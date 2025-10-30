@@ -36,13 +36,20 @@ export async function getVersionById(versionId: string): Promise<ProjectVersion 
 }
 
 export async function setCurrentVersion(versionId: string, projectId: string): Promise<void> {
-  const { error } = await supabase
+  const { error: resetError } = await supabase
+    .from('project_versions')
+    .update({ is_current: false })
+    .eq('project_id', projectId);
+
+  if (resetError) throw resetError;
+
+  const { error: setError } = await supabase
     .from('project_versions')
     .update({ is_current: true })
     .eq('id', versionId)
     .eq('project_id', projectId);
 
-  if (error) throw error;
+  if (setError) throw setError;
 }
 
 export async function createEmptyVersion(
