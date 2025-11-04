@@ -188,6 +188,33 @@ export async function duplicateVersion(
 
       if (insertItemsError) throw insertItemsError;
     }
+
+    const { data: sourceCountertops, error: countertopsError } = await supabase
+      .from('version_area_countertops')
+      .select('*')
+      .in('area_id', Array.from(areaIdMap.keys()));
+
+    if (countertopsError) throw countertopsError;
+
+    if (sourceCountertops && sourceCountertops.length > 0) {
+      let countertopsToInsert = sourceCountertops.map(countertop => {
+        const { id, area_id, created_at, ...countertopData } = countertop;
+        return {
+          ...countertopData,
+          area_id: areaIdMap.get(area_id)!,
+        };
+      });
+
+      if (updatePrices) {
+        countertopsToInsert = await updateCountertopPrices(countertopsToInsert);
+      }
+
+      const { error: insertCountertopsError } = await supabase
+        .from('version_area_countertops')
+        .insert(countertopsToInsert);
+
+      if (insertCountertopsError) throw insertCountertopsError;
+    }
   }
 
   await recalculateVersionTotal(newVersion.id);
@@ -286,13 +313,41 @@ async function updateItemPrices(items: any[]): Promise<any[]> {
   });
 }
 
+async function updateCountertopPrices(countertops: any[]): Promise<any[]> {
+  const priceIds = countertops.map(ct => ct.price_list_item_id).filter(Boolean);
+
+  if (priceIds.length === 0) return countertops;
+
+  const { data: priceList, error } = await supabase
+    .from('price_list')
+    .select('*')
+    .in('id', priceIds);
+
+  if (error) throw error;
+
+  const priceMap = new Map(priceList?.map(p => [p.id, p]) || []);
+
+  return countertops.map(countertop => {
+    const updated = { ...countertop };
+
+    if (countertop.price_list_item_id && priceMap.has(countertop.price_list_item_id)) {
+      const priceItem = priceMap.get(countertop.price_list_item_id);
+      updated.unit_price = priceItem.price;
+      updated.subtotal = priceItem.price * (countertop.quantity || 1);
+    }
+
+    return updated;
+  });
+}
+
 export async function recalculateVersionTotal(versionId: string): Promise<void> {
   const { data: areas, error: areasError } = await supabase
     .from('version_project_areas')
     .select(`
       *,
       cabinets:version_area_cabinets(subtotal),
-      items:version_area_items(subtotal)
+      items:version_area_items(subtotal),
+      countertops:version_area_countertops(subtotal)
     `)
     .eq('version_id', versionId);
 
@@ -303,7 +358,8 @@ export async function recalculateVersionTotal(versionId: string): Promise<void> 
     for (const area of areas) {
       const cabinetsTotal = (area.cabinets || []).reduce((sum: number, c: any) => sum + (c.subtotal || 0), 0);
       const itemsTotal = (area.items || []).reduce((sum: number, i: any) => sum + (i.subtotal || 0), 0);
-      const areaTotal = cabinetsTotal + itemsTotal;
+      const countertopsTotal = (area.countertops || []).reduce((sum: number, ct: any) => sum + (ct.subtotal || 0), 0);
+      const areaTotal = cabinetsTotal + itemsTotal + countertopsTotal;
       total += areaTotal;
 
       await supabase
@@ -341,7 +397,8 @@ export async function getVersionData(versionId: string) {
     .select(`
       *,
       cabinets:version_area_cabinets(*),
-      items:version_area_items(*)
+      items:version_area_items(*),
+      countertops:version_area_countertops(*)
     `)
     .eq('version_id', versionId)
     .order('display_order');

@@ -412,7 +412,12 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
     0
   );
 
-  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal;
+  const countertopsSubtotal = areas.reduce(
+    (sum, area) => sum + area.countertops.reduce((s, ct) => s + ct.subtotal, 0),
+    0
+  );
+
+  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal;
 
   const taxesAmount = (materialsSubtotal * taxesPercentage) / 100;
   const projectTotal = materialsSubtotal + otherExpenses + taxesAmount + installDelivery;
@@ -656,6 +661,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm text-slate-600">Cabinets Subtotal:</p>
+                <p className="text-sm text-slate-600">Countertops Subtotal:</p>
                 <p className="text-sm text-slate-600">Individual Items Subtotal:</p>
                 <p className="text-sm text-slate-600 mt-2 pt-2 border-t border-slate-300">Materials Subtotal:</p>
                 <p className="text-sm text-slate-600">Other Expenses:</p>
@@ -665,6 +671,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-slate-700">{formatPrice(cabinetsSubtotal)}</p>
+                <p className="text-sm font-medium text-slate-700">{formatPrice(countertopsSubtotal)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(itemsSubtotal)}</p>
                 <p className="text-sm font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(materialsSubtotal)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(otherExpenses)}</p>
@@ -772,6 +779,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
                       <div className="text-base sm:text-xl font-bold text-slate-900">
                         {formatCurrency(
                           area.cabinets.reduce((sum, c) => sum + c.subtotal, 0) +
+                          area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0) +
                           area.items.reduce((sum, i) => sum + i.subtotal, 0)
                         )}
                       </div>

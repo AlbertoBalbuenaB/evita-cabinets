@@ -1,11 +1,11 @@
 import { formatCurrency } from '../lib/calculations';
 import { calculateAreaBoxesAndPallets } from '../lib/boxesAndPallets';
 import { supabase } from '../lib/supabase';
-import type { Project, ProjectArea, AreaCabinet, AreaItem, Product } from '../types';
+import type { Project, ProjectArea, AreaCabinet, AreaItem, AreaCountertop, Product } from '../types';
 
 export async function printQuotation(
   project: Project,
-  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[] })[],
+  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[],
   products: Product[] = []
 ) {
   const cabinetsSubtotal = areas.reduce(
@@ -18,7 +18,12 @@ export async function printQuotation(
     0
   );
 
-  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal;
+  const countertopsSubtotal = areas.reduce(
+    (sum, area) => sum + area.countertops.reduce((s, ct) => s + ct.subtotal, 0),
+    0
+  );
+
+  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal;
   const otherExpenses = project.other_expenses || 0;
   const taxesPercentage = project.taxes_percentage || 0;
   const taxesAmount = (materialsSubtotal * taxesPercentage) / 100;
@@ -34,7 +39,8 @@ export async function printQuotation(
   const areaBreakdown = areas.map(area => {
     const areaCabinetsTotal = area.cabinets.reduce((sum, c) => sum + c.subtotal, 0);
     const areaItemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
-    const areaTotal = areaCabinetsTotal + areaItemsTotal;
+    const areaCountertopsTotal = area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0);
+    const areaTotal = areaCabinetsTotal + areaItemsTotal + areaCountertopsTotal;
 
     const boxesPalletsCalc = calculateAreaBoxesAndPallets(area.cabinets, products);
 
