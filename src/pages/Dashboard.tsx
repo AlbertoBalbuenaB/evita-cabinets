@@ -26,10 +26,6 @@ interface DashboardStats {
   wonValue: number;
   totalProducts: number;
   totalPriceItems: number;
-  totalCabinets: number;
-  totalCabinetQuantity: number;
-  avgCostPerCabinet: number;
-  totalCabinetValue: number;
 }
 
 interface RecentProject {
@@ -96,10 +92,6 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
     wonValue: 0,
     totalProducts: 0,
     totalPriceItems: 0,
-    totalCabinets: 0,
-    totalCabinetQuantity: 0,
-    avgCostPerCabinet: 0,
-    totalCabinetValue: 0,
   });
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [projectTypeStats, setProjectTypeStats] = useState<ProjectTypeStats[]>([]);
@@ -117,7 +109,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
 
   async function loadStats() {
     try {
-      const [projectsRes, productsRes, pricesRes, recentRes, cabinetsRes] = await Promise.all([
+      const [projectsRes, productsRes, pricesRes, recentRes] = await Promise.all([
         supabase.from('projects').select('status, total_amount, quote_date, project_type'),
         supabase.from('products_catalog').select('id', { count: 'exact', head: true }),
         supabase.from('price_list').select('id', { count: 'exact', head: true }),
@@ -126,11 +118,9 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
           .select('id, name, quote_date, total_amount, status, project_type, updated_at')
           .order('updated_at', { ascending: false })
           .limit(5),
-        supabase.from('area_cabinets').select('quantity, subtotal'),
       ]);
 
       const projects = projectsRes.data || [];
-      const cabinets = cabinetsRes.data || [];
 
       const wonProjects = projects.filter(p => p.status === 'won');
       const pendingProjects = projects.filter(p => p.status === 'pending');
@@ -138,11 +128,6 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
 
       const totalValue = projects.reduce((sum, p) => sum + (p.total_amount || 0), 0);
       const wonValue = wonProjects.reduce((sum, p) => sum + (p.total_amount || 0), 0);
-
-      const totalCabinets = cabinets.length;
-      const totalCabinetQuantity = cabinets.reduce((sum, c) => sum + c.quantity, 0);
-      const totalCabinetValue = cabinets.reduce((sum, c) => sum + (c.subtotal || 0), 0);
-      const avgCostPerCabinet = totalCabinets > 0 ? totalCabinetValue / totalCabinets : 0;
 
       setStats({
         totalProjects: projects.length,
@@ -153,10 +138,6 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
         wonValue,
         totalProducts: productsRes.count || 0,
         totalPriceItems: pricesRes.count || 0,
-        totalCabinets,
-        totalCabinetQuantity,
-        avgCostPerCabinet,
-        totalCabinetValue,
       });
 
       const monthlyMap = new Map<string, MonthlyData>();
@@ -583,18 +564,11 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
       color: 'bg-green-500',
     },
     {
-      label: 'Total Cabinets',
-      value: `${stats.totalCabinets}`,
-      subtext: `${stats.totalCabinetQuantity} units quoted`,
-      icon: Package,
-      color: 'bg-blue-500',
-    },
-    {
-      label: 'Avg Cost per Cabinet',
-      value: formatCurrency(stats.avgCostPerCabinet),
-      subtext: `${stats.totalCabinets} cabinets total`,
+      label: 'Monthly Conversion',
+      value: currentMonthData ? `${currentMonthConversion.toFixed(1)}%` : 'N/A',
+      subtext: currentMonthData ? currentMonthData.month : 'No data',
       icon: BarChart3,
-      color: 'bg-purple-500',
+      color: 'bg-blue-500',
     },
     {
       label: 'Total Quoted Value',
