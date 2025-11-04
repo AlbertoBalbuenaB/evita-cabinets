@@ -32,11 +32,13 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
     const areasCosts = areas.map((area) => {
       const cabinetsTotal = area.cabinets.reduce((sum, c) => sum + c.subtotal, 0);
       const itemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
+      const cabinetsCount = area.cabinets.reduce((sum, c) => sum + c.quantity, 0);
       return {
         name: area.name,
         total: cabinetsTotal + itemsTotal,
         taxes: calculateTaxesForArea(area.cabinets),
-        cabinets: area.cabinets.length,
+        cabinets: cabinetsCount,
+        cabinetEntries: area.cabinets.length,
         items: area.items.length,
       };
     });
@@ -77,8 +79,11 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
     const maxAreaCost = Math.max(...areasCosts.map((a) => a.total), 1);
     const maxMaterialCost = Math.max(...materialsBreakdown.map((m) => m.cost), 1);
 
-    const totalCabinets = allCabinets.length;
+    const totalCabinets = allCabinets.reduce((sum, c) => sum + c.quantity, 0);
+    const totalCabinetEntries = allCabinets.length;
     const totalSKUs = new Set(allCabinets.map((c) => c.product_sku)).size;
+    const cabinetsCost = allCabinets.reduce((sum, c) => sum + c.subtotal, 0);
+    const avgCostPerCabinet = totalCabinets > 0 ? cabinetsCost / totalCabinets : 0;
 
     return {
       areasCosts,
@@ -87,8 +92,13 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
       maxMaterialCost,
       totalCost,
       totalCabinets,
+      totalCabinetEntries,
       totalSKUs,
       totalProjectTaxes,
+      cabinetsCost,
+      avgCostPerCabinet,
+      totalItems: allItems.length,
+      itemsCost: totalItemsCost,
     };
   }, [areas]);
 
@@ -98,24 +108,53 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
 
   return (
     <div className="no-print space-y-6">
+      <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-slate-900">Project Analytics</h3>
+          <TrendingUp className="h-5 w-5 text-slate-400" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+            <div className="text-sm text-slate-600 mb-1">Total Cabinets</div>
+            <div className="text-3xl font-bold text-blue-600">{analytics.totalCabinets}</div>
+            <div className="text-xs text-slate-500 mt-1">{analytics.totalCabinetEntries} entries</div>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+            <div className="text-sm text-slate-600 mb-1">Avg Cost/Cabinet</div>
+            <div className="text-3xl font-bold text-purple-600">{formatCurrency(analytics.avgCostPerCabinet)}</div>
+            <div className="text-xs text-slate-500 mt-1">Per unit</div>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+            <div className="text-sm text-slate-600 mb-1">Cabinets Value</div>
+            <div className="text-3xl font-bold text-green-600">{formatCurrency(analytics.cabinetsCost)}</div>
+            <div className="text-xs text-slate-500 mt-1">{analytics.totalSKUs} unique SKUs</div>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+            <div className="text-sm text-slate-600 mb-1">Additional Items</div>
+            <div className="text-3xl font-bold text-amber-600">{analytics.totalItems}</div>
+            <div className="text-xs text-slate-500 mt-1">{formatCurrency(analytics.itemsCost)} value</div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">Project Stats</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Project Summary</h3>
             <TrendingUp className="h-5 w-5 text-slate-400" />
           </div>
           <div className="space-y-4">
             <div>
-              <div className="text-sm text-slate-600">Total Cabinets</div>
-              <div className="text-3xl font-bold text-slate-900">{analytics.totalCabinets}</div>
+              <div className="text-sm text-slate-600">Total Areas</div>
+              <div className="text-3xl font-bold text-slate-900">{areas.length}</div>
             </div>
             <div>
-              <div className="text-sm text-slate-600">Unique SKUs</div>
-              <div className="text-2xl font-bold text-slate-900">{analytics.totalSKUs}</div>
+              <div className="text-sm text-slate-600">Total Project Value</div>
+              <div className="text-2xl font-bold text-slate-900">{formatCurrency(analytics.totalCost)}</div>
             </div>
             <div>
-              <div className="text-sm text-slate-600">Areas</div>
-              <div className="text-2xl font-bold text-slate-900">{areas.length}</div>
+              <div className="text-sm text-slate-600">Total Taxes</div>
+              <div className="text-2xl font-bold text-slate-900">{formatCurrency(analytics.totalProjectTaxes)}</div>
             </div>
           </div>
         </div>
@@ -286,9 +325,7 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
           <div>
             <div className="text-sm text-blue-100">Avg Cost per Cabinet</div>
             <div className="text-xl font-bold">
-              {analytics.totalCabinets > 0
-                ? formatCurrency(analytics.totalCost / analytics.totalCabinets)
-                : formatCurrency(0)}
+              {formatCurrency(analytics.avgCostPerCabinet)}
             </div>
           </div>
         </div>

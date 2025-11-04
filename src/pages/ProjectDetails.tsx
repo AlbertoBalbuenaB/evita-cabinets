@@ -636,72 +636,9 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
 
       {showAnalytics && areas.length > 0 && (
         <div className="mb-6 space-y-6">
-          <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-slate-200 p-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-              <Calculator className="h-5 w-5 mr-2 text-blue-600" />
-              Project Analytics
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-                <div className="flex items-center justify-between mb-2">
-                  <Package className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm text-slate-500">Total Cabinets</span>
-                </div>
-                <div className="text-3xl font-bold text-slate-900">
-                  {areas.reduce((sum, area) => sum + area.cabinets.reduce((s, c) => s + c.quantity, 0), 0)}
-                </div>
-                <div className="text-xs text-slate-500 mt-1">
-                  {areas.reduce((sum, area) => sum + area.cabinets.length, 0)} cabinet entries
-                </div>
-              </div>
+          <ProjectCharts areas={areas} />
 
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-                <div className="flex items-center justify-between mb-2">
-                  <BarChart3 className="h-5 w-5 text-purple-600" />
-                  <span className="text-sm text-slate-500">Avg Cost/Cabinet</span>
-                </div>
-                <div className="text-3xl font-bold text-slate-900">
-                  {formatCurrency(
-                    areas.reduce((sum, area) => sum + area.cabinets.reduce((s, c) => s + c.quantity, 0), 0) > 0
-                      ? areas.reduce((sum, area) => sum + area.cabinets.reduce((s, c) => s + c.subtotal, 0), 0) /
-                        areas.reduce((sum, area) => sum + area.cabinets.reduce((s, c) => s + c.quantity, 0), 0)
-                      : 0
-                  )}
-                </div>
-                <div className="text-xs text-slate-500 mt-1">
-                  Per cabinet unit
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-                <div className="flex items-center justify-between mb-2">
-                  <DollarSign className="h-5 w-5 text-green-600" />
-                  <span className="text-sm text-slate-500">Cabinets Value</span>
-                </div>
-                <div className="text-3xl font-bold text-slate-900">
-                  {formatCurrency(areas.reduce((sum, area) => sum + area.cabinets.reduce((s, c) => s + c.subtotal, 0), 0))}
-                </div>
-                <div className="text-xs text-slate-500 mt-1">
-                  Total cabinets cost
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-                <div className="flex items-center justify-between mb-2">
-                  <ListPlus className="h-5 w-5 text-amber-600" />
-                  <span className="text-sm text-slate-500">Additional Items</span>
-                </div>
-                <div className="text-3xl font-bold text-slate-900">
-                  {areas.reduce((sum, area) => sum + area.items.length, 0)}
-                </div>
-                <div className="text-xs text-slate-500 mt-1">
-                  {formatCurrency(areas.reduce((sum, area) => sum + area.items.reduce((s, i) => s + i.subtotal, 0), 0))} value
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 p-6">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-slate-200 p-6">
             <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
               <Package className="h-5 w-5 mr-2" />
               Shipping - Boxes & Pallets
@@ -745,7 +682,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
               </div>
             </div>
           </div>
-          <ProjectCharts areas={areas} />
+
           <MaterialBreakdownByArea projectId={project.id} />
           <MaterialBreakdown cabinets={areas.flatMap(a => a.cabinets)} items={areas.flatMap(a => a.items)} />
         </div>
