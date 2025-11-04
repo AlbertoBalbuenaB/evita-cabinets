@@ -491,7 +491,7 @@ export function MaterialBreakdown({ cabinets, items, countertops }: MaterialBrea
           </div>
           <div>
             <div className="text-sm text-slate-300 flex items-center">
-              <Hammer className="h-4 w-4 mr-1" />
+              <HammerIcon className="h-4 w-4 mr-1" />
               Labor
             </div>
             <div className="text-xl font-bold">{formatCurrency(breakdown.totals.labor)}</div>
