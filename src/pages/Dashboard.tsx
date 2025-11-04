@@ -16,7 +16,6 @@ import { supabase } from '../lib/supabase';
 import { formatCurrency } from '../lib/calculations';
 import { seedSampleData } from '../utils/seedData';
 import { Button } from '../components/Button';
-import { MaterialBreakdownByArea } from '../components/MaterialBreakdownByArea';
 
 interface DashboardStats {
   totalProjects: number;
@@ -1067,10 +1066,6 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
           </div>
         </div>
       )}
-
-      <div className="mt-6">
-        <MaterialBreakdownByArea />
-      </div>
 
       {projectTypeStats.length > 0 && (
         <div className="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 p-6">

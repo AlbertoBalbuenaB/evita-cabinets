@@ -10,6 +10,7 @@ import { CabinetForm } from '../components/CabinetForm';
 import { ItemForm } from '../components/ItemForm';
 import { CabinetCard } from '../components/CabinetCard';
 import { MaterialBreakdown } from '../components/MaterialBreakdown';
+import { MaterialBreakdownByArea } from '../components/MaterialBreakdownByArea';
 import { ProjectCharts } from '../components/ProjectCharts';
 import { printQuotation } from '../utils/printQuotation';
 import { BoxesPalletsBreakdown } from '../components/BoxesPalletsBreakdown';
@@ -680,6 +681,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
             </div>
           </div>
           <ProjectCharts areas={areas} />
+          <MaterialBreakdownByArea projectId={project.id} />
           <MaterialBreakdown cabinets={areas.flatMap(a => a.cabinets)} items={areas.flatMap(a => a.items)} />
         </div>
       )}

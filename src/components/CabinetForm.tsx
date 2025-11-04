@@ -207,16 +207,27 @@ export function CabinetForm({ areaId, cabinet, onClose, versionId }: CabinetForm
       const tableName = versionId ? 'version_area_cabinets' : 'area_cabinets';
 
       if (cabinet) {
-        const { error } = await supabase
+        console.log('Updating cabinet with data:', cabinetData);
+        const { data, error } = await supabase
           .from(tableName)
           .update(cabinetData)
-          .eq('id', cabinet.id);
+          .eq('id', cabinet.id)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error details:', error);
+          throw error;
+        }
+        console.log('Update successful:', data);
       } else {
-        const { error } = await supabase.from(tableName).insert([cabinetData]);
+        console.log('Inserting cabinet with data:', cabinetData);
+        const { data, error } = await supabase.from(tableName).insert([cabinetData]).select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error details:', error);
+          throw error;
+        }
+        console.log('Insert successful:', data);
       }
 
       if (!versionId) {
@@ -225,9 +236,12 @@ export function CabinetForm({ areaId, cabinet, onClose, versionId }: CabinetForm
       }
 
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving cabinet:', error);
-      alert('Failed to save cabinet');
+      const errorMessage = error?.message || 'Failed to save cabinet';
+      const errorDetails = error?.details || '';
+      const errorHint = error?.hint || '';
+      alert(`Failed to save cabinet\n\n${errorMessage}\n${errorDetails}\n${errorHint}`);
     }
   }
 

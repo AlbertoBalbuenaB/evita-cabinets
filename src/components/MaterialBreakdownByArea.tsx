@@ -6,7 +6,7 @@ import { formatCurrency } from '../lib/calculations';
 interface AreaMaterialBreakdown {
   areaId: string;
   areaName: string;
-  projectName: string;
+  projectName?: string;
   materials: {
     boxMaterial: { name: string; cost: number; count: number };
     boxEdgeband: { name: string; cost: number; count: number };
@@ -17,23 +17,33 @@ interface AreaMaterialBreakdown {
   cabinetCount: number;
 }
 
-export function MaterialBreakdownByArea() {
+interface MaterialBreakdownByAreaProps {
+  projectId?: string;
+}
+
+export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaProps = {}) {
   const [breakdownData, setBreakdownData] = useState<AreaMaterialBreakdown[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadMaterialBreakdown();
-  }, []);
+  }, [projectId]);
 
   async function loadMaterialBreakdown() {
     try {
-      const { data: areas, error: areasError } = await supabase
+      let areasQuery = supabase
         .from('project_areas')
         .select(`
           id,
           name,
           projects:project_id (name)
         `);
+
+      if (projectId) {
+        areasQuery = areasQuery.eq('project_id', projectId);
+      }
+
+      const { data: areas, error: areasError } = await areasQuery;
 
       if (areasError) throw areasError;
 
@@ -135,7 +145,7 @@ export function MaterialBreakdownByArea() {
         areaBreakdowns.push({
           areaId: area.id,
           areaName: area.name,
-          projectName: (area.projects as any)?.name || 'Unknown Project',
+          projectName: projectId ? undefined : ((area.projects as any)?.name || 'Unknown Project'),
           materials: {
             boxMaterial: getMostUsedMaterial(materialCounts.boxMaterial),
             boxEdgeband: getMostUsedMaterial(materialCounts.boxEdgeband),
@@ -198,7 +208,7 @@ export function MaterialBreakdownByArea() {
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <h3 className="text-base font-semibold text-slate-900">{area.areaName}</h3>
-                <p className="text-sm text-slate-600">{area.projectName}</p>
+                {area.projectName && <p className="text-sm text-slate-600">{area.projectName}</p>}
                 <div className="flex items-center gap-4 mt-1">
                   <span className="text-xs text-slate-500">
                     {area.cabinetCount} cabinet{area.cabinetCount !== 1 ? 's' : ''}
