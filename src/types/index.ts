@@ -33,6 +33,19 @@ export interface AreaItem {
   updated_at?: string;
 }
 
+export interface AreaCountertop {
+  id: string;
+  area_id: string;
+  price_list_item_id: string;
+  item_name: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export type Setting = Database['public']['Tables']['settings']['Row'];
 export type SettingInsert = Database['public']['Tables']['settings']['Insert'];
 export type SettingUpdate = Database['public']['Tables']['settings']['Update'];

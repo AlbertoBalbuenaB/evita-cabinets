@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Edit2, Trash2, Copy, Printer, BarChart3, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, TrendingUp, Save } from 'lucide-react';
+import { ArrowLeft, Plus, Edit2, Trash2, Copy, Printer, BarChart3, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, TrendingUp, Save, Hammer } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
 import { formatCurrency } from '../lib/calculations';
-import type { Project, ProjectArea, AreaCabinet, ProjectAreaInsert, Product, AreaItem } from '../types';
+import type { Project, ProjectArea, AreaCabinet, ProjectAreaInsert, Product, AreaItem, AreaCountertop } from '../types';
 import { CabinetForm } from '../components/CabinetForm';
 import { ItemForm } from '../components/ItemForm';
+import { CountertopForm } from '../components/CountertopForm';
 import { CabinetCard } from '../components/CabinetCard';
 import { MaterialBreakdown } from '../components/MaterialBreakdown';
 import { MaterialBreakdownByArea } from '../components/MaterialBreakdownByArea';
@@ -37,7 +38,7 @@ interface ProjectDetailsProps {
 }
 
 export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
-  const [areas, setAreas] = useState<(ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[] })[]>([]);
+  const [areas, setAreas] = useState<(ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAreaModalOpen, setIsAreaModalOpen] = useState(false);
@@ -46,6 +47,8 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
   const [editingCabinet, setEditingCabinet] = useState<AreaCabinet | null>(null);
   const [selectedAreaForItem, setSelectedAreaForItem] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<AreaItem | null>(null);
+  const [selectedAreaForCountertop, setSelectedAreaForCountertop] = useState<string | null>(null);
+  const [editingCountertop, setEditingCountertop] = useState<AreaCountertop | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [currencyDisplay, setCurrencyDisplay] = useState<'USD' | 'MXN' | 'BOTH'>('MXN');
   const [exchangeRate, setExchangeRate] = useState(18);
@@ -122,7 +125,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
 
       const areasWithCabinetsAndItems = await Promise.all(
         (areasData || []).map(async (area) => {
-          const [cabinetsResult, itemsResult] = await Promise.all([
+          const [cabinetsResult, itemsResult, countertopsResult] = await Promise.all([
             supabase
               .from('area_cabinets')
               .select('*')
@@ -133,12 +136,18 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
               .select('*')
               .eq('area_id', area.id)
               .order('created_at'),
+            supabase
+              .from('area_countertops')
+              .select('*')
+              .eq('area_id', area.id)
+              .order('created_at'),
           ]);
 
           return {
             ...area,
             cabinets: cabinetsResult.data || [],
             items: itemsResult.data || [],
+            countertops: countertopsResult.data || [],
           };
         })
       );
@@ -152,11 +161,12 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
     }
   }
 
-  async function updateProjectTotal(areasData: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[] })[]) {
+  async function updateProjectTotal(areasData: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[]) {
     const total = areasData.reduce((sum, area) => {
       const cabinetsTotal = area.cabinets.reduce((s, c) => s + c.subtotal, 0);
       const itemsTotal = area.items.reduce((s, i) => s + i.subtotal, 0);
-      return sum + cabinetsTotal + itemsTotal;
+      const countertopsTotal = area.countertops.reduce((s, ct) => s + ct.subtotal, 0);
+      return sum + cabinetsTotal + itemsTotal + countertopsTotal;
     }, 0);
 
     try {
@@ -168,7 +178,8 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
       for (const area of areasData) {
         const cabinetsTotal = area.cabinets.reduce((s, c) => s + c.subtotal, 0);
         const itemsTotal = area.items.reduce((s, i) => s + i.subtotal, 0);
-        const areaTotal = cabinetsTotal + itemsTotal;
+        const countertopsTotal = area.countertops.reduce((s, ct) => s + ct.subtotal, 0);
+        const areaTotal = cabinetsTotal + itemsTotal + countertopsTotal;
         await supabase
           .from('project_areas')
           .update({ subtotal: areaTotal })
@@ -329,9 +340,40 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
     }
   }
 
+  async function handleDeleteCountertop(countertopId: string) {
+    if (!confirm('Are you sure you want to delete this countertop?')) return;
+
+    try {
+      if (currentVersionId) {
+        const { error } = await supabase.from('version_area_countertops').delete().eq('id', countertopId);
+        if (error) throw error;
+        await recalculateVersionTotal(currentVersionId);
+        await loadVersionAreas(currentVersionId);
+      } else {
+        const { error } = await supabase.from('area_countertops').delete().eq('id', countertopId);
+        if (error) throw error;
+        await loadAreas();
+      }
+    } catch (error) {
+      console.error('Error deleting countertop:', error);
+      alert('Failed to delete countertop');
+    }
+  }
+
   async function handleCloseItemForm() {
     setSelectedAreaForItem(null);
     setEditingItem(null);
+    if (currentVersionId) {
+      await recalculateVersionTotal(currentVersionId);
+      await loadVersionAreas(currentVersionId);
+    } else {
+      await loadAreas();
+    }
+  }
+
+  async function handleCloseCountertopForm() {
+    setSelectedAreaForCountertop(null);
+    setEditingCountertop(null);
     if (currentVersionId) {
       await recalculateVersionTotal(currentVersionId);
       await loadVersionAreas(currentVersionId);
@@ -684,7 +726,11 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
           </div>
 
           <MaterialBreakdownByArea projectId={project.id} />
-          <MaterialBreakdown cabinets={areas.flatMap(a => a.cabinets)} items={areas.flatMap(a => a.items)} />
+          <MaterialBreakdown
+            cabinets={areas.flatMap(a => a.cabinets)}
+            items={areas.flatMap(a => a.items)}
+            countertops={areas.flatMap(a => a.countertops)}
+          />
         </div>
       )}
 
@@ -755,15 +801,19 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
                     <Plus className="h-4 w-4 mr-2" />
                     Add Cabinet
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => setSelectedAreaForCountertop(area.id)} className="w-full sm:w-auto border-orange-300 hover:bg-orange-50">
+                    <Hammer className="h-4 w-4 mr-2" />
+                    Add Countertop
+                  </Button>
                   <Button size="sm" variant="outline" onClick={() => setSelectedAreaForItem(area.id)} className="w-full sm:w-auto">
                     <ListPlus className="h-4 w-4 mr-2" />
                     Add Item
                   </Button>
                 </div>
 
-                {area.cabinets.length === 0 && area.items.length === 0 ? (
+                {area.cabinets.length === 0 && area.items.length === 0 && area.countertops.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-slate-600 mb-3">No cabinets or items in this area</p>
+                    <p className="text-slate-600 mb-3">No cabinets, countertops, or items in this area</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -785,6 +835,71 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
                           />
                         ))}
                       </>
+                    )}
+
+                    {area.countertops.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-slate-700 text-sm">Countertops</h4>
+                        <div className="space-y-2">
+                          {area.countertops.map((countertop) => (
+                            <div
+                              key={countertop.id}
+                              className="bg-orange-50 border border-orange-200 rounded-lg p-4"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <h4 className="font-semibold text-slate-900">{countertop.item_name}</h4>
+                                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded">
+                                      Countertop
+                                    </span>
+                                  </div>
+                                  <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                                    <div className="flex justify-between">
+                                      <span className="text-slate-600">Quantity:</span>
+                                      <span className="font-medium">{countertop.quantity}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-slate-600">Unit Price:</span>
+                                      <span className="font-medium">{formatPrice(countertop.unit_price)}</span>
+                                    </div>
+                                    <div className="flex justify-between col-span-2 pt-1 border-t border-orange-200">
+                                      <span className="text-slate-600 font-medium">Subtotal:</span>
+                                      <span className="font-semibold text-orange-900">
+                                        {formatPrice(countertop.subtotal)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {countertop.notes && (
+                                    <div className="mt-2 text-xs text-slate-600 italic">
+                                      Note: {countertop.notes}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex space-x-1 ml-4">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedAreaForCountertop(countertop.area_id);
+                                      setEditingCountertop(countertop);
+                                    }}
+                                  >
+                                    <Edit2 className="h-4 w-4 text-slate-600" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteCountertop(countertop.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
 
                     {area.items.length > 0 && (
@@ -881,6 +996,15 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
           areaId={selectedAreaForItem}
           item={editingItem}
           onClose={handleCloseItemForm}
+          versionId={currentVersionId}
+        />
+      )}
+
+      {selectedAreaForCountertop && (
+        <CountertopForm
+          areaId={selectedAreaForCountertop}
+          countertop={editingCountertop}
+          onClose={handleCloseCountertopForm}
           versionId={currentVersionId}
         />
       )}

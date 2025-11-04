@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Package, Ruler, Wrench, Hammer, ListChecks } from 'lucide-react';
+import { Package, Ruler, Wrench, Hammer as HammerIcon, ListChecks } from 'lucide-react';
 import { formatCurrency } from '../lib/calculations';
 import { supabase } from '../lib/supabase';
-import type { AreaCabinet, Product, PriceListItem, AreaItem } from '../types';
+import type { AreaCabinet, Product, PriceListItem, AreaItem, AreaCountertop } from '../types';
 
 interface MaterialBreakdownProps {
   cabinets: AreaCabinet[];
   items: AreaItem[];
+  countertops: AreaCountertop[];
 }
 
 interface MaterialDetail {
@@ -31,7 +32,7 @@ interface HardwareDetail {
   cost: number;
 }
 
-export function MaterialBreakdown({ cabinets, items }: MaterialBreakdownProps) {
+export function MaterialBreakdown({ cabinets, items, countertops }: MaterialBreakdownProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [priceList, setPriceList] = useState<PriceListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -405,6 +406,38 @@ export function MaterialBreakdown({ cabinets, items }: MaterialBreakdownProps) {
         </div>
       </div>
 
+      {countertops.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+            <HammerIcon className="h-5 w-5 mr-2 text-orange-600" />
+            Countertops Breakdown
+          </h3>
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="space-y-2">
+              {countertops.map((countertop, idx) => (
+                <div key={idx} className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-orange-800 font-medium">{countertop.item_name}</span>
+                    <span className="font-medium text-orange-900">{formatCurrency(countertop.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-orange-700">
+                    <span>Quantity: {countertop.quantity}</span>
+                    <span>Unit Price: {formatCurrency(countertop.unit_price)}</span>
+                  </div>
+                  {countertop.notes && (
+                    <div className="text-xs text-orange-600 italic">Note: {countertop.notes}</div>
+                  )}
+                </div>
+              ))}
+              <div className="pt-2 border-t border-orange-300 flex justify-between font-semibold text-orange-900">
+                <span>Total Countertops</span>
+                <span>{formatCurrency(countertops.reduce((sum, ct) => sum + ct.subtotal, 0))}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {items.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
@@ -463,6 +496,15 @@ export function MaterialBreakdown({ cabinets, items }: MaterialBreakdownProps) {
             </div>
             <div className="text-xl font-bold">{formatCurrency(breakdown.totals.labor)}</div>
           </div>
+          {countertops.length > 0 && (
+            <div>
+              <div className="text-sm text-slate-300 flex items-center">
+                <HammerIcon className="h-4 w-4 mr-1" />
+                Countertops
+              </div>
+              <div className="text-xl font-bold">{formatCurrency(countertops.reduce((sum, ct) => sum + ct.subtotal, 0))}</div>
+            </div>
+          )}
           {items.length > 0 && (
             <div>
               <div className="text-sm text-slate-300 flex items-center">
@@ -474,7 +516,7 @@ export function MaterialBreakdown({ cabinets, items }: MaterialBreakdownProps) {
           )}
           <div className="border-l border-slate-500 pl-4">
             <div className="text-sm text-slate-300">Total Cost</div>
-            <div className="text-2xl font-bold">{formatCurrency(breakdown.totals.total + items.reduce((sum, item) => sum + item.subtotal, 0))}</div>
+            <div className="text-2xl font-bold">{formatCurrency(breakdown.totals.total + countertops.reduce((sum, ct) => sum + ct.subtotal, 0) + items.reduce((sum, item) => sum + item.subtotal, 0))}</div>
           </div>
         </div>
       </div>

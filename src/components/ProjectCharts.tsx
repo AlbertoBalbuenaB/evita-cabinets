@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { BarChart3, PieChart, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '../lib/calculations';
-import type { ProjectArea, AreaCabinet, AreaItem } from '../types';
+import type { ProjectArea, AreaCabinet, AreaItem, AreaCountertop } from '../types';
 
 interface ProjectChartsProps {
-  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[] })[];
+  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[];
 }
 
 export function ProjectCharts({ areas }: ProjectChartsProps) {
@@ -32,20 +32,24 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
     const areasCosts = areas.map((area) => {
       const cabinetsTotal = area.cabinets.reduce((sum, c) => sum + c.subtotal, 0);
       const itemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
+      const countertopsTotal = area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0);
       const cabinetsCount = area.cabinets.reduce((sum, c) => sum + c.quantity, 0);
       return {
         name: area.name,
-        total: cabinetsTotal + itemsTotal,
+        total: cabinetsTotal + itemsTotal + countertopsTotal,
         taxes: calculateTaxesForArea(area.cabinets),
         cabinets: cabinetsCount,
         cabinetEntries: area.cabinets.length,
         items: area.items.length,
+        countertops: area.countertops.length,
       };
     });
 
     const allCabinets = areas.flatMap((a) => a.cabinets);
     const allItems = areas.flatMap((a) => a.items);
+    const allCountertops = areas.flatMap((a) => a.countertops);
     const totalItemsCost = allItems.reduce((sum, i) => sum + i.subtotal, 0);
+    const totalCountertopsCost = allCountertops.reduce((sum, ct) => sum + ct.subtotal, 0);
 
     const totalProjectTaxes = areasCosts.reduce((sum, area) => sum + area.taxes, 0);
 
@@ -69,6 +73,7 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
       { name: 'Doors Edgeband', cost: materialsCosts.doorsEdgeband, color: 'bg-green-400' },
       { name: 'Doors Interior', cost: materialsCosts.doorsInterior, color: 'bg-green-300' },
       { name: 'Hardware', cost: materialsCosts.hardware, color: 'bg-amber-500' },
+      { name: 'Countertops', cost: totalCountertopsCost, color: 'bg-orange-500' },
       { name: 'Individual Items', cost: totalItemsCost, color: 'bg-amber-600' },
       { name: 'Taxes', cost: materialsCosts.taxes, color: 'bg-red-500' },
       { name: 'Labor', cost: materialsCosts.labor, color: 'bg-slate-500' },
@@ -99,6 +104,8 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
       avgCostPerCabinet,
       totalItems: allItems.length,
       itemsCost: totalItemsCost,
+      totalCountertops: allCountertops.length,
+      countertopsCost: totalCountertopsCost,
     };
   }, [areas]);
 
@@ -113,7 +120,7 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
           <h3 className="text-lg font-semibold text-slate-900">Project Analytics</h3>
           <TrendingUp className="h-5 w-5 text-slate-400" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
             <div className="text-sm text-slate-600 mb-1">Total Cabinets</div>
             <div className="text-3xl font-bold text-blue-600">{analytics.totalCabinets}</div>
@@ -128,6 +135,11 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
             <div className="text-sm text-slate-600 mb-1">Cabinets Value</div>
             <div className="text-3xl font-bold text-green-600">{formatCurrency(analytics.cabinetsCost)}</div>
             <div className="text-xs text-slate-500 mt-1">{analytics.totalSKUs} unique SKUs</div>
+          </div>
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+            <div className="text-sm text-slate-600 mb-1">Countertops</div>
+            <div className="text-3xl font-bold text-orange-600">{analytics.totalCountertops}</div>
+            <div className="text-xs text-slate-500 mt-1">{formatCurrency(analytics.countertopsCost)} value</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
             <div className="text-sm text-slate-600 mb-1">Additional Items</div>
@@ -176,6 +188,7 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
                     <div className="flex items-center space-x-3">
                       <span className="text-xs text-slate-500">
                         {area.cabinets} cabinets
+                        {area.countertops > 0 && ` • ${area.countertops} countertops`}
                         {area.items > 0 && ` • ${area.items} items`}
                       </span>
                       <span className="text-xs text-red-600">Tax: {formatCurrency(area.taxes)}</span>
@@ -260,6 +273,7 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
                       'bg-green-300': '#86efac',
                       'bg-amber-500': '#f59e0b',
                       'bg-amber-600': '#d97706',
+                      'bg-orange-500': '#f97316',
                       'bg-red-500': '#ef4444',
                       'bg-slate-500': '#64748b',
                     };
