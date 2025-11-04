@@ -196,6 +196,7 @@ export interface Database {
           labor_cost: number;
           subtotal: number;
           created_at: string;
+          is_rta: boolean;
         };
         Insert: {
           id?: string;
@@ -219,6 +220,7 @@ export interface Database {
           labor_cost?: number;
           subtotal?: number;
           created_at?: string;
+          is_rta?: boolean;
         };
         Update: {
           id?: string;
@@ -242,6 +244,7 @@ export interface Database {
           labor_cost?: number;
           subtotal?: number;
           created_at?: string;
+          is_rta?: boolean;
         };
       };
     };
