@@ -46,10 +46,15 @@ Select which material component to change:
 **Current Material**: Choose which material you want to replace
 - Dropdown shows only materials currently used in your selected scope
 - Displays the number of cabinets using each material
+- Example: "White Melamine (47 cabinets)"
 
 **New Material**: Select the replacement material
-- Searchable dropdown for quick selection
-- Only shows compatible material types
+- Shows **ALL active materials** from the Price List
+- Searchable dropdown with autocomplete for quick selection
+- Filtered to show only compatible material types
+- Displays full details: Name - Dimensions - Price/Unit
+- Includes materials not currently used in the project
+- Shows count of available compatible materials at bottom
 
 **Update Matching Interior Finish** (optional checkbox):
 - When enabled, if a cabinet's interior finish matches the current material, it will also be updated to the new material

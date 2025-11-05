@@ -4,6 +4,7 @@ import { Modal } from './Modal';
 import { Button } from './Button';
 import { AutocompleteSelect } from './AutocompleteSelect';
 import { formatCurrency } from '../lib/calculations';
+import { supabase } from '../lib/supabase';
 import {
   getMaterialsInUse,
   previewBulkMaterialChange,
@@ -14,7 +15,7 @@ import {
   type MaterialUsageInfo,
   type BulkChangePreview,
 } from '../lib/bulkMaterialChange';
-import type { ProjectArea } from '../types';
+import type { ProjectArea, PriceListItem } from '../types';
 
 interface BulkMaterialChangeModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export function BulkMaterialChangeModal({
   const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>(preselectedAreaId ? [preselectedAreaId] : []);
   const [changeType, setChangeType] = useState<MaterialChangeType>('box_material');
   const [materialsInUse, setMaterialsInUse] = useState<MaterialUsageInfo[]>([]);
+  const [allMaterials, setAllMaterials] = useState<PriceListItem[]>([]);
   const [oldMaterialId, setOldMaterialId] = useState('');
   const [newMaterialId, setNewMaterialId] = useState('');
   const [updateMatchingInteriorFinish, setUpdateMatchingInteriorFinish] = useState(false);
@@ -49,8 +51,11 @@ export function BulkMaterialChangeModal({
   const [step, setStep] = useState<'setup' | 'preview'>('setup');
 
   useEffect(() => {
-    if (isOpen && scope && changeType) {
-      loadMaterialsInUse();
+    if (isOpen) {
+      loadAllMaterials();
+      if (scope && changeType) {
+        loadMaterialsInUse();
+      }
     }
   }, [isOpen, scope, selectedAreaIds, changeType, versionId]);
 
@@ -60,6 +65,21 @@ export function BulkMaterialChangeModal({
     setNewMaterialId('');
     setValidationError('');
   }, [scope, selectedAreaIds, changeType]);
+
+  async function loadAllMaterials() {
+    try {
+      const { data, error } = await supabase
+        .from('price_list')
+        .select('*')
+        .eq('is_active', true)
+        .order('concept_description');
+
+      if (error) throw error;
+      setAllMaterials(data || []);
+    } catch (error) {
+      console.error('Error loading all materials:', error);
+    }
+  }
 
   async function loadMaterialsInUse() {
     try {
@@ -72,6 +92,39 @@ export function BulkMaterialChangeModal({
     } finally {
       setLoading(false);
     }
+  }
+
+  function getCompatibleMaterials(): PriceListItem[] {
+    const isSheetMaterial = (type: string) =>
+      type.toLowerCase().includes('melamine') ||
+      type.toLowerCase().includes('mdf') ||
+      type.toLowerCase().includes('plywood') ||
+      type.toLowerCase().includes('laminate');
+
+    const isEdgeband = (type: string) => type.toLowerCase().includes('edgeband');
+
+    const isHardware = (type: string) =>
+      type.toLowerCase().includes('hinge') ||
+      type.toLowerCase().includes('slide') ||
+      type.toLowerCase().includes('handle') ||
+      type.toLowerCase().includes('hardware');
+
+    return allMaterials.filter((material) => {
+      const materialType = material.type.toLowerCase();
+
+      switch (changeType) {
+        case 'box_material':
+        case 'doors_material':
+        case 'box_interior_finish':
+        case 'doors_interior_finish':
+          return isSheetMaterial(materialType);
+        case 'box_edgeband':
+        case 'doors_edgeband':
+          return isEdgeband(materialType);
+        default:
+          return true;
+      }
+    });
   }
 
   async function handlePreview() {
@@ -316,14 +369,17 @@ export function BulkMaterialChangeModal({
               <AutocompleteSelect
                 value={newMaterialId}
                 onChange={setNewMaterialId}
-                options={materialsInUse
-                  .filter(m => m.materialId !== oldMaterialId)
+                options={getCompatibleMaterials()
+                  .filter(m => m.id !== oldMaterialId)
                   .map((mat) => ({
-                    value: mat.materialId,
-                    label: mat.materialName,
+                    value: mat.id,
+                    label: `${mat.concept_description} - ${mat.dimensions || ''} - ${formatCurrency(mat.price)}/${mat.unit}`,
                   }))}
-                placeholder="Select new material..."
+                placeholder="Search for new material..."
               />
+              <p className="mt-1 text-xs text-slate-500">
+                {getCompatibleMaterials().length} compatible materials available
+              </p>
             </div>
           </div>
 
