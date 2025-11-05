@@ -274,15 +274,15 @@ function CreateVersionModal({ projectId, versions, onClose, onCreated }: CreateV
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    if (versions.length > 0 && createType === 'duplicate' && !sourceVersionId) {
+    if (versions.length > 0 && createType === 'duplicate') {
       const current = versions.find(v => v.is_current);
       const defaultVersion = current || versions[0];
 
-      if (defaultVersion) {
+      if (defaultVersion && !sourceVersionId) {
         setSourceVersionId(defaultVersion.id);
       }
     }
-  }, [createType, versions, sourceVersionId]);
+  }, [createType, versions]);
 
   async function handleCreate() {
     if (!versionName.trim()) {
@@ -368,10 +368,10 @@ function CreateVersionModal({ projectId, versions, onClose, onCreated }: CreateV
                 onChange={(e) => setSourceVersionId(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {!sourceVersionId && <option value="">Select a version...</option>}
+                <option value="">Select a version...</option>
                 {versions.map((version) => (
                   <option key={version.id} value={version.id}>
-                    {version.version_number} - {version.version_name}{version.is_current ? ' (Current)' : ''} ({formatCurrency(version.total_amount || 0)})
+                    {version.version_number} - {version.version_name}{version.is_current ? ' (Current)' : ''} - {formatCurrency(version.total_amount || 0)}
                   </option>
                 ))}
               </select>
