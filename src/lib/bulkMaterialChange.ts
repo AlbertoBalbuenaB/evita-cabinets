@@ -1,0 +1,475 @@
+import { supabase } from './supabase';
+import {
+  calculateBoxMaterialCost,
+  calculateBoxEdgebandCost,
+  calculateDoorsMaterialCost,
+  calculateDoorsEdgebandCost,
+  calculateInteriorFinishCost,
+} from './calculations';
+import type { AreaCabinet, PriceListItem, Product } from '../types';
+
+export type MaterialChangeType =
+  | 'box_material'
+  | 'box_edgeband'
+  | 'doors_material'
+  | 'doors_edgeband'
+  | 'box_interior_finish'
+  | 'doors_interior_finish';
+
+export type ChangeScope = 'area' | 'selected_areas' | 'project';
+
+export interface BulkMaterialChangeParams {
+  projectId: string;
+  scope: ChangeScope;
+  areaIds: string[];
+  changeType: MaterialChangeType;
+  oldMaterialId: string;
+  newMaterialId: string;
+  updateMatchingInteriorFinish?: boolean;
+  versionId?: string | null;
+}
+
+export interface MaterialUsageInfo {
+  materialId: string;
+  materialName: string;
+  cabinetCount: number;
+  totalCost: number;
+}
+
+export interface BulkChangePreview {
+  affectedCabinets: Array<{
+    id: string;
+    product_sku: string;
+    quantity: number;
+    currentCost: number;
+    newCost: number;
+    areaId: string;
+  }>;
+  totalCabinets: number;
+  costBefore: number;
+  costAfter: number;
+  costDifference: number;
+  percentageChange: number;
+}
+
+export async function getMaterialsInUse(
+  projectId: string,
+  areaIds: string[],
+  changeType: MaterialChangeType,
+  versionId?: string | null
+): Promise<MaterialUsageInfo[]> {
+  const tableName = versionId ? 'version_area_cabinets' : 'area_cabinets';
+  const areaTableName = versionId ? 'version_project_areas' : 'project_areas';
+
+  let materialColumn: string;
+  let costColumn: string;
+
+  switch (changeType) {
+    case 'box_material':
+      materialColumn = 'box_material_id';
+      costColumn = 'box_material_cost';
+      break;
+    case 'box_edgeband':
+      materialColumn = 'box_edgeband_id';
+      costColumn = 'box_edgeband_cost';
+      break;
+    case 'doors_material':
+      materialColumn = 'doors_material_id';
+      costColumn = 'doors_material_cost';
+      break;
+    case 'doors_edgeband':
+      materialColumn = 'doors_edgeband_id';
+      costColumn = 'doors_edgeband_cost';
+      break;
+    case 'box_interior_finish':
+      materialColumn = 'box_interior_finish_id';
+      costColumn = 'box_interior_finish_cost';
+      break;
+    case 'doors_interior_finish':
+      materialColumn = 'doors_interior_finish_id';
+      costColumn = 'doors_interior_finish_cost';
+      break;
+    default:
+      throw new Error(`Unknown change type: ${changeType}`);
+  }
+
+  let query = supabase
+    .from(tableName)
+    .select(`${materialColumn}, ${costColumn}, quantity`)
+    .not(materialColumn, 'is', null);
+
+  if (areaIds.length > 0) {
+    query = query.in('area_id', areaIds);
+  } else {
+    const { data: areas } = await supabase
+      .from(areaTableName)
+      .select('id')
+      .eq(versionId ? 'version_id' : 'project_id', versionId || projectId);
+
+    if (areas && areas.length > 0) {
+      query = query.in('area_id', areas.map(a => a.id));
+    }
+  }
+
+  const { data: cabinets, error } = await query;
+
+  if (error) throw error;
+
+  const { data: priceList } = await supabase
+    .from('price_list')
+    .select('id, concept_description');
+
+  const priceListMap = new Map(priceList?.map(p => [p.id, p.concept_description]) || []);
+  const materialsMap = new Map<string, MaterialUsageInfo>();
+
+  cabinets?.forEach((cabinet: any) => {
+    const matId = cabinet[materialColumn];
+    if (!matId) return;
+
+    if (!materialsMap.has(matId)) {
+      materialsMap.set(matId, {
+        materialId: matId,
+        materialName: priceListMap.get(matId) || 'Unknown Material',
+        cabinetCount: 0,
+        totalCost: 0,
+      });
+    }
+
+    const info = materialsMap.get(matId)!;
+    info.cabinetCount += 1;
+    info.totalCost += cabinet[costColumn] || 0;
+  });
+
+  return Array.from(materialsMap.values()).sort((a, b) => b.cabinetCount - a.cabinetCount);
+}
+
+export async function previewBulkMaterialChange(
+  params: BulkMaterialChangeParams
+): Promise<BulkChangePreview> {
+  const { projectId, areaIds, changeType, oldMaterialId, newMaterialId, versionId } = params;
+  const tableName = versionId ? 'version_area_cabinets' : 'area_cabinets';
+  const areaTableName = versionId ? 'version_project_areas' : 'project_areas';
+
+  let materialColumn: string;
+  let costColumn: string;
+
+  switch (changeType) {
+    case 'box_material':
+      materialColumn = 'box_material_id';
+      costColumn = 'box_material_cost';
+      break;
+    case 'box_edgeband':
+      materialColumn = 'box_edgeband_id';
+      costColumn = 'box_edgeband_cost';
+      break;
+    case 'doors_material':
+      materialColumn = 'doors_material_id';
+      costColumn = 'doors_material_cost';
+      break;
+    case 'doors_edgeband':
+      materialColumn = 'doors_edgeband_id';
+      costColumn = 'doors_edgeband_cost';
+      break;
+    case 'box_interior_finish':
+      materialColumn = 'box_interior_finish_id';
+      costColumn = 'box_interior_finish_cost';
+      break;
+    case 'doors_interior_finish':
+      materialColumn = 'doors_interior_finish_id';
+      costColumn = 'doors_interior_finish_cost';
+      break;
+    default:
+      throw new Error(`Unknown change type: ${changeType}`);
+  }
+
+  let query = supabase
+    .from(tableName)
+    .select('*')
+    .eq(materialColumn, oldMaterialId);
+
+  if (areaIds.length > 0) {
+    query = query.in('area_id', areaIds);
+  } else {
+    const { data: areas } = await supabase
+      .from(areaTableName)
+      .select('id')
+      .eq(versionId ? 'version_id' : 'project_id', versionId || projectId);
+
+    if (areas && areas.length > 0) {
+      query = query.in('area_id', areas.map(a => a.id));
+    }
+  }
+
+  const { data: cabinets, error } = await query;
+
+  if (error) throw error;
+
+  const [{ data: newMaterial }, { data: products }, { data: priceList }] = await Promise.all([
+    supabase.from('price_list').select('*').eq('id', newMaterialId).single(),
+    supabase.from('products_catalog').select('*'),
+    supabase.from('price_list').select('*'),
+  ]);
+
+  if (!newMaterial) {
+    throw new Error('New material not found');
+  }
+
+  const productsMap = new Map(products?.map(p => [p.sku, p]) || []);
+  const priceListMap = new Map(priceList?.map(p => [p.id, p]) || []);
+
+  let totalCostBefore = 0;
+  let totalCostAfter = 0;
+
+  const affectedCabinets = (cabinets || []).map((cabinet: any) => {
+    const product = productsMap.get(cabinet.product_sku);
+    if (!product) {
+      return {
+        id: cabinet.id,
+        product_sku: cabinet.product_sku,
+        quantity: cabinet.quantity,
+        currentCost: cabinet[costColumn] || 0,
+        newCost: cabinet[costColumn] || 0,
+        areaId: cabinet.area_id,
+      };
+    }
+
+    const currentCost = cabinet[costColumn] || 0;
+    let newCost = currentCost;
+
+    try {
+      switch (changeType) {
+        case 'box_material':
+          newCost = calculateBoxMaterialCost(product, newMaterial, cabinet.quantity);
+          break;
+        case 'box_edgeband':
+          newCost = calculateBoxEdgebandCost(product, newMaterial, cabinet.quantity);
+          break;
+        case 'doors_material':
+          newCost = calculateDoorsMaterialCost(product, newMaterial, cabinet.quantity);
+          break;
+        case 'doors_edgeband':
+          newCost = calculateDoorsEdgebandCost(product, newMaterial, cabinet.quantity);
+          break;
+        case 'box_interior_finish':
+        case 'doors_interior_finish':
+          const isBox = changeType === 'box_interior_finish';
+          newCost = calculateInteriorFinishCost(product, newMaterial, cabinet.quantity, isBox);
+          break;
+      }
+    } catch (error) {
+      console.error(`Error calculating cost for cabinet ${cabinet.id}:`, error);
+    }
+
+    totalCostBefore += currentCost;
+    totalCostAfter += newCost;
+
+    return {
+      id: cabinet.id,
+      product_sku: cabinet.product_sku,
+      quantity: cabinet.quantity,
+      currentCost,
+      newCost,
+      areaId: cabinet.area_id,
+    };
+  });
+
+  const costDifference = totalCostAfter - totalCostBefore;
+  const percentageChange = totalCostBefore > 0 ? (costDifference / totalCostBefore) * 100 : 0;
+
+  return {
+    affectedCabinets,
+    totalCabinets: affectedCabinets.length,
+    costBefore: totalCostBefore,
+    costAfter: totalCostAfter,
+    costDifference,
+    percentageChange,
+  };
+}
+
+export async function executeBulkMaterialChange(
+  params: BulkMaterialChangeParams
+): Promise<{ success: boolean; updatedCount: number; error?: string }> {
+  const {
+    projectId,
+    areaIds,
+    changeType,
+    oldMaterialId,
+    newMaterialId,
+    updateMatchingInteriorFinish,
+    versionId,
+  } = params;
+
+  try {
+    const preview = await previewBulkMaterialChange(params);
+
+    if (preview.totalCabinets === 0) {
+      return {
+        success: false,
+        updatedCount: 0,
+        error: 'No cabinets found with the selected material',
+      };
+    }
+
+    const tableName = versionId ? 'version_area_cabinets' : 'area_cabinets';
+    const [{ data: oldMaterial }, { data: newMaterial }] = await Promise.all([
+      supabase.from('price_list').select('concept_description').eq('id', oldMaterialId).single(),
+      supabase.from('price_list').select('concept_description').eq('id', newMaterialId).single(),
+    ]);
+
+    let updatePromises: Promise<any>[] = [];
+
+    for (const cabinet of preview.affectedCabinets) {
+      const updates: any = {};
+
+      switch (changeType) {
+        case 'box_material':
+          updates.box_material_id = newMaterialId;
+          updates.box_material_cost = cabinet.newCost;
+          if (updateMatchingInteriorFinish) {
+            const { data: currentCabinet } = await supabase
+              .from(tableName)
+              .select('box_interior_finish_id')
+              .eq('id', cabinet.id)
+              .single();
+
+            if (currentCabinet?.box_interior_finish_id === oldMaterialId) {
+              updates.box_interior_finish_id = newMaterialId;
+            }
+          }
+          break;
+        case 'box_edgeband':
+          updates.box_edgeband_id = newMaterialId;
+          updates.box_edgeband_cost = cabinet.newCost;
+          break;
+        case 'doors_material':
+          updates.doors_material_id = newMaterialId;
+          updates.doors_material_cost = cabinet.newCost;
+          if (updateMatchingInteriorFinish) {
+            const { data: currentCabinet } = await supabase
+              .from(tableName)
+              .select('doors_interior_finish_id')
+              .eq('id', cabinet.id)
+              .single();
+
+            if (currentCabinet?.doors_interior_finish_id === oldMaterialId) {
+              updates.doors_interior_finish_id = newMaterialId;
+            }
+          }
+          break;
+        case 'doors_edgeband':
+          updates.doors_edgeband_id = newMaterialId;
+          updates.doors_edgeband_cost = cabinet.newCost;
+          break;
+        case 'box_interior_finish':
+          updates.box_interior_finish_id = newMaterialId;
+          updates.box_interior_finish_cost = cabinet.newCost;
+          break;
+        case 'doors_interior_finish':
+          updates.doors_interior_finish_id = newMaterialId;
+          updates.doors_interior_finish_cost = cabinet.newCost;
+          break;
+      }
+
+      const { data: currentCabinet } = await supabase
+        .from(tableName)
+        .select('*')
+        .eq('id', cabinet.id)
+        .single();
+
+      if (currentCabinet) {
+        const newSubtotal =
+          (changeType === 'box_material' ? updates.box_material_cost : currentCabinet.box_material_cost || 0) +
+          (changeType === 'box_edgeband' ? updates.box_edgeband_cost : currentCabinet.box_edgeband_cost || 0) +
+          (changeType === 'box_interior_finish' ? updates.box_interior_finish_cost : currentCabinet.box_interior_finish_cost || 0) +
+          (changeType === 'doors_material' ? updates.doors_material_cost : currentCabinet.doors_material_cost || 0) +
+          (changeType === 'doors_edgeband' ? updates.doors_edgeband_cost : currentCabinet.doors_edgeband_cost || 0) +
+          (changeType === 'doors_interior_finish' ? updates.doors_interior_finish_cost : currentCabinet.doors_interior_finish_cost || 0) +
+          (currentCabinet.hardware_cost || 0) +
+          (currentCabinet.labor_cost || 0);
+
+        updates.subtotal = newSubtotal;
+      }
+
+      updatePromises.push(
+        supabase.from(tableName).update(updates).eq('id', cabinet.id)
+      );
+    }
+
+    await Promise.all(updatePromises);
+
+    await supabase.from('material_change_log').insert({
+      project_id: projectId,
+      user_action: `Changed ${changeType.replace('_', ' ')} from ${oldMaterial?.concept_description || 'Unknown'} to ${newMaterial?.concept_description || 'Unknown'}`,
+      change_type: changeType,
+      scope: params.scope,
+      scope_details: areaIds,
+      affected_cabinets_count: preview.totalCabinets,
+      old_material_id: oldMaterialId,
+      new_material_id: newMaterialId,
+      old_material_name: oldMaterial?.concept_description,
+      new_material_name: newMaterial?.concept_description,
+      cost_before: preview.costBefore,
+      cost_after: preview.costAfter,
+      cost_difference: preview.costDifference,
+    });
+
+    return {
+      success: true,
+      updatedCount: preview.totalCabinets,
+    };
+  } catch (error: any) {
+    console.error('Error executing bulk material change:', error);
+    return {
+      success: false,
+      updatedCount: 0,
+      error: error.message || 'Unknown error occurred',
+    };
+  }
+}
+
+export async function validateMaterialReplacement(
+  oldMaterialId: string,
+  newMaterialId: string
+): Promise<{ valid: boolean; error?: string }> {
+  const [{ data: oldMaterial }, { data: newMaterial }] = await Promise.all([
+    supabase.from('price_list').select('*').eq('id', oldMaterialId).single(),
+    supabase.from('price_list').select('*').eq('id', newMaterialId).single(),
+  ]);
+
+  if (!oldMaterial) {
+    return { valid: false, error: 'Old material not found' };
+  }
+
+  if (!newMaterial) {
+    return { valid: false, error: 'New material not found' };
+  }
+
+  if (!newMaterial.is_active) {
+    return { valid: false, error: 'New material is not active' };
+  }
+
+  const oldType = oldMaterial.type.toLowerCase();
+  const newType = newMaterial.type.toLowerCase();
+
+  const isSheetMaterial = (type: string) =>
+    type.includes('melamine') || type.includes('mdf') || type.includes('plywood') || type.includes('laminate');
+
+  const isEdgeband = (type: string) => type.includes('edgeband');
+
+  const isHardware = (type: string) =>
+    type.includes('hinge') || type.includes('slide') || type.includes('handle') || type.includes('hardware');
+
+  if (isSheetMaterial(oldType) && !isSheetMaterial(newType)) {
+    return { valid: false, error: 'Cannot replace sheet material with non-sheet material' };
+  }
+
+  if (isEdgeband(oldType) && !isEdgeband(newType)) {
+    return { valid: false, error: 'Cannot replace edgeband with non-edgeband material' };
+  }
+
+  if (isHardware(oldType) && !isHardware(newType)) {
+    return { valid: false, error: 'Cannot replace hardware with non-hardware material' };
+  }
+
+  return { valid: true };
+}

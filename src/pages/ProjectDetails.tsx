@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Edit2, Trash2, Copy, Printer, BarChart3, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, TrendingUp, Save, Hammer } from 'lucide-react';
+import { ArrowLeft, Plus, Edit2, Trash2, Copy, Printer, BarChart3, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, TrendingUp, Save, Hammer, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -23,6 +23,7 @@ import { recalculateAreaSheetMaterialCosts } from '../lib/sheetMaterials';
 import { VersionManager } from '../components/VersionManager';
 import { VersionComparison } from '../components/VersionComparison';
 import { SaveTemplateModal } from '../components/SaveTemplateModal';
+import { BulkMaterialChangeModal } from '../components/BulkMaterialChangeModal';
 import { createTemplateFromCabinet } from '../lib/templateManager';
 import { countActualCabinets, countCabinetEntries } from '../lib/cabinetFilters';
 import {
@@ -65,6 +66,8 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
   const [savingTemplateCabinet, setSavingTemplateCabinet] = useState<AreaCabinet | null>(null);
   const [priceList, setPriceList] = useState<PriceListItem[]>([]);
   const [areaMaterialsVisible, setAreaMaterialsVisible] = useState<Record<string, boolean>>({});
+  const [isBulkMaterialChangeOpen, setIsBulkMaterialChangeOpen] = useState(false);
+  const [bulkChangePreselectedAreaId, setBulkChangePreselectedAreaId] = useState<string | undefined>();
 
   useEffect(() => {
     loadCurrentVersion();
@@ -615,6 +618,14 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
             <span className="hidden sm:inline">Add Area</span>
             <span className="sm:hidden">Area</span>
           </Button>
+          <Button variant="secondary" onClick={() => {
+            setBulkChangePreselectedAreaId(undefined);
+            setIsBulkMaterialChangeOpen(true);
+          }} className="w-full sm:w-auto">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            <span className="hidden md:inline">Change Materials</span>
+            <span className="md:hidden">Materials</span>
+          </Button>
           <Button variant="secondary" onClick={handlePrint} className="w-full sm:w-auto">
             <Printer className="h-4 w-4 mr-2" />
             <span className="hidden md:inline">Print / Export PDF</span>
@@ -858,6 +869,17 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
                         title={areaMaterialsVisible[area.id] ? 'Hide Materials' : 'Show Materials'}
                       >
                         <Calculator className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setBulkChangePreselectedAreaId(area.id);
+                          setIsBulkMaterialChangeOpen(true);
+                        }}
+                        title="Change Materials in This Area"
+                      >
+                        <RefreshCw className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -1115,6 +1137,26 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
           defaultName={savingTemplateCabinet.product_sku || ''}
         />
       )}
+
+      <BulkMaterialChangeModal
+        isOpen={isBulkMaterialChangeOpen}
+        onClose={() => {
+          setIsBulkMaterialChangeOpen(false);
+          setBulkChangePreselectedAreaId(undefined);
+        }}
+        onSuccess={async () => {
+          if (currentVersionId) {
+            await recalculateVersionTotal(currentVersionId);
+            await loadVersionAreas(currentVersionId);
+          } else {
+            await loadAreas();
+          }
+        }}
+        projectId={project.id}
+        areas={areas}
+        preselectedAreaId={bulkChangePreselectedAreaId}
+        versionId={currentVersionId}
+      />
     </div>
   );
 }
