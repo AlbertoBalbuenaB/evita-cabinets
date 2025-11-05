@@ -213,59 +213,20 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
 
   async function loadTrends() {
     try {
-      const topCabinetsQuery = await supabase.rpc('get_top_cabinets', { limit_count: 5 });
-
-      if (topCabinetsQuery.data) {
-        setTopCabinets(topCabinetsQuery.data);
-      } else {
-        await loadTopCabinetsManually();
-      }
-
-      const doorMaterialsQuery = await supabase.rpc('get_door_material_trends', { limit_count: 5 });
-
-      if (doorMaterialsQuery.data) {
-        setDoorMaterialTrends(doorMaterialsQuery.data);
-      } else {
-        await loadDoorMaterialsManually();
-      }
-
-      const boxMaterialsQuery = await supabase.rpc('get_box_material_trends', { limit_count: 5 });
-
-      if (boxMaterialsQuery.data) {
-        setBoxMaterialTrends(boxMaterialsQuery.data);
-      } else {
-        await loadBoxMaterialsManually();
-      }
-
+      await loadTopCabinetsManually();
+      await loadDoorMaterialsManually();
+      await loadBoxMaterialsManually();
       await loadHardwareTrendsManually();
-
     } catch (error) {
       console.error('Error loading trends:', error);
-      await loadTrendsManually();
     }
   }
 
   async function loadTopCabinetsManually() {
     try {
-      const { data: currentVersions } = await supabase
-        .from('project_versions')
-        .select('id')
-        .eq('is_current', true);
-
-      if (!currentVersions || currentVersions.length === 0) return;
-
-      const versionIds = currentVersions.map(v => v.id);
-
       const { data: cabinets } = await supabase
-        .from('version_area_cabinets')
-        .select('product_sku, product_description, quantity, area_id')
-        .in('area_id',
-          (await supabase
-            .from('version_project_areas')
-            .select('id')
-            .in('version_id', versionIds)
-          ).data?.map(a => a.id) || []
-        );
+        .from('area_cabinets')
+        .select('product_sku, product_description, quantity, area_id');
 
       if (!cabinets) return;
 
@@ -309,28 +270,9 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
 
   async function loadDoorMaterialsManually() {
     try {
-      const { data: currentVersions } = await supabase
-        .from('project_versions')
-        .select('id')
-        .eq('is_current', true);
-
-      if (!currentVersions || currentVersions.length === 0) return;
-
-      const versionIds = currentVersions.map(v => v.id);
-
-      const { data: areas } = await supabase
-        .from('version_project_areas')
-        .select('id')
-        .in('version_id', versionIds);
-
-      if (!areas || areas.length === 0) return;
-
-      const areaIds = areas.map(a => a.id);
-
       const { data: cabinets } = await supabase
-        .from('version_area_cabinets')
-        .select('doors_material_id, product_sku')
-        .in('area_id', areaIds);
+        .from('area_cabinets')
+        .select('doors_material_id, product_sku');
 
       if (!cabinets) return;
 
@@ -381,28 +323,9 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
 
   async function loadBoxMaterialsManually() {
     try {
-      const { data: currentVersions } = await supabase
-        .from('project_versions')
-        .select('id')
-        .eq('is_current', true);
-
-      if (!currentVersions || currentVersions.length === 0) return;
-
-      const versionIds = currentVersions.map(v => v.id);
-
-      const { data: areas } = await supabase
-        .from('version_project_areas')
-        .select('id')
-        .in('version_id', versionIds);
-
-      if (!areas || areas.length === 0) return;
-
-      const areaIds = areas.map(a => a.id);
-
       const { data: cabinets } = await supabase
-        .from('version_area_cabinets')
-        .select('box_material_id, product_sku')
-        .in('area_id', areaIds);
+        .from('area_cabinets')
+        .select('box_material_id, product_sku');
 
       if (!cabinets) return;
 
@@ -453,28 +376,9 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
 
   async function loadHardwareTrendsManually() {
     try {
-      const { data: currentVersions } = await supabase
-        .from('project_versions')
-        .select('id')
-        .eq('is_current', true);
-
-      if (!currentVersions || currentVersions.length === 0) return;
-
-      const versionIds = currentVersions.map(v => v.id);
-
-      const { data: areas } = await supabase
-        .from('version_project_areas')
-        .select('id')
-        .in('version_id', versionIds);
-
-      if (!areas || areas.length === 0) return;
-
-      const areaIds = areas.map(a => a.id);
-
       const { data: cabinets } = await supabase
-        .from('version_area_cabinets')
-        .select('hardware, product_sku')
-        .in('area_id', areaIds);
+        .from('area_cabinets')
+        .select('hardware, product_sku');
 
       if (!cabinets) return;
 
