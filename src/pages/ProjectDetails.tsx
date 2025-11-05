@@ -11,7 +11,6 @@ import { ItemForm } from '../components/ItemForm';
 import { CountertopForm } from '../components/CountertopForm';
 import { CabinetCard } from '../components/CabinetCard';
 import { MaterialBreakdown } from '../components/MaterialBreakdown';
-import { MaterialBreakdownByArea } from '../components/MaterialBreakdownByArea';
 import { AreaMaterialBreakdown } from '../components/AreaMaterialBreakdown';
 import { ProjectCharts } from '../components/ProjectCharts';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -778,7 +777,6 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
             </div>
           </div>
 
-          <MaterialBreakdownByArea projectId={project.id} />
           <MaterialBreakdown
             cabinets={areas.flatMap(a => a.cabinets || [])}
             items={areas.flatMap(a => a.items || [])}
