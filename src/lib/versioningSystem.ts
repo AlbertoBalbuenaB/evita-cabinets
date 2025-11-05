@@ -392,6 +392,8 @@ export async function deleteVersion(versionId: string): Promise<void> {
 }
 
 export async function getVersionData(versionId: string) {
+  console.log('[DEBUG] getVersionData called with versionId:', versionId);
+
   const { data: areas, error } = await supabase
     .from('version_project_areas')
     .select(`
@@ -403,7 +405,17 @@ export async function getVersionData(versionId: string) {
     .eq('version_id', versionId)
     .order('display_order');
 
-  if (error) throw error;
+  console.log('[DEBUG] getVersionData result:', {
+    areasCount: areas?.length || 0,
+    error: error,
+    firstArea: areas?.[0]
+  });
+
+  if (error) {
+    console.error('[ERROR] Supabase error in getVersionData:', error);
+    throw error;
+  }
+
   return areas || [];
 }
 

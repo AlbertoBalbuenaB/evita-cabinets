@@ -77,21 +77,25 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
   }, [project.id]);
 
   async function loadCurrentVersion() {
+    console.log('[DEBUG] loadCurrentVersion called for project:', project.id, project.name);
     try {
       const version = await getCurrentVersion(project.id);
+      console.log('[DEBUG] Current version found:', version);
       if (version) {
         setCurrentVersionId(version.id);
         await loadVersionAreas(version.id);
       } else {
+        console.log('[DEBUG] No version found, loading legacy areas');
         await loadAreas();
       }
     } catch (error) {
-      console.error('Error loading version:', error);
+      console.error('[ERROR] Error loading version:', error);
       await loadAreas();
     }
   }
 
   async function loadVersionAreas(versionId: string) {
+    console.log('[DEBUG] loadVersionAreas called with versionId:', versionId);
     try {
       const [areasData, productsResult, settingsData] = await Promise.all([
         getVersionData(versionId),
@@ -99,11 +103,21 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
         getSettings(),
       ]);
 
+      console.log('[DEBUG] Loaded version areas:', {
+        areasCount: areasData?.length || 0,
+        areas: areasData,
+        productsCount: productsResult.data?.length || 0,
+        settings: settingsData
+      });
+
       setProducts(productsResult.data || []);
       setExchangeRate(settingsData.exchangeRateUsdToMxn);
       setAreas(areasData as any);
+
+      console.log('[DEBUG] State updated with areas:', areasData?.length || 0);
     } catch (error) {
-      console.error('Error loading version areas:', error);
+      console.error('[ERROR] Error loading version areas:', error);
+      console.error('[ERROR] Stack trace:', error);
     } finally {
       setLoading(false);
     }
