@@ -201,6 +201,7 @@ export async function duplicateVersion(
         const { id, area_id, created_at, ...countertopData } = countertop;
         return {
           ...countertopData,
+          version_id: newVersion.id,
           area_id: areaIdMap.get(area_id)!,
         };
       });

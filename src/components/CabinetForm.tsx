@@ -209,7 +209,7 @@ export function CabinetForm({ areaId, cabinet, onClose, versionId }: CabinetForm
       return;
     }
 
-    const cabinetData: AreaCabinetInsert = {
+    const cabinetData: any = {
       area_id: areaId,
       product_sku: selectedProduct.sku,
       quantity,
@@ -231,6 +231,29 @@ export function CabinetForm({ areaId, cabinet, onClose, versionId }: CabinetForm
       labor_cost: costs.laborCost,
       subtotal: costs.subtotal,
     };
+
+    if (versionId) {
+      cabinetData.product_id = selectedProduct.id;
+      cabinetData.product_description = selectedProduct.description;
+      cabinetData.box_sf = selectedProduct.box_sf;
+      cabinetData.doors_fronts_sf = selectedProduct.doors_fronts_sf;
+      cabinetData.total_edgeband = selectedProduct.total_edgeband;
+      cabinetData.has_drawers = selectedProduct.description.toLowerCase().includes('drawer');
+
+      const boxMaterial = priceList.find(p => p.id === boxMaterialId);
+      const boxEdgeband = priceList.find(p => p.id === boxEdgebandId);
+      const boxInterior = useBoxInteriorFinish ? priceList.find(p => p.id === boxInteriorFinishId) : null;
+      const doorsMaterial = priceList.find(p => p.id === doorsMaterialId);
+      const doorsEdgeband = priceList.find(p => p.id === doorsEdgebandId);
+      const doorsInterior = useDoorsInteriorFinish ? priceList.find(p => p.id === doorsInteriorFinishId) : null;
+
+      if (boxMaterial) cabinetData.box_material_name = boxMaterial.concept_description;
+      if (boxEdgeband) cabinetData.box_edgeband_name = boxEdgeband.concept_description;
+      if (boxInterior) cabinetData.box_interior_finish_name = boxInterior.concept_description;
+      if (doorsMaterial) cabinetData.doors_material_name = doorsMaterial.concept_description;
+      if (doorsEdgeband) cabinetData.doors_edgeband_name = doorsEdgeband.concept_description;
+      if (doorsInterior) cabinetData.doors_interior_finish_name = doorsInterior.concept_description;
+    }
 
     try {
       const tableName = versionId ? 'version_area_cabinets' : 'area_cabinets';

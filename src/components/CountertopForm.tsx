@@ -61,7 +61,7 @@ export function CountertopForm({ areaId, countertop, onClose, versionId }: Count
       return;
     }
 
-    const countertopData = {
+    const countertopData: any = {
       area_id: areaId,
       price_list_item_id: selectedPriceListItemId,
       item_name: selectedPriceListItem.concept_description,
@@ -69,8 +69,13 @@ export function CountertopForm({ areaId, countertop, onClose, versionId }: Count
       unit_price: unitPrice,
       subtotal,
       notes: notes || null,
-      updated_at: new Date().toISOString(),
     };
+
+    if (versionId) {
+      countertopData.version_id = versionId;
+    } else {
+      countertopData.updated_at = new Date().toISOString();
+    }
 
     try {
       const tableName = versionId ? 'version_area_countertops' : 'area_countertops';
