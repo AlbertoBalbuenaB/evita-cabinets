@@ -274,15 +274,15 @@ function CreateVersionModal({ projectId, versions, onClose, onCreated }: CreateV
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    if (versions.length > 0 && createType === 'duplicate') {
+    if (versions.length > 0 && createType === 'duplicate' && !sourceVersionId) {
       const current = versions.find(v => v.is_current);
       const defaultVersion = current || versions[0];
 
-      if (defaultVersion && !sourceVersionId) {
+      if (defaultVersion) {
         setSourceVersionId(defaultVersion.id);
       }
     }
-  }, [createType, versions]);
+  }, [createType, versions, sourceVersionId]);
 
   async function handleCreate() {
     if (!versionName.trim()) {
@@ -361,20 +361,26 @@ function CreateVersionModal({ projectId, versions, onClose, onCreated }: CreateV
           <>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Source Version
+                Source Version {versions.length > 0 && `(${versions.length} available)`}
               </label>
-              <select
-                value={sourceVersionId}
-                onChange={(e) => setSourceVersionId(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select a version...</option>
-                {versions.map((version) => (
-                  <option key={version.id} value={version.id}>
-                    {version.version_number} - {version.version_name}{version.is_current ? ' (Current)' : ''} - {formatCurrency(version.total_amount || 0)}
-                  </option>
-                ))}
-              </select>
+              {versions.length === 0 ? (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                  No versions available. Please create an empty version first.
+                </div>
+              ) : (
+                <select
+                  value={sourceVersionId}
+                  onChange={(e) => setSourceVersionId(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select a version...</option>
+                  {versions.map((version) => (
+                    <option key={version.id} value={version.id}>
+                      {version.version_number} - {version.version_name}{version.is_current ? ' (Current)' : ''} - {formatCurrency(version.total_amount || 0)}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="flex items-center p-3 bg-amber-50 border border-amber-200 rounded-lg">
