@@ -122,30 +122,30 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
           <TrendingUp className="h-5 w-5 text-slate-400" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 overflow-hidden">
             <div className="text-sm text-slate-600 mb-1">Total Cabinets</div>
-            <div className="text-3xl font-bold text-blue-600">{analytics.totalCabinets}</div>
-            <div className="text-xs text-slate-500 mt-1">{analytics.totalCabinetEntries} entries</div>
+            <div className="text-2xl sm:text-3xl font-bold text-blue-600 break-all">{analytics.totalCabinets}</div>
+            <div className="text-xs text-slate-500 mt-1 truncate">{analytics.totalCabinetEntries} entries</div>
           </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 overflow-hidden">
             <div className="text-sm text-slate-600 mb-1">Avg Cost/Cabinet</div>
-            <div className="text-3xl font-bold text-purple-600">{formatCurrency(analytics.avgCostPerCabinet)}</div>
-            <div className="text-xs text-slate-500 mt-1">Per unit</div>
+            <div className="text-2xl sm:text-3xl font-bold text-purple-600 break-all">{formatCurrency(analytics.avgCostPerCabinet)}</div>
+            <div className="text-xs text-slate-500 mt-1 truncate">Per unit</div>
           </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 overflow-hidden">
             <div className="text-sm text-slate-600 mb-1">Cabinets Value</div>
-            <div className="text-3xl font-bold text-green-600">{formatCurrency(analytics.cabinetsCost)}</div>
-            <div className="text-xs text-slate-500 mt-1">{analytics.totalSKUs} unique SKUs</div>
+            <div className="text-2xl sm:text-3xl font-bold text-green-600 break-all">{formatCurrency(analytics.cabinetsCost)}</div>
+            <div className="text-xs text-slate-500 mt-1 truncate">{analytics.totalSKUs} unique SKUs</div>
           </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 overflow-hidden">
             <div className="text-sm text-slate-600 mb-1">Countertops</div>
-            <div className="text-3xl font-bold text-orange-600">{analytics.totalCountertops}</div>
-            <div className="text-xs text-slate-500 mt-1">{formatCurrency(analytics.countertopsCost)} value</div>
+            <div className="text-2xl sm:text-3xl font-bold text-orange-600 break-all">{analytics.totalCountertops}</div>
+            <div className="text-xs text-slate-500 mt-1 truncate">{formatCurrency(analytics.countertopsCost)} value</div>
           </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 overflow-hidden">
             <div className="text-sm text-slate-600 mb-1">Additional Items</div>
-            <div className="text-3xl font-bold text-amber-600">{analytics.totalItems}</div>
-            <div className="text-xs text-slate-500 mt-1">{formatCurrency(analytics.itemsCost)} value</div>
+            <div className="text-2xl sm:text-3xl font-bold text-amber-600 break-all">{analytics.totalItems}</div>
+            <div className="text-xs text-slate-500 mt-1 truncate">{formatCurrency(analytics.itemsCost)} value</div>
           </div>
         </div>
       </div>
@@ -159,15 +159,15 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
           <div className="space-y-4">
             <div>
               <div className="text-sm text-slate-600">Total Areas</div>
-              <div className="text-3xl font-bold text-slate-900">{areas.length}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-slate-900 break-all">{areas.length}</div>
             </div>
             <div>
               <div className="text-sm text-slate-600">Total Project Value</div>
-              <div className="text-2xl font-bold text-slate-900">{formatCurrency(analytics.totalCost)}</div>
+              <div className="text-xl sm:text-2xl font-bold text-slate-900 break-all">{formatCurrency(analytics.totalCost)}</div>
             </div>
             <div>
               <div className="text-sm text-slate-600">Total Taxes</div>
-              <div className="text-2xl font-bold text-slate-900">{formatCurrency(analytics.totalProjectTaxes)}</div>
+              <div className="text-xl sm:text-2xl font-bold text-slate-900 break-all">{formatCurrency(analytics.totalProjectTaxes)}</div>
             </div>
           </div>
         </div>

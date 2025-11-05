@@ -738,36 +738,36 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
               Shipping - Boxes & Pallets
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="bg-white rounded-lg p-4 shadow-sm">
+              <div className="bg-white rounded-lg p-4 shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between mb-2">
                   <Package className="h-5 w-5 text-blue-600" />
                   <span className="text-sm text-slate-500">Total Boxes</span>
                 </div>
-                <div className="text-3xl font-bold text-slate-900">
+                <div className="text-2xl sm:text-3xl font-bold text-slate-900 break-all">
                   {areas.reduce((sum, area) => {
                     const { boxes } = calculateAreaBoxesAndPallets(area.cabinets, products);
                     return sum + boxes;
                   }, 0)}
                 </div>
               </div>
-              <div className="bg-white rounded-lg p-4 shadow-sm">
+              <div className="bg-white rounded-lg p-4 shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between mb-2">
                   <Truck className="h-5 w-5 text-green-600" />
                   <span className="text-sm text-slate-500">Total Pallets</span>
                 </div>
-                <div className="text-3xl font-bold text-slate-900">
+                <div className="text-2xl sm:text-3xl font-bold text-slate-900 break-all">
                   {areas.reduce((sum, area) => {
                     const { pallets } = calculateAreaBoxesAndPallets(area.cabinets, products);
                     return sum + pallets;
                   }, 0)}
                 </div>
               </div>
-              <div className="bg-white rounded-lg p-4 shadow-sm">
+              <div className="bg-white rounded-lg p-4 shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between mb-2">
                   <Package className="h-5 w-5 text-purple-600" />
                   <span className="text-sm text-slate-500">Total Acc. ft²</span>
                 </div>
-                <div className="text-3xl font-bold text-slate-900">
+                <div className="text-2xl sm:text-3xl font-bold text-slate-900 break-all">
                   {areas.reduce((sum, area) => {
                     const { accessoriesSqFt } = calculateAreaBoxesAndPallets(area.cabinets, products);
                     return sum + accessoriesSqFt;

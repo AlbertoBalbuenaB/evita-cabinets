@@ -25,28 +25,28 @@ export function BoxesPalletsBreakdown({
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white rounded-lg p-3 shadow-sm">
+        <div className="bg-white rounded-lg p-3 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between mb-1">
             <Package className="h-4 w-4 text-blue-600" />
             <span className="text-xs text-slate-500">Boxes</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900">{boxes}</div>
+          <div className="text-xl sm:text-2xl font-bold text-slate-900 break-all">{boxes}</div>
         </div>
 
-        <div className="bg-white rounded-lg p-3 shadow-sm">
+        <div className="bg-white rounded-lg p-3 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between mb-1">
             <Truck className="h-4 w-4 text-green-600" />
             <span className="text-xs text-slate-500">Pallets</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900">{pallets}</div>
+          <div className="text-xl sm:text-2xl font-bold text-slate-900 break-all">{pallets}</div>
         </div>
 
-        <div className="bg-white rounded-lg p-3 shadow-sm">
+        <div className="bg-white rounded-lg p-3 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between mb-1">
             <Grid className="h-4 w-4 text-purple-600" />
             <span className="text-xs text-slate-500">Acc. ft²</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900">
+          <div className="text-xl sm:text-2xl font-bold text-slate-900 break-all">
             {accessoriesSqFt.toFixed(2)}
           </div>
         </div>
