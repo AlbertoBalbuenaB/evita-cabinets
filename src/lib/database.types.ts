@@ -111,6 +111,7 @@ export interface Database {
           project_type: string;
           other_expenses: number;
           taxes_percentage: number;
+          profit_percentage: number;
           install_delivery: number;
           project_details: string | null;
           created_at: string;
@@ -126,6 +127,7 @@ export interface Database {
           project_type?: string;
           other_expenses?: number;
           taxes_percentage?: number;
+          profit_percentage?: number;
           install_delivery?: number;
           project_details?: string | null;
           created_at?: string;
@@ -141,6 +143,7 @@ export interface Database {
           project_type?: string;
           other_expenses?: number;
           taxes_percentage?: number;
+          profit_percentage?: number;
           install_delivery?: number;
           project_details?: string | null;
           created_at?: string;

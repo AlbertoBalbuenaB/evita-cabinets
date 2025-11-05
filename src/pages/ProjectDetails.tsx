@@ -14,7 +14,7 @@ import { MaterialBreakdown } from '../components/MaterialBreakdown';
 import { AreaMaterialBreakdown } from '../components/AreaMaterialBreakdown';
 import { ProjectCharts } from '../components/ProjectCharts';
 import { ErrorBoundary } from '../components/ErrorBoundary';
-import { printQuotation } from '../utils/printQuotation';
+import { printQuotation, printQuotationUSD } from '../utils/printQuotation';
 import { BoxesPalletsBreakdown } from '../components/BoxesPalletsBreakdown';
 import { calculateAreaBoxesAndPallets } from '../lib/boxesAndPallets';
 import { getSettings } from '../lib/settingsStore';
@@ -48,6 +48,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
   const [exchangeRate, setExchangeRate] = useState(18);
   const [otherExpenses, setOtherExpenses] = useState(project.other_expenses || 0);
   const [tariffPercentage, setTariffPercentage] = useState(project.tariff_percentage || 0);
+  const [profitPercentage, setProfitPercentage] = useState(project.profit_percentage || 0);
   const [taxesPercentage, setTaxesPercentage] = useState(project.taxes_percentage || 0);
   const [installDelivery, setInstallDelivery] = useState(project.install_delivery || 0);
   const [savingTemplateCabinet, setSavingTemplateCabinet] = useState<AreaCabinet | null>(null);
@@ -57,6 +58,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
   const [bulkChangePreselectedAreaId, setBulkChangePreselectedAreaId] = useState<string | undefined>();
   const [areaSearchQuery, setAreaSearchQuery] = useState('');
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isPrintMenuOpen, setIsPrintMenuOpen] = useState(false);
 
   useEffect(() => {
     loadAreas();
@@ -322,6 +324,10 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
     await printQuotation(project, areas, products);
   }
 
+  async function handlePrintUSD() {
+    await printQuotationUSD(project, areas, exchangeRate);
+  }
+
   async function handleSaveChanges() {
     try {
       await loadAreas();
@@ -368,8 +374,10 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
   const subtotalBeforeTariff = materialsSubtotal + otherExpenses + installDelivery;
   const tariffAmount = (subtotalBeforeTariff * tariffPercentage) / 100;
   const subtotalWithTariff = subtotalBeforeTariff + tariffAmount;
-  const taxesAmount = (subtotalWithTariff * taxesPercentage) / 100;
-  const projectTotal = subtotalWithTariff + taxesAmount;
+  const profitAmount = (subtotalWithTariff * profitPercentage) / 100;
+  const subtotalWithProfit = subtotalWithTariff + profitAmount;
+  const taxesAmount = (subtotalWithProfit * taxesPercentage) / 100;
+  const projectTotal = subtotalWithProfit + taxesAmount;
 
   const formatPrice = (amount: number) => {
     const amountInUSD = amount / exchangeRate;
@@ -398,6 +406,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
         .update({
           other_expenses: otherExpenses,
           tariff_percentage: tariffPercentage,
+          profit_percentage: profitPercentage,
           taxes_percentage: taxesPercentage,
           install_delivery: installDelivery,
           total_amount: projectTotal,
@@ -516,11 +525,56 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
             <span className="hidden md:inline">Change Materials</span>
             <span className="md:hidden">Materials</span>
           </Button>
-          <Button variant="secondary" onClick={handlePrint} className="w-full sm:w-auto">
-            <Printer className="h-4 w-4 mr-2" />
-            <span className="hidden md:inline">Print / Export PDF</span>
-            <span className="md:hidden">Print</span>
-          </Button>
+          <div className="relative w-full sm:w-auto">
+            <Button
+              variant="secondary"
+              onClick={() => setIsPrintMenuOpen(!isPrintMenuOpen)}
+              className="w-full sm:w-auto"
+              disabled={areas.length === 0}
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              <span className="hidden md:inline">Print / Export PDF</span>
+              <span className="md:hidden">Print</span>
+            </Button>
+            {isPrintMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setIsPrintMenuOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white border border-slate-200 z-20">
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        handlePrint();
+                        setIsPrintMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center"
+                    >
+                      <Printer className="h-4 w-4 mr-2 text-slate-500" />
+                      <div>
+                        <div className="font-medium">Standard PDF</div>
+                        <div className="text-xs text-slate-500">MXN with all details</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        handlePrintUSD();
+                        setIsPrintMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center"
+                    >
+                      <DollarSign className="h-4 w-4 mr-2 text-slate-500" />
+                      <div>
+                        <div className="font-medium">USD Summary PDF</div>
+                        <div className="text-xs text-slate-500">Price, tariff, profit & tax by area</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <div className="relative w-full sm:w-auto">
             <Button
               variant="secondary"
@@ -650,6 +704,26 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
+                Profit (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={profitPercentage}
+                onChange={(e) => setProfitPercentage(parseFloat(e.target.value) || 0)}
+                onBlur={updateProjectCosts}
+                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0.00"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                {profitPercentage > 0 ? formatPrice(profitAmount) : 'Percentage of subtotal + tariff'}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
                 Taxes (%)
               </label>
               <input
@@ -664,7 +738,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
                 placeholder="0.00"
               />
               <p className="mt-1 text-xs text-slate-500">
-                {taxesPercentage > 0 ? formatPrice(taxesAmount) : 'Percentage of subtotal + tariff'}
+                {taxesPercentage > 0 ? formatPrice(taxesAmount) : 'Percentage of subtotal + tariff + profit'}
               </p>
             </div>
           </div>
@@ -679,6 +753,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
                 <p className="text-sm text-slate-600">Other Expenses:</p>
                 <p className="text-sm text-slate-600">Install & Delivery:</p>
                 {tariffPercentage > 0 && <p className="text-sm text-slate-600">Tariff ({tariffPercentage}%):</p>}
+                {profitPercentage > 0 && <p className="text-sm text-slate-600">Profit ({profitPercentage}%):</p>}
                 <p className="text-sm text-slate-600">Taxes ({taxesPercentage}%):</p>
                 <p className="text-base font-semibold text-slate-900 mt-2">Total:</p>
               </div>
@@ -690,6 +765,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
                 <p className="text-sm font-medium text-slate-700">{formatPrice(otherExpenses)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(installDelivery)}</p>
                 {tariffPercentage > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(tariffAmount)}</p>}
+                {profitPercentage > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(profitAmount)}</p>}
                 <p className="text-sm font-medium text-slate-700">{formatPrice(taxesAmount)}</p>
                 <p className="text-base font-bold text-slate-900 mt-2">{formatPrice(projectTotal)}</p>
               </div>

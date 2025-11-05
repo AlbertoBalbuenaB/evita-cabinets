@@ -506,3 +506,374 @@ export async function printQuotation(
   printWindow.document.write(html);
   printWindow.document.close();
 }
+
+export async function printQuotationUSD(
+  project: Project,
+  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[],
+  exchangeRate: number
+) {
+  const formatUSD = (amount: number) => {
+    const amountInUSD = amount / exchangeRate;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amountInUSD);
+  };
+
+  const tariffPercentage = project.tariff_percentage || 0;
+  const profitPercentage = project.profit_percentage || 0;
+  const taxesPercentage = project.taxes_percentage || 0;
+
+  const areaBreakdown = areas.map(area => {
+    const areaCabinetsTotal = area.cabinets.reduce((sum, c) => sum + c.subtotal, 0);
+    const areaItemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
+    const areaCountertopsTotal = area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0);
+    const areaPrice = areaCabinetsTotal + areaItemsTotal + areaCountertopsTotal;
+
+    const areaTariff = (areaPrice * tariffPercentage) / 100;
+    const areaProfit = ((areaPrice + areaTariff) * profitPercentage) / 100;
+    const areaTax = ((areaPrice + areaTariff + areaProfit) * taxesPercentage) / 100;
+    const areaTotal = areaPrice + areaTariff + areaProfit + areaTax;
+
+    return {
+      name: area.name,
+      price: areaPrice,
+      tariff: areaTariff,
+      profit: areaProfit,
+      tax: areaTax,
+      total: areaTotal
+    };
+  });
+
+  const totalPrice = areaBreakdown.reduce((sum, a) => sum + a.price, 0);
+  const totalTariff = areaBreakdown.reduce((sum, a) => sum + a.tariff, 0);
+  const totalProfit = areaBreakdown.reduce((sum, a) => sum + a.profit, 0);
+  const totalTax = areaBreakdown.reduce((sum, a) => sum + a.tax, 0);
+  const grandTotal = areaBreakdown.reduce((sum, a) => sum + a.total, 0);
+
+  const otherExpenses = project.other_expenses || 0;
+  const installDelivery = project.install_delivery || 0;
+  const finalTotal = grandTotal + otherExpenses + installDelivery;
+
+  let logoUrl = '';
+  try {
+    const { data: settings, error } = await supabase
+      .from('settings')
+      .select('logo_url')
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching settings:', error);
+    }
+
+    if (settings?.logo_url) {
+      const { data } = supabase.storage
+        .from('logos')
+        .getPublicUrl(settings.logo_url);
+      logoUrl = data.publicUrl;
+    }
+  } catch (error) {
+    console.error('Error fetching logo URL:', error);
+  }
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>USD Quotation - ${project.name}</title>
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        @page {
+          margin: 2cm;
+          size: A4;
+        }
+
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          font-size: 10pt;
+          line-height: 1.5;
+          color: #000;
+          background: white;
+        }
+
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 25px;
+          padding-bottom: 15px;
+          border-bottom: 2px solid #000;
+        }
+
+        .logo-section img {
+          height: 60px;
+          width: auto;
+          display: block;
+          max-width: 300px;
+        }
+
+        .company-info {
+          text-align: right;
+          font-size: 9pt;
+          line-height: 1.5;
+        }
+
+        .company-info p {
+          margin: 2px 0;
+        }
+
+        .project-header {
+          margin-bottom: 30px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+
+        .project-label {
+          font-size: 9pt;
+          font-weight: 600;
+          color: #666;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .project-name {
+          font-size: 16pt;
+          font-weight: 700;
+          margin: 2px 0 8px 0;
+          color: #000;
+        }
+
+        .section-title {
+          text-align: center;
+          font-size: 11pt;
+          font-weight: 600;
+          margin: 25px 0 15px 0;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: #000;
+        }
+
+        .pricing-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 20px;
+          font-size: 9pt;
+        }
+
+        .pricing-table thead {
+          background-color: #f8f9fa;
+        }
+
+        .pricing-table th {
+          text-align: left;
+          padding: 10px 12px;
+          font-weight: 600;
+          font-size: 9pt;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+          border-bottom: 2px solid #000;
+          color: #000;
+        }
+
+        .pricing-table th.right {
+          text-align: right;
+        }
+
+        .pricing-table tbody td {
+          padding: 10px 12px;
+          border-bottom: 1px solid #e0e0e0;
+        }
+
+        .pricing-table tbody td.right {
+          text-align: right;
+          font-weight: 600;
+        }
+
+        .pricing-table tfoot td {
+          padding: 12px;
+          font-weight: 700;
+          font-size: 10pt;
+          border-top: 2px solid #000;
+          background-color: #f8f9fa;
+        }
+
+        .pricing-table tfoot td.right {
+          text-align: right;
+        }
+
+        .summary-section {
+          margin-top: 30px;
+          border: 2px solid #000;
+          border-radius: 4px;
+          overflow: hidden;
+        }
+
+        .summary-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 10px 20px;
+          font-size: 10pt;
+          border-bottom: 1px solid #e0e0e0;
+        }
+
+        .summary-row:last-child {
+          border-bottom: none;
+        }
+
+        .summary-row.total {
+          background-color: #000;
+          color: white;
+          font-weight: 700;
+          font-size: 11pt;
+          padding: 14px 20px;
+        }
+
+        .footer {
+          position: fixed;
+          bottom: 1.5cm;
+          left: 2cm;
+          right: 2cm;
+          text-align: center;
+          font-size: 8pt;
+          color: #666;
+          padding-top: 10px;
+          border-top: 1px solid #e0e0e0;
+        }
+
+        @media print {
+          body {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logo-section">
+          ${logoUrl ? `<img src="${logoUrl}" alt="Evita Cabinets" crossorigin="anonymous" />` : '<h1 style="font-size: 24pt; font-weight: 700; margin: 0;">Evita Cabinets</h1>'}
+        </div>
+        <div class="company-info">
+          <p><strong>6400 Westpark Dr # 465, Houston, TX 77057</strong></p>
+          <p>www.evitacabinets.com</p>
+          <p>34-6234-9223</p>
+          <p>info@evitacabinets.com</p>
+        </div>
+      </div>
+
+      <div class="project-header">
+        <div class="project-header-left">
+          <span class="project-label">Project</span>
+          <div class="project-name">${project.name}</div>
+          <span class="project-label">Address</span>
+          <span style="font-size: 9pt;">${project.address || '-'}</span>
+        </div>
+      </div>
+
+      <div class="section-title">USD Pricing per Area</div>
+
+      <table class="pricing-table">
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th class="right">Price</th>
+            ${tariffPercentage > 0 ? '<th class="right">Tariff</th>' : ''}
+            ${profitPercentage > 0 ? '<th class="right">Profit</th>' : ''}
+            <th class="right">Tax</th>
+            <th class="right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${areaBreakdown.map(area => `
+            <tr>
+              <td>${area.name}</td>
+              <td class="right">${formatUSD(area.price)}</td>
+              ${tariffPercentage > 0 ? `<td class="right">${formatUSD(area.tariff)}</td>` : ''}
+              ${profitPercentage > 0 ? `<td class="right">${formatUSD(area.profit)}</td>` : ''}
+              <td class="right">${formatUSD(area.tax)}</td>
+              <td class="right">${formatUSD(area.total)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td><strong>SUBTOTAL</strong></td>
+            <td class="right">${formatUSD(totalPrice)}</td>
+            ${tariffPercentage > 0 ? `<td class="right">${formatUSD(totalTariff)}</td>` : ''}
+            ${profitPercentage > 0 ? `<td class="right">${formatUSD(totalProfit)}</td>` : ''}
+            <td class="right">${formatUSD(totalTax)}</td>
+            <td class="right">${formatUSD(grandTotal)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="summary-section">
+        ${otherExpenses > 0 ? `
+          <div class="summary-row">
+            <span class="summary-label">Other Expenses</span>
+            <span class="summary-value">${formatUSD(otherExpenses)}</span>
+          </div>
+        ` : ''}
+        ${installDelivery > 0 ? `
+          <div class="summary-row">
+            <span class="summary-label">Install & Delivery</span>
+            <span class="summary-value">${formatUSD(installDelivery)}</span>
+          </div>
+        ` : ''}
+        <div class="summary-row total">
+          <span class="summary-label">GRAND TOTAL</span>
+          <span class="summary-value">${formatUSD(finalTotal)}</span>
+        </div>
+      </div>
+
+      <div class="footer">
+        ${new Date(project.quote_date).toLocaleDateString('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: 'numeric'
+        })} | Page 1
+      </div>
+
+      <script>
+        window.onload = function() {
+          const logo = document.querySelector('.logo-section img');
+          if (logo) {
+            if (logo.complete && logo.naturalHeight > 0) {
+              setTimeout(() => window.print(), 500);
+            } else {
+              logo.onload = function() {
+                setTimeout(() => window.print(), 500);
+              };
+              logo.onerror = function() {
+                setTimeout(() => window.print(), 500);
+              };
+            }
+          } else {
+            setTimeout(() => window.print(), 500);
+          }
+        };
+      </script>
+    </body>
+    </html>
+  `;
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Please allow pop-ups to print the quotation.');
+    return;
+  }
+
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
