@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { Package, Layers, Hash, Ruler, Hammer } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatCurrency } from '../lib/calculations';
+import { calculateAreaEdgebandRolls } from '../lib/edgebandRolls';
+import { calculateAreaSheetMaterials } from '../lib/sheetMaterials';
 
 interface MaterialData {
-  boxMaterialSheets: Map<string, { sheetsNeeded: number; totalSF: number; cost: number }>;
-  doorsMaterialSheets: Map<string, { sheetsNeeded: number; totalSF: number; cost: number }>;
-  boxEdgebandRolls: Map<string, { rollsNeeded: number; totalMeters: number; cost: number }>;
-  doorsEdgebandRolls: Map<string, { rollsNeeded: number; totalMeters: number; cost: number }>;
+  boxMaterialSheets: Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>;
+  doorsMaterialSheets: Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>;
+  boxEdgebandRolls: Map<string, { rollsNeeded: number; totalMeters: number; cost: number; totalMetersRounded: number }>;
+  doorsEdgebandRolls: Map<string, { rollsNeeded: number; totalMeters: number; cost: number; totalMetersRounded: number }>;
   hardware: Map<string, { quantity: number; cost: number }>;
   countertops: Map<string, { quantity: number; cost: number }>;
   totalCost: number;
@@ -17,9 +19,6 @@ interface AreaMaterialBreakdownProps {
   areaId: string;
   isVersion?: boolean;
 }
-
-const SHEET_SIZE_SF = 32;
-const ROLL_LENGTH_METERS = 100;
 
 export function AreaMaterialBreakdown({ areaId, isVersion = false }: AreaMaterialBreakdownProps) {
   const [data, setData] = useState<MaterialData | null>(null);
@@ -31,211 +30,304 @@ export function AreaMaterialBreakdown({ areaId, isVersion = false }: AreaMateria
 
   async function loadMaterialData() {
     try {
-      const cabinetsTable = isVersion ? 'version_area_cabinets' : 'area_cabinets';
-      const countertopsTable = isVersion ? 'version_area_countertops' : 'area_countertops';
-
-      const cabinetsSelect = isVersion
-        ? `
-          quantity,
-          product_sku,
-          box_material_id,
-          box_edgeband_id,
-          doors_material_id,
-          doors_edgeband_id,
-          box_material_cost,
-          box_edgeband_cost,
-          doors_material_cost,
-          doors_edgeband_cost,
-          hardware_cost,
-          hardware,
-          subtotal,
-          box_sf,
-          doors_fronts_sf,
-          total_edgeband,
-          box_edgeband,
-          doors_fronts_edgeband
-        `
-        : `
-          quantity,
-          product_sku,
-          box_material_id,
-          box_edgeband_id,
-          doors_material_id,
-          doors_edgeband_id,
-          box_material_cost,
-          box_edgeband_cost,
-          doors_material_cost,
-          doors_edgeband_cost,
-          hardware_cost,
-          hardware,
-          subtotal
-        `;
-
-      const { data: cabinets, error: cabinetsError } = await supabase
-        .from(cabinetsTable)
-        .select(cabinetsSelect)
-        .eq('area_id', areaId);
-
-      if (cabinetsError) throw cabinetsError;
-
-      const { data: countertops, error: countertopsError } = await supabase
-        .from(countertopsTable)
-        .select(`
-          item_name,
-          quantity,
-          subtotal
-        `)
-        .eq('area_id', areaId);
-
-      if (countertopsError) throw countertopsError;
-
-      const { data: priceList, error: priceListError } = await supabase
-        .from('price_list')
-        .select('id, concept_description');
-
-      if (priceListError) throw priceListError;
-
-      let productsMap = new Map();
-
       if (!isVersion) {
-        const { data: products, error: productsError } = await supabase
-          .from('products_catalog')
-          .select('sku, box_sf, doors_fronts_sf, total_edgeband, box_edgeband');
-
-        if (productsError) throw productsError;
-        productsMap = new Map(products?.map(p => [p.sku, p]) || []);
+        await loadNonVersionMaterialData();
+      } else {
+        await loadVersionMaterialData();
       }
-
-      const priceListMap = new Map(priceList?.map(p => [p.id, p.concept_description]) || []);
-
-      const boxMaterialSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number }>();
-      const doorsMaterialSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number }>();
-      const boxEdgebandRolls = new Map<string, { rollsNeeded: number; totalMeters: number; cost: number }>();
-      const doorsEdgebandRolls = new Map<string, { rollsNeeded: number; totalMeters: number; cost: number }>();
-      const hardware = new Map<string, { quantity: number; cost: number }>();
-      const countertopsMap = new Map<string, { quantity: number; cost: number }>();
-
-      let totalCost = 0;
-
-      cabinets?.forEach(cabinet => {
-        const qty = cabinet.quantity || 1;
-        let boxSf, doorsSf, totalEdgeband, boxEdgeband, doorsEdgeband;
-
-        if (isVersion) {
-          boxSf = (cabinet as any).box_sf || 0;
-          doorsSf = (cabinet as any).doors_fronts_sf || 0;
-          totalEdgeband = (cabinet as any).total_edgeband || 0;
-          boxEdgeband = (cabinet as any).box_edgeband || 0;
-          doorsEdgeband = (cabinet as any).doors_fronts_edgeband || 0;
-        } else {
-          const product = productsMap.get(cabinet.product_sku || '');
-          if (!product) return;
-          boxSf = product.box_sf || 0;
-          doorsSf = product.doors_fronts_sf || 0;
-          totalEdgeband = product.total_edgeband || 0;
-          boxEdgeband = product.box_edgeband || 0;
-          doorsEdgeband = product.doors_fronts_edgeband || 0;
-        }
-
-        if (cabinet.box_material_id && boxSf > 0) {
-          const name = priceListMap.get(cabinet.box_material_id) || 'Unknown Box Material';
-          const totalSF = boxSf * qty;
-          const existing = boxMaterialSheets.get(name) || { sheetsNeeded: 0, totalSF: 0, cost: 0 };
-          boxMaterialSheets.set(name, {
-            sheetsNeeded: existing.sheetsNeeded + Math.ceil(totalSF / SHEET_SIZE_SF),
-            totalSF: existing.totalSF + totalSF,
-            cost: existing.cost + (cabinet.box_material_cost || 0),
-          });
-        }
-
-        if (cabinet.doors_material_id && doorsSf > 0) {
-          const name = priceListMap.get(cabinet.doors_material_id) || 'Unknown Doors Material';
-          const totalSF = doorsSf * qty;
-          const existing = doorsMaterialSheets.get(name) || { sheetsNeeded: 0, totalSF: 0, cost: 0 };
-          doorsMaterialSheets.set(name, {
-            sheetsNeeded: existing.sheetsNeeded + Math.ceil(totalSF / SHEET_SIZE_SF),
-            totalSF: existing.totalSF + totalSF,
-            cost: existing.cost + (cabinet.doors_material_cost || 0),
-          });
-        }
-
-        if (cabinet.box_edgeband_id && boxEdgeband > 0) {
-          const name = priceListMap.get(cabinet.box_edgeband_id) || 'Unknown Box Edgeband';
-          const totalMeters = boxEdgeband * qty;
-          const existing = boxEdgebandRolls.get(name) || { rollsNeeded: 0, totalMeters: 0, cost: 0 };
-          boxEdgebandRolls.set(name, {
-            rollsNeeded: existing.rollsNeeded + Math.ceil(totalMeters / ROLL_LENGTH_METERS),
-            totalMeters: existing.totalMeters + totalMeters,
-            cost: existing.cost + (cabinet.box_edgeband_cost || 0),
-          });
-        }
-
-        if (cabinet.doors_edgeband_id && doorsEdgeband > 0) {
-          const name = priceListMap.get(cabinet.doors_edgeband_id) || 'Unknown Doors Edgeband';
-          const totalMeters = doorsEdgeband * qty;
-          const existing = doorsEdgebandRolls.get(name) || { rollsNeeded: 0, totalMeters: 0, cost: 0 };
-          doorsEdgebandRolls.set(name, {
-            rollsNeeded: existing.rollsNeeded + Math.ceil(totalMeters / ROLL_LENGTH_METERS),
-            totalMeters: existing.totalMeters + totalMeters,
-            cost: existing.cost + (cabinet.doors_edgeband_cost || 0),
-          });
-        }
-
-        if (cabinet.hardware && Array.isArray(cabinet.hardware) && cabinet.hardware.length > 0) {
-          const totalHardwareCost = cabinet.hardware_cost || 0;
-          const totalHardwareItems = cabinet.hardware.reduce((sum: number, hw: any) => sum + (hw.quantity_per_cabinet || 0), 0);
-
-          (cabinet.hardware as any[]).forEach((hw: any) => {
-            const hardwareId = hw.hardware_id;
-            const quantityPerCabinet = hw.quantity_per_cabinet || 0;
-
-            if (!hardwareId || quantityPerCabinet === 0) return;
-
-            const name = priceListMap.get(hardwareId) || 'Unknown Hardware';
-            const hwQty = quantityPerCabinet * qty;
-            const proportionalCost = totalHardwareItems > 0
-              ? (quantityPerCabinet / totalHardwareItems) * totalHardwareCost
-              : 0;
-
-            const existing = hardware.get(name) || { quantity: 0, cost: 0 };
-            hardware.set(name, {
-              quantity: existing.quantity + hwQty,
-              cost: existing.cost + proportionalCost,
-            });
-          });
-        }
-
-        totalCost += cabinet.subtotal || 0;
-      });
-
-      countertops?.forEach(countertop => {
-        const name = countertop.item_name || 'Unknown Countertop';
-        const qty = countertop.quantity || 0;
-        const cost = countertop.subtotal || 0;
-
-        const existing = countertopsMap.get(name) || { quantity: 0, cost: 0 };
-        countertopsMap.set(name, {
-          quantity: existing.quantity + qty,
-          cost: existing.cost + cost,
-        });
-
-        totalCost += cost;
-      });
-
-      setData({
-        boxMaterialSheets,
-        doorsMaterialSheets,
-        boxEdgebandRolls,
-        doorsEdgebandRolls,
-        hardware,
-        countertops: countertopsMap,
-        totalCost,
-      });
     } catch (error) {
       console.error('Error loading material breakdown:', error);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadNonVersionMaterialData() {
+    const [sheetResult, edgebandResult] = await Promise.all([
+      calculateAreaSheetMaterials(areaId),
+      calculateAreaEdgebandRolls(areaId),
+    ]);
+
+    const boxMaterialSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
+    const doorsMaterialSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
+
+    sheetResult.sheetUsages.forEach(usage => {
+      const target = usage.materialType === 'box' ? boxMaterialSheets : doorsMaterialSheets;
+      target.set(usage.materialName, {
+        sheetsNeeded: usage.sheetsNeeded,
+        totalSF: usage.totalSF,
+        cost: usage.totalCost,
+        sfPerSheet: usage.sfPerSheet,
+      });
+    });
+
+    const boxEdgebandRolls = new Map<string, { rollsNeeded: number; totalMeters: number; cost: number; totalMetersRounded: number }>();
+    const doorsEdgebandRolls = new Map<string, { rollsNeeded: number; totalMeters: number; cost: number; totalMetersRounded: number }>();
+
+    const { data: priceList } = await supabase
+      .from('price_list')
+      .select('id, concept_description');
+
+    const priceListMap = new Map(priceList?.map(p => [p.id, p.concept_description]) || []);
+
+    const { data: cabinets } = await supabase
+      .from('area_cabinets')
+      .select('box_edgeband_id, doors_edgeband_id')
+      .eq('area_id', areaId);
+
+    const boxEdgebandIds = new Set(cabinets?.map(c => c.box_edgeband_id).filter(Boolean) || []);
+    const doorsEdgebandIds = new Set(cabinets?.map(c => c.doors_edgeband_id).filter(Boolean) || []);
+
+    edgebandResult.edgebandUsages.forEach(usage => {
+      const data = {
+        rollsNeeded: usage.rollsNeeded,
+        totalMeters: usage.totalMeters,
+        cost: usage.totalCost,
+        totalMetersRounded: usage.totalMetersRounded,
+      };
+
+      if (boxEdgebandIds.has(usage.edgebandId)) {
+        boxEdgebandRolls.set(usage.edgebandName, data);
+      }
+      if (doorsEdgebandIds.has(usage.edgebandId)) {
+        doorsEdgebandRolls.set(usage.edgebandName, data);
+      }
+    });
+
+    const { hardware, countertops, totalCost } = await loadHardwareAndCountertops('area_cabinets', 'area_countertops');
+
+    setData({
+      boxMaterialSheets,
+      doorsMaterialSheets,
+      boxEdgebandRolls,
+      doorsEdgebandRolls,
+      hardware,
+      countertops,
+      totalCost,
+    });
+  }
+
+  async function loadVersionMaterialData() {
+    const { data: cabinets } = await supabase
+      .from('version_area_cabinets')
+      .select(`
+        quantity,
+        box_material_id,
+        doors_material_id,
+        box_edgeband_id,
+        doors_edgeband_id,
+        box_material_cost,
+        doors_material_cost,
+        box_edgeband_cost,
+        doors_edgeband_cost,
+        hardware_cost,
+        hardware,
+        subtotal,
+        box_sf,
+        doors_fronts_sf,
+        box_edgeband,
+        doors_fronts_edgeband
+      `)
+      .eq('area_id', areaId);
+
+    const { data: priceList } = await supabase
+      .from('price_list')
+      .select('id, concept_description, sf_per_sheet, dimensions, type');
+
+    const priceListMap = new Map(priceList?.map(p => [p.id, p]) || []);
+
+    const boxMaterialSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
+    const doorsMaterialSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
+    const boxEdgebandRolls = new Map<string, { rollsNeeded: number; totalMeters: number; cost: number; totalMetersRounded: number }>();
+    const doorsEdgebandRolls = new Map<string, { rollsNeeded: number; totalMeters: number; cost: number; totalMetersRounded: number }>();
+
+    const boxMaterialsAgg = new Map<string, { totalSF: number; totalCost: number; sfPerSheet: number }>();
+    const doorsMaterialsAgg = new Map<string, { totalSF: number; totalCost: number; sfPerSheet: number }>();
+    const boxEdgebandAgg = new Map<string, { totalMeters: number; totalCost: number }>();
+    const doorsEdgebandAgg = new Map<string, { totalMeters: number; totalCost: number }>();
+
+    cabinets?.forEach(cabinet => {
+      const qty = cabinet.quantity || 1;
+
+      if (cabinet.box_material_id) {
+        const material = priceListMap.get(cabinet.box_material_id);
+        if (material) {
+          const name = material.concept_description;
+          const sf = (cabinet.box_sf || 0) * qty;
+          const sfPerSheet = material.sf_per_sheet || 32;
+          const existing = boxMaterialsAgg.get(name) || { totalSF: 0, totalCost: 0, sfPerSheet };
+          boxMaterialsAgg.set(name, {
+            totalSF: existing.totalSF + sf,
+            totalCost: existing.totalCost + (cabinet.box_material_cost || 0),
+            sfPerSheet,
+          });
+        }
+      }
+
+      if (cabinet.doors_material_id) {
+        const material = priceListMap.get(cabinet.doors_material_id);
+        if (material) {
+          const name = material.concept_description;
+          const sf = (cabinet.doors_fronts_sf || 0) * qty;
+          const sfPerSheet = material.sf_per_sheet || 32;
+          const existing = doorsMaterialsAgg.get(name) || { totalSF: 0, totalCost: 0, sfPerSheet };
+          doorsMaterialsAgg.set(name, {
+            totalSF: existing.totalSF + sf,
+            totalCost: existing.totalCost + (cabinet.doors_material_cost || 0),
+            sfPerSheet,
+          });
+        }
+      }
+
+      if (cabinet.box_edgeband_id) {
+        const material = priceListMap.get(cabinet.box_edgeband_id);
+        if (material) {
+          const name = material.concept_description;
+          const meters = (cabinet.box_edgeband || 0) * qty;
+          const existing = boxEdgebandAgg.get(name) || { totalMeters: 0, totalCost: 0 };
+          boxEdgebandAgg.set(name, {
+            totalMeters: existing.totalMeters + meters,
+            totalCost: existing.totalCost + (cabinet.box_edgeband_cost || 0),
+          });
+        }
+      }
+
+      if (cabinet.doors_edgeband_id) {
+        const material = priceListMap.get(cabinet.doors_edgeband_id);
+        if (material) {
+          const name = material.concept_description;
+          const meters = (cabinet.doors_fronts_edgeband || 0) * qty;
+          const existing = doorsEdgebandAgg.get(name) || { totalMeters: 0, totalCost: 0 };
+          doorsEdgebandAgg.set(name, {
+            totalMeters: existing.totalMeters + meters,
+            totalCost: existing.totalCost + (cabinet.doors_edgeband_cost || 0),
+          });
+        }
+      }
+    });
+
+    boxMaterialsAgg.forEach((agg, name) => {
+      const sheetsNeeded = Math.ceil(agg.totalSF / agg.sfPerSheet);
+      boxMaterialSheets.set(name, {
+        sheetsNeeded,
+        totalSF: agg.totalSF,
+        cost: agg.totalCost,
+        sfPerSheet: agg.sfPerSheet,
+      });
+    });
+
+    doorsMaterialsAgg.forEach((agg, name) => {
+      const sheetsNeeded = Math.ceil(agg.totalSF / agg.sfPerSheet);
+      doorsMaterialSheets.set(name, {
+        sheetsNeeded,
+        totalSF: agg.totalSF,
+        cost: agg.totalCost,
+        sfPerSheet: agg.sfPerSheet,
+      });
+    });
+
+    const ROLL_LENGTH_METERS = 150;
+
+    boxEdgebandAgg.forEach((agg, name) => {
+      const rollsNeeded = Math.ceil(agg.totalMeters / ROLL_LENGTH_METERS);
+      boxEdgebandRolls.set(name, {
+        rollsNeeded,
+        totalMeters: agg.totalMeters,
+        cost: agg.totalCost,
+        totalMetersRounded: rollsNeeded * ROLL_LENGTH_METERS,
+      });
+    });
+
+    doorsEdgebandAgg.forEach((agg, name) => {
+      const rollsNeeded = Math.ceil(agg.totalMeters / ROLL_LENGTH_METERS);
+      doorsEdgebandRolls.set(name, {
+        rollsNeeded,
+        totalMeters: agg.totalMeters,
+        cost: agg.totalCost,
+        totalMetersRounded: rollsNeeded * ROLL_LENGTH_METERS,
+      });
+    });
+
+    const { hardware, countertops, totalCost } = await loadHardwareAndCountertops('version_area_cabinets', 'version_area_countertops');
+
+    setData({
+      boxMaterialSheets,
+      doorsMaterialSheets,
+      boxEdgebandRolls,
+      doorsEdgebandRolls,
+      hardware,
+      countertops,
+      totalCost,
+    });
+  }
+
+  async function loadHardwareAndCountertops(cabinetsTable: string, countertopsTable: string) {
+    const { data: cabinets } = await supabase
+      .from(cabinetsTable)
+      .select('quantity, hardware, hardware_cost, subtotal')
+      .eq('area_id', areaId);
+
+    const { data: countertops } = await supabase
+      .from(countertopsTable)
+      .select('item_name, quantity, subtotal')
+      .eq('area_id', areaId);
+
+    const { data: priceList } = await supabase
+      .from('price_list')
+      .select('id, concept_description');
+
+    const priceListMap = new Map(priceList?.map(p => [p.id, p.concept_description]) || []);
+
+    const hardware = new Map<string, { quantity: number; cost: number }>();
+    let totalCost = 0;
+
+    cabinets?.forEach(cabinet => {
+      const qty = cabinet.quantity || 1;
+
+      if (cabinet.hardware && Array.isArray(cabinet.hardware) && cabinet.hardware.length > 0) {
+        const totalHardwareCost = cabinet.hardware_cost || 0;
+        const totalHardwareItems = cabinet.hardware.reduce((sum: number, hw: any) => sum + (hw.quantity_per_cabinet || 0), 0);
+
+        (cabinet.hardware as any[]).forEach((hw: any) => {
+          const hardwareId = hw.hardware_id;
+          const quantityPerCabinet = hw.quantity_per_cabinet || 0;
+
+          if (!hardwareId || quantityPerCabinet === 0) return;
+
+          const name = priceListMap.get(hardwareId) || 'Unknown Hardware';
+          const hwQty = quantityPerCabinet * qty;
+          const proportionalCost = totalHardwareItems > 0
+            ? (quantityPerCabinet / totalHardwareItems) * totalHardwareCost
+            : 0;
+
+          const existing = hardware.get(name) || { quantity: 0, cost: 0 };
+          hardware.set(name, {
+            quantity: existing.quantity + hwQty,
+            cost: existing.cost + proportionalCost,
+          });
+        });
+      }
+
+      totalCost += cabinet.subtotal || 0;
+    });
+
+    const countertopsMap = new Map<string, { quantity: number; cost: number }>();
+
+    countertops?.forEach(countertop => {
+      const name = countertop.item_name || 'Unknown Countertop';
+      const qty = countertop.quantity || 0;
+      const cost = countertop.subtotal || 0;
+
+      const existing = countertopsMap.get(name) || { quantity: 0, cost: 0 };
+      countertopsMap.set(name, {
+        quantity: existing.quantity + qty,
+        cost: existing.cost + cost,
+      });
+
+      totalCost += cost;
+    });
+
+    return { hardware, countertops: countertopsMap, totalCost };
   }
 
   if (loading) {
@@ -322,7 +414,7 @@ export function AreaMaterialBreakdown({ areaId, isVersion = false }: AreaMateria
           <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
             <div className="flex items-center mb-2">
               <Ruler className="h-3 w-3 text-amber-700 mr-1.5" />
-              <h5 className="text-xs font-semibold text-amber-900">Box Edgeband (Rolls)</h5>
+              <h5 className="text-xs font-semibold text-amber-900">Box Edgeband (Rolls 150m)</h5>
             </div>
             <div className="space-y-1.5">
               {Array.from(data.boxEdgebandRolls.entries()).map(([name, rollData]) => (
@@ -330,7 +422,7 @@ export function AreaMaterialBreakdown({ areaId, isVersion = false }: AreaMateria
                   <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
                   <div className="flex justify-between text-slate-600">
                     <span><Hash className="h-3 w-3 inline mr-1" />{rollData.rollsNeeded} rolls</span>
-                    <span><Ruler className="h-3 w-3 inline mr-1" />{rollData.totalMeters.toFixed(1)} m</span>
+                    <span><Ruler className="h-3 w-3 inline mr-1" />{rollData.totalMeters.toFixed(1)}m ({rollData.totalMetersRounded}m)</span>
                     <span className="font-semibold text-amber-700">{formatCurrency(rollData.cost)}</span>
                   </div>
                 </div>
@@ -343,7 +435,7 @@ export function AreaMaterialBreakdown({ areaId, isVersion = false }: AreaMateria
           <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
             <div className="flex items-center mb-2">
               <Ruler className="h-3 w-3 text-purple-700 mr-1.5" />
-              <h5 className="text-xs font-semibold text-purple-900">Doors Edgeband (Rolls)</h5>
+              <h5 className="text-xs font-semibold text-purple-900">Doors Edgeband (Rolls 150m)</h5>
             </div>
             <div className="space-y-1.5">
               {Array.from(data.doorsEdgebandRolls.entries()).map(([name, rollData]) => (
@@ -351,7 +443,7 @@ export function AreaMaterialBreakdown({ areaId, isVersion = false }: AreaMateria
                   <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
                   <div className="flex justify-between text-slate-600">
                     <span><Hash className="h-3 w-3 inline mr-1" />{rollData.rollsNeeded} rolls</span>
-                    <span><Ruler className="h-3 w-3 inline mr-1" />{rollData.totalMeters.toFixed(1)} m</span>
+                    <span><Ruler className="h-3 w-3 inline mr-1" />{rollData.totalMeters.toFixed(1)}m ({rollData.totalMetersRounded}m)</span>
                     <span className="font-semibold text-purple-700">{formatCurrency(rollData.cost)}</span>
                   </div>
                 </div>
