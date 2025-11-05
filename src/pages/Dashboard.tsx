@@ -226,9 +226,15 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
     try {
       const { data: cabinets } = await supabase
         .from('area_cabinets')
-        .select('product_sku, product_description, quantity, area_id');
+        .select('product_sku, quantity, area_id');
 
       if (!cabinets) return;
+
+      const { data: products } = await supabase
+        .from('products_catalog')
+        .select('sku, description');
+
+      const productMap = new Map(products?.map(p => [p.sku, p.description]) || []);
 
       const cabinetMap = new Map<string, { description: string; totalQty: number; count: number }>();
 
@@ -240,7 +246,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
 
         if (!cabinetMap.has(sku)) {
           cabinetMap.set(sku, {
-            description: cabinet.product_description || sku,
+            description: productMap.get(sku) || sku,
             totalQty: 0,
             count: 0,
           });
