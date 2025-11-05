@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Edit2, Trash2, Copy, Printer, BarChart3, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, TrendingUp, Save, Hammer, RefreshCw, Search, X } from 'lucide-react';
+import { ArrowLeft, Plus, Edit2, Trash2, Copy, Printer, BarChart3, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, TrendingUp, Save, Hammer, RefreshCw, Search, X, Download, FileSpreadsheet } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -26,6 +26,7 @@ import { SaveTemplateModal } from '../components/SaveTemplateModal';
 import { BulkMaterialChangeModal } from '../components/BulkMaterialChangeModal';
 import { createTemplateFromCabinet } from '../lib/templateManager';
 import { countActualCabinets, countCabinetEntries } from '../lib/cabinetFilters';
+import { downloadAreasCSV, downloadDetailedAreasCSV } from '../utils/exportAreasCSV';
 import {
   getCurrentVersion,
   getVersionData,
@@ -69,6 +70,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
   const [isBulkMaterialChangeOpen, setIsBulkMaterialChangeOpen] = useState(false);
   const [bulkChangePreselectedAreaId, setBulkChangePreselectedAreaId] = useState<string | undefined>();
   const [areaSearchQuery, setAreaSearchQuery] = useState('');
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
 
   useEffect(() => {
     loadCurrentVersion();
@@ -443,6 +445,22 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
     }
   }
 
+  function handleExportAreasCSV() {
+    if (areas.length === 0) {
+      alert('No areas to export');
+      return;
+    }
+    downloadAreasCSV(areas, project.name);
+  }
+
+  function handleExportDetailedAreasCSV() {
+    if (areas.length === 0) {
+      alert('No areas to export');
+      return;
+    }
+    downloadDetailedAreasCSV(areas, project.name);
+  }
+
   const cabinetsSubtotal = areas.reduce(
     (sum, area) => sum + area.cabinets.reduce((s, c) => s + c.subtotal, 0),
     0
@@ -632,6 +650,56 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
             <span className="hidden md:inline">Print / Export PDF</span>
             <span className="md:hidden">Print</span>
           </Button>
+          <div className="relative w-full sm:w-auto">
+            <Button
+              variant="secondary"
+              onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
+              className="w-full sm:w-auto"
+              disabled={areas.length === 0}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              <span className="hidden md:inline">Export CSV</span>
+              <span className="md:hidden">CSV</span>
+            </Button>
+            {isExportMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setIsExportMenuOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white border border-slate-200 z-20">
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        handleExportAreasCSV();
+                        setIsExportMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center"
+                    >
+                      <Download className="h-4 w-4 mr-2 text-slate-500" />
+                      <div>
+                        <div className="font-medium">Areas Summary</div>
+                        <div className="text-xs text-slate-500">Export area totals</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleExportDetailedAreasCSV();
+                        setIsExportMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center"
+                    >
+                      <FileSpreadsheet className="h-4 w-4 mr-2 text-slate-500" />
+                      <div>
+                        <div className="font-medium">Detailed Report</div>
+                        <div className="text-xs text-slate-500">Export all items & details</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <Button variant="secondary" onClick={handleSaveChanges} className="w-full sm:w-auto">
             <Save className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Save Changes</span>
