@@ -22,7 +22,7 @@ import { recalculateAreaEdgebandCosts } from '../lib/edgebandRolls';
 import { recalculateAreaSheetMaterialCosts } from '../lib/sheetMaterials';
 import { SaveTemplateModal } from '../components/SaveTemplateModal';
 import { BulkMaterialChangeModal } from '../components/BulkMaterialChangeModal';
-import { BulkPriceUpdateModal } from '../components/BulkPriceUpdateModal';
+import { MaterialPriceUpdateModal } from '../components/MaterialPriceUpdateModal';
 import { createTemplateFromCabinet } from '../lib/templateManager';
 import { countActualCabinets, countCabinetEntries } from '../lib/cabinetFilters';
 import { downloadAreasCSV, downloadDetailedAreasCSV } from '../utils/exportAreasCSV';
@@ -1269,7 +1269,7 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
         preselectedAreaId={bulkChangePreselectedAreaId}
       />
 
-      <BulkPriceUpdateModal
+      <MaterialPriceUpdateModal
         isOpen={isBulkPriceUpdateOpen}
         onClose={() => setIsBulkPriceUpdateOpen(false)}
         projectId={project.id}
