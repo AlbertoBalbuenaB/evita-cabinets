@@ -567,6 +567,16 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
             <span className="hidden md:inline">Change Materials</span>
             <span className="md:hidden">Materials</span>
           </Button>
+          <Button
+            variant="secondary"
+            onClick={() => setIsBulkPriceUpdateOpen(true)}
+            className="w-full sm:w-auto"
+            disabled={areas.length === 0}
+          >
+            <TrendingUp className="h-4 w-4 mr-2" />
+            <span className="hidden md:inline">Update Prices</span>
+            <span className="md:hidden">Prices</span>
+          </Button>
           <div className="relative w-full sm:w-auto">
             <Button
               variant="secondary"
