@@ -120,6 +120,12 @@ export interface CabinetTemplate {
   use_doors_interior_finish: boolean;
   hardware: HardwareItem[];
   is_rta: boolean;
+  original_box_material_price: number | null;
+  original_box_edgeband_price: number | null;
+  original_box_interior_finish_price: number | null;
+  original_doors_material_price: number | null;
+  original_doors_edgeband_price: number | null;
+  original_doors_interior_finish_price: number | null;
   usage_count: number;
   last_used_at: string | null;
   created_at: string;
@@ -148,6 +154,12 @@ export interface CabinetTemplateInsert {
   use_doors_interior_finish: boolean;
   hardware: HardwareItem[];
   is_rta: boolean;
+  original_box_material_price?: number | null;
+  original_box_edgeband_price?: number | null;
+  original_box_interior_finish_price?: number | null;
+  original_doors_material_price?: number | null;
+  original_doors_edgeband_price?: number | null;
+  original_doors_interior_finish_price?: number | null;
 }
 
 export interface TemplateUsageLog {
