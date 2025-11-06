@@ -549,6 +549,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
               onDelete={handleDelete}
               onDuplicate={handleDuplicate}
               onStatusChange={handleQuickStatusChange}
+              staleProjectIds={staleProjectIds}
             />
           ))}
         </div>
@@ -563,6 +564,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
               onDelete={handleDelete}
               onDuplicate={handleDuplicate}
               onStatusChange={handleQuickStatusChange}
+              staleProjectIds={staleProjectIds}
             />
           ))}
         </div>
@@ -586,9 +588,10 @@ interface ProjectCardProps {
   onDelete: (project: Project) => void;
   onDuplicate: (project: Project) => void;
   onStatusChange: (project: Project, status: ProjectStatus) => void;
+  staleProjectIds: string[];
 }
 
-function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusChange }: ProjectCardProps) {
+function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusChange, staleProjectIds }: ProjectCardProps) {
   const [showActions, setShowActions] = useState(false);
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -835,7 +838,7 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
   );
 }
 
-function ProjectListItem({ project, onView, onEdit, onDelete }: ProjectCardProps) {
+function ProjectListItem({ project, onView, onEdit, onDelete, staleProjectIds }: ProjectCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Pending':
