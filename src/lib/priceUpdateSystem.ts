@@ -81,7 +81,14 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
       const materialChanges: MaterialChange[] = [];
       const costs = await recalculateCabinetCosts(cabinet, product, priceList, settingsData);
 
-      if (costs.boxMaterialCost !== cabinet.box_material_cost && cabinet.box_material_id) {
+      // Tolerance threshold for rounding differences (1 cent)
+      const TOLERANCE = 0.01;
+
+      const hasSignificantDifference = (newCost: number, oldCost: number) => {
+        return Math.abs(newCost - oldCost) > TOLERANCE;
+      };
+
+      if (hasSignificantDifference(costs.boxMaterialCost, cabinet.box_material_cost) && cabinet.box_material_id) {
         const material = priceList.find(p => p.id === cabinet.box_material_id);
         if (material) {
           materialChanges.push({
@@ -97,7 +104,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
         }
       }
 
-      if (costs.boxEdgebandCost !== cabinet.box_edgeband_cost && cabinet.box_edgeband_id) {
+      if (hasSignificantDifference(costs.boxEdgebandCost, cabinet.box_edgeband_cost) && cabinet.box_edgeband_id) {
         const material = priceList.find(p => p.id === cabinet.box_edgeband_id);
         if (material) {
           materialChanges.push({
@@ -113,7 +120,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
         }
       }
 
-      if (costs.boxInteriorFinishCost !== cabinet.box_interior_finish_cost && cabinet.box_interior_finish_id) {
+      if (hasSignificantDifference(costs.boxInteriorFinishCost, cabinet.box_interior_finish_cost) && cabinet.box_interior_finish_id) {
         const material = priceList.find(p => p.id === cabinet.box_interior_finish_id);
         if (material) {
           materialChanges.push({
@@ -129,7 +136,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
         }
       }
 
-      if (costs.doorsMaterialCost !== cabinet.doors_material_cost && cabinet.doors_material_id) {
+      if (hasSignificantDifference(costs.doorsMaterialCost, cabinet.doors_material_cost) && cabinet.doors_material_id) {
         const material = priceList.find(p => p.id === cabinet.doors_material_id);
         if (material) {
           materialChanges.push({
@@ -145,7 +152,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
         }
       }
 
-      if (costs.doorsEdgebandCost !== cabinet.doors_edgeband_cost && cabinet.doors_edgeband_id) {
+      if (hasSignificantDifference(costs.doorsEdgebandCost, cabinet.doors_edgeband_cost) && cabinet.doors_edgeband_id) {
         const material = priceList.find(p => p.id === cabinet.doors_edgeband_id);
         if (material) {
           materialChanges.push({
@@ -161,7 +168,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
         }
       }
 
-      if (costs.doorsInteriorFinishCost !== cabinet.doors_interior_finish_cost && cabinet.doors_interior_finish_id) {
+      if (hasSignificantDifference(costs.doorsInteriorFinishCost, cabinet.doors_interior_finish_cost) && cabinet.doors_interior_finish_id) {
         const material = priceList.find(p => p.id === cabinet.doors_interior_finish_id);
         if (material) {
           materialChanges.push({
@@ -177,7 +184,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
         }
       }
 
-      if (costs.hardwareCost !== cabinet.hardware_cost) {
+      if (hasSignificantDifference(costs.hardwareCost, cabinet.hardware_cost)) {
         const hardware = Array.isArray(cabinet.hardware) ? cabinet.hardware : [];
         if (hardware.length > 0) {
           materialChanges.push({
