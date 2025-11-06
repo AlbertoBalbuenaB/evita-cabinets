@@ -242,39 +242,55 @@ export function MaterialPriceUpdateModal({
                 </div>
 
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {analysis.materials.map((material) => (
-                    <label
-                      key={material.materialId}
-                      className="flex items-start p-4 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedMaterialIds.includes(material.materialId)}
-                        onChange={() => toggleMaterialSelection(material.materialId)}
-                        className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-1"
-                      />
-                      <div className="ml-3 flex-1">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="font-medium text-slate-900">{material.materialName}</div>
-                            <div className="text-xs text-slate-500 mt-1">
-                              {getMaterialTypeLabel(material.materialType)} • {material.affectedCabinetsCount} cabinet{material.affectedCabinetsCount !== 1 ? 's' : ''} • Areas: {material.affectedAreas.join(', ')}
+                  {analysis.materials.map((material) => {
+                    const priceChangeDate = new Date(material.priceChangeDate).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    });
+
+                    return (
+                      <label
+                        key={material.materialId}
+                        className="flex items-start p-4 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedMaterialIds.includes(material.materialId)}
+                          onChange={() => toggleMaterialSelection(material.materialId)}
+                          className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-1"
+                        />
+                        <div className="ml-3 flex-1">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium text-slate-900">{material.materialName}</div>
+                              <div className="text-xs text-slate-500 mt-1 space-y-0.5">
+                                <div>{getMaterialTypeLabel(material.materialType)} • {material.affectedCabinetsCount} cabinet{material.affectedCabinetsCount !== 1 ? 's' : ''} • Areas: {material.affectedAreas.join(', ')}</div>
+                                <div>
+                                  <span className="font-medium">Price:</span> {formatCurrency(material.oldPrice)} → {formatCurrency(material.currentPrice)}
+                                  <span className={material.priceChangePercentage >= 0 ? 'text-red-600' : 'text-green-600'}>
+                                    {' '}({material.priceChangePercentage >= 0 ? '+' : ''}{material.priceChangePercentage.toFixed(1)}%)
+                                  </span>
+                                  {' • '}{priceChangeDate}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                          <div className="text-right ml-4">
-                            <span className={`text-sm font-semibold ${
-                              material.totalDifference >= 0 ? 'text-red-600' : 'text-green-600'
-                            }`}>
-                              {material.totalDifference >= 0 ? '+' : ''}{formatCurrency(material.totalDifference)}
-                            </span>
-                            <div className="text-xs text-slate-500">
-                              ({material.percentageChange >= 0 ? '+' : ''}{material.percentageChange.toFixed(1)}%)
+                            <div className="text-right ml-4">
+                              <span className={`text-sm font-semibold ${
+                                material.totalDifference >= 0 ? 'text-red-600' : 'text-green-600'
+                              }`}>
+                                {material.totalDifference >= 0 ? '+' : ''}{formatCurrency(material.totalDifference)}
+                              </span>
+                              <div className="text-xs text-slate-500">
+                                ({material.percentageChange >= 0 ? '+' : ''}{material.percentageChange.toFixed(1)}%)
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </label>
-                  ))}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -372,6 +388,14 @@ export function MaterialPriceUpdateModal({
 }
 
 function MaterialPreviewCard({ material, getMaterialTypeLabel }: { material: MaterialImpact; getMaterialTypeLabel: (type: MaterialImpact['materialType']) => string }) {
+  const priceChangeDate = new Date(material.priceChangeDate).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
   return (
     <div className="border border-slate-200 rounded-lg p-4 bg-white">
       <div className="flex items-start justify-between">
@@ -380,8 +404,19 @@ function MaterialPreviewCard({ material, getMaterialTypeLabel }: { material: Mat
           <div className="text-sm text-slate-600 mt-1">
             {getMaterialTypeLabel(material.materialType)}
           </div>
-          <div className="text-xs text-slate-500 mt-2">
-            {material.affectedCabinetsCount} cabinet{material.affectedCabinetsCount !== 1 ? 's' : ''} in {material.affectedAreas.length} area{material.affectedAreas.length !== 1 ? 's' : ''}: {material.affectedAreas.join(', ')}
+          <div className="text-xs text-slate-500 mt-2 space-y-1">
+            <div>
+              <span className="font-medium">Price changed:</span> {priceChangeDate}
+            </div>
+            <div>
+              <span className="font-medium">Unit price:</span> {formatCurrency(material.oldPrice)} → {formatCurrency(material.currentPrice)}
+              <span className={material.priceChangePercentage >= 0 ? 'text-red-600' : 'text-green-600'}>
+                {' '}({material.priceChangePercentage >= 0 ? '+' : ''}{material.priceChangePercentage.toFixed(1)}%)
+              </span>
+            </div>
+            <div>
+              <span className="font-medium">Impact:</span> {material.affectedCabinetsCount} cabinet{material.affectedCabinetsCount !== 1 ? 's' : ''} in {material.affectedAreas.length} area{material.affectedAreas.length !== 1 ? 's' : ''}: {material.affectedAreas.join(', ')}
+            </div>
           </div>
         </div>
         <div className="text-right ml-4">
