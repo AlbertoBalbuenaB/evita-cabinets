@@ -28,6 +28,7 @@ import { countActualCabinets, countCabinetEntries } from '../lib/cabinetFilters'
 import { downloadAreasCSV, downloadDetailedAreasCSV } from '../utils/exportAreasCSV';
 import { checkProjectHasStalePrices } from '../lib/priceUpdateSystem';
 import { getVersionHistory } from '../lib/versioningSystem';
+import { updateProjectBrief } from '../lib/projectBrief';
 import { ProjectVersionHistory } from './ProjectVersionHistory';
 
 interface ProjectDetailsProps {
@@ -35,7 +36,8 @@ interface ProjectDetailsProps {
   onBack: () => void;
 }
 
-export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
+export function ProjectDetails({ project: initialProject, onBack }: ProjectDetailsProps) {
+  const [project, setProject] = useState<Project>(initialProject);
   const [areas, setAreas] = useState<(ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,10 +71,29 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
   const [versionCount, setVersionCount] = useState(0);
 
   useEffect(() => {
+    setProject(initialProject);
+  }, [initialProject]);
+
+  useEffect(() => {
     loadAreas();
     checkStalePrices();
     loadVersionCount();
   }, [project.id]);
+
+  async function loadProject() {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', project.id)
+        .single();
+
+      if (error) throw error;
+      if (data) setProject(data);
+    } catch (error) {
+      console.error('Error loading project:', error);
+    }
+  }
 
   async function checkStalePrices() {
     const stale = await checkProjectHasStalePrices(project.id);
@@ -354,6 +375,8 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
 
   async function handleSaveChanges() {
     try {
+      await updateProjectBrief(project.id);
+      await loadProject();
       await loadAreas();
       alert('Changes saved successfully');
     } catch (error) {
@@ -534,15 +557,27 @@ export function ProjectDetails({ project, onBack }: ProjectDetailsProps) {
             </div>
           </div>
 
-          {project.project_details && (
-            <div className="mt-4 p-4 bg-white border border-slate-200 rounded-lg">
-              <h3 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                <Receipt className="h-4 w-4" />
-                Project Notes
-              </h3>
-              <p className="text-sm text-slate-600 whitespace-pre-wrap">{project.project_details}</p>
-            </div>
-          )}
+          <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {project.project_details && (
+              <div className="p-4 bg-white border border-slate-200 rounded-lg">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                  <Receipt className="h-4 w-4" />
+                  Notes
+                </h3>
+                <p className="text-sm text-slate-600 whitespace-pre-wrap">{project.project_details}</p>
+              </div>
+            )}
+
+            {project.project_brief && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Project Brief
+                </h3>
+                <p className="text-sm text-blue-900 whitespace-pre-wrap font-mono">{project.project_brief}</p>
+              </div>
+            )}
+          </div>
         </div>
 
       </div>
