@@ -108,6 +108,20 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
     loadTrends();
   }, []);
 
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadStats();
+        loadTrends();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   async function loadStats() {
     try {
       const [projectsRes, productsRes, pricesRes, recentRes] = await Promise.all([
@@ -278,7 +292,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
     try {
       const { data: cabinets } = await supabase
         .from('area_cabinets')
-        .select('doors_material_id, product_sku');
+        .select('doors_material_id, product_sku, quantity');
 
       if (!cabinets) return;
 
@@ -307,10 +321,10 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
           });
         }
 
-        materialMap.get(id)!.count += 1;
+        materialMap.get(id)!.count += (cabinet.quantity || 1);
       });
 
-      const total = filteredCabinets.filter(c => c.doors_material_id).length;
+      const total = filteredCabinets.reduce((sum, c) => sum + (c.doors_material_id ? (c.quantity || 1) : 0), 0);
       const trends: MaterialTrend[] = Array.from(materialMap.entries())
         .map(([id, data]) => ({
           material_id: id,
@@ -331,7 +345,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
     try {
       const { data: cabinets } = await supabase
         .from('area_cabinets')
-        .select('box_material_id, product_sku');
+        .select('box_material_id, product_sku, quantity');
 
       if (!cabinets) return;
 
@@ -360,10 +374,10 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
           });
         }
 
-        materialMap.get(id)!.count += 1;
+        materialMap.get(id)!.count += (cabinet.quantity || 1);
       });
 
-      const total = filteredCabinets.filter(c => c.box_material_id).length;
+      const total = filteredCabinets.reduce((sum, c) => sum + (c.box_material_id ? (c.quantity || 1) : 0), 0);
       const trends: MaterialTrend[] = Array.from(materialMap.entries())
         .map(([id, data]) => ({
           material_id: id,
@@ -384,7 +398,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
     try {
       const { data: cabinets } = await supabase
         .from('area_cabinets')
-        .select('hardware, product_sku');
+        .select('hardware, product_sku, quantity');
 
       if (!cabinets) return;
 
@@ -418,7 +432,9 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
           if (!id) return;
 
           const name = hardwareNameMap.get(id) || 'Unknown Hardware';
-          const qty = hw.quantity_per_cabinet || 0;
+          const qtyPerCabinet = hw.quantity_per_cabinet || 0;
+          const cabinetQty = cabinet.quantity || 1;
+          const totalQty = qtyPerCabinet * cabinetQty;
 
           if (!hardwareMap.has(id)) {
             hardwareMap.set(id, { name, count: 0, totalQty: 0 });
@@ -426,7 +442,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
 
           const entry = hardwareMap.get(id)!;
           entry.count += 1;
-          entry.totalQty += qty;
+          entry.totalQty += totalQty;
         });
       });
 
