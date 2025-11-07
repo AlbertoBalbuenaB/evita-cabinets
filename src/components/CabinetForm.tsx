@@ -9,8 +9,6 @@ import { TemplateSelectorModal } from './TemplateSelectorModal';
 import { logTemplateUsage } from '../lib/templateManager';
 import type { CabinetTemplate } from '../types';
 import { getSettings } from '../lib/settingsStore';
-import { recalculateAreaEdgebandCosts } from '../lib/edgebandRolls';
-import { recalculateAreaSheetMaterialCosts } from '../lib/sheetMaterials';
 import {
   calculateBoxMaterialCost,
   calculateBoxEdgebandCost,
@@ -208,6 +206,8 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       return;
     }
 
+    setLoading(true);
+
     const boxMaterial = priceList.find(p => p.id === boxMaterialId);
     const boxEdgeband = priceList.find(p => p.id === boxEdgebandId);
     const boxInteriorFinish = useBoxInteriorFinish ? priceList.find(p => p.id === boxInteriorFinishId) : null;
@@ -285,9 +285,6 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
         }
       }
 
-      await recalculateAreaSheetMaterialCosts(areaId);
-      await recalculateAreaEdgebandCosts(areaId);
-
       onClose();
     } catch (error: any) {
       console.error('Error saving cabinet:', error);
@@ -295,6 +292,8 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       const errorDetails = error?.details || '';
       const errorHint = error?.hint || '';
       alert(`Failed to save cabinet\n\n${errorMessage}\n${errorDetails}\n${errorHint}`);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -716,11 +715,11 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
         )}
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
-            <Button type="button" variant="secondary" onClick={onClose}>
+            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={!costs}>
-              {cabinet ? 'Update Cabinet' : 'Add Cabinet'}
+            <Button onClick={handleSave} disabled={!costs || loading}>
+              {loading ? 'Saving...' : cabinet ? 'Update Cabinet' : 'Add Cabinet'}
             </Button>
           </div>
         </div>
