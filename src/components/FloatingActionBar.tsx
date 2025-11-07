@@ -42,7 +42,7 @@ export function FloatingActionBar({
       {!isExpanded && (
         <button
           onClick={() => setIsExpanded(true)}
-          className="fixed bottom-6 left-6 z-50 h-14 w-14 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center group hover:scale-110"
+          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center group hover:scale-110"
           aria-label="Open actions menu"
         >
           <Menu className="h-6 w-6 transition-transform group-hover:rotate-90" />
