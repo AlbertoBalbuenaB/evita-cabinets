@@ -104,6 +104,7 @@ export interface Database {
         Row: {
           id: string;
           name: string;
+          customer: string | null;
           address: string | null;
           quote_date: string;
           total_amount: number;
@@ -122,6 +123,7 @@ export interface Database {
         Insert: {
           id?: string;
           name: string;
+          customer?: string | null;
           address?: string | null;
           quote_date?: string;
           total_amount?: number;
@@ -140,6 +142,7 @@ export interface Database {
         Update: {
           id?: string;
           name?: string;
+          customer?: string | null;
           address?: string | null;
           quote_date?: string;
           total_amount?: number;

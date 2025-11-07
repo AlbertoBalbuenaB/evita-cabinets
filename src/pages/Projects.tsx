@@ -55,6 +55,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [customerFilter, setCustomerFilter] = useState<string>('all');
   const [monthFilter, setMonthFilter] = useState<string>('all');
   const [yearFilter, setYearFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortBy>('date_desc');
@@ -112,6 +113,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
         (p) =>
           p.name.toLowerCase().includes(query) ||
           p.address?.toLowerCase().includes(query) ||
+          p.customer?.toLowerCase().includes(query) ||
           p.project_details?.toLowerCase().includes(query)
       );
     }
@@ -122,6 +124,10 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
 
     if (typeFilter !== 'all') {
       filtered = filtered.filter((p) => p.project_type === typeFilter);
+    }
+
+    if (customerFilter !== 'all') {
+      filtered = filtered.filter((p) => p.customer === customerFilter);
     }
 
     if (yearFilter !== 'all') {
@@ -152,7 +158,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
     });
 
     return filtered;
-  }, [projects, searchQuery, statusFilter, typeFilter, monthFilter, yearFilter, sortBy]);
+  }, [projects, searchQuery, statusFilter, typeFilter, customerFilter, monthFilter, yearFilter, sortBy]);
 
   const stats = useMemo(() => {
     const total = projects.length;
@@ -187,6 +193,13 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
       activeValue,
       lostValue,
     };
+  }, [projects]);
+
+  const uniqueCustomers = useMemo(() => {
+    const customers = projects
+      .map(p => p.customer)
+      .filter((c): c is string => c !== null && c !== undefined && c.trim() !== '');
+    return Array.from(new Set(customers)).sort();
   }, [projects]);
 
   function handleAddNew() {
@@ -287,12 +300,13 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
     setSearchQuery('');
     setStatusFilter('all');
     setTypeFilter('all');
+    setCustomerFilter('all');
     setMonthFilter('all');
     setYearFilter('all');
     setSortBy('date_desc');
   }
 
-  const hasActiveFilters = searchQuery || statusFilter !== 'all' || typeFilter !== 'all' || monthFilter !== 'all' || yearFilter !== 'all';
+  const hasActiveFilters = searchQuery || statusFilter !== 'all' || typeFilter !== 'all' || customerFilter !== 'all' || monthFilter !== 'all' || yearFilter !== 'all';
 
   if (selectedProject) {
     return <ProjectDetails project={selectedProject} onBack={handleBackToList} />;
@@ -455,6 +469,22 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
                   <option value="Bids">Bids</option>
                   <option value="Prefab">Prefab</option>
                   <option value="Stores">Stores</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Customer</label>
+                <select
+                  value={customerFilter}
+                  onChange={(e) => setCustomerFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  <option value="all">All Customers</option>
+                  {uniqueCustomers.map((customer) => (
+                    <option key={customer} value={customer}>
+                      {customer}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -776,6 +806,13 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
           </span>
         </div>
 
+        {project.customer && (
+          <div className="flex items-center text-sm text-slate-600 mb-2">
+            <Tag className="h-4 w-4 mr-1.5 flex-shrink-0 text-slate-400" />
+            <span className="font-medium line-clamp-1">{project.customer}</span>
+          </div>
+        )}
+
         {project.address && (
           <div className="flex items-center text-sm text-slate-600 mb-2">
             <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0 text-slate-400" />
@@ -896,6 +933,12 @@ function ProjectListItem({ project, onView, onEdit, onDelete, staleProjectIds }:
           </div>
 
           <div className="flex items-center gap-4 text-sm text-slate-600">
+            {project.customer && (
+              <div className="flex items-center">
+                <Tag className="h-3.5 w-3.5 mr-1 text-slate-400" />
+                <span className="font-medium truncate max-w-xs">{project.customer}</span>
+              </div>
+            )}
             {project.address && (
               <div className="flex items-center">
                 <MapPin className="h-3.5 w-3.5 mr-1 text-slate-400" />
@@ -1024,6 +1067,7 @@ interface ProjectFormModalProps {
 function ProjectFormModal({ project, onSave, onClose }: ProjectFormModalProps) {
   const [formData, setFormData] = useState<ProjectInsert>({
     name: project?.name || '',
+    customer: project?.customer || '',
     address: project?.address || '',
     quote_date: project?.quote_date || format(new Date(), 'yyyy-MM-dd'),
     status: project?.status || 'Pending',
@@ -1057,6 +1101,13 @@ function ProjectFormModal({ project, onSave, onClose }: ProjectFormModalProps) {
               placeholder="Kitchen Renovation - Smith Residence"
             />
           </div>
+
+          <Input
+            label="Customer Name"
+            value={formData.customer || ''}
+            onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+            placeholder="John Smith"
+          />
 
           <Input
             label="Address (Optional)"
