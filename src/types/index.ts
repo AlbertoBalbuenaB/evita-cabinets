@@ -89,7 +89,7 @@ export interface CabinetCostBreakdown {
 
 export type ProjectType = 'Custom' | 'Bids' | 'Prefab' | 'Stores';
 
-export type ProjectStatus = 'Pending' | 'Estimating' | 'Lost' | 'Awarded' | 'Disqualified' | 'Cancelled';
+export type ProjectStatus = 'Pending' | 'Estimating' | 'Sent' | 'Lost' | 'Awarded' | 'Disqualified' | 'Cancelled';
 
 export interface ProjectWithDetails extends Project {
   areas?: (ProjectArea & {

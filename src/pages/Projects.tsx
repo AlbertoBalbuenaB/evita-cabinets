@@ -23,7 +23,8 @@ import {
   Copy,
   Eye,
   MoreVertical,
-  AlertTriangle
+  AlertTriangle,
+  Send
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
@@ -434,6 +435,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
                   <option value="all">All Statuses</option>
                   <option value="Pending">Pending</option>
                   <option value="Estimating">Estimating</option>
+                  <option value="Sent">Sent</option>
                   <option value="Lost">Lost</option>
                   <option value="Awarded">Awarded</option>
                   <option value="Disqualified">Disqualified</option>
@@ -604,6 +606,11 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
         return {
           color: 'bg-blue-100 text-blue-800 border-blue-300',
           icon: <FileText className="h-3.5 w-3.5" />,
+        };
+      case 'Sent':
+        return {
+          color: 'bg-purple-100 text-purple-800 border-purple-300',
+          icon: <Send className="h-3.5 w-3.5" />,
         };
       case 'Awarded':
         return {
@@ -845,6 +852,8 @@ function ProjectListItem({ project, onView, onEdit, onDelete, staleProjectIds }:
         return 'bg-slate-100 text-slate-700';
       case 'Estimating':
         return 'bg-blue-100 text-blue-700';
+      case 'Sent':
+        return 'bg-purple-100 text-purple-700';
       case 'Awarded':
         return 'bg-green-100 text-green-700';
       case 'Lost':
@@ -1093,6 +1102,7 @@ function ProjectFormModal({ project, onSave, onClose }: ProjectFormModalProps) {
             >
               <option value="Pending">Pending</option>
               <option value="Estimating">Estimating</option>
+              <option value="Sent">Sent</option>
               <option value="Lost">Lost</option>
               <option value="Awarded">Awarded</option>
               <option value="Disqualified">Disqualified</option>
