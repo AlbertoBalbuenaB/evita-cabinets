@@ -10,9 +10,10 @@ interface CabinetCardProps {
   onDelete: () => void;
   onDuplicate: () => void;
   onSaveAsTemplate?: () => void;
+  productDescription?: string;
 }
 
-export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTemplate }: CabinetCardProps) {
+export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTemplate, productDescription }: CabinetCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -20,23 +21,20 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
       <div className="bg-slate-50 px-3 sm:px-4 py-3">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <div className="flex items-center justify-between sm:flex-1">
-            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-              <span className="font-medium text-slate-900 truncate text-sm sm:text-base">{cabinet.product_sku}</span>
-              <span className="text-xs sm:text-sm text-slate-600 whitespace-nowrap">Qty: {cabinet.quantity}</span>
-            </div>
-            <div className="text-right sm:hidden">
-              <div className="text-base font-bold text-slate-900">
-                {formatCurrency(cabinet.subtotal)}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 min-w-0 flex-1">
+              <div className="flex items-center space-x-2">
+                <span className="font-medium text-slate-900 text-sm sm:text-base">{cabinet.product_sku}</span>
+                <span className="text-xs sm:text-sm text-slate-600 whitespace-nowrap">Qty: {cabinet.quantity}</span>
               </div>
+              {productDescription && (
+                <span className="text-xs sm:text-sm text-slate-500 truncate mt-0.5 sm:mt-0">
+                  {productDescription}
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end sm:space-x-4">
-            <div className="text-right hidden sm:block">
-              <div className="text-lg font-bold text-slate-900">
-                {formatCurrency(cabinet.subtotal)}
-              </div>
-            </div>
+          <div className="flex items-center justify-end sm:space-x-4">
 
             <div className="flex space-x-1">
               <Button variant="ghost" size="sm" onClick={() => setIsExpanded(!isExpanded)}>

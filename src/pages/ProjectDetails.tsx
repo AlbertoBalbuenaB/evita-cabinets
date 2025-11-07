@@ -984,16 +984,20 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                           <AreaMaterialBreakdown areaId={area.id} />
                         )}
 
-                        {area.cabinets.map((cabinet) => (
-                          <CabinetCard
-                            key={cabinet.id}
-                            cabinet={cabinet}
-                            onEdit={() => handleEditCabinet(cabinet)}
-                            onDelete={() => handleDeleteCabinet(cabinet)}
-                            onDuplicate={() => handleDuplicateCabinet(cabinet)}
-                            onSaveAsTemplate={() => handleSaveAsTemplate(cabinet)}
-                          />
-                        ))}
+                        {area.cabinets.map((cabinet) => {
+                          const product = products.find(p => p.sku === cabinet.product_sku);
+                          return (
+                            <CabinetCard
+                              key={cabinet.id}
+                              cabinet={cabinet}
+                              onEdit={() => handleEditCabinet(cabinet)}
+                              onDelete={() => handleDeleteCabinet(cabinet)}
+                              onDuplicate={() => handleDuplicateCabinet(cabinet)}
+                              onSaveAsTemplate={() => handleSaveAsTemplate(cabinet)}
+                              productDescription={product?.description}
+                            />
+                          );
+                        })}
                       </>
                     )}
 
