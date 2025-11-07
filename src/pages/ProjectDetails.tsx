@@ -30,6 +30,7 @@ import { checkProjectHasStalePrices } from '../lib/priceUpdateSystem';
 import { getVersionHistory } from '../lib/versioningSystem';
 import { updateProjectBrief } from '../lib/projectBrief';
 import { ProjectVersionHistory } from './ProjectVersionHistory';
+import { FloatingActionBar } from '../components/FloatingActionBar';
 
 interface ProjectDetailsProps {
   project: Project;
@@ -63,8 +64,6 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
   const [isBulkMaterialChangeOpen, setIsBulkMaterialChangeOpen] = useState(false);
   const [bulkChangePreselectedAreaId, setBulkChangePreselectedAreaId] = useState<string | undefined>();
   const [areaSearchQuery, setAreaSearchQuery] = useState('');
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
-  const [isPrintMenuOpen, setIsPrintMenuOpen] = useState(false);
   const [hasStalePrices, setHasStalePrices] = useState(false);
   const [isBulkPriceUpdateOpen, setIsBulkPriceUpdateOpen] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
@@ -615,159 +614,6 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
       )}
 
       <div className="mb-6 space-y-4">
-        <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3 sm:gap-0">
-          <Button onClick={() => setIsAreaModalOpen(true)} className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Add Area</span>
-            <span className="sm:hidden">Area</span>
-          </Button>
-          <Button variant="secondary" onClick={() => {
-            setBulkChangePreselectedAreaId(undefined);
-            setIsBulkMaterialChangeOpen(true);
-          }} className="w-full sm:w-auto">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            <span className="hidden md:inline">Change Materials</span>
-            <span className="md:hidden">Materials</span>
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => setIsBulkPriceUpdateOpen(true)}
-            className="w-full sm:w-auto"
-            disabled={areas.length === 0}
-          >
-            <TrendingUp className="h-4 w-4 mr-2" />
-            <span className="hidden md:inline">Recalculate Prices</span>
-            <span className="md:hidden">Recalculate</span>
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => setShowVersionHistory(true)}
-            className="w-full sm:w-auto relative"
-          >
-            <History className="h-4 w-4 mr-2" />
-            <span className="hidden md:inline">Version History</span>
-            <span className="md:hidden">History</span>
-            {versionCount > 0 && (
-              <span className="absolute -top-1 -right-1 h-5 w-5 bg-blue-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                {versionCount}
-              </span>
-            )}
-          </Button>
-          <div className="relative w-full sm:w-auto">
-            <Button
-              variant="secondary"
-              onClick={() => setIsPrintMenuOpen(!isPrintMenuOpen)}
-              className="w-full sm:w-auto"
-              disabled={areas.length === 0}
-            >
-              <Printer className="h-4 w-4 mr-2" />
-              <span className="hidden md:inline">Print / Export PDF</span>
-              <span className="md:hidden">Print</span>
-            </Button>
-            {isPrintMenuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setIsPrintMenuOpen(false)}
-                />
-                <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white border border-slate-200 z-20">
-                  <div className="py-1">
-                    <button
-                      onClick={() => {
-                        handlePrint();
-                        setIsPrintMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center"
-                    >
-                      <Printer className="h-4 w-4 mr-2 text-slate-500" />
-                      <div>
-                        <div className="font-medium">Standard PDF</div>
-                        <div className="text-xs text-slate-500">MXN with all details</div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        handlePrintUSD();
-                        setIsPrintMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center"
-                    >
-                      <DollarSign className="h-4 w-4 mr-2 text-slate-500" />
-                      <div>
-                        <div className="font-medium">USD Summary PDF</div>
-                        <div className="text-xs text-slate-500">Price, tariff, profit & tax by area</div>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-          <div className="relative w-full sm:w-auto">
-            <Button
-              variant="secondary"
-              onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-              className="w-full sm:w-auto"
-              disabled={areas.length === 0}
-            >
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              <span className="hidden md:inline">Export CSV</span>
-              <span className="md:hidden">CSV</span>
-            </Button>
-            {isExportMenuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setIsExportMenuOpen(false)}
-                />
-                <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white border border-slate-200 z-20">
-                  <div className="py-1">
-                    <button
-                      onClick={() => {
-                        handleExportAreasCSV();
-                        setIsExportMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center"
-                    >
-                      <Download className="h-4 w-4 mr-2 text-slate-500" />
-                      <div>
-                        <div className="font-medium">Areas Summary</div>
-                        <div className="text-xs text-slate-500">Export area totals</div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleExportDetailedAreasCSV();
-                        setIsExportMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center"
-                    >
-                      <FileSpreadsheet className="h-4 w-4 mr-2 text-slate-500" />
-                      <div>
-                        <div className="font-medium">Detailed Report</div>
-                        <div className="text-xs text-slate-500">Export all items & details</div>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-          <Button variant="secondary" onClick={handleSaveChanges} className="w-full sm:w-auto">
-            <Save className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Save Changes</span>
-            <span className="sm:hidden">Save</span>
-          </Button>
-          <Button
-            variant={showAnalytics ? 'primary' : 'secondary'}
-            onClick={() => setShowAnalytics(!showAnalytics)}
-            className="w-full sm:w-auto"
-          >
-            <BarChart3 className="h-4 w-4 mr-2" />
-            <span className="hidden md:inline">{showAnalytics ? 'Hide Analytics' : 'Show Analytics'}</span>
-            <span className="md:hidden">Analytics</span>
-          </Button>
-        </div>
 
         <div className="bg-white rounded-lg border border-slate-200 p-4">
           <div className="flex items-center mb-4">
@@ -1355,6 +1201,25 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
           await checkStalePrices();
           await loadVersionCount();
         }}
+      />
+
+      <FloatingActionBar
+        onAddArea={() => setIsAreaModalOpen(true)}
+        onChangeMaterials={() => {
+          setBulkChangePreselectedAreaId(undefined);
+          setIsBulkMaterialChangeOpen(true);
+        }}
+        onRecalculatePrices={() => setIsBulkPriceUpdateOpen(true)}
+        onVersionHistory={() => setShowVersionHistory(true)}
+        onPrintMXN={handlePrint}
+        onPrintUSD={handlePrintUSD}
+        onExportAreasSummary={handleExportAreasCSV}
+        onExportDetailed={handleExportDetailedAreasCSV}
+        onSaveChanges={handleSaveChanges}
+        onToggleAnalytics={() => setShowAnalytics(!showAnalytics)}
+        showAnalytics={showAnalytics}
+        versionCount={versionCount}
+        areasEmpty={areas.length === 0}
       />
     </div>
   );
