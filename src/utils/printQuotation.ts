@@ -392,6 +392,7 @@ export async function printQuotation(
           <tr>
             <th>Area/Concept</th>
             <th class="center">Boxes</th>
+            <th class="right">Square Feet</th>
             <th class="right">Price</th>
           </tr>
         </thead>
@@ -400,6 +401,7 @@ export async function printQuotation(
             <tr>
               <td>${area.name}</td>
               <td class="center">${area.boxes}</td>
+              <td class="right">${area.sf}</td>
               <td class="right">${formatCurrency(area.total)}</td>
             </tr>
           `).join('')}
@@ -408,6 +410,7 @@ export async function printQuotation(
           <tr>
             <td><strong>Total</strong></td>
             <td class="center"></td>
+            <td class="right">${totalSF.toFixed(2)}</td>
             <td class="right">${formatCurrency(materialsSubtotal)}</td>
           </tr>
         </tfoot>
