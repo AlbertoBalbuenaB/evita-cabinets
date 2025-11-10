@@ -126,7 +126,10 @@ export function FloatingActionBar({
 
               <div className="relative flex-shrink-0">
                 <button
-                  onClick={() => setIsPrintMenuOpen(!isPrintMenuOpen)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsPrintMenuOpen(!isPrintMenuOpen);
+                  }}
                   disabled={areasEmpty}
                   className="h-10 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -134,7 +137,7 @@ export function FloatingActionBar({
                   <span className="hidden sm:inline">Print</span>
                 </button>
                 {isPrintMenuOpen && (
-                  <div className="absolute bottom-full left-0 mb-2 w-64 rounded-lg shadow-xl bg-white border border-slate-200">
+                  <div className="absolute bottom-full left-0 mb-2 w-64 rounded-lg shadow-xl bg-white border border-slate-200 z-10">
                     <div className="py-1">
                       <button
                         onClick={() => {
@@ -171,7 +174,10 @@ export function FloatingActionBar({
 
               <div className="relative flex-shrink-0">
                 <button
-                  onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExportMenuOpen(!isExportMenuOpen);
+                  }}
                   disabled={areasEmpty}
                   className="h-10 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -179,7 +185,7 @@ export function FloatingActionBar({
                   <span className="hidden sm:inline">CSV</span>
                 </button>
                 {isExportMenuOpen && (
-                  <div className="absolute bottom-full left-0 mb-2 w-64 rounded-lg shadow-xl bg-white border border-slate-200">
+                  <div className="absolute bottom-full left-0 mb-2 w-64 rounded-lg shadow-xl bg-white border border-slate-200 z-10">
                     <div className="py-1">
                       <button
                         onClick={() => {
