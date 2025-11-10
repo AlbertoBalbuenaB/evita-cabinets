@@ -839,7 +839,7 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                 {profitMultiplier > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(profitAmount)}</p>}
                 <p className="text-sm font-bold text-blue-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(price)}</p>
                 {tariffMultiplier > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(tariffAmount)}</p>}
-                {taxMultiplier > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(taxAmount)}</p>}
+                {taxPercentage > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(taxAmount)}</p>}
                 <p className="text-sm font-medium text-slate-700">{formatPrice(otherExpenses)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(installDelivery)}</p>
                 <p className="text-base font-bold text-slate-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(projectTotal)}</p>
