@@ -681,31 +681,55 @@ export async function printQuotationUSD(
           text-align: right;
         }
 
-        .summary-section {
-          margin-top: 30px;
-          border: 2px solid #000;
-          border-radius: 4px;
-          overflow: hidden;
-        }
-
-        .summary-row {
+        .notes-box {
+          background-color: #fff8e1;
+          border: 1px solid #ffd54f;
+          border-left: 4px solid #ffa000;
+          padding: 12px 15px;
+          margin: 20px 0;
+          font-size: 9pt;
           display: flex;
-          justify-content: space-between;
-          padding: 10px 20px;
-          font-size: 10pt;
-          border-bottom: 1px solid #e0e0e0;
+          align-items: flex-start;
+          gap: 10px;
+          line-height: 1.5;
         }
 
-        .summary-row:last-child {
-          border-bottom: none;
-        }
-
-        .summary-row.total {
-          background-color: #000;
+        .notes-box-number {
+          background-color: #ffa000;
           color: white;
           font-weight: 700;
-          font-size: 11pt;
-          padding: 14px 20px;
+          padding: 3px 9px;
+          border-radius: 3px;
+          font-size: 9pt;
+          flex-shrink: 0;
+        }
+
+        .project-details {
+          margin-top: 20px;
+          margin-bottom: 20px;
+          page-break-inside: avoid;
+        }
+
+        .project-details h3 {
+          font-size: 10pt;
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+
+        .project-details ul {
+          list-style: disc;
+          padding-left: 18px;
+          margin: 0;
+        }
+
+        .project-details li {
+          margin: 4px 0;
+          font-size: 9pt;
+          line-height: 1.5;
+        }
+
+        .project-details li strong {
+          font-weight: 600;
         }
 
         .footer {
@@ -724,6 +748,10 @@ export async function printQuotationUSD(
           body {
             print-color-adjust: exact;
             -webkit-print-color-adjust: exact;
+          }
+
+          .project-details {
+            page-break-inside: avoid;
           }
         }
       </style>
@@ -750,17 +778,16 @@ export async function printQuotationUSD(
         </div>
       </div>
 
-      <div class="section-title">USD Pricing per Area</div>
+      <div class="section-title">Pricing</div>
 
       <table class="pricing-table">
         <thead>
           <tr>
-            <th>Area</th>
+            <th>Totem Style</th>
             <th class="right">Price</th>
             ${tariffPercentage > 0 ? '<th class="right">Tariff</th>' : ''}
-            ${profitPercentage > 0 ? '<th class="right">Profit</th>' : ''}
             <th class="right">Tax</th>
-            <th class="right">Total</th>
+            <th class="right">Total w/Tax</th>
           </tr>
         </thead>
         <tbody>
@@ -769,7 +796,6 @@ export async function printQuotationUSD(
               <td>${area.name}</td>
               <td class="right">${formatUSD(area.price)}</td>
               ${tariffPercentage > 0 ? `<td class="right">${formatUSD(area.tariff)}</td>` : ''}
-              ${profitPercentage > 0 ? `<td class="right">${formatUSD(area.profit)}</td>` : ''}
               <td class="right">${formatUSD(area.tax)}</td>
               <td class="right">${formatUSD(area.total)}</td>
             </tr>
@@ -777,41 +803,59 @@ export async function printQuotationUSD(
         </tbody>
         <tfoot>
           <tr>
-            <td><strong>SUBTOTAL</strong></td>
+            <td><strong>Totals</strong></td>
             <td class="right">${formatUSD(totalPrice)}</td>
             ${tariffPercentage > 0 ? `<td class="right">${formatUSD(totalTariff)}</td>` : ''}
-            ${profitPercentage > 0 ? `<td class="right">${formatUSD(totalProfit)}</td>` : ''}
             <td class="right">${formatUSD(totalTax)}</td>
             <td class="right">${formatUSD(grandTotal)}</td>
           </tr>
         </tfoot>
       </table>
 
-      <div class="summary-section">
-        ${otherExpenses > 0 ? `
-          <div class="summary-row">
-            <span class="summary-label">Other Expenses</span>
-            <span class="summary-value">${formatUSD(otherExpenses)}</span>
+      ${(() => {
+        const { pallets } = areaBreakdown.reduce((acc, area, index) => {
+          const areaData = areas[index];
+          if (areaData) {
+            const calc = calculateAreaBoxesAndPallets(areaData.cabinets, products);
+            acc.pallets += calc.pallets;
+          }
+          return acc;
+        }, { pallets: 0 });
+
+        return pallets > 0 ? `
+          <div class="notes-box">
+            <div class="notes-box-number">${pallets}</div>
+            <div>Pallets approx. everything assembled</div>
           </div>
-        ` : ''}
-        ${installDelivery > 0 ? `
-          <div class="summary-row">
-            <span class="summary-label">Install & Delivery</span>
-            <span class="summary-value">${formatUSD(installDelivery)}</span>
-          </div>
-        ` : ''}
-        <div class="summary-row total">
-          <span class="summary-label">GRAND TOTAL</span>
-          <span class="summary-value">${formatUSD(finalTotal)}</span>
+        ` : '';
+      })()}
+
+      ${project.project_brief ? `
+        <div class="project-details">
+          <h3>Project Details</h3>
+          <ul>
+            ${project.project_brief.split('\n').filter(line => line.trim()).map(line => {
+              const trimmed = line.trim();
+              if (trimmed.startsWith('•')) {
+                return `<li>${trimmed.substring(1).trim()}</li>`;
+              } else if (trimmed.startsWith('-')) {
+                return `<li>${trimmed.substring(1).trim()}</li>`;
+              } else if (trimmed.match(/^[A-Z][a-z\s&/()]+:/)) {
+                const [label, ...rest] = trimmed.split(':');
+                return `<li><strong>${label}:</strong>${rest.join(':')}</li>`;
+              }
+              return `<li>${trimmed}</li>`;
+            }).join('')}
+          </ul>
         </div>
-      </div>
+      ` : ''}
 
       <div class="footer">
         ${new Date(project.quote_date).toLocaleDateString('en-US', {
           month: '2-digit',
           day: '2-digit',
           year: 'numeric'
-        })} | Page 1
+        })} | Page 2
       </div>
 
       <script>
