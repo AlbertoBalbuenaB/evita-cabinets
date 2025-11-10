@@ -371,7 +371,7 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
   }
 
   async function handlePrintUSD() {
-    await printQuotationUSD(project, areas, exchangeRate);
+    await printQuotationUSD(project, areas, exchangeRate, products);
   }
 
   async function handleSaveChanges() {

@@ -479,7 +479,8 @@ export async function printQuotation(
 export async function printQuotationUSD(
   project: Project,
   areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[],
-  exchangeRate: number
+  exchangeRate: number,
+  products: Product[] = []
 ) {
   const formatUSD = (amount: number) => {
     const amountInUSD = amount / exchangeRate;
