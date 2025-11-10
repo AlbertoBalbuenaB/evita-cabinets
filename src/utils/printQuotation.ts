@@ -409,7 +409,7 @@ export async function printQuotation(
         <tfoot>
           <tr>
             <td><strong>Total</strong></td>
-            <td class="center"></td>
+            <td class="center"><strong>${totalBoxes}</strong></td>
             <td class="right">${totalSF.toFixed(2)}</td>
             <td class="right">${formatCurrency(materialsSubtotal)}</td>
           </tr>
