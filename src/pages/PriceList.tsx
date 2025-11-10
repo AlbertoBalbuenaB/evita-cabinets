@@ -74,16 +74,23 @@ export function PriceList() {
     if (!confirm(`Delete ${item.concept_description}?`)) return;
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('price_list')
         .update({ is_active: false })
-        .eq('id', item.id);
+        .eq('id', item.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        alert(`Failed to delete item: ${error.message}`);
+        return;
+      }
+
+      console.log('Delete successful:', data);
       loadPriceList();
     } catch (error) {
       console.error('Error deleting item:', error);
-      alert('Failed to delete item');
+      alert(`Failed to delete item: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
