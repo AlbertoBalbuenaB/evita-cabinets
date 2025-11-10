@@ -811,7 +811,7 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                 placeholder="0.0825"
               />
               <p className="mt-1 text-xs text-slate-500">
-                {taxMultiplier > 0 ? `${formatPrice(taxAmount)} (${(taxMultiplier * 100).toFixed(2)}%)` : 'e.g., 0.0825 = 8.25% tax'}
+                {taxMultiplier > 0 ? `${formatPrice(taxAmount)} (${(taxMultiplier * 100).toFixed(4)}%)` : 'e.g., 0.0825 = 8.25% tax'}
               </p>
             </div>
           </div>
@@ -826,7 +826,7 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                 {profitMultiplier > 0 && <p className="text-sm text-slate-600">Profit ({(profitMultiplier * 100).toFixed(1)}%):</p>}
                 <p className="text-sm font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">Price:</p>
                 {tariffMultiplier > 0 && <p className="text-sm text-slate-600">Tariff ({(tariffMultiplier * 100).toFixed(2)}%):</p>}
-                {taxMultiplier > 0 && <p className="text-sm text-slate-600">Tax ({(taxMultiplier * 100).toFixed(2)}%):</p>}
+                {taxMultiplier > 0 && <p className="text-sm text-slate-600">Tax ({(taxMultiplier * 100).toFixed(4)}%):</p>}
                 <p className="text-sm text-slate-600">Other Expenses:</p>
                 <p className="text-sm text-slate-600">Install & Delivery:</p>
                 <p className="text-base font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">Total:</p>
