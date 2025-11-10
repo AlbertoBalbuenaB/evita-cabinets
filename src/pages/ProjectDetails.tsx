@@ -56,7 +56,7 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
   const [otherExpenses, setOtherExpenses] = useState(project.other_expenses || 0);
   const [profitMultiplier, setProfitMultiplier] = useState(project.profit_multiplier || 0);
   const [tariffMultiplier, setTariffMultiplier] = useState(project.tariff_multiplier || 0);
-  const [taxMultiplier, setTaxMultiplier] = useState(project.tax_multiplier || 0);
+  const [taxPercentage, setTaxPercentage] = useState(project.tax_percentage || 0);
   const [installDelivery, setInstallDelivery] = useState(project.install_delivery || 0);
   const [savingTemplateCabinet, setSavingTemplateCabinet] = useState<AreaCabinet | null>(null);
   const [priceList, setPriceList] = useState<PriceListItem[]>([]);
@@ -424,7 +424,7 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
     : materialsSubtotal;
   const profitAmount = price - materialsSubtotal;
   const tariffAmount = price * tariffMultiplier;
-  const taxAmount = (price + tariffAmount) * taxMultiplier;
+  const taxAmount = (price + tariffAmount) * (taxPercentage / 100);
   const projectTotal = price + tariffAmount + taxAmount + otherExpenses + installDelivery;
 
   const formatPrice = (amount: number) => {
@@ -455,7 +455,7 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
           other_expenses: otherExpenses,
           profit_multiplier: profitMultiplier,
           tariff_multiplier: tariffMultiplier,
-          tax_multiplier: taxMultiplier,
+          tax_percentage: taxPercentage,
           install_delivery: installDelivery,
           total_amount: projectTotal,
         })
@@ -798,20 +798,20 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Tax Multiplier
+                Tax (%)
               </label>
               <input
                 type="number"
                 min="0"
-                step="0.0001"
-                value={taxMultiplier}
-                onChange={(e) => setTaxMultiplier(parseFloat(e.target.value) || 0)}
+                step="0.01"
+                value={taxPercentage}
+                onChange={(e) => setTaxPercentage(parseFloat(e.target.value) || 0)}
                 onBlur={updateProjectCosts}
                 className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="0.0825"
+                placeholder="8.25"
               />
               <p className="mt-1 text-xs text-slate-500">
-                {taxMultiplier > 0 ? `${formatPrice(taxAmount)} (${(taxMultiplier * 100).toFixed(4)}%)` : 'e.g., 0.0825 = 8.25% tax'}
+                {taxPercentage > 0 ? formatPrice(taxAmount) : 'e.g., 8.25 for 8.25% tax'}
               </p>
             </div>
           </div>
@@ -826,7 +826,7 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                 {profitMultiplier > 0 && <p className="text-sm text-slate-600">Profit ({(profitMultiplier * 100).toFixed(1)}%):</p>}
                 <p className="text-sm font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">Price:</p>
                 {tariffMultiplier > 0 && <p className="text-sm text-slate-600">Tariff ({(tariffMultiplier * 100).toFixed(2)}%):</p>}
-                {taxMultiplier > 0 && <p className="text-sm text-slate-600">Tax ({(taxMultiplier * 100).toFixed(4)}%):</p>}
+                {taxPercentage > 0 && <p className="text-sm text-slate-600">Tax ({taxPercentage}%):</p>}
                 <p className="text-sm text-slate-600">Other Expenses:</p>
                 <p className="text-sm text-slate-600">Install & Delivery:</p>
                 <p className="text-base font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">Total:</p>

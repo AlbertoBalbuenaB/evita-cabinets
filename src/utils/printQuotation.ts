@@ -495,7 +495,7 @@ export async function printQuotationUSD(
 
   const profitMultiplier = project.profit_multiplier || 0;
   const tariffMultiplier = project.tariff_multiplier || 0;
-  const taxMultiplier = project.tax_multiplier || 0;
+  const taxPercentage = project.tax_percentage || 0;
 
   const areaBreakdown = areas.map(area => {
     const areaCabinetsTotal = area.cabinets.reduce((sum, c) => sum + c.subtotal, 0);
@@ -507,7 +507,7 @@ export async function printQuotationUSD(
       ? areaMaterialsSubtotal / (1 - profitMultiplier)
       : areaMaterialsSubtotal;
     const areaTariff = areaPrice * tariffMultiplier;
-    const areaTax = (areaPrice + areaTariff) * taxMultiplier;
+    const areaTax = (areaPrice + areaTariff) * (taxPercentage / 100);
     const areaTotal = areaPrice + areaTariff + areaTax;
 
     return {
