@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Copy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -84,6 +84,31 @@ export function PriceList() {
     } catch (error) {
       console.error('Error deleting item:', error);
       alert('Failed to delete item');
+    }
+  }
+
+  async function handleDuplicate(item: PriceListItem) {
+    try {
+      const newItem: PriceListInsert = {
+        sku_code: item.sku_code ? `${item.sku_code}-copy` : '',
+        concept_description: `${item.concept_description} (Copy)`,
+        type: item.type,
+        material: item.material,
+        dimensions: item.dimensions,
+        unit: item.unit,
+        price: item.price,
+        sf_per_sheet: item.sf_per_sheet,
+      };
+
+      const { error } = await supabase
+        .from('price_list')
+        .insert(newItem);
+
+      if (error) throw error;
+      loadPriceList();
+    } catch (error) {
+      console.error('Error duplicating item:', error);
+      alert('Failed to duplicate item');
     }
   }
 
@@ -243,6 +268,14 @@ export function PriceList() {
                         className="mr-2"
                       >
                         <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDuplicate(item)}
+                        className="mr-2"
+                      >
+                        <Copy className="h-4 w-4 text-blue-600" />
                       </Button>
                       <Button
                         variant="ghost"
