@@ -503,8 +503,9 @@ export async function printQuotationUSD(
     const areaCountertopsTotal = area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0);
     const areaMaterialsSubtotal = areaCabinetsTotal + areaItemsTotal + areaCountertopsTotal;
 
-    const areaProfit = areaMaterialsSubtotal * profitMultiplier;
-    const areaPrice = areaMaterialsSubtotal + areaProfit;
+    const areaPrice = profitMultiplier > 0 && profitMultiplier < 1
+      ? areaMaterialsSubtotal / (1 - profitMultiplier)
+      : areaMaterialsSubtotal;
     const areaTariff = areaPrice * tariffMultiplier;
     const areaTax = (areaPrice + areaTariff) * taxMultiplier;
     const areaTotal = areaPrice + areaTariff + areaTax;
@@ -513,7 +514,6 @@ export async function printQuotationUSD(
       name: area.name,
       price: areaPrice,
       tariff: areaTariff,
-      profit: areaProfit,
       tax: areaTax,
       total: areaTotal
     };

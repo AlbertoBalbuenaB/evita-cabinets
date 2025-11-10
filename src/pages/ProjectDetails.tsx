@@ -419,8 +419,10 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
 
   const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal;
 
-  const profitAmount = materialsSubtotal * profitMultiplier;
-  const price = materialsSubtotal + profitAmount;
+  const price = profitMultiplier > 0 && profitMultiplier < 1
+    ? materialsSubtotal / (1 - profitMultiplier)
+    : materialsSubtotal;
+  const profitAmount = price - materialsSubtotal;
   const tariffAmount = price * tariffMultiplier;
   const taxAmount = (price + tariffAmount) * taxMultiplier;
   const projectTotal = price + tariffAmount + taxAmount + otherExpenses + installDelivery;
