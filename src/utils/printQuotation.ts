@@ -789,7 +789,7 @@ export async function printQuotationUSD(
           <tr>
             <th>Area/Concept</th>
             <th class="right">Price</th>
-            ${tariffPercentage > 0 ? '<th class="right">Tariff</th>' : ''}
+            <th class="right">Tariff</th>
             <th class="right">Tax</th>
             <th class="right">Total w/Tax</th>
           </tr>
@@ -799,7 +799,7 @@ export async function printQuotationUSD(
             <tr>
               <td>${area.name}</td>
               <td class="right">${formatUSD(area.price)}</td>
-              ${tariffPercentage > 0 ? `<td class="right">${formatUSD(area.tariff)}</td>` : ''}
+              <td class="right">${formatUSD(area.tariff)}</td>
               <td class="right">${formatUSD(area.tax)}</td>
               <td class="right">${formatUSD(area.total)}</td>
             </tr>
@@ -809,7 +809,7 @@ export async function printQuotationUSD(
           <tr>
             <td><strong>Totals</strong></td>
             <td class="right">${formatUSD(totalPrice)}</td>
-            ${tariffPercentage > 0 ? `<td class="right">${formatUSD(totalTariff)}</td>` : ''}
+            <td class="right">${formatUSD(totalTariff)}</td>
             <td class="right">${formatUSD(totalTax)}</td>
             <td class="right">${formatUSD(grandTotal)}</td>
           </tr>
