@@ -390,7 +390,7 @@ export async function printQuotation(
       <table class="pricing-table">
         <thead>
           <tr>
-            <th>Totem Style</th>
+            <th>Area/Concept</th>
             <th class="center">Boxes</th>
             <th class="right">Price</th>
           </tr>
@@ -784,7 +784,7 @@ export async function printQuotationUSD(
       <table class="pricing-table">
         <thead>
           <tr>
-            <th>Totem Style</th>
+            <th>Area/Concept</th>
             <th class="right">Price</th>
             ${tariffPercentage > 0 ? '<th class="right">Tariff</th>' : ''}
             <th class="right">Tax</th>
