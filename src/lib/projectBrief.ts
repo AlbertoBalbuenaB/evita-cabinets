@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { ProjectArea, AreaCabinet, PriceListItem, Product } from '../types';
+import type { ProjectArea, AreaCabinet, AreaItem, AreaCountertop, PriceListItem, Product } from '../types';
 import { isAccessoryPanel } from './cabinetFilters';
 
 interface HardwareInfo {
@@ -15,7 +15,9 @@ export async function generateProjectBrief(projectId: string): Promise<string> {
       .from('project_areas')
       .select(`
         *,
-        cabinets:area_cabinets(*)
+        cabinets:area_cabinets(*),
+        items:area_items(*),
+        countertops:area_countertops(*)
       `)
       .eq('project_id', projectId);
 
@@ -24,15 +26,15 @@ export async function generateProjectBrief(projectId: string): Promise<string> {
     }
 
     const allCabinets: AreaCabinet[] = areas.flatMap((area: any) => area.cabinets || []);
-
-    if (allCabinets.length === 0) {
-      return 'No cabinets in this project yet.';
-    }
+    const allItems: AreaItem[] = areas.flatMap((area: any) => area.items || []);
+    const allCountertops: AreaCountertop[] = areas.flatMap((area: any) => area.countertops || []);
 
     const materialIds = new Set<string>();
     const edgebandIds = new Set<string>();
     const interiorFinishIds = new Set<string>();
     const hardwareIds = new Set<string>();
+    const itemIds = new Set<string>();
+    const countertopIds = new Set<string>();
 
     allCabinets.forEach(cabinet => {
       if (cabinet.box_material_id) materialIds.add(cabinet.box_material_id);
@@ -49,7 +51,15 @@ export async function generateProjectBrief(projectId: string): Promise<string> {
       }
     });
 
-    const allIds = [...materialIds, ...edgebandIds, ...interiorFinishIds, ...hardwareIds];
+    allItems.forEach(item => {
+      if (item.price_list_item_id) itemIds.add(item.price_list_item_id);
+    });
+
+    allCountertops.forEach(ct => {
+      if (ct.price_list_item_id) countertopIds.add(ct.price_list_item_id);
+    });
+
+    const allIds = [...materialIds, ...edgebandIds, ...interiorFinishIds, ...hardwareIds, ...itemIds, ...countertopIds];
 
     const { data: priceListItems } = await supabase
       .from('price_list')
@@ -182,24 +192,20 @@ export async function generateProjectBrief(projectId: string): Promise<string> {
 
     if (hardwareByCategory.size > 0) {
       const hardwareParts: string[] = [];
-      const categoryOrder = ['Hinges', 'Drawer Slides', 'Special Hardware', 'Other'];
+      const categoryOrder = ['Hinges', 'Drawer Slides', 'Special Hardware'];
 
       categoryOrder.forEach(category => {
         if (hardwareByCategory.has(category)) {
           const items = hardwareByCategory.get(category)!;
-          hardwareParts.push(`${category}:`);
-          items.forEach(item => {
-            hardwareParts.push(`  - ${item.name}`);
-          });
+          const itemNames = Array.from(new Set(items.map(item => item.name)));
+          hardwareParts.push(`${category}: ${itemNames.join(', ')}`);
         }
       });
 
       hardwareByCategory.forEach((items, category) => {
         if (!categoryOrder.includes(category)) {
-          hardwareParts.push(`${category}:`);
-          items.forEach(item => {
-            hardwareParts.push(`  - ${item.name}`);
-          });
+          const itemNames = Array.from(new Set(items.map(item => item.name)));
+          hardwareParts.push(`${category}: ${itemNames.join(', ')}`);
         }
       });
 
@@ -233,6 +239,69 @@ export async function generateProjectBrief(projectId: string): Promise<string> {
       });
 
       sections.push(`CABINET TYPES:\n${cabinetParts.join('\n')}`);
+    }
+
+    const accessoryTypes = new Map<string, { description: string; quantity: number }>();
+
+    allCabinets.forEach(cabinet => {
+      if (isAccessoryPanel(cabinet.product_sku)) {
+        const sku = cabinet.product_sku;
+        const product = productMap.get(sku);
+        const description = product?.description || sku;
+
+        if (!accessoryTypes.has(sku)) {
+          accessoryTypes.set(sku, { description, quantity: 0 });
+        }
+
+        const entry = accessoryTypes.get(sku)!;
+        entry.quantity += cabinet.quantity || 1;
+      }
+    });
+
+    if (accessoryTypes.size > 0) {
+      const accessoryParts: string[] = [];
+      const sortedAccessories = Array.from(accessoryTypes.entries())
+        .sort((a, b) => b[1].quantity - a[1].quantity);
+
+      sortedAccessories.forEach(([sku, data]) => {
+        accessoryParts.push(`${sku} - ${data.description}: ${data.quantity} units`);
+      });
+
+      sections.push(`ACCESSORIES:\n${accessoryParts.join('\n')}`);
+    }
+
+    if (allCountertops.length > 0) {
+      const countertopSummary = new Map<string, number>();
+
+      allCountertops.forEach(ct => {
+        const name = ct.item_name;
+        const qty = ct.quantity || 0;
+        countertopSummary.set(name, (countertopSummary.get(name) || 0) + qty);
+      });
+
+      const countertopParts: string[] = [];
+      countertopSummary.forEach((qty, name) => {
+        countertopParts.push(`${name}: ${qty.toFixed(2)} units`);
+      });
+
+      sections.push(`COUNTERTOPS:\n${countertopParts.join('\n')}`);
+    }
+
+    if (allItems.length > 0) {
+      const itemSummary = new Map<string, number>();
+
+      allItems.forEach(item => {
+        const name = item.item_name;
+        const qty = item.quantity || 0;
+        itemSummary.set(name, (itemSummary.get(name) || 0) + qty);
+      });
+
+      const itemParts: string[] = [];
+      itemSummary.forEach((qty, name) => {
+        itemParts.push(`${name}: ${qty} units`);
+      });
+
+      sections.push(`OTHER:\n${itemParts.join('\n')}`);
     }
 
     return sections.join('\n\n');
