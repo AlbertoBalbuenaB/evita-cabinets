@@ -367,7 +367,7 @@ export async function printQuotation(
           <span class="project-label">Project</span>
           <div class="project-name">${project.name}</div>
           <span class="project-label">Address</span>
-          <span style="font-size: 9pt;">${project.address || '-'}</span>
+          <div style="font-size: 10pt; font-weight: 600; margin-top: 2px;">${project.address || '-'}</div>
         </div>
         <div style="text-align: right;">
           <span class="project-label">Date</span>
@@ -752,7 +752,7 @@ export async function printQuotationUSD(
           <span class="project-label">Project</span>
           <div class="project-name">${project.name}</div>
           <span class="project-label">Address</span>
-          <span style="font-size: 9pt;">${project.address || '-'}</span>
+          <div style="font-size: 10pt; font-weight: 600; margin-top: 2px;">${project.address || '-'}</div>
         </div>
         <div style="text-align: right;">
           <span class="project-label">Date</span>
