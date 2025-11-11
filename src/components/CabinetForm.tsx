@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Plus, Trash2, ChevronDown, ChevronRight, DollarSign, Info, Bookmark } from 'lucide-react';
+import { X, Plus, Trash2, ChevronDown, ChevronRight, DollarSign, Info, Bookmark, Layers, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from './Button';
 import { Input } from './Input';
@@ -451,31 +451,55 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   required
                 />
 
-                <div>
-                  <label className="flex items-center space-x-2 cursor-pointer">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <label className="flex items-start space-x-2 cursor-pointer group">
                     <input
                       type="checkbox"
                       checked={useBoxInteriorFinish}
                       onChange={(e) => setUseBoxInteriorFinish(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-0.5"
                     />
-                    <span className="text-sm font-medium text-slate-700">
-                      Different interior finish
-                    </span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Layers className="h-4 w-4 text-amber-600" />
+                        <span className="text-sm font-medium text-slate-700">
+                          Add Surface Layer Material
+                        </span>
+                        <Info className="h-3.5 w-3.5 text-amber-500" />
+                      </div>
+                      <p className="text-xs text-slate-600 mt-1">
+                        For laminate, veneer, or other materials applied over the base material.
+                        Both materials will use the same square footage.
+                      </p>
+                    </div>
                   </label>
                 </div>
 
                 {useBoxInteriorFinish && (
-                  <AutocompleteSelect
-                    label="Interior Finish"
-                    placeholder="Select interior finish..."
-                    value={boxInteriorFinishId}
-                    onChange={setBoxInteriorFinishId}
-                    options={sheetMaterials.map((item) => ({
-                      value: item.id,
-                      label: `${item.concept_description} - ${formatCurrency(item.price)}/${item.unit}`,
-                    }))}
-                  />
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Layers className="h-4 w-4 text-blue-600" />
+                      <span className="text-xs font-semibold text-blue-900">Surface Layer Material</span>
+                      <span className="text-xs text-blue-600">(Applied over base material)</span>
+                    </div>
+                    <AutocompleteSelect
+                      label="Surface Layer (e.g., Laminate, Veneer)"
+                      placeholder="Select surface layer material..."
+                      value={boxInteriorFinishId}
+                      onChange={setBoxInteriorFinishId}
+                      options={sheetMaterials.map((item) => ({
+                        value: item.id,
+                        label: `${item.concept_description} - ${formatCurrency(item.price)}/${item.unit}`,
+                      }))}
+                    />
+                    <div className="flex items-start gap-2 mt-2 text-xs text-blue-700">
+                      <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                      <span>
+                        The surface layer will require the same number of sheets as the base material.
+                        Total cost = Base Material + Surface Layer.
+                      </span>
+                    </div>
+                  </div>
                 )}
                 </div>
               )}
@@ -531,31 +555,55 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   required
                 />
 
-                <div>
-                  <label className="flex items-center space-x-2 cursor-pointer">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <label className="flex items-start space-x-2 cursor-pointer group">
                     <input
                       type="checkbox"
                       checked={useDoorsInteriorFinish}
                       onChange={(e) => setUseDoorsInteriorFinish(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-0.5"
                     />
-                    <span className="text-sm font-medium text-slate-700">
-                      Different interior finish
-                    </span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Layers className="h-4 w-4 text-amber-600" />
+                        <span className="text-sm font-medium text-slate-700">
+                          Add Surface Layer Material
+                        </span>
+                        <Info className="h-3.5 w-3.5 text-amber-500" />
+                      </div>
+                      <p className="text-xs text-slate-600 mt-1">
+                        For laminate, veneer, or other materials applied over the base material.
+                        Both materials will use the same square footage.
+                      </p>
+                    </div>
                   </label>
                 </div>
 
                 {useDoorsInteriorFinish && (
-                  <AutocompleteSelect
-                    label="Interior Finish"
-                    placeholder="Select interior finish..."
-                    value={doorsInteriorFinishId}
-                    onChange={setDoorsInteriorFinishId}
-                    options={sheetMaterials.map((item) => ({
-                      value: item.id,
-                      label: `${item.concept_description} - ${formatCurrency(item.price)}/${item.unit}`,
-                    }))}
-                  />
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Layers className="h-4 w-4 text-green-600" />
+                      <span className="text-xs font-semibold text-green-900">Surface Layer Material</span>
+                      <span className="text-xs text-green-600">(Applied over base material)</span>
+                    </div>
+                    <AutocompleteSelect
+                      label="Surface Layer (e.g., Laminate, Veneer)"
+                      placeholder="Select surface layer material..."
+                      value={doorsInteriorFinishId}
+                      onChange={setDoorsInteriorFinishId}
+                      options={sheetMaterials.map((item) => ({
+                        value: item.id,
+                        label: `${item.concept_description} - ${formatCurrency(item.price)}/${item.unit}`,
+                      }))}
+                    />
+                    <div className="flex items-start gap-2 mt-2 text-xs text-green-700">
+                      <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                      <span>
+                        The surface layer will require the same number of sheets as the base material.
+                        Total cost = Base Material + Surface Layer.
+                      </span>
+                    </div>
+                  </div>
                 )}
                 </div>
               )}
@@ -666,8 +714,11 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     <span className="font-medium">{formatCurrency(costs.boxEdgebandCost)}</span>
                   </div>
                   {costs.boxInteriorFinishCost > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">Box Interior Finish:</span>
+                    <div className="flex justify-between bg-blue-50 -mx-2 px-2 py-1 rounded">
+                      <span className="text-slate-600 flex items-center gap-1">
+                        <Layers className="h-3.5 w-3.5 text-blue-600" />
+                        Box Surface Layer:
+                      </span>
                       <span className="font-medium">
                         {formatCurrency(costs.boxInteriorFinishCost)}
                       </span>
@@ -682,8 +733,11 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     <span className="font-medium">{formatCurrency(costs.doorsEdgebandCost)}</span>
                   </div>
                   {costs.doorsInteriorFinishCost > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">Doors Interior Finish:</span>
+                    <div className="flex justify-between bg-green-50 -mx-2 px-2 py-1 rounded">
+                      <span className="text-slate-600 flex items-center gap-1">
+                        <Layers className="h-3.5 w-3.5 text-green-600" />
+                        Doors Surface Layer:
+                      </span>
                       <span className="font-medium">
                         {formatCurrency(costs.doorsInteriorFinishCost)}
                       </span>

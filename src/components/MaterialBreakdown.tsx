@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Package, Ruler, Wrench, Hammer as HammerIcon, ListChecks } from 'lucide-react';
+import { Package, Ruler, Wrench, Hammer as HammerIcon, ListChecks, Layers } from 'lucide-react';
 import { formatCurrency } from '../lib/calculations';
 import { supabase } from '../lib/supabase';
 import type { AreaCabinet, Product, PriceListItem, AreaItem, AreaCountertop } from '../types';
@@ -16,6 +16,10 @@ interface MaterialDetail {
   sheetsNeeded: number;
   sfPerSheet: number;
   cost: number;
+  layerMaterialName?: string;
+  layerCost?: number;
+  layerSheetsNeeded?: number;
+  isComposite?: boolean;
 }
 
 interface EdgebandDetail {
@@ -64,6 +68,8 @@ export function MaterialBreakdown({ cabinets, items, countertops }: MaterialBrea
 
     const boxMaterialsMap = new Map<string, MaterialDetail>();
     const doorsMaterialsMap = new Map<string, MaterialDetail>();
+    const boxInteriorFinishMap = new Map<string, { materialName: string; totalSF: number; sheetsNeeded: number; sfPerSheet: number; cost: number }>();
+    const doorsInteriorFinishMap = new Map<string, { materialName: string; totalSF: number; sheetsNeeded: number; sfPerSheet: number; cost: number }>();
     const boxEdgebandMap = new Map<string, EdgebandDetail>();
     const doorsEdgebandMap = new Map<string, EdgebandDetail>();
     const hardwareMap = new Map<string, HardwareDetail>();
@@ -98,6 +104,30 @@ export function MaterialBreakdown({ cabinets, items, countertops }: MaterialBrea
         }
       }
 
+      if (cabinet.box_interior_finish_id && cabinet.box_interior_finish_cost > 0) {
+        const interiorMaterial = priceList.find((p) => p.id === cabinet.box_interior_finish_id);
+        if (interiorMaterial) {
+          const sfPerSheet = interiorMaterial.sf_per_sheet || 32;
+          const totalSF = product.box_sf * cabinet.quantity;
+
+          const key = interiorMaterial.id;
+          if (!boxInteriorFinishMap.has(key)) {
+            boxInteriorFinishMap.set(key, {
+              materialName: interiorMaterial.concept_description,
+              totalSF: totalSF,
+              sheetsNeeded: Math.ceil(totalSF / sfPerSheet),
+              sfPerSheet: sfPerSheet,
+              cost: cabinet.box_interior_finish_cost,
+            });
+          } else {
+            const existing = boxInteriorFinishMap.get(key)!;
+            existing.totalSF += totalSF;
+            existing.sheetsNeeded = Math.ceil(existing.totalSF / sfPerSheet);
+            existing.cost += cabinet.box_interior_finish_cost;
+          }
+        }
+      }
+
       if (cabinet.doors_material_id) {
         const material = priceList.find((p) => p.id === cabinet.doors_material_id);
         if (material) {
@@ -118,6 +148,30 @@ export function MaterialBreakdown({ cabinets, items, countertops }: MaterialBrea
             existing.totalSF += totalSF;
             existing.sheetsNeeded = Math.ceil(existing.totalSF / sfPerSheet);
             existing.cost += cabinet.doors_material_cost;
+          }
+        }
+      }
+
+      if (cabinet.doors_interior_finish_id && cabinet.doors_interior_finish_cost > 0) {
+        const interiorMaterial = priceList.find((p) => p.id === cabinet.doors_interior_finish_id);
+        if (interiorMaterial) {
+          const sfPerSheet = interiorMaterial.sf_per_sheet || 32;
+          const totalSF = product.doors_fronts_sf * cabinet.quantity;
+
+          const key = interiorMaterial.id;
+          if (!doorsInteriorFinishMap.has(key)) {
+            doorsInteriorFinishMap.set(key, {
+              materialName: interiorMaterial.concept_description,
+              totalSF: totalSF,
+              sheetsNeeded: Math.ceil(totalSF / sfPerSheet),
+              sfPerSheet: sfPerSheet,
+              cost: cabinet.doors_interior_finish_cost,
+            });
+          } else {
+            const existing = doorsInteriorFinishMap.get(key)!;
+            existing.totalSF += totalSF;
+            existing.sheetsNeeded = Math.ceil(existing.totalSF / sfPerSheet);
+            existing.cost += cabinet.doors_interior_finish_cost;
           }
         }
       }
@@ -201,6 +255,12 @@ export function MaterialBreakdown({ cabinets, items, countertops }: MaterialBrea
     const doorsMaterials = Array.from(doorsMaterialsMap.values()).filter(
       (m) => m.cost > 0 && !m.materialName.toLowerCase().includes('not apply')
     );
+    const boxInteriorFinishes = Array.from(boxInteriorFinishMap.values()).filter(
+      (m) => m.cost > 0 && !m.materialName.toLowerCase().includes('not apply')
+    );
+    const doorsInteriorFinishes = Array.from(doorsInteriorFinishMap.values()).filter(
+      (m) => m.cost > 0 && !m.materialName.toLowerCase().includes('not apply')
+    );
     const allEdgebands = [
       ...Array.from(boxEdgebandMap.values()),
       ...Array.from(doorsEdgebandMap.values()),
@@ -209,8 +269,8 @@ export function MaterialBreakdown({ cabinets, items, countertops }: MaterialBrea
       (h) => h.cost > 0 && !h.name.toLowerCase().includes('not apply')
     );
 
-    const totalBoxCost = boxMaterials.reduce((sum, m) => sum + m.cost, 0);
-    const totalDoorsCost = doorsMaterials.reduce((sum, m) => sum + m.cost, 0);
+    const totalBoxCost = boxMaterials.reduce((sum, m) => sum + m.cost, 0) + boxInteriorFinishes.reduce((sum, m) => sum + m.cost, 0);
+    const totalDoorsCost = doorsMaterials.reduce((sum, m) => sum + m.cost, 0) + doorsInteriorFinishes.reduce((sum, m) => sum + m.cost, 0);
     const totalEdgebandCost = allEdgebands.reduce((sum, e) => sum + e.cost, 0);
     const totalHardwareCost = hardware.reduce((sum, h) => sum + h.cost, 0);
 
@@ -234,6 +294,8 @@ export function MaterialBreakdown({ cabinets, items, countertops }: MaterialBrea
     return {
       boxMaterials,
       doorsMaterials,
+      boxInteriorFinishes,
+      doorsInteriorFinishes,
       edgebands: Array.from(mergedEdgebands.values()),
       hardware,
       totals: {
@@ -296,8 +358,42 @@ export function MaterialBreakdown({ cabinets, items, countertops }: MaterialBrea
               ) : (
                 <p className="text-sm text-blue-600">No box materials</p>
               )}
+
+              {breakdown.boxInteriorFinishes && breakdown.boxInteriorFinishes.length > 0 && (
+                <div className="pt-2 border-t border-blue-300">
+                  <div className="flex items-center gap-1 mb-2">
+                    <Layers className="h-3.5 w-3.5 text-blue-700" />
+                    <span className="text-xs font-semibold text-blue-800">Surface Layer Materials (Applied Over Base)</span>
+                  </div>
+                  {breakdown.boxInteriorFinishes.map((mat, idx) => (
+                    <div key={idx} className="space-y-1 bg-blue-100 rounded p-2 mb-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-blue-800 font-medium flex items-center gap-1">
+                          <Layers className="h-3 w-3" />
+                          {mat.materialName}
+                        </span>
+                        <span className="font-medium text-blue-900">{formatCurrency(mat.cost)}</span>
+                      </div>
+                      <div className="text-xs text-blue-700 space-y-0.5">
+                        <div className="flex justify-between">
+                          <span>SF needed:</span>
+                          <span className="font-medium">{mat.totalSF.toFixed(2)} ft²</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Sheets to order:</span>
+                          <span className="font-medium">{mat.sheetsNeeded} × {mat.sfPerSheet} ft²</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-amber-700">⚠ Same sheets as base material</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="pt-2 border-t border-blue-300 flex justify-between font-semibold text-blue-900">
-                <span>Total</span>
+                <span>Total (Base + Surface Layer)</span>
                 <span>{formatCurrency(breakdown.totals.box)}</span>
               </div>
             </div>
@@ -332,8 +428,42 @@ export function MaterialBreakdown({ cabinets, items, countertops }: MaterialBrea
               ) : (
                 <p className="text-sm text-green-600">No doors materials</p>
               )}
+
+              {breakdown.doorsInteriorFinishes && breakdown.doorsInteriorFinishes.length > 0 && (
+                <div className="pt-2 border-t border-green-300">
+                  <div className="flex items-center gap-1 mb-2">
+                    <Layers className="h-3.5 w-3.5 text-green-700" />
+                    <span className="text-xs font-semibold text-green-800">Surface Layer Materials (Applied Over Base)</span>
+                  </div>
+                  {breakdown.doorsInteriorFinishes.map((mat, idx) => (
+                    <div key={idx} className="space-y-1 bg-green-100 rounded p-2 mb-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-green-800 font-medium flex items-center gap-1">
+                          <Layers className="h-3 w-3" />
+                          {mat.materialName}
+                        </span>
+                        <span className="font-medium text-green-900">{formatCurrency(mat.cost)}</span>
+                      </div>
+                      <div className="text-xs text-green-700 space-y-0.5">
+                        <div className="flex justify-between">
+                          <span>SF needed:</span>
+                          <span className="font-medium">{mat.totalSF.toFixed(2)} ft²</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Sheets to order:</span>
+                          <span className="font-medium">{mat.sheetsNeeded} × {mat.sfPerSheet} ft²</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-amber-700">⚠ Same sheets as base material</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="pt-2 border-t border-green-300 flex justify-between font-semibold text-green-900">
-                <span>Total</span>
+                <span>Total (Base + Surface Layer)</span>
                 <span>{formatCurrency(breakdown.totals.doors)}</span>
               </div>
             </div>

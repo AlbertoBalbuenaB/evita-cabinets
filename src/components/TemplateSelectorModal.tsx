@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, AlertCircle, Check } from 'lucide-react';
+import { Search, AlertCircle, Check, Layers } from 'lucide-react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { getAllTemplates, searchTemplates, validateTemplateAvailability } from '../lib/templateManager';
@@ -177,6 +177,12 @@ export function TemplateSelectorModal({
                       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                         <span>Product: {template.product_sku || 'N/A'}</span>
                         <span>Used {template.usage_count} times</span>
+                        {(template.use_box_interior_finish || template.use_doors_interior_finish) && (
+                          <span className="flex items-center gap-1 text-amber-600 font-medium">
+                            <Layers className="h-3 w-3" />
+                            Composite Materials
+                          </span>
+                        )}
                       </div>
                     </div>
                     {selectedTemplate?.id === template.id && (
@@ -217,10 +223,31 @@ export function TemplateSelectorModal({
 
         {selectedTemplate && validationStatus?.isValid && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <p className="text-sm text-green-800">
-              <Check className="h-4 w-4 inline mr-1" />
-              All materials are available. Template is ready to use.
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm text-green-800">
+                <Check className="h-4 w-4 inline mr-1" />
+                All materials are available. Template is ready to use.
+              </p>
+              {(selectedTemplate.use_box_interior_finish || selectedTemplate.use_doors_interior_finish) && (
+                <div className="bg-amber-50 border border-amber-200 rounded p-2 mt-2">
+                  <p className="text-xs text-amber-800 flex items-center gap-1">
+                    <Layers className="h-3.5 w-3.5" />
+                    <span className="font-medium">This template uses composite materials:</span>
+                  </p>
+                  <ul className="text-xs text-amber-700 mt-1 ml-5 space-y-0.5">
+                    {selectedTemplate.use_box_interior_finish && (
+                      <li>• Box: {selectedTemplate.box_material_name} + {selectedTemplate.box_interior_finish_name}</li>
+                    )}
+                    {selectedTemplate.use_doors_interior_finish && (
+                      <li>• Doors: {selectedTemplate.doors_material_name} + {selectedTemplate.doors_interior_finish_name}</li>
+                    )}
+                  </ul>
+                  <p className="text-xs text-amber-600 mt-1.5 italic">
+                    Both materials will require the same number of sheets.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

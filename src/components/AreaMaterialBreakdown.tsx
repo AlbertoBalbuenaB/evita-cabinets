@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Package, Layers, Hash, Ruler, Hammer } from 'lucide-react';
+import { Package, Layers, Hash, Ruler, Hammer, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatCurrency } from '../lib/calculations';
 import { calculateAreaEdgebandRolls } from '../lib/edgebandRolls';
@@ -8,6 +8,8 @@ import { calculateAreaSheetMaterials } from '../lib/sheetMaterials';
 interface MaterialData {
   boxMaterialSheets: Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>;
   doorsMaterialSheets: Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>;
+  boxInteriorFinishSheets: Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>;
+  doorsInteriorFinishSheets: Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>;
   edgebandRolls: Map<string, { rollsNeeded: number; totalMeters: number; cost: number; totalMetersRounded: number }>;
   hardware: Map<string, { quantity: number; cost: number }>;
   countertops: Map<string, { quantity: number; cost: number }>;
@@ -35,6 +37,8 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
 
     const boxMaterialSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
     const doorsMaterialSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
+    const boxInteriorFinishSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
+    const doorsInteriorFinishSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
 
     sheetResult.sheetUsages.forEach(usage => {
       const target = usage.materialType === 'box' ? boxMaterialSheets : doorsMaterialSheets;
@@ -44,6 +48,73 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
         cost: usage.totalCost,
         sfPerSheet: usage.sfPerSheet,
       });
+    });
+
+    const { data: cabinetsForInterior } = await supabase
+      .from('area_cabinets')
+      .select('box_interior_finish_id, doors_interior_finish_id, box_interior_finish_cost, doors_interior_finish_cost, quantity, product_sku')
+      .eq('area_id', areaId);
+
+    const { data: products } = await supabase
+      .from('products_catalog')
+      .select('sku, box_sf, doors_fronts_sf');
+
+    const { data: priceListForInterior } = await supabase
+      .from('price_list')
+      .select('id, concept_description, sf_per_sheet');
+
+    const priceListMapInterior = new Map(priceListForInterior?.map(p => [p.id, p]) || []);
+    const productsMapInterior = new Map(products?.map(p => [p.sku, p]) || []);
+
+    cabinetsForInterior?.forEach(cabinet => {
+      const product = productsMapInterior.get(cabinet.product_sku || '');
+      if (!product) return;
+
+      if (cabinet.box_interior_finish_id && cabinet.box_interior_finish_cost > 0) {
+        const material = priceListMapInterior.get(cabinet.box_interior_finish_id);
+        if (material && !material.concept_description.toLowerCase().includes('not apply')) {
+          const sfPerSheet = material.sf_per_sheet || 32;
+          const totalSF = product.box_sf * cabinet.quantity;
+          const sheetsNeeded = Math.ceil(totalSF / sfPerSheet);
+
+          const existing = boxInteriorFinishSheets.get(material.concept_description);
+          if (existing) {
+            existing.totalSF += totalSF;
+            existing.sheetsNeeded = Math.ceil(existing.totalSF / sfPerSheet);
+            existing.cost += cabinet.box_interior_finish_cost;
+          } else {
+            boxInteriorFinishSheets.set(material.concept_description, {
+              sheetsNeeded,
+              totalSF,
+              cost: cabinet.box_interior_finish_cost,
+              sfPerSheet,
+            });
+          }
+        }
+      }
+
+      if (cabinet.doors_interior_finish_id && cabinet.doors_interior_finish_cost > 0) {
+        const material = priceListMapInterior.get(cabinet.doors_interior_finish_id);
+        if (material && !material.concept_description.toLowerCase().includes('not apply')) {
+          const sfPerSheet = material.sf_per_sheet || 32;
+          const totalSF = product.doors_fronts_sf * cabinet.quantity;
+          const sheetsNeeded = Math.ceil(totalSF / sfPerSheet);
+
+          const existing = doorsInteriorFinishSheets.get(material.concept_description);
+          if (existing) {
+            existing.totalSF += totalSF;
+            existing.sheetsNeeded = Math.ceil(existing.totalSF / sfPerSheet);
+            existing.cost += cabinet.doors_interior_finish_cost;
+          } else {
+            doorsInteriorFinishSheets.set(material.concept_description, {
+              sheetsNeeded,
+              totalSF,
+              cost: cabinet.doors_interior_finish_cost,
+              sfPerSheet,
+            });
+          }
+        }
+      }
     });
 
     const edgebandRolls = new Map<string, { rollsNeeded: number; totalMeters: number; cost: number; totalMetersRounded: number }>();
@@ -62,6 +133,8 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
     setData({
       boxMaterialSheets,
       doorsMaterialSheets,
+      boxInteriorFinishSheets,
+      doorsInteriorFinishSheets,
       edgebandRolls,
       hardware,
       countertops,
@@ -160,6 +233,8 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
   if (!data || (
     data.boxMaterialSheets.size === 0 &&
     data.doorsMaterialSheets.size === 0 &&
+    data.boxInteriorFinishSheets.size === 0 &&
+    data.doorsInteriorFinishSheets.size === 0 &&
     data.edgebandRolls.size === 0 &&
     data.hardware.size === 0 &&
     data.countertops.size === 0
@@ -202,6 +277,31 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
                 </div>
               ))}
             </div>
+            {data.boxInteriorFinishSheets.size > 0 && (
+              <div className="mt-2 pt-2 border-t border-blue-200">
+                <div className="flex items-center gap-1 mb-1.5">
+                  <Layers className="h-3 w-3 text-blue-700" />
+                  <span className="text-xs font-semibold text-blue-800">Surface Layers</span>
+                </div>
+                {Array.from(data.boxInteriorFinishSheets.entries()).map(([name, matData]) => (
+                  <div key={name} className="bg-blue-100 rounded p-2 text-xs mb-1.5">
+                    <div className="font-medium text-slate-900 truncate mb-1 flex items-center gap-1">
+                      <Layers className="h-3 w-3 text-blue-600" />
+                      {name}
+                    </div>
+                    <div className="flex justify-between text-slate-600 mb-1">
+                      <span><Hash className="h-3 w-3 inline mr-1" />{matData.sheetsNeeded} sheets</span>
+                      <span><Ruler className="h-3 w-3 inline mr-1" />{matData.totalSF.toFixed(1)} SF</span>
+                      <span className="font-semibold text-blue-700">{formatCurrency(matData.cost)}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-amber-700">
+                      <AlertCircle className="h-3 w-3" />
+                      <span className="text-xs">Same sheets as base</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -223,6 +323,31 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
                 </div>
               ))}
             </div>
+            {data.doorsInteriorFinishSheets.size > 0 && (
+              <div className="mt-2 pt-2 border-t border-green-200">
+                <div className="flex items-center gap-1 mb-1.5">
+                  <Layers className="h-3 w-3 text-green-700" />
+                  <span className="text-xs font-semibold text-green-800">Surface Layers</span>
+                </div>
+                {Array.from(data.doorsInteriorFinishSheets.entries()).map(([name, matData]) => (
+                  <div key={name} className="bg-green-100 rounded p-2 text-xs mb-1.5">
+                    <div className="font-medium text-slate-900 truncate mb-1 flex items-center gap-1">
+                      <Layers className="h-3 w-3 text-green-600" />
+                      {name}
+                    </div>
+                    <div className="flex justify-between text-slate-600 mb-1">
+                      <span><Hash className="h-3 w-3 inline mr-1" />{matData.sheetsNeeded} sheets</span>
+                      <span><Ruler className="h-3 w-3 inline mr-1" />{matData.totalSF.toFixed(1)} SF</span>
+                      <span className="font-semibold text-green-700">{formatCurrency(matData.cost)}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-amber-700">
+                      <AlertCircle className="h-3 w-3" />
+                      <span className="text-xs">Same sheets as base</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
