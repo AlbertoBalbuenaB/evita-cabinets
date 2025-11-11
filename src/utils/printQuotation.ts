@@ -333,18 +333,6 @@ export async function printQuotation(
           font-weight: 600;
         }
 
-        .footer {
-          position: fixed;
-          bottom: 1.5cm;
-          left: 2cm;
-          right: 2cm;
-          text-align: center;
-          font-size: 8pt;
-          color: #666;
-          padding-top: 10px;
-          border-top: 1px solid #e0e0e0;
-        }
-
         @media print {
           body {
             print-color-adjust: exact;
@@ -440,14 +428,6 @@ export async function printQuotation(
           </ul>
         </div>
       ` : ''}
-
-      <div class="footer">
-        ${new Date(project.quote_date).toLocaleDateString('en-US', {
-          month: '2-digit',
-          day: '2-digit',
-          year: 'numeric'
-        })} | Page 1
-      </div>
 
       <script>
         window.onload = function() {
@@ -734,18 +714,6 @@ export async function printQuotationUSD(
           font-weight: 600;
         }
 
-        .footer {
-          position: fixed;
-          bottom: 1.5cm;
-          left: 2cm;
-          right: 2cm;
-          text-align: center;
-          font-size: 8pt;
-          color: #666;
-          padding-top: 10px;
-          border-top: 1px solid #e0e0e0;
-        }
-
         @media print {
           body {
             print-color-adjust: exact;
@@ -851,14 +819,6 @@ export async function printQuotationUSD(
           </ul>
         </div>
       ` : ''}
-
-      <div class="footer">
-        ${new Date(project.quote_date).toLocaleDateString('en-US', {
-          month: '2-digit',
-          day: '2-digit',
-          year: 'numeric'
-        })} | Page 2
-      </div>
 
       <script>
         window.onload = function() {
