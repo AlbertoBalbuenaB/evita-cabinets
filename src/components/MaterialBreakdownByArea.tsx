@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Package, Layers, Hash, Ruler, Hammer } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatCurrency } from '../lib/calculations';
+import { calculateAreaSheetMaterials } from '../lib/sheetMaterials';
+import { calculateAreaEdgebandRolls } from '../lib/edgebandRolls';
 
 interface AreaMaterialBreakdown {
   areaId: string;
@@ -125,7 +127,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
             const totalSF = product.box_sf * qty;
             const existing = boxMaterialSheets.get(name) || { sheetsNeeded: 0, totalSF: 0, cost: 0 };
             boxMaterialSheets.set(name, {
-              sheetsNeeded: existing.sheetsNeeded + Math.ceil(totalSF / SHEET_SIZE_SF),
+              sheetsNeeded: 0,
               totalSF: existing.totalSF + totalSF,
               cost: existing.cost + (cabinet.box_material_cost || 0),
             });
@@ -137,7 +139,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
             const totalSF = product.doors_fronts_sf * qty;
             const existing = doorsMaterialSheets.get(name) || { sheetsNeeded: 0, totalSF: 0, cost: 0 };
             doorsMaterialSheets.set(name, {
-              sheetsNeeded: existing.sheetsNeeded + Math.ceil(totalSF / SHEET_SIZE_SF),
+              sheetsNeeded: 0,
               totalSF: existing.totalSF + totalSF,
               cost: existing.cost + (cabinet.doors_material_cost || 0),
             });
@@ -207,6 +209,14 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
           });
 
           totalCost += cost;
+        });
+
+        boxMaterialSheets.forEach((material, name) => {
+          material.sheetsNeeded = Math.ceil(material.totalSF / SHEET_SIZE_SF);
+        });
+
+        doorsMaterialSheets.forEach((material, name) => {
+          material.sheetsNeeded = Math.ceil(material.totalSF / SHEET_SIZE_SF);
         });
 
         areaBreakdowns.push({

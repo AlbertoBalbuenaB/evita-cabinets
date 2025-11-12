@@ -6,6 +6,7 @@ import {
   calculateDoorsEdgebandCost,
   calculateInteriorFinishCost,
 } from './calculations';
+import { recalculateAreaSheetMaterialCosts } from './sheetMaterials';
 import type { AreaCabinet, PriceListItem, Product } from '../types';
 
 export type MaterialChangeType =
@@ -405,6 +406,13 @@ export async function executeBulkMaterialChange(
     }
 
     await Promise.all(updatePromises);
+
+    if (!versionId && (changeType === 'box_material' || changeType === 'doors_material' || changeType === 'box_interior_finish' || changeType === 'doors_interior_finish')) {
+      const affectedAreaIds = Array.from(new Set(preview.affectedCabinets.map(c => c.areaId)));
+      for (const areaId of affectedAreaIds) {
+        await recalculateAreaSheetMaterialCosts(areaId);
+      }
+    }
 
     await supabase.from('material_change_log').insert({
       project_id: projectId,

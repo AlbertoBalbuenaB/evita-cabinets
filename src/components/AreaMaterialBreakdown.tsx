@@ -41,79 +41,34 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
     const doorsInteriorFinishSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
 
     sheetResult.sheetUsages.forEach(usage => {
-      const target = usage.materialType === 'box' ? boxMaterialSheets : doorsMaterialSheets;
-      target.set(usage.materialName, {
-        sheetsNeeded: usage.sheetsNeeded,
-        totalSF: usage.totalSF,
-        cost: usage.totalCost,
-        sfPerSheet: usage.sfPerSheet,
-      });
-    });
-
-    const { data: cabinetsForInterior } = await supabase
-      .from('area_cabinets')
-      .select('box_interior_finish_id, doors_interior_finish_id, box_interior_finish_cost, doors_interior_finish_cost, quantity, product_sku')
-      .eq('area_id', areaId);
-
-    const { data: products } = await supabase
-      .from('products_catalog')
-      .select('sku, box_sf, doors_fronts_sf');
-
-    const { data: priceListForInterior } = await supabase
-      .from('price_list')
-      .select('id, concept_description, sf_per_sheet');
-
-    const priceListMapInterior = new Map(priceListForInterior?.map(p => [p.id, p]) || []);
-    const productsMapInterior = new Map(products?.map(p => [p.sku, p]) || []);
-
-    cabinetsForInterior?.forEach(cabinet => {
-      const product = productsMapInterior.get(cabinet.product_sku || '');
-      if (!product) return;
-
-      if (cabinet.box_interior_finish_id && cabinet.box_interior_finish_cost > 0) {
-        const material = priceListMapInterior.get(cabinet.box_interior_finish_id);
-        if (material && !material.concept_description.toLowerCase().includes('not apply')) {
-          const sfPerSheet = material.sf_per_sheet || 32;
-          const totalSF = product.box_sf * cabinet.quantity;
-          const sheetsNeeded = Math.ceil(totalSF / sfPerSheet);
-
-          const existing = boxInteriorFinishSheets.get(material.concept_description);
-          if (existing) {
-            existing.totalSF += totalSF;
-            existing.sheetsNeeded = Math.ceil(existing.totalSF / sfPerSheet);
-            existing.cost += cabinet.box_interior_finish_cost;
-          } else {
-            boxInteriorFinishSheets.set(material.concept_description, {
-              sheetsNeeded,
-              totalSF,
-              cost: cabinet.box_interior_finish_cost,
-              sfPerSheet,
-            });
-          }
-        }
-      }
-
-      if (cabinet.doors_interior_finish_id && cabinet.doors_interior_finish_cost > 0) {
-        const material = priceListMapInterior.get(cabinet.doors_interior_finish_id);
-        if (material && !material.concept_description.toLowerCase().includes('not apply')) {
-          const sfPerSheet = material.sf_per_sheet || 32;
-          const totalSF = product.doors_fronts_sf * cabinet.quantity;
-          const sheetsNeeded = Math.ceil(totalSF / sfPerSheet);
-
-          const existing = doorsInteriorFinishSheets.get(material.concept_description);
-          if (existing) {
-            existing.totalSF += totalSF;
-            existing.sheetsNeeded = Math.ceil(existing.totalSF / sfPerSheet);
-            existing.cost += cabinet.doors_interior_finish_cost;
-          } else {
-            doorsInteriorFinishSheets.set(material.concept_description, {
-              sheetsNeeded,
-              totalSF,
-              cost: cabinet.doors_interior_finish_cost,
-              sfPerSheet,
-            });
-          }
-        }
+      if (usage.materialType === 'box') {
+        boxMaterialSheets.set(usage.materialName, {
+          sheetsNeeded: usage.sheetsNeeded,
+          totalSF: usage.totalSF,
+          cost: usage.totalCost,
+          sfPerSheet: usage.sfPerSheet,
+        });
+      } else if (usage.materialType === 'doors') {
+        doorsMaterialSheets.set(usage.materialName, {
+          sheetsNeeded: usage.sheetsNeeded,
+          totalSF: usage.totalSF,
+          cost: usage.totalCost,
+          sfPerSheet: usage.sfPerSheet,
+        });
+      } else if (usage.materialType === 'box_interior_finish') {
+        boxInteriorFinishSheets.set(usage.materialName, {
+          sheetsNeeded: usage.sheetsNeeded,
+          totalSF: usage.totalSF,
+          cost: usage.totalCost,
+          sfPerSheet: usage.sfPerSheet,
+        });
+      } else if (usage.materialType === 'doors_interior_finish') {
+        doorsInteriorFinishSheets.set(usage.materialName, {
+          sheetsNeeded: usage.sheetsNeeded,
+          totalSF: usage.totalSF,
+          cost: usage.totalCost,
+          sfPerSheet: usage.sfPerSheet,
+        });
       }
     });
 

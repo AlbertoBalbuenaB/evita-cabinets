@@ -10,6 +10,7 @@ import {
   calculateLaborCost,
 } from './calculations';
 import { getSettings } from './settingsStore';
+import { recalculateAreaSheetMaterialCosts } from './sheetMaterials';
 
 export interface MaterialChange {
   materialType: 'box_material' | 'box_edgeband' | 'box_interior_finish' | 'doors_material' | 'doors_edgeband' | 'doors_interior_finish' | 'hardware';
@@ -402,6 +403,15 @@ export async function updateProjectPrices(
     });
 
     if (result.updated > 0) {
+      const uniqueAreaIds = Array.from(new Set((cabinets || []).map(c => c.area_id)));
+
+      for (const areaId of uniqueAreaIds) {
+        if (onProgress) {
+          onProgress(`Recalculating sheet materials for area...`, 0, 0);
+        }
+        await recalculateAreaSheetMaterialCosts(areaId);
+      }
+
       await supabase
         .from('project_price_staleness')
         .update({ has_stale_prices: false, affected_material_count: 0, last_checked_at: new Date().toISOString() })

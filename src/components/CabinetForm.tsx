@@ -496,7 +496,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                       <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                       <span>
                         The surface layer will require the same number of sheets as the base material.
-                        Total cost = Base Material + Surface Layer.
+                        Cost is calculated at area level by aggregating all cabinets, rounding up to full sheets.
                       </span>
                     </div>
                   </div>
@@ -600,7 +600,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                       <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                       <span>
                         The surface layer will require the same number of sheets as the base material.
-                        Total cost = Base Material + Surface Layer.
+                        Cost is calculated at area level by aggregating all cabinets, rounding up to full sheets.
                       </span>
                     </div>
                   </div>
