@@ -1066,11 +1066,16 @@ interface ProjectFormModalProps {
 }
 
 function ProjectFormModal({ project, onSave, onClose }: ProjectFormModalProps) {
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
   const [formData, setFormData] = useState<ProjectInsert>({
     name: project?.name || '',
     customer: project?.customer || '',
     address: project?.address || '',
-    quote_date: project?.quote_date || format(new Date(), 'yyyy-MM-dd'),
+    quote_date: project?.quote_date || getTodayDate(),
     status: project?.status || 'Pending',
     project_type: project?.project_type || 'Custom',
     project_details: project?.project_details || '',

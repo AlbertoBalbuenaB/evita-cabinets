@@ -70,9 +70,12 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
   const [versionCount, setVersionCount] = useState(0);
   const [isPrintMenuOpen, setIsPrintMenuOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [editedQuoteDate, setEditedQuoteDate] = useState(project.quote_date);
 
   useEffect(() => {
     setProject(initialProject);
+    setEditedQuoteDate(initialProject.quote_date);
   }, [initialProject]);
 
   useEffect(() => {
@@ -376,13 +379,47 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
 
   async function handleSaveChanges() {
     try {
+      const today = new Date();
+      const formattedDate = today.toISOString().split('T')[0];
+
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          quote_date: formattedDate,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', project.id);
+
+      if (error) throw error;
+
       await updateProjectBrief(project.id);
       await loadProject();
       await loadAreas();
-      alert('Changes saved successfully');
+      alert('Changes saved successfully and quote date updated to today');
     } catch (error) {
       console.error('Error saving changes:', error);
       alert('Failed to save changes');
+    }
+  }
+
+  async function handleSaveDateChange() {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          quote_date: editedQuoteDate,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', project.id);
+
+      if (error) throw error;
+
+      await loadProject();
+      setIsEditingDate(false);
+      alert('Quote date updated successfully');
+    } catch (error) {
+      console.error('Error updating date:', error);
+      alert('Failed to update date');
     }
   }
 
@@ -512,9 +549,48 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                   <span className="text-slate-400">📍</span> {project.address}
                 </p>
               )}
-              <p className="mt-1 text-xs sm:text-sm text-slate-500">
-                Quote Date: {new Date(project.quote_date).toLocaleDateString()} • Type: {project.project_type}
-              </p>
+              <div className="mt-1 flex items-center gap-2">
+                {isEditingDate ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={editedQuoteDate}
+                      onChange={(e) => setEditedQuoteDate(e.target.value)}
+                      className="px-2 py-1 text-xs border border-slate-300 rounded"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleSaveDateChange}
+                      className="!px-2 !py-1 !text-xs"
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setIsEditingDate(false);
+                        setEditedQuoteDate(project.quote_date);
+                      }}
+                      className="!px-2 !py-1 !text-xs"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-xs sm:text-sm text-slate-500">
+                    Quote Date: {new Date(project.quote_date).toLocaleDateString()}
+                    <button
+                      onClick={() => setIsEditingDate(true)}
+                      className="ml-2 text-blue-600 hover:text-blue-700 underline"
+                    >
+                      Edit
+                    </button>
+                    {' • '}
+                    Type: {project.project_type}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
