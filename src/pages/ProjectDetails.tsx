@@ -578,17 +578,44 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                     </Button>
                   </div>
                 ) : (
-                  <p className="text-xs sm:text-sm text-slate-500">
-                    Quote Date: {new Date(project.quote_date).toLocaleDateString()}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-xs sm:text-sm text-slate-500">
+                      Quote Date: {new Date(project.quote_date).toLocaleDateString()}
+                    </p>
+                    <button
+                      onClick={async () => {
+                        const today = new Date().toISOString().split('T')[0];
+                        setEditedQuoteDate(today);
+                        try {
+                          const { error } = await supabase
+                            .from('projects')
+                            .update({
+                              quote_date: today,
+                              updated_at: new Date().toISOString()
+                            })
+                            .eq('id', project.id);
+                          if (error) throw error;
+                          await loadProject();
+                          alert('Quote date updated to today!');
+                        } catch (error) {
+                          console.error('Error updating date:', error);
+                          alert('Failed to update date');
+                        }
+                      }}
+                      className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded font-medium"
+                    >
+                      Update to Today
+                    </button>
                     <button
                       onClick={() => setIsEditingDate(true)}
-                      className="ml-2 text-blue-600 hover:text-blue-700 underline"
+                      className="px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-medium"
                     >
                       Edit
                     </button>
-                    {' • '}
-                    Type: {project.project_type}
-                  </p>
+                    <p className="text-xs sm:text-sm text-slate-500">
+                      Type: {project.project_type}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
