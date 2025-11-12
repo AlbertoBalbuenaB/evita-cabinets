@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, AlertCircle, RefreshCw, CheckCircle, TrendingUp, TrendingDown } from 'lucide-react';
+import { AlertCircle, RefreshCw, CheckCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { formatCurrency } from '../lib/calculations';

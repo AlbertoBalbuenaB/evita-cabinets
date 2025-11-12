@@ -67,6 +67,9 @@ export interface Database {
           unit: string;
           price: number;
           sf_per_sheet: number | null;
+          tax_rate: number | null;
+          base_price: number | null;
+          price_with_tax: number | null;
           is_active: boolean;
           created_at: string;
           updated_at: string;
@@ -81,6 +84,9 @@ export interface Database {
           unit: string;
           price: number;
           sf_per_sheet?: number | null;
+          tax_rate?: number | null;
+          base_price?: number | null;
+          price_with_tax?: number | null;
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -95,6 +101,9 @@ export interface Database {
           unit?: string;
           price?: number;
           sf_per_sheet?: number | null;
+          tax_rate?: number | null;
+          base_price?: number | null;
+          price_with_tax?: number | null;
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;

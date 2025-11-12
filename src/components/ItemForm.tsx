@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from './Button';
 import { Input } from './Input';
@@ -78,7 +77,7 @@ export function ItemForm({ areaId, item, onClose }: ItemFormProps) {
 
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('area_items').insert(itemData);
+        const { error } = await supabase.from('area_items').insert(itemData as any);
 
         if (error) throw error;
       }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Plus, Trash2, ChevronDown, ChevronRight, DollarSign, Info, Bookmark, Layers, AlertCircle, Package } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight, Info, Bookmark, Layers, AlertCircle, Package } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from './Button';
 import { Input } from './Input';
@@ -19,13 +19,11 @@ import {
   calculateAccessoriesCost,
   calculateLaborCost,
   formatCurrency,
-  parseDimensions,
 } from '../lib/calculations';
 import type {
   Product,
   PriceListItem,
   AreaCabinet,
-  AreaCabinetInsert,
   HardwareItem,
   AccessoryItem,
 } from '../types';
@@ -106,7 +104,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       setSettings(settingsData);
 
       if (cabinet?.product_sku) {
-        const product = productsRes.data?.find((p) => p.sku === cabinet.product_sku);
+        const product = (productsRes.data as any[])?.find((p: any) => p.sku === cabinet.product_sku);
         setSelectedProduct(product || null);
       }
     } catch (error) {
@@ -260,7 +258,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
 
     try {
       if (cabinet) {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('area_cabinets')
           .update(cabinetData)
           .eq('id', cabinet.id)
@@ -271,7 +269,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
           throw error;
         }
       } else {
-        const { data, error } = await supabase.from('area_cabinets').insert([cabinetData]).select();
+        const { data, error } = await supabase.from('area_cabinets').insert([cabinetData as any]).select();
 
         if (error) {
           console.error('Insert error details:', error);
@@ -440,9 +438,9 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     <ChevronRight className="h-5 w-5 text-slate-600" />
                   )}
                   <h3 className="text-lg font-semibold text-slate-900">Box Construction</h3>
-                  {costs.boxMaterial > 0 && (
+                  {costs && costs.boxMaterialCost > 0 && (
                     <span className="ml-2 text-sm font-medium text-blue-600">
-                      {formatCurrency(costs.boxMaterial + costs.boxEdgeband + costs.boxInteriorFinish)}
+                      {formatCurrency(costs.boxMaterialCost + costs.boxEdgebandCost + costs.boxInteriorFinishCost)}
                     </span>
                   )}
                 </div>
@@ -544,9 +542,9 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     <ChevronRight className="h-5 w-5 text-slate-600" />
                   )}
                   <h3 className="text-lg font-semibold text-slate-900">Doors & Drawer Fronts</h3>
-                  {costs.doorsMaterial > 0 && (
+                  {costs && costs.doorsMaterialCost > 0 && (
                     <span className="ml-2 text-sm font-medium text-blue-600">
-                      {formatCurrency(costs.doorsMaterial + costs.doorsEdgeband + costs.doorsInteriorFinish)}
+                      {formatCurrency(costs.doorsMaterialCost + costs.doorsEdgebandCost + costs.doorsInteriorFinishCost)}
                     </span>
                   )}
                 </div>
@@ -648,9 +646,9 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     <ChevronRight className="h-5 w-5 text-slate-600" />
                   )}
                   <h3 className="text-lg font-semibold text-slate-900">Hardware</h3>
-                  {costs.hardware > 0 && (
+                  {costs && costs.hardwareCost > 0 && (
                     <span className="ml-2 text-sm font-medium text-blue-600">
-                      {formatCurrency(costs.hardware)}
+                      {formatCurrency(costs.hardwareCost)}
                     </span>
                   )}
                   <span className="ml-2 text-xs text-slate-500">({hardware.length} items)</span>

@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { Package, Layers, Hash, Ruler, Hammer } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatCurrency } from '../lib/calculations';
-import { calculateAreaSheetMaterials } from '../lib/sheetMaterials';
-import { calculateAreaEdgebandRolls } from '../lib/edgebandRolls';
 
 interface AreaMaterialBreakdown {
   areaId: string;
@@ -100,14 +98,14 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
 
       if (productsError) throw productsError;
 
-      const priceListMap = new Map(priceList?.map(p => [p.id, p.concept_description]) || []);
-      const productsMap = new Map(products?.map(p => [p.sku, p]) || []);
+      const priceListMap = new Map((priceList as any[])?.map((p: any) => [p.id, p.concept_description]) || []);
+      const productsMap = new Map((products as any[])?.map((p: any) => [p.sku, p]) || []);
 
       const areaBreakdowns: AreaMaterialBreakdown[] = [];
 
-      areas?.forEach(area => {
-        const areaCabinets = cabinets?.filter(c => c.area_id === area.id) || [];
-        const areaCountertops = countertops?.filter(ct => ct.area_id === area.id) || [];
+      (areas as any[])?.forEach((area: any) => {
+        const areaCabinets = (cabinets as any[])?.filter((c: any) => c.area_id === area.id) || [];
+        const areaCountertops = (countertops as any[])?.filter((ct: any) => ct.area_id === area.id) || [];
 
         if (areaCabinets.length === 0 && areaCountertops.length === 0) return;
 
@@ -121,7 +119,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
 
         let totalCost = 0;
 
-        areaCabinets.forEach(cabinet => {
+        areaCabinets.forEach((cabinet: any) => {
           const product = productsMap.get(cabinet.product_sku || '');
           const qty = cabinet.quantity || 1;
 
@@ -226,7 +224,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
           totalCost += cabinet.subtotal || 0;
         });
 
-        areaCountertops.forEach(countertop => {
+        areaCountertops.forEach((countertop: any) => {
           const name = countertop.item_name || 'Unknown Countertop';
           const qty = countertop.quantity || 0;
           const cost = countertop.subtotal || 0;

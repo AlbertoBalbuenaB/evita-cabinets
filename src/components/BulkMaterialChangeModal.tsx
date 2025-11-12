@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, AlertTriangle, CheckCircle, RefreshCw, ArrowRight, Trash2, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle, RefreshCw, ArrowRight, Trash2 } from 'lucide-react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { AutocompleteSelect } from './AutocompleteSelect';
@@ -375,7 +375,7 @@ export function BulkMaterialChangeModal({
             .select('subtotal')
             .eq('id', areaId)
             .single();
-          basicChanges.set(areaId, { previous: area?.subtotal || 0, new: area?.subtotal || 0 });
+          basicChanges.set(areaId, { previous: (area as any)?.subtotal || 0, new: (area as any)?.subtotal || 0 });
         }
 
         await saveVersionDetails(

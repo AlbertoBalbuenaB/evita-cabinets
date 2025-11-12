@@ -38,9 +38,13 @@ export interface AreaCountertop {
   area_id: string;
   price_list_item_id: string;
   item_name: string;
+  description?: string;
   quantity: number;
   unit_price: number;
   subtotal: number;
+  length_inches?: number;
+  width_inches?: number;
+  square_feet?: number;
   notes?: string;
   created_at?: string;
   updated_at?: string;

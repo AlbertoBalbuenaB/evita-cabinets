@@ -80,7 +80,7 @@ export function CountertopForm({ areaId, countertop, onClose }: CountertopFormPr
 
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('area_countertops').insert(countertopData);
+        const { error } = await supabase.from('area_countertops').insert(countertopData as any);
 
         if (error) throw error;
       }

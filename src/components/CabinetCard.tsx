@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Edit2, Trash2, Copy, ChevronDown, ChevronUp, Bookmark } from 'lucide-react';
 import { Button } from './Button';
-import { formatCurrency, formatNumber } from '../lib/calculations';
+import { formatCurrency } from '../lib/calculations';
 import type { AreaCabinet } from '../types';
 
 interface CabinetCardProps {

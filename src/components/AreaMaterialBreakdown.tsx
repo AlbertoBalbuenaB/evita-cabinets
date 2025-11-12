@@ -119,13 +119,13 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
       .from('price_list')
       .select('id, concept_description');
 
-    const priceListMap = new Map(priceList?.map(p => [p.id, p.concept_description]) || []);
+    const priceListMap = new Map(priceList?.map((p: any) => [p.id, p.concept_description]) || []);
 
     const hardware = new Map<string, { quantity: number; cost: number }>();
     const accessories = new Map<string, { quantity: number; cost: number }>();
     let totalCost = 0;
 
-    cabinets?.forEach(cabinet => {
+    (cabinets as any[])?.forEach((cabinet: any) => {
       const qty = cabinet.quantity || 1;
 
       if (cabinet.hardware && Array.isArray(cabinet.hardware) && cabinet.hardware.length > 0) {
@@ -187,7 +187,7 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
 
     const countertopsMap = new Map<string, { quantity: number; cost: number }>();
 
-    countertops?.forEach(countertop => {
+    (countertops as any[])?.forEach((countertop: any) => {
       const name = countertop.item_name || 'Unknown Countertop';
       const qty = countertop.quantity || 0;
       const cost = countertop.subtotal || 0;
