@@ -1096,6 +1096,8 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                               onDuplicate={() => handleDuplicateCabinet(cabinet)}
                               onSaveAsTemplate={() => handleSaveAsTemplate(cabinet)}
                               productDescription={product?.description}
+                              product={product}
+                              priceList={priceList}
                             />
                           );
                         })}
