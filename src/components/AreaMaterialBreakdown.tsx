@@ -346,6 +346,33 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
           </div>
         )}
 
+        {data.backPanelMaterialSheets.size > 0 && (
+          <div className="bg-orange-50 rounded-lg p-3 border border-orange-100">
+            <div className="flex items-center mb-2">
+              <Package className="h-3 w-3 text-orange-700 mr-1.5" />
+              <h5 className="text-xs font-semibold text-orange-900">Back Panel Materials (Sheets)</h5>
+            </div>
+            <div className="space-y-1.5">
+              {Array.from(data.backPanelMaterialSheets.entries()).map(([name, matData]) => (
+                <div key={name} className="bg-white rounded p-2 text-xs">
+                  <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
+                  <div className="flex justify-between text-slate-600">
+                    <span><Hash className="h-3 w-3 inline mr-1" />{matData.sheetsNeeded} sheets</span>
+                    <span><Ruler className="h-3 w-3 inline mr-1" />{matData.totalSF.toFixed(1)} SF</span>
+                    <span className="font-semibold text-orange-700">{formatCurrency(matData.cost)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 pt-2 border-t border-orange-200">
+              <div className="flex items-center gap-1 text-orange-700 text-xs">
+                <AlertCircle className="h-3 w-3" />
+                <span>Subtracted from box material calculation</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {data.edgebandRolls.size > 0 && (
           <div className="bg-amber-50 rounded-lg p-3 border border-amber-100 lg:col-span-2">
             <div className="flex items-center mb-2">
