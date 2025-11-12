@@ -18,6 +18,7 @@ import {
   calculateHardwareCost,
   calculateAccessoriesCost,
   calculateLaborCost,
+  calculateBackPanelMaterialCost,
   formatCurrency,
 } from '../lib/calculations';
 import type {
@@ -78,6 +79,15 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
 
   const [isRta, setIsRta] = useState(cabinet?.is_rta ?? true);
 
+  const [useBackPanelMaterial, setUseBackPanelMaterial] = useState(cabinet?.use_back_panel_material ?? false);
+  const [backPanelMaterialId, setBackPanelMaterialId] = useState(cabinet?.back_panel_material_id || '');
+  const [backPanelWidthInches, setBackPanelWidthInches] = useState(cabinet?.back_panel_width_inches || 0);
+  const [backPanelHeightInches, setBackPanelHeightInches] = useState(cabinet?.back_panel_height_inches || 0);
+
+  const backPanelSF = useBackPanelMaterial && backPanelWidthInches && backPanelHeightInches
+    ? (backPanelWidthInches * backPanelHeightInches) / 144
+    : 0;
+
   useEffect(() => {
     if (selectedProduct) {
       const hasDrawers = selectedProduct.description.toLowerCase().includes('drawer');
@@ -129,14 +139,19 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       ? priceList.find((p) => p.id === doorsInteriorFinishId)
       : null;
 
+    const backPanelMaterial = backPanelMaterialId ? priceList.find((p) => p.id === backPanelMaterialId) : null;
+    const backPanelMaterialCost = useBackPanelMaterial && backPanelMaterial && backPanelSF > 0
+      ? calculateBackPanelMaterialCost(backPanelSF, backPanelMaterial)
+      : 0;
+
     const boxMaterialCost = boxMaterial && boxEdgeband
-      ? calculateBoxMaterialCost(selectedProduct, boxMaterial, quantity)
+      ? calculateBoxMaterialCost(selectedProduct, boxMaterial, quantity, backPanelSF)
       : 0;
     const boxEdgebandCost = boxMaterial && boxEdgeband
       ? calculateBoxEdgebandCost(selectedProduct, boxEdgeband, quantity)
       : 0;
     const boxInteriorFinishCost = boxInteriorFinish && boxMaterial && boxEdgeband
-      ? calculateInteriorFinishCost(selectedProduct, boxInteriorFinish, quantity, true)
+      ? calculateInteriorFinishCost(selectedProduct, boxInteriorFinish, quantity, true, backPanelSF)
       : 0;
 
     const doorsMaterialCost = doorsMaterial && doorsEdgeband
@@ -160,6 +175,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       doorsMaterialCost +
       doorsEdgebandCost +
       doorsInteriorFinishCost +
+      backPanelMaterialCost +
       hardwareCost +
       accessoriesCost +
       laborCost;
@@ -171,6 +187,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       doorsMaterialCost,
       doorsEdgebandCost,
       doorsInteriorFinishCost,
+      backPanelMaterialCost,
       hardwareCost,
       accessoriesCost,
       laborCost,
@@ -198,6 +215,11 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
     setAccessories(Array.isArray(template.accessories) ? template.accessories : []);
     setIsRta(template.is_rta);
 
+    setUseBackPanelMaterial(template.use_back_panel_material);
+    setBackPanelMaterialId(template.back_panel_material_id || '');
+    setBackPanelWidthInches(template.back_panel_width_inches || 0);
+    setBackPanelHeightInches(template.back_panel_height_inches || 0);
+
     setLoadedTemplateId(template.id);
     setShowTemplateSelector(false);
     setQuantity(1);
@@ -223,6 +245,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
     const doorsMaterial = priceList.find(p => p.id === doorsMaterialId);
     const doorsEdgeband = priceList.find(p => p.id === doorsEdgebandId);
     const doorsInteriorFinish = useDoorsInteriorFinish ? priceList.find(p => p.id === doorsInteriorFinishId) : null;
+    const backPanelMaterial = useBackPanelMaterial ? priceList.find(p => p.id === backPanelMaterialId) : null;
 
     const cabinetData: any = {
       area_id: areaId,
@@ -237,6 +260,12 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       hardware: hardware as any,
       accessories: accessories as any,
       is_rta: isRta,
+      use_back_panel_material: useBackPanelMaterial,
+      back_panel_material_id: useBackPanelMaterial ? backPanelMaterialId : null,
+      back_panel_width_inches: useBackPanelMaterial ? backPanelWidthInches : null,
+      back_panel_height_inches: useBackPanelMaterial ? backPanelHeightInches : null,
+      back_panel_sf: useBackPanelMaterial ? backPanelSF : 0,
+      back_panel_material_cost: costs.backPanelMaterialCost,
       box_material_cost: costs.boxMaterialCost,
       box_edgeband_cost: costs.boxEdgebandCost,
       box_interior_finish_cost: costs.boxInteriorFinishCost,
@@ -253,6 +282,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       original_doors_material_price: doorsMaterial?.price || null,
       original_doors_edgeband_price: doorsEdgeband?.price || null,
       original_doors_interior_finish_price: doorsInteriorFinish?.price || null,
+      original_back_panel_material_price: backPanelMaterial?.price || null,
     };
 
 
@@ -520,6 +550,87 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                       <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                       <span>
                         The surface layer will require the same number of sheets as the base material.
+                        Cost is calculated at area level by aggregating all cabinets, rounding up to full sheets.
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-4">
+                  <label className="flex items-start space-x-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={useBackPanelMaterial}
+                      onChange={(e) => setUseBackPanelMaterial(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-orange-600" />
+                        <span className="text-sm font-medium text-slate-700">
+                          Use Different Material for Back Panel
+                        </span>
+                        <Info className="h-3.5 w-3.5 text-orange-500" />
+                      </div>
+                      <p className="text-xs text-slate-600 mt-1">
+                        Specify a different material for the cabinet back panel (inset, no edgeband required).
+                        Square footage will be subtracted from box material calculations.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                {useBackPanelMaterial && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Package className="h-4 w-4 text-orange-600" />
+                      <span className="text-xs font-semibold text-orange-900">Back Panel Material</span>
+                      <span className="text-xs text-orange-600">(Will be subtracted from box material)</span>
+                    </div>
+                    <AutocompleteSelect
+                      label="Back Panel Material"
+                      placeholder="Select back panel material..."
+                      value={backPanelMaterialId}
+                      onChange={setBackPanelMaterialId}
+                      options={sheetMaterials.map((item) => ({
+                        value: item.id,
+                        label: `${item.concept_description} - ${formatCurrency(item.price)}/${item.unit}`,
+                      }))}
+                      required={useBackPanelMaterial}
+                    />
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <Input
+                        label="Width (inches)"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={backPanelWidthInches || ''}
+                        onChange={(e) => setBackPanelWidthInches(parseFloat(e.target.value) || 0)}
+                        required={useBackPanelMaterial}
+                      />
+                      <Input
+                        label="Height (inches)"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={backPanelHeightInches || ''}
+                        onChange={(e) => setBackPanelHeightInches(parseFloat(e.target.value) || 0)}
+                        required={useBackPanelMaterial}
+                      />
+                    </div>
+                    {backPanelSF > 0 && (
+                      <div className="mt-3 bg-orange-100 border border-orange-300 rounded-lg p-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-orange-900">Back Panel Area:</span>
+                          <span className="text-sm font-bold text-orange-700">{backPanelSF.toFixed(2)} ft²</span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-start gap-2 mt-3 text-xs text-orange-700">
+                      <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                      <span>
+                        The back panel area is subtracted from both box material and surface layer material (if applicable).
+                        No edgeband is calculated for back panels (inset installation).
                         Cost is calculated at area level by aggregating all cabinets, rounding up to full sheets.
                       </span>
                     </div>
@@ -849,6 +960,17 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                       </span>
                       <span className="font-medium">
                         {formatCurrency(costs.boxInteriorFinishCost)}
+                      </span>
+                    </div>
+                  )}
+                  {costs.backPanelMaterialCost > 0 && (
+                    <div className="flex justify-between bg-orange-50 -mx-2 px-2 py-1 rounded">
+                      <span className="text-slate-600 flex items-center gap-1">
+                        <Package className="h-3.5 w-3.5 text-orange-600" />
+                        Back Panel Material:
+                      </span>
+                      <span className="font-medium">
+                        {formatCurrency(costs.backPanelMaterialCost)}
                       </span>
                     </div>
                   )}

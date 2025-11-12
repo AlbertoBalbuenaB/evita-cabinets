@@ -10,6 +10,7 @@ interface MaterialData {
   doorsMaterialSheets: Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>;
   boxInteriorFinishSheets: Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>;
   doorsInteriorFinishSheets: Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>;
+  backPanelMaterialSheets: Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>;
   edgebandRolls: Map<string, { rollsNeeded: number; totalMeters: number; cost: number; totalMetersRounded: number }>;
   hardware: Map<string, { quantity: number; cost: number }>;
   accessories: Map<string, { quantity: number; cost: number }>;
@@ -40,6 +41,7 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
     const doorsMaterialSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
     const boxInteriorFinishSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
     const doorsInteriorFinishSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
+    const backPanelMaterialSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number; sfPerSheet: number }>();
 
     sheetResult.sheetUsages.forEach(usage => {
       if (usage.materialType === 'box') {
@@ -70,6 +72,13 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
           cost: usage.totalCost,
           sfPerSheet: usage.sfPerSheet,
         });
+      } else if (usage.materialType === 'back_panel') {
+        backPanelMaterialSheets.set(usage.materialName, {
+          sheetsNeeded: usage.sheetsNeeded,
+          totalSF: usage.totalSF,
+          cost: usage.totalCost,
+          sfPerSheet: usage.sfPerSheet,
+        });
       }
     });
 
@@ -91,6 +100,7 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
       doorsMaterialSheets,
       boxInteriorFinishSheets,
       doorsInteriorFinishSheets,
+      backPanelMaterialSheets,
       edgebandRolls,
       hardware,
       accessories,
