@@ -18,8 +18,8 @@ export function calculateBoxesForCabinet(
   const quantity = cabinet.quantity;
 
   if (isAccessoryPanel(sku)) {
-    const boxSF = product.box_sf || 0;
-    const doorsSF = product.doors_fronts_sf || 0;
+    const boxSF = product.original_box_sf ?? product.box_sf ?? 0;
+    const doorsSF = product.original_doors_fronts_sf ?? product.doors_fronts_sf ?? 0;
     const totalSqFt = (boxSF + doorsSF) * quantity;
     return Math.ceil(totalSqFt / 32);
   }
@@ -48,8 +48,8 @@ export function calculateAccessoriesSqFt(
   const sku = product.sku;
 
   if (isAccessoryPanel(sku)) {
-    const boxSF = product.box_sf || 0;
-    const doorsSF = product.doors_fronts_sf || 0;
+    const boxSF = product.original_box_sf ?? product.box_sf ?? 0;
+    const doorsSF = product.original_doors_fronts_sf ?? product.doors_fronts_sf ?? 0;
     return (boxSF + doorsSF) * cabinet.quantity;
   }
 

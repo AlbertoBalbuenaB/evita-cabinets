@@ -22,6 +22,9 @@ export interface Database {
           total_edgeband: number;
           has_drawers: boolean;
           is_active: boolean;
+          original_box_sf: number | null;
+          original_doors_fronts_sf: number | null;
+          waste_applied: boolean | null;
           created_at: string;
           updated_at: string;
         };
@@ -37,6 +40,9 @@ export interface Database {
           total_edgeband: number;
           has_drawers?: boolean;
           is_active?: boolean;
+          original_box_sf?: number | null;
+          original_doors_fronts_sf?: number | null;
+          waste_applied?: boolean | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -52,6 +58,9 @@ export interface Database {
           total_edgeband?: number;
           has_drawers?: boolean;
           is_active?: boolean;
+          original_box_sf?: number | null;
+          original_doors_fronts_sf?: number | null;
+          waste_applied?: boolean | null;
           created_at?: string;
           updated_at?: string;
         };
