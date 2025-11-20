@@ -795,26 +795,42 @@ export async function printQuotationUSD(
             <td class="right">${formatUSD(totalTax)}</td>
             <td class="right">${formatUSD(grandTotal)}</td>
           </tr>
+          ${otherExpenses > 0 ? `
+          <tr>
+            <td><strong>Other Expenses</strong></td>
+            <td class="right"></td>
+            <td class="right"></td>
+            <td class="right"></td>
+            <td class="right">${formatUSD(otherExpenses)}</td>
+          </tr>
+          ` : ''}
+          ${installDelivery > 0 ? `
+          <tr>
+            <td><strong>Install & Delivery</strong></td>
+            <td class="right"></td>
+            <td class="right"></td>
+            <td class="right"></td>
+            <td class="right">${formatUSD(installDelivery)}</td>
+          </tr>
+          ` : ''}
+          <tr style="border-top: 2px solid #333;">
+            <td><strong>Grand Total</strong></td>
+            <td class="right"></td>
+            <td class="right"></td>
+            <td class="right"></td>
+            <td class="right"><strong>${formatUSD(finalTotal)}</strong></td>
+          </tr>
         </tfoot>
       </table>
 
-      ${(() => {
-        const { pallets } = areaBreakdown.reduce((acc, area, index) => {
-          const areaData = areas[index];
-          if (areaData) {
-            const calc = calculateAreaBoxesAndPallets(areaData.cabinets, products);
-            acc.pallets += calc.pallets;
-          }
-          return acc;
-        }, { pallets: 0 });
+      <div style="margin-top: 20px; padding: 12px; background-color: #f8f9fa; border-left: 4px solid #0066cc; font-size: 9pt; line-height: 1.6;">
+        <p style="margin: 0 0 8px 0; font-weight: 600;">Please note that the international tariff effective October 10 is 25%; however, only 11% of this tariff directly impacts the cost of this project.</p>
+      </div>
 
-        return pallets > 0 ? `
-          <div class="notes-box">
-            <div class="notes-box-number">${pallets}</div>
-            <div>Pallets approx. everything assembled</div>
-          </div>
-        ` : '';
-      })()}
+      <div style="margin-top: 12px; padding: 16px; background-color: #ff9800; border: 3px solid #e65100; font-size: 10pt; font-weight: 700; text-align: center; color: #000;">
+        <p style="margin: 0;">GRAND TOTAL; INCLUDING DELIVERY COST & TAX, NOT INCLUDING UNLOADING NOR INSTALL</p>
+        <p style="margin: 4px 0 0 0; font-size: 8pt; font-weight: 600;">*PRICE IS VALID FOR 30 DAYS, SUBJECT TO CHANGE DUE TO INTERNATIONAL TAARIFF RATES</p>
+      </div>
 
       ${project.project_brief ? `
         <div class="project-details">
