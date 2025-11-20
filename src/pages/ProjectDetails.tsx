@@ -78,10 +78,14 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
   const [autoScrollInterval, setAutoScrollInterval] = useState<number | null>(null);
   const [dropIndicatorPosition, setDropIndicatorPosition] = useState<'before' | 'after' | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [disclaimerTariffInfo, setDisclaimerTariffInfo] = useState(project.disclaimer_tariff_info || 'Please note that the international tariff effective October 10 is 25%; however, only 11% of this tariff directly impacts the cost of this project.');
+  const [disclaimerPriceValidity, setDisclaimerPriceValidity] = useState(project.disclaimer_price_validity || 'Grand Total includes delivery cost and tax, but does not include unloading or installation services.\n\n*Price is valid for 30 days and is subject to change due to international tariff rates.');
 
   useEffect(() => {
     setProject(initialProject);
     setEditedQuoteDate(initialProject.quote_date);
+    setDisclaimerTariffInfo(initialProject.disclaimer_tariff_info || 'Please note that the international tariff effective October 10 is 25%; however, only 11% of this tariff directly impacts the cost of this project.');
+    setDisclaimerPriceValidity(initialProject.disclaimer_price_validity || 'Grand Total includes delivery cost and tax, but does not include unloading or installation services.\\n\\n*Price is valid for 30 days and is subject to change due to international tariff rates.');
   }, [initialProject]);
 
   useEffect(() => {
@@ -645,6 +649,8 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
           tax_percentage: taxPercentage,
           install_delivery: installDelivery,
           total_amount: projectTotal,
+          disclaimer_tariff_info: disclaimerTariffInfo,
+          disclaimer_price_validity: disclaimerPriceValidity,
         })
         .eq('id', project.id);
     } catch (error) {
@@ -1101,6 +1107,52 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                 <p className="text-sm font-medium text-slate-700">{formatPrice(installDelivery)}</p>
                 <p className="text-base font-bold text-slate-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(projectTotal)}</p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="flex items-center mb-4">
+            <Receipt className="h-5 w-5 text-blue-600 mr-2" />
+            <h3 className="text-lg font-semibold text-slate-900">PDF Disclaimers</h3>
+          </div>
+          <p className="text-sm text-slate-600 mb-4">
+            Customize the disclaimer text that appears in the USD Summary PDF below the pricing table.
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Tariff Information Disclaimer
+              </label>
+              <textarea
+                value={disclaimerTariffInfo}
+                onChange={(e) => setDisclaimerTariffInfo(e.target.value)}
+                onBlur={updateProjectCosts}
+                rows={2}
+                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                placeholder="e.g., Please note that the international tariff..."
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Information about tariff percentages and impact
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Price Validity & Conditions Disclaimer
+              </label>
+              <textarea
+                value={disclaimerPriceValidity}
+                onChange={(e) => setDisclaimerPriceValidity(e.target.value)}
+                onBlur={updateProjectCosts}
+                rows={3}
+                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                placeholder="e.g., Grand Total includes delivery cost and tax..."
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                What's included/excluded and price validity period
+              </p>
             </div>
           </div>
         </div>

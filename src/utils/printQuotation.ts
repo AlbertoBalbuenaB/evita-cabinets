@@ -823,17 +823,31 @@ export async function printQuotationUSD(
         </tfoot>
       </table>
 
-      <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
-        <p style="margin: 0 0 12px 0; font-size: 8pt; color: #666; line-height: 1.5;">
-          Please note that the international tariff effective October 10 is 25%; however, only 11% of this tariff directly impacts the cost of this project.
-        </p>
-        <p style="margin: 0; font-size: 8pt; color: #333; line-height: 1.5;">
-          <strong>Grand Total includes delivery cost and tax, but does not include unloading or installation services.</strong>
-        </p>
-        <p style="margin: 8px 0 0 0; font-size: 7pt; color: #999; font-style: italic;">
-          *Price is valid for 30 days and is subject to change due to international tariff rates.
-        </p>
-      </div>
+      ${(() => {
+        const disclaimerTariff = project.disclaimer_tariff_info || 'Please note that the international tariff effective October 10 is 25%; however, only 11% of this tariff directly impacts the cost of this project.';
+        const disclaimerValidity = project.disclaimer_price_validity || 'Grand Total includes delivery cost and tax, but does not include unloading or installation services.\n\n*Price is valid for 30 days and is subject to change due to international tariff rates.';
+
+        // Split the price validity disclaimer into lines
+        const validityLines = disclaimerValidity.split('\n').filter(line => line.trim());
+        const mainText = validityLines[0] || '';
+        const footnoteText = validityLines.slice(1).join(' ').trim();
+
+        return `
+          <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
+            <p style="margin: 0 0 12px 0; font-size: 8pt; color: #666; line-height: 1.5;">
+              ${disclaimerTariff}
+            </p>
+            <p style="margin: 0; font-size: 8pt; color: #333; line-height: 1.5;">
+              <strong>${mainText}</strong>
+            </p>
+            ${footnoteText ? `
+            <p style="margin: 8px 0 0 0; font-size: 7pt; color: #999; font-style: italic;">
+              ${footnoteText}
+            </p>
+            ` : ''}
+          </div>
+        `;
+      })()}
 
       ${project.project_brief ? `
         <div class="project-details">
