@@ -20,6 +20,7 @@ import {
   Send,
   User,
   Layers,
+  Unlink,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from './Button';
@@ -36,7 +37,12 @@ interface ProjectGroupCardProps {
   onDelete: (project: Project) => void;
   onDuplicate: (project: Project) => void;
   onStatusChange: (project: Project, status: ProjectStatus) => void;
+  onUngroup: (projectId: string) => void;
   staleProjectIds: string[];
+  selectionMode?: boolean;
+  selectedProjectIds?: string[];
+  onSelect?: (projectId: string, checked: boolean) => void;
+  onSelectAll?: (projectIds: string[], checked: boolean) => void;
 }
 
 export function ProjectGroupCard({
@@ -47,7 +53,12 @@ export function ProjectGroupCard({
   onDelete,
   onDuplicate,
   onStatusChange,
+  onUngroup,
   staleProjectIds,
+  selectionMode,
+  selectedProjectIds = [],
+  onSelect,
+  onSelectAll,
 }: ProjectGroupCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showPrimaryActions, setShowPrimaryActions] = useState(false);
@@ -100,9 +111,32 @@ export function ProjectGroupCard({
   const primaryProject = group.primaryProject;
   const statusConfig = getStatusConfig(primaryProject.status);
 
+  const groupProjectIds = group.projects.map(p => p.id);
+  const allGroupSelected = selectionMode && groupProjectIds.every(id => selectedProjectIds.includes(id));
+  const someGroupSelected = selectionMode && groupProjectIds.some(id => selectedProjectIds.includes(id)) && !allGroupSelected;
+
   return (
     <div className="group bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-lg hover:border-blue-300 transition-all duration-200 overflow-hidden relative">
       <div className="h-2 bg-gradient-to-r from-blue-500 to-purple-500" />
+
+      {selectionMode && (
+        <div className="absolute top-4 left-4 z-10">
+          <input
+            type="checkbox"
+            checked={allGroupSelected}
+            ref={(el) => {
+              if (el) el.indeterminate = someGroupSelected;
+            }}
+            onChange={(e) => {
+              e.stopPropagation();
+              onSelectAll?.(groupProjectIds, e.target.checked);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="h-5 w-5 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            title={allGroupSelected ? 'Deselect all versions' : 'Select all versions'}
+          />
+        </div>
+      )}
 
       <div className="absolute top-4 right-4 z-10">
         <div className="relative">
@@ -252,10 +286,22 @@ export function ProjectGroupCard({
                     className="bg-white rounded-lg p-3 border border-slate-200 hover:border-blue-300 transition-colors cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onView(project);
+                      if (!selectionMode) onView(project);
                     }}
                   >
                     <div className="flex items-start justify-between gap-2">
+                      {selectionMode && (
+                        <input
+                          type="checkbox"
+                          checked={selectedProjectIds.includes(project.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            onSelect?.(project.id, e.target.checked);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-4 w-4 mt-0.5 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0"
+                        />
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-mono text-slate-500">v{versionNum}</span>
@@ -309,6 +355,20 @@ export function ProjectGroupCard({
                         >
                           <Trash2 className="h-3.5 w-3.5 text-red-600" />
                         </Button>
+                        {group.versionCount > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onUngroup(project.id);
+                            }}
+                            className="hover:bg-orange-50 p-1"
+                            title="Remove from group"
+                          >
+                            <Unlink className="h-3.5 w-3.5 text-orange-600" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

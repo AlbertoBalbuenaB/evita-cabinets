@@ -14,6 +14,7 @@ import {
   XCircle,
   User,
   Layers,
+  Unlink,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from './Button';
@@ -30,7 +31,12 @@ interface ProjectGroupListItemProps {
   onDelete: (project: Project) => void;
   onDuplicate: (project: Project) => void;
   onStatusChange: (project: Project, status: ProjectStatus) => void;
+  onUngroup: (projectId: string) => void;
   staleProjectIds: string[];
+  selectionMode?: boolean;
+  selectedProjectIds?: string[];
+  onSelect?: (projectId: string, checked: boolean) => void;
+  onSelectAll?: (projectIds: string[], checked: boolean) => void;
 }
 
 export function ProjectGroupListItem({
@@ -41,7 +47,12 @@ export function ProjectGroupListItem({
   onDelete,
   onDuplicate,
   onStatusChange,
+  onUngroup,
   staleProjectIds,
+  selectionMode,
+  selectedProjectIds = [],
+  onSelect,
+  onSelectAll,
 }: ProjectGroupListItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showPrimaryActions, setShowPrimaryActions] = useState(false);
@@ -69,12 +80,32 @@ export function ProjectGroupListItem({
 
   const primaryProject = group.primaryProject;
 
+  const groupProjectIds = group.projects.map(p => p.id);
+  const allGroupSelected = selectionMode && groupProjectIds.every(id => selectedProjectIds.includes(id));
+  const someGroupSelected = selectionMode && groupProjectIds.some(id => selectedProjectIds.includes(id)) && !allGroupSelected;
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all">
       <div
         className="p-4 flex items-center gap-4 cursor-pointer"
-        onClick={() => onView(primaryProject)}
+        onClick={() => !selectionMode && onView(primaryProject)}
       >
+        {selectionMode && (
+          <input
+            type="checkbox"
+            checked={allGroupSelected}
+            ref={(el) => {
+              if (el) el.indeterminate = someGroupSelected;
+            }}
+            onChange={(e) => {
+              e.stopPropagation();
+              onSelectAll?.(groupProjectIds, e.target.checked);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="h-5 w-5 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0"
+            title={allGroupSelected ? 'Deselect all versions' : 'Select all versions'}
+          />
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-2">
             <h3 className="text-base font-semibold text-slate-900 truncate hover:text-blue-600 transition-colors">
@@ -254,10 +285,22 @@ export function ProjectGroupListItem({
                   className="bg-white rounded-lg p-3 border border-slate-200 hover:border-blue-300 transition-colors cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onView(project);
+                    if (!selectionMode) onView(project);
                   }}
                 >
                   <div className="flex items-center justify-between gap-4">
+                    {selectionMode && (
+                      <input
+                        type="checkbox"
+                        checked={selectedProjectIds.includes(project.id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          onSelect?.(project.id, e.target.checked);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0"
+                      />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-mono text-slate-500">v{versionNum}</span>
@@ -310,6 +353,20 @@ export function ProjectGroupListItem({
                       >
                         <Trash2 className="h-3.5 w-3.5 text-red-600" />
                       </Button>
+                      {group.versionCount > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUngroup(project.id);
+                          }}
+                          className="hover:bg-orange-50 p-1"
+                          title="Remove from group"
+                        >
+                          <Unlink className="h-3.5 w-3.5 text-orange-600" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
