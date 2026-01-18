@@ -104,7 +104,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
   async function loadData() {
     try {
       const [productsRes, pricesRes, settingsData] = await Promise.all([
-        supabase.from('products_catalog').select('*').eq('is_active', true).order('sku'),
+        supabase.from('products_catalog').select('*').eq('is_active', true).eq('status', 'active').order('sku'),
         supabase.from('price_list').select('*').eq('is_active', true).order('concept_description'),
         getSettings(),
       ]);
