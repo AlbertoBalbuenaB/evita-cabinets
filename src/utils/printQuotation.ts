@@ -486,7 +486,8 @@ export async function printQuotationUSD(
   const taxPercentage = project.tax_percentage || 0;
   const referralRate = project.referral_currency_rate || 0;
 
-  const areaBreakdown = areas.map(area => {
+  // First pass: calculate base prices to determine total price
+  const baseAreaData = areas.map(area => {
     const areaCabinetsTotal = area.cabinets.reduce((sum, c) => sum + c.subtotal, 0);
     const areaItemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
     const areaCountertopsTotal = area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0);
@@ -495,13 +496,37 @@ export async function printQuotationUSD(
     const areaPrice = profitMultiplier > 0 && profitMultiplier < 1
       ? areaMaterialsSubtotal / (1 - profitMultiplier)
       : areaMaterialsSubtotal;
-    const areaTariff = areaMaterialsSubtotal * tariffMultiplier;
-    const areaTax = (areaPrice + areaTariff) * (taxPercentage / 100);
-    const areaTotal = areaPrice + areaTariff + areaTax;
 
     return {
       name: area.name,
-      price: areaPrice,
+      materialsSubtotal: areaMaterialsSubtotal,
+      basePrice: areaPrice
+    };
+  });
+
+  const totalBasePrice = baseAreaData.reduce((sum, a) => sum + a.basePrice, 0);
+  const installDelivery = project.install_delivery || 0;
+  const totalReferralAmount = (totalBasePrice + installDelivery) * referralRate;
+
+  // Second pass: distribute referral fee proportionally and calculate final values
+  const areaBreakdown = baseAreaData.map(area => {
+    // Calculate this area's weight (proportion of total price)
+    const weight = totalBasePrice > 0 ? area.basePrice / totalBasePrice : 0;
+
+    // Distribute referral fee proportionally to this area
+    const referralPortionForArea = totalReferralAmount * weight;
+
+    // Display price includes the hidden referral fee
+    const displayPrice = area.basePrice + referralPortionForArea;
+
+    // Calculate tariff, tax, and total based on inflated price
+    const areaTariff = area.materialsSubtotal * tariffMultiplier;
+    const areaTax = (displayPrice + areaTariff) * (taxPercentage / 100);
+    const areaTotal = displayPrice + areaTariff + areaTax;
+
+    return {
+      name: area.name,
+      price: displayPrice,
       tariff: areaTariff,
       tax: areaTax,
       total: areaTotal
@@ -514,9 +539,7 @@ export async function printQuotationUSD(
   const grandTotal = areaBreakdown.reduce((sum, a) => sum + a.total, 0);
 
   const otherExpenses = project.other_expenses || 0;
-  const installDelivery = project.install_delivery || 0;
-  const referralAmount = (totalPrice + installDelivery) * referralRate;
-  const finalTotal = grandTotal + referralAmount + otherExpenses + installDelivery;
+  const finalTotal = grandTotal + otherExpenses + installDelivery;
 
   let logoUrl = '';
   try {
@@ -804,15 +827,6 @@ export async function printQuotationUSD(
             <td class="right"></td>
             <td class="right"></td>
             <td class="right">${formatUSD(installDelivery)}</td>
-          </tr>
-          ` : ''}
-          ${referralRate > 0 ? `
-          <tr>
-            <td><strong>Referral Fee (${(referralRate * 100).toFixed(2)}%)</strong></td>
-            <td class="right"></td>
-            <td class="right"></td>
-            <td class="right"></td>
-            <td class="right">${formatUSD(referralAmount)}</td>
           </tr>
           ` : ''}
           ${otherExpenses > 0 ? `
