@@ -9,8 +9,6 @@ import {
   Tag,
   Search,
   Filter,
-  Grid3x3,
-  List,
   TrendingUp,
   DollarSign,
   CheckCircle2,
@@ -42,9 +40,7 @@ import { getProjectsWithStalePrices } from '../lib/priceUpdateSystem';
 import { ImportProjectModal } from '../components/ImportProjectModal';
 import { groupProjectsByGroupId } from '../lib/projectGrouping';
 import { ProjectGroupCard } from '../components/ProjectGroupCard';
-import { ProjectGroupListItem } from '../components/ProjectGroupListItem';
 
-type ViewMode = 'grid' | 'list';
 type SortBy = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc' | 'amount_desc' | 'amount_asc';
 
 interface ProjectsProps {
@@ -61,7 +57,6 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [staleProjectIds, setStaleProjectIds] = useState<string[]>([]);
 
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -549,29 +544,6 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
                   </span>
                 )}
               </Button>
-
-              <div className="flex border border-slate-300 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`px-3 py-2 ${
-                    viewMode === 'grid'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <Grid3x3 className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`px-3 py-2 border-l border-slate-300 ${
-                    viewMode === 'list'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
             </div>
           </div>
 
@@ -709,83 +681,42 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
       </div>
 
       {filteredAndSortedProjects.length > 0 && projectGroups && projectGroups.length > 0 && (
-        <>
-          {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projectGroups.map((group) =>
-                group?.versionCount === 1 ? (
-                  <ProjectCard
-                    key={group.primaryProject?.id}
-                    project={group.primaryProject}
-                    onView={handleViewProject}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onDuplicate={handleDuplicate}
-                    onStatusChange={handleQuickStatusChange}
-                    staleProjectIds={staleProjectIds}
-                    selectionMode={selectionMode}
-                    isSelected={selectedProjectIds.includes(group.primaryProject.id)}
-                    onSelect={handleProjectSelect}
-                  />
-                ) : (
-                  <ProjectGroupCard
-                    key={group.groupId}
-                    group={group}
-                    allProjects={projects}
-                    onView={handleViewProject}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onDuplicate={handleDuplicate}
-                    onStatusChange={handleQuickStatusChange}
-                    onUngroup={handleUngroupProject}
-                    staleProjectIds={staleProjectIds}
-                    selectionMode={selectionMode}
-                    selectedProjectIds={selectedProjectIds}
-                    onSelect={handleProjectSelect}
-                    onSelectAll={handleSelectAllInGroup}
-                  />
-                )
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {projectGroups.map((group) =>
-                group?.versionCount === 1 ? (
-                  <ProjectListItem
-                    key={group.primaryProject?.id}
-                    project={group.primaryProject}
-                    onView={handleViewProject}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onDuplicate={handleDuplicate}
-                    onStatusChange={handleQuickStatusChange}
-                    staleProjectIds={staleProjectIds}
-                    selectionMode={selectionMode}
-                    isSelected={selectedProjectIds.includes(group.primaryProject.id)}
-                    onSelect={handleProjectSelect}
-                  />
-                ) : (
-                  <ProjectGroupListItem
-                    key={group.groupId}
-                    group={group}
-                    allProjects={projects}
-                    onView={handleViewProject}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onDuplicate={handleDuplicate}
-                    onStatusChange={handleQuickStatusChange}
-                    onUngroup={handleUngroupProject}
-                    staleProjectIds={staleProjectIds}
-                    selectionMode={selectionMode}
-                    selectedProjectIds={selectedProjectIds}
-                    onSelect={handleProjectSelect}
-                    onSelectAll={handleSelectAllInGroup}
-                  />
-                )
-              )}
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {projectGroups.map((group) =>
+            group?.versionCount === 1 ? (
+              <ProjectCard
+                key={group.primaryProject?.id}
+                project={group.primaryProject}
+                onView={handleViewProject}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
+                onStatusChange={handleQuickStatusChange}
+                staleProjectIds={staleProjectIds}
+                selectionMode={selectionMode}
+                isSelected={selectedProjectIds.includes(group.primaryProject.id)}
+                onSelect={handleProjectSelect}
+              />
+            ) : (
+              <ProjectGroupCard
+                key={group.groupId}
+                group={group}
+                allProjects={projects}
+                onView={handleViewProject}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onDuplicate={handleDuplicate}
+                onStatusChange={handleQuickStatusChange}
+                onUngroup={handleUngroupProject}
+                staleProjectIds={staleProjectIds}
+                selectionMode={selectionMode}
+                selectedProjectIds={selectedProjectIds}
+                onSelect={handleProjectSelect}
+                onSelectAll={handleSelectAllInGroup}
+              />
+            )
           )}
-        </>
+        </div>
       )}
 
       {selectionMode && selectedProjectIds.length >= 2 && (
@@ -1105,194 +1036,6 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
             >
               <Trash2 className="h-4 w-4 text-red-600" />
             </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProjectListItem({ project, onView, onEdit, onDelete, onDuplicate, onStatusChange, staleProjectIds, selectionMode, isSelected, onSelect }: ProjectCardProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Pending':
-        return 'bg-slate-100 text-slate-700';
-      case 'Estimating':
-        return 'bg-blue-100 text-blue-700';
-      case 'Sent':
-        return 'bg-purple-100 text-purple-700';
-      case 'Awarded':
-        return 'bg-green-100 text-green-700';
-      case 'Lost':
-        return 'bg-red-100 text-red-700';
-      case 'Disqualified':
-        return 'bg-orange-100 text-orange-700';
-      case 'Cancelled':
-        return 'bg-gray-100 text-gray-700';
-      default:
-        return 'bg-slate-100 text-slate-700';
-    }
-  };
-
-  return (
-    <div
-      className="bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer"
-      onClick={() => !selectionMode && onView(project)}
-    >
-      <div className="p-4 flex items-center gap-4">
-        {selectionMode && (
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={(e) => {
-              e.stopPropagation();
-              onSelect?.(project.id, e.target.checked);
-            }}
-            onClick={(e) => e.stopPropagation()}
-            className="h-5 w-5 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0"
-          />
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-base font-semibold text-slate-900 truncate hover:text-blue-600 transition-colors">
-              {project.name}
-            </h3>
-            {staleProjectIds.includes(project.id) && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 border border-yellow-300" title="Price updates available">
-                <AlertTriangle className="h-3 w-3" />
-              </span>
-            )}
-            <span
-              className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(
-                project.status
-              )}`}
-            >
-              {project.status}
-            </span>
-            <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-              {project.project_type}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4 text-sm text-slate-600">
-            {project.customer && (
-              <div className="flex items-center">
-                <User className="h-3.5 w-3.5 mr-1 text-slate-400" />
-                <span className="font-medium truncate max-w-xs">{project.customer}</span>
-              </div>
-            )}
-            {project.address && (
-              <div className="flex items-center">
-                <MapPin className="h-3.5 w-3.5 mr-1 text-slate-400" />
-                <span className="truncate max-w-xs">{project.address}</span>
-              </div>
-            )}
-            <div className="flex items-center">
-              <Calendar className="h-3.5 w-3.5 mr-1 text-slate-400" />
-              <span>{format(new Date(project.quote_date + 'T00:00:00'), 'MMM dd, yyyy')}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="text-right mr-2">
-            <div className="text-xs text-slate-500 mb-1">Total Value</div>
-            <div className="text-xl font-bold text-slate-900">
-              {formatCurrency(project.total_amount)}
-            </div>
-          </div>
-
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowActions(!showActions);
-              }}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-              title="More actions"
-            >
-              <MoreVertical className="h-4 w-4 text-slate-600" />
-            </button>
-
-            {showActions && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowActions(false)}
-                />
-                <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onView(project);
-                      setShowActions(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"
-                  >
-                    <Eye className="h-4 w-4" />
-                    View Details
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(project);
-                      setShowActions(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                    Edit Project
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDuplicate(project);
-                      setShowActions(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"
-                  >
-                    <Copy className="h-4 w-4" />
-                    Duplicate
-                  </button>
-                  <div className="border-t border-slate-200 my-1" />
-                  <div className="px-4 py-2 text-xs font-medium text-slate-500">Quick Status</div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStatusChange(project, 'Awarded');
-                      setShowActions(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-green-700"
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    Mark as Awarded
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStatusChange(project, 'Lost');
-                      setShowActions(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-red-700"
-                  >
-                    <XCircle className="h-4 w-4" />
-                    Mark as Lost
-                  </button>
-                  <div className="border-t border-slate-200 my-1" />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(project);
-                      setShowActions(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 flex items-center gap-2 text-red-600"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
           </div>
         </div>
       </div>
