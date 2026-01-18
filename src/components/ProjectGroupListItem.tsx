@@ -93,9 +93,9 @@ export function ProjectGroupListItem({
         {selectionMode && (
           <input
             type="checkbox"
-            checked={allGroupSelected}
+            checked={allGroupSelected || false}
             ref={(el) => {
-              if (el) el.indeterminate = someGroupSelected;
+              if (el) el.indeterminate = someGroupSelected || false;
             }}
             onChange={(e) => {
               e.stopPropagation();
@@ -308,7 +308,9 @@ export function ProjectGroupListItem({
                           {project.name}
                         </h5>
                         {isStale && (
-                          <AlertTriangle className="h-3 w-3 text-yellow-600 flex-shrink-0" title="Price updates available" />
+                          <span title="Price updates available">
+                            <AlertTriangle className="h-3 w-3 text-yellow-600 flex-shrink-0" />
+                          </span>
                         )}
                         <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(project.status)}`}>
                           {project.status}

@@ -708,80 +708,84 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
         )}
       </div>
 
-      {viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projectGroups.map((group) =>
-            group.versionCount === 1 ? (
-              <ProjectCard
-                key={group.primaryProject.id}
-                project={group.primaryProject}
-                onView={handleViewProject}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onDuplicate={handleDuplicate}
-                onStatusChange={handleQuickStatusChange}
-                staleProjectIds={staleProjectIds}
-                selectionMode={selectionMode}
-                isSelected={selectedProjectIds.includes(group.primaryProject.id)}
-                onSelect={handleProjectSelect}
-              />
-            ) : (
-              <ProjectGroupCard
-                key={group.groupId}
-                group={group}
-                allProjects={projects}
-                onView={handleViewProject}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onDuplicate={handleDuplicate}
-                onStatusChange={handleQuickStatusChange}
-                onUngroup={handleUngroupProject}
-                staleProjectIds={staleProjectIds}
-                selectionMode={selectionMode}
-                selectedProjectIds={selectedProjectIds}
-                onSelect={handleProjectSelect}
-                onSelectAll={handleSelectAllInGroup}
-              />
-            )
+      {filteredAndSortedProjects.length > 0 && projectGroups && projectGroups.length > 0 && (
+        <>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {projectGroups.map((group) =>
+                group?.versionCount === 1 ? (
+                  <ProjectCard
+                    key={group.primaryProject?.id}
+                    project={group.primaryProject}
+                    onView={handleViewProject}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onDuplicate={handleDuplicate}
+                    onStatusChange={handleQuickStatusChange}
+                    staleProjectIds={staleProjectIds}
+                    selectionMode={selectionMode}
+                    isSelected={selectedProjectIds.includes(group.primaryProject.id)}
+                    onSelect={handleProjectSelect}
+                  />
+                ) : (
+                  <ProjectGroupCard
+                    key={group.groupId}
+                    group={group}
+                    allProjects={projects}
+                    onView={handleViewProject}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onDuplicate={handleDuplicate}
+                    onStatusChange={handleQuickStatusChange}
+                    onUngroup={handleUngroupProject}
+                    staleProjectIds={staleProjectIds}
+                    selectionMode={selectionMode}
+                    selectedProjectIds={selectedProjectIds}
+                    onSelect={handleProjectSelect}
+                    onSelectAll={handleSelectAllInGroup}
+                  />
+                )
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {projectGroups.map((group) =>
+                group?.versionCount === 1 ? (
+                  <ProjectListItem
+                    key={group.primaryProject?.id}
+                    project={group.primaryProject}
+                    onView={handleViewProject}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onDuplicate={handleDuplicate}
+                    onStatusChange={handleQuickStatusChange}
+                    staleProjectIds={staleProjectIds}
+                    selectionMode={selectionMode}
+                    isSelected={selectedProjectIds.includes(group.primaryProject.id)}
+                    onSelect={handleProjectSelect}
+                  />
+                ) : (
+                  <ProjectGroupListItem
+                    key={group.groupId}
+                    group={group}
+                    allProjects={projects}
+                    onView={handleViewProject}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onDuplicate={handleDuplicate}
+                    onStatusChange={handleQuickStatusChange}
+                    onUngroup={handleUngroupProject}
+                    staleProjectIds={staleProjectIds}
+                    selectionMode={selectionMode}
+                    selectedProjectIds={selectedProjectIds}
+                    onSelect={handleProjectSelect}
+                    onSelectAll={handleSelectAllInGroup}
+                  />
+                )
+              )}
+            </div>
           )}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {projectGroups.map((group) =>
-            group.versionCount === 1 ? (
-              <ProjectListItem
-                key={group.primaryProject.id}
-                project={group.primaryProject}
-                onView={handleViewProject}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onDuplicate={handleDuplicate}
-                onStatusChange={handleQuickStatusChange}
-                staleProjectIds={staleProjectIds}
-                selectionMode={selectionMode}
-                isSelected={selectedProjectIds.includes(group.primaryProject.id)}
-                onSelect={handleProjectSelect}
-              />
-            ) : (
-              <ProjectGroupListItem
-                key={group.groupId}
-                group={group}
-                allProjects={projects}
-                onView={handleViewProject}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onDuplicate={handleDuplicate}
-                onStatusChange={handleQuickStatusChange}
-                onUngroup={handleUngroupProject}
-                staleProjectIds={staleProjectIds}
-                selectionMode={selectionMode}
-                selectedProjectIds={selectedProjectIds}
-                onSelect={handleProjectSelect}
-                onSelectAll={handleSelectAllInGroup}
-              />
-            )
-          )}
-        </div>
+        </>
       )}
 
       {selectionMode && selectedProjectIds.length >= 2 && (
@@ -1108,7 +1112,7 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
   );
 }
 
-function ProjectListItem({ project, onView, onEdit, onDelete, staleProjectIds, selectionMode, isSelected, onSelect }: ProjectCardProps) {
+function ProjectListItem({ project, onView, onEdit, onDelete, onDuplicate, onStatusChange, staleProjectIds, selectionMode, isSelected, onSelect }: ProjectCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Pending':
