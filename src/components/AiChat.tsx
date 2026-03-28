@@ -55,23 +55,150 @@ const SUGGESTIONS = [
   { icon: '📦', text: 'Search a SKU' },
 ];
 
+function formatInline(text: string, keyPrefix: string = ''): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  const regex = /(\*\*(.+?)\*\*|`([^`]+)`)/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+  let idx = 0;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > last) {
+      parts.push(text.slice(last, match.index));
+    }
+    if (match[2]) {
+      parts.push(<strong key={`${keyPrefix}b${idx}`} className="font-semibold text-slate-900">{match[2]}</strong>);
+    } else if (match[3]) {
+      parts.push(<code key={`${keyPrefix}c${idx}`} className="font-mono text-xs bg-slate-100 text-slate-700 px-1 py-0.5 rounded">{match[3]}</code>);
+    }
+    last = match.index + match[0].length;
+    idx++;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
+function isTableSeparator(line: string): boolean {
+  return /^\|[\s\-:|]+\|$/.test(line.trim());
+}
+
+function isTableLine(line: string): boolean {
+  const t = line.trim();
+  return t.includes('|') && t.startsWith('|') && t.endsWith('|');
+}
+
+function isAmountCell(text: string): boolean {
+  const t = text.trim();
+  return /^\$/.test(t) || /^-?\d[\d,.]+%?$/.test(t);
+}
+
+function renderTable(tableLines: string[], keyBase: number): React.ReactNode {
+  const rows = tableLines.filter(l => !isTableSeparator(l));
+  if (rows.length === 0) return null;
+
+  const parseRow = (line: string) =>
+    line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+
+  const headerCells = parseRow(rows[0]);
+  const hasSeparator = tableLines.length > 1 && isTableSeparator(tableLines[1]);
+  const dataRows = hasSeparator ? rows.slice(1) : rows.slice(1);
+
+  return (
+    <div key={`tbl-${keyBase}`} className="my-1 overflow-x-auto">
+      <table className="w-full text-xs font-mono border-collapse">
+        {hasSeparator && (
+          <thead>
+            <tr>
+              {headerCells.map((cell, ci) => (
+                <th key={ci} className={`py-1 px-2 text-left font-semibold text-slate-700 border-b border-slate-200 ${isAmountCell(cell) ? 'text-right' : ''}`}>
+                  {cell}
+                </th>
+              ))}
+            </tr>
+          </thead>
+        )}
+        <tbody>
+          {(hasSeparator ? dataRows : rows).map((row, ri) => {
+            const cells = parseRow(row);
+            return (
+              <tr key={ri} className="border-b border-slate-100 last:border-0">
+                {cells.map((cell, ci) => (
+                  <td key={ci} className={`py-1 px-2 text-slate-600 ${isAmountCell(cell) ? 'text-right tabular-nums' : ''}`}>
+                    {formatInline(cell, `t${keyBase}-${ri}-${ci}-`)}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function formatMessage(text: string): React.ReactNode {
   const lines = text.split('\n');
-  return lines.map((line, i) => {
+  const result: React.ReactNode[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Group consecutive table lines
+    if (isTableLine(line)) {
+      const tableLines: string[] = [];
+      while (i < lines.length && isTableLine(lines[i])) {
+        tableLines.push(lines[i]);
+        i++;
+      }
+      result.push(renderTable(tableLines, i));
+      continue;
+    }
+
+    // Headers
+    if (line.startsWith('### ')) {
+      result.push(<p key={i} className="font-semibold text-slate-900 my-1 text-sm">{formatInline(line.slice(4), `h${i}-`)}</p>);
+      i++; continue;
+    }
+    if (line.startsWith('## ')) {
+      result.push(<p key={i} className="font-semibold text-slate-900 my-1">{formatInline(line.slice(3), `h${i}-`)}</p>);
+      i++; continue;
+    }
+
+    // Bullets
     if (line.startsWith('• ') || line.startsWith('- ')) {
-      return (
+      result.push(
         <div key={i} className="flex gap-2 my-0.5">
           <span className="text-blue-500 flex-shrink-0">•</span>
-          <span>{line.slice(2)}</span>
+          <span>{formatInline(line.slice(2), `bl${i}-`)}</span>
         </div>
       );
+      i++; continue;
     }
-    if (line.startsWith('**') && line.endsWith('**')) {
-      return <p key={i} className="font-semibold text-slate-900 my-1">{line.slice(2, -2)}</p>;
+
+    // Numbered lists
+    const numMatch = line.match(/^(\d+)\.\s(.+)/);
+    if (numMatch) {
+      result.push(
+        <div key={i} className="flex gap-2 my-0.5">
+          <span className="text-blue-500 flex-shrink-0 min-w-[1.2em] text-right">{numMatch[1]}.</span>
+          <span>{formatInline(numMatch[2], `nl${i}-`)}</span>
+        </div>
+      );
+      i++; continue;
     }
-    if (line === '') return <div key={i} className="h-2" />;
-    return <p key={i} className="my-0.5 leading-relaxed">{line}</p>;
-  });
+
+    // Empty line
+    if (line === '') {
+      result.push(<div key={i} className="h-2" />);
+      i++; continue;
+    }
+
+    // Plain text with inline formatting
+    result.push(<p key={i} className="my-0.5 leading-relaxed">{formatInline(line, `p${i}-`)}</p>);
+    i++;
+  }
+
+  return result;
 }
 
 function formatDate(iso: string): string {
