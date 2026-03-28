@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Send, Sparkles, ChevronRight, RotateCcw, Loader2, History, ArrowLeft, MessageSquare } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAiChatContext } from '../stores/aiChatContext';
 
@@ -55,23 +55,196 @@ const SUGGESTIONS = [
   { icon: '📦', text: 'Search a SKU' },
 ];
 
-function formatMessage(text: string): React.ReactNode {
-  const lines = text.split('\n');
-  return lines.map((line, i) => {
-    if (line.startsWith('• ') || line.startsWith('- ')) {
-      return (
-        <div key={i} className="flex gap-2 my-0.5">
-          <span className="text-blue-500 flex-shrink-0">•</span>
-          <span>{line.slice(2)}</span>
-        </div>
+function formatBoldCode(text: string, keyPrefix: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  const boldSegments = text.split('**');
+  boldSegments.forEach((segment, si) => {
+    if (segment === '') return;
+    const isBold = si % 2 === 1;
+    const codeParts = segment.split(/`([^`]+)`/);
+    const children: React.ReactNode[] = [];
+    codeParts.forEach((part, ci) => {
+      if (part === '') return;
+      if (ci % 2 === 1) {
+        children.push(<code key={`${keyPrefix}${si}c${ci}`} className="font-mono text-xs bg-slate-100 text-slate-700 px-1 py-0.5 rounded">{part}</code>);
+      } else {
+        children.push(part);
+      }
+    });
+    if (isBold) {
+      parts.push(<strong key={`${keyPrefix}b${si}`} className="font-semibold text-slate-900">{children}</strong>);
+    } else {
+      parts.push(...children);
+    }
+  });
+  return parts;
+}
+
+function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: string) => void): React.ReactNode[] {
+  const linkRegex = /\[\[(project|material):([^|]+)\|([^\]]+)\]\]/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let idx = 0;
+
+  while ((match = linkRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(...formatBoldCode(text.slice(lastIndex, match.index), `${keyPrefix}t${idx}-`));
+    }
+    const [, kind, id, label] = match;
+    if (kind === 'project') {
+      parts.push(
+        <button
+          key={`${keyPrefix}lnk${idx}`}
+          type="button"
+          onClick={() => onNavigate?.(`/projects/${id}`)}
+          className="text-blue-600 hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+        >
+          {label}
+        </button>
+      );
+    } else {
+      parts.push(
+        <span key={`${keyPrefix}lnk${idx}`} className="text-blue-600 underline">
+          {label}
+        </span>
       );
     }
-    if (line.startsWith('**') && line.endsWith('**')) {
-      return <p key={i} className="font-semibold text-slate-900 my-1">{line.slice(2, -2)}</p>;
+    lastIndex = linkRegex.lastIndex;
+    idx++;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(...formatBoldCode(text.slice(lastIndex), `${keyPrefix}t${idx}-`));
+  } else if (lastIndex === 0) {
+    return formatBoldCode(text, keyPrefix);
+  }
+
+  return parts;
+}
+
+function isTableSeparator(line: string): boolean {
+  return /^\|[\s\-:|]+\|$/.test(line.trim());
+}
+
+function isTableLine(line: string): boolean {
+  const t = line.trim();
+  return t.includes('|') && t.startsWith('|') && t.endsWith('|');
+}
+
+function isAmountCell(text: string): boolean {
+  const t = text.trim();
+  return /^\$/.test(t) || /^-?\d[\d,.]+%?$/.test(t);
+}
+
+function renderTable(tableLines: string[], keyBase: number, onNavigate?: (path: string) => void): React.ReactNode {
+  const rows = tableLines.filter(l => !isTableSeparator(l));
+  if (rows.length === 0) return null;
+
+  const parseRow = (line: string) =>
+    line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+
+  const headerCells = parseRow(rows[0]);
+  const hasSeparator = tableLines.length > 1 && isTableSeparator(tableLines[1]);
+  const dataRows = hasSeparator ? rows.slice(1) : rows.slice(1);
+
+  return (
+    <div key={`tbl-${keyBase}`} className="my-1 overflow-x-auto">
+      <table className="w-full text-xs font-mono border-collapse">
+        {hasSeparator && (
+          <thead>
+            <tr>
+              {headerCells.map((cell, ci) => (
+                <th key={ci} className={`py-1 px-2 text-left font-semibold text-slate-700 border-b border-slate-200 ${isAmountCell(cell) ? 'text-right' : ''}`}>
+                  {cell}
+                </th>
+              ))}
+            </tr>
+          </thead>
+        )}
+        <tbody>
+          {(hasSeparator ? dataRows : rows).map((row, ri) => {
+            const cells = parseRow(row);
+            return (
+              <tr key={ri} className="border-b border-slate-100 last:border-0">
+                {cells.map((cell, ci) => (
+                  <td key={ci} className={`py-1 px-2 text-slate-600 ${isAmountCell(cell) ? 'text-right tabular-nums' : ''}`}>
+                    {formatInline(cell, `t${keyBase}-${ri}-${ci}-`, onNavigate)}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function formatMessage(text: string, onNavigate?: (path: string) => void): React.ReactNode {
+  const lines = text.split('\n');
+  const result: React.ReactNode[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Group consecutive table lines
+    if (isTableLine(line)) {
+      const tableLines: string[] = [];
+      while (i < lines.length && isTableLine(lines[i])) {
+        tableLines.push(lines[i]);
+        i++;
+      }
+      result.push(renderTable(tableLines, i, onNavigate));
+      continue;
     }
-    if (line === '') return <div key={i} className="h-2" />;
-    return <p key={i} className="my-0.5 leading-relaxed">{line}</p>;
-  });
+
+    // Headers
+    if (line.startsWith('### ')) {
+      result.push(<p key={i} className="font-semibold text-slate-900 my-1 text-sm">{formatInline(line.slice(4), `h${i}-`, onNavigate)}</p>);
+      i++; continue;
+    }
+    if (line.startsWith('## ')) {
+      result.push(<p key={i} className="font-semibold text-slate-900 my-1">{formatInline(line.slice(3), `h${i}-`, onNavigate)}</p>);
+      i++; continue;
+    }
+
+    // Bullets
+    if (line.startsWith('• ') || line.startsWith('- ')) {
+      result.push(
+        <div key={i} className="flex gap-2 my-0.5">
+          <span className="text-blue-500 flex-shrink-0">•</span>
+          <span>{formatInline(line.slice(2), `bl${i}-`, onNavigate)}</span>
+        </div>
+      );
+      i++; continue;
+    }
+
+    // Numbered lists
+    const numMatch = line.match(/^(\d+)\.\s(.+)/);
+    if (numMatch) {
+      result.push(
+        <div key={i} className="flex gap-2 my-0.5">
+          <span className="text-blue-500 flex-shrink-0 min-w-[1.2em] text-right">{numMatch[1]}.</span>
+          <span>{formatInline(numMatch[2], `nl${i}-`, onNavigate)}</span>
+        </div>
+      );
+      i++; continue;
+    }
+
+    // Empty line
+    if (line === '') {
+      result.push(<div key={i} className="h-2" />);
+      i++; continue;
+    }
+
+    // Plain text with inline formatting
+    result.push(<p key={i} className="my-0.5 leading-relaxed">{formatInline(line, `p${i}-`, onNavigate)}</p>);
+    i++;
+  }
+
+  return result;
 }
 
 function formatDate(iso: string): string {
@@ -96,6 +269,7 @@ function derivePageContext(pathname: string): { currentPage: string; projectId: 
 
 export function AiChat() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { currentPage, projectId } = derivePageContext(pathname);
   const activeProjectTab = useAiChatContext(s => s.activeProjectTab);
   const [isOpen, setIsOpen] = useState(false);
@@ -154,6 +328,32 @@ export function AiChat() {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, loading, view]);
+
+  useEffect(() => {
+    if (!unlocked) return;
+    const saved = sessionStorage.getItem('evita-ia-messages');
+    if (saved) return;
+
+    (async () => {
+      const sessionKey = getOrCreateSessionKey();
+      const { data } = await supabase
+        .from('ai_chat_sessions')
+        .select('id, created_at, messages')
+        .eq('session_key', sessionKey)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (data?.length) {
+        const session = data[0];
+        const age = Date.now() - new Date(session.created_at).getTime();
+        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+        if (age < TWENTY_FOUR_HOURS && Array.isArray(session.messages) && session.messages.length > 0) {
+          setMessages(session.messages as Message[]);
+          setCurrentSessionId(session.id);
+        }
+      }
+    })();
+  }, [unlocked]);
 
   async function saveSession(msgs: Message[]) {
     if (msgs.length === 0) return;
@@ -563,7 +763,7 @@ export function AiChat() {
                       }
                     >
                       {msg.role === 'assistant'
-                        ? formatMessage(msg.content)
+                        ? formatMessage(msg.content, navigate)
                         : <p className="leading-relaxed">{msg.content}</p>
                       }
                     </div>

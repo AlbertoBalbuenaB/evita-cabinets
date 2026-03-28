@@ -24,11 +24,6 @@ function hasModificationIntent(messages: {role:string;content:string}[]): boolea
   return kw.some(k => last.toLowerCase().includes(k));
 }
 
-function detectSarahRomero(messages: {role:string;content:string}[]): boolean {
-  const text = messages.map(m => m.content).join(' ').toLowerCase();
-  return text.includes('sarah romero') || text.includes("sarah's") || text.includes('de sarah');
-}
-
 function normalizeQuotes(s: string): string {
   return s
     .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')
@@ -338,9 +333,10 @@ Deno.serve(async (req: Request) => {
   const { messages = [], projectId = null, pageKey = 'dashboard' } = body;
   const sb = createClient(SB_URL, SB_SERVICE);
 
-  const [settingsRes, recentRes] = await Promise.all([
+  const [settingsRes, recentRes, matPricesRes] = await Promise.all([
     sb.from('settings').select('key, value'),
-    sb.from('projects').select('name, customer, status, total_amount').order('updated_at', { ascending: false }).limit(5),
+    sb.from('projects').select('id, name, customer, status, total_amount').order('updated_at', { ascending: false }).limit(5),
+    sb.from('price_list').select('id, unit_price_mxn').or('id.like.f4953b9f%,id.like.d0eb99a2%,id.like.6d877ed9%,id.like.e3e9c098%'),
   ]);
 
   const sData = settingsRes.data ?? [];
@@ -351,17 +347,27 @@ Deno.serve(async (req: Request) => {
   const lDraw = Number(get('labor_cost_with_drawers'));
   const fx    = Number(get('exchange_rate_usd_to_mxn'));
 
+  const matPrices = matPricesRes.data ?? [];
+  const priceOf = (prefix: string) =>
+    Number(matPrices.find((m: any) => m.id.startsWith(prefix))?.unit_price_mxn) || 0;
+  const pBoxMat  = priceOf('f4953b9f');
+  const pDoorMat = priceOf('d0eb99a2');
+  const pBoxEB   = priceOf('6d877ed9');
+  const pDoorEB  = priceOf('e3e9c098');
+
   let liveData = `Exchange rate: ${fx} MXN/USD | Waste box: x${wBox} | Waste doors: x${wDoor} | Labor base: $${lBase} | Labor drawers: $${lDraw}`;
   if (recentRes.data?.length) {
     liveData += '\nRecent projects: ' + recentRes.data.map((p: any) =>
-      `${p.name} (${p.status}) $${Number(p.total_amount).toLocaleString()} MXN`
+      `${p.name} [id:${p.id}] (${p.status}) $${Number(p.total_amount).toLocaleString()} MXN`
     ).join(' | ');
   }
 
+  let proj: any = null;
   if (projectId) {
-    const { data: proj } = await sb.from('projects')
+    const { data: projData } = await sb.from('projects')
       .select('name, status, total_amount, profit_multiplier, tax_percentage, tariff_multiplier, install_delivery, install_delivery_usd, install_delivery_per_box_usd, referral_currency_rate')
       .eq('id', projectId).single();
+    proj = projData;
     if (proj) {
       const { data: areas } = await sb.from('project_areas')
         .select('id, name, subtotal, applies_tariff').eq('project_id', projectId).order('display_order');
@@ -374,15 +380,16 @@ Deno.serve(async (req: Request) => {
           .in('area_id', areaIds);
         if (cabCosts) {
           for (const c of cabCosts) {
-            costBreakdown.box_mat    += Number(c.box_material_cost)        || 0;
-            costBreakdown.door_mat   += Number(c.doors_material_cost)      || 0;
-            costBreakdown.box_eb     += Number(c.box_edgeband_cost)        || 0;
-            costBreakdown.door_eb    += Number(c.doors_edgeband_cost)      || 0;
-            costBreakdown.labor      += Number(c.labor_cost)               || 0;
-            costBreakdown.hardware   += Number(c.hardware_cost)            || 0;
-            costBreakdown.accessories+= Number(c.accessories_cost)         || 0;
-            costBreakdown.back_panel += Number(c.back_panel_material_cost) || 0;
-            costBreakdown.door_profile += Number(c.door_profile_cost)      || 0;
+            const qty = Number(c.quantity) || 1;
+            costBreakdown.box_mat    += (Number(c.box_material_cost)        || 0) * qty;
+            costBreakdown.door_mat   += (Number(c.doors_material_cost)      || 0) * qty;
+            costBreakdown.box_eb     += (Number(c.box_edgeband_cost)        || 0) * qty;
+            costBreakdown.door_eb    += (Number(c.doors_edgeband_cost)      || 0) * qty;
+            costBreakdown.labor      += (Number(c.labor_cost)               || 0) * qty;
+            costBreakdown.hardware   += (Number(c.hardware_cost)            || 0) * qty;
+            costBreakdown.accessories+= (Number(c.accessories_cost)         || 0) * qty;
+            costBreakdown.back_panel += (Number(c.back_panel_material_cost) || 0) * qty;
+            costBreakdown.door_profile += (Number(c.door_profile_cost)      || 0) * qty;
           }
         }
       }
@@ -391,7 +398,7 @@ Deno.serve(async (req: Request) => {
       const totalMaterials = costBreakdown.box_mat + costBreakdown.door_mat + costBreakdown.box_eb + costBreakdown.door_eb + costBreakdown.accessories + costBreakdown.back_panel + costBreakdown.door_profile;
       const totalCabSubtotal = totalMaterials + costBreakdown.labor + costBreakdown.hardware;
 
-      liveData += `\nOpen project: ${proj.name} | ${proj.status} | $${Number(proj.total_amount).toLocaleString()} MXN`;
+      liveData += `\nOpen project: ${proj.name} [id:${projectId}] | ${proj.status} | $${Number(proj.total_amount).toLocaleString()} MXN`;
       liveData += ` | Profit: ${((proj.profit_multiplier??0)*100).toFixed(1)}% | Tax: ${proj.tax_percentage??0}% | Tariff: ${((proj.tariff_multiplier??0)*100).toFixed(1)}%`;
       if (proj.install_delivery_usd) liveData += ` | Install: $${proj.install_delivery_usd} USD`;
       liveData += ` | Referral: ${((proj.referral_currency_rate??0)*100).toFixed(0)}%`;
@@ -424,10 +431,10 @@ Deno.serve(async (req: Request) => {
         const bsf=Number(p.box_sf), dsf=Number(p.doors_fronts_sf);
         const beb=Number(p.box_edgeband), bebc=Number(p.box_edgeband_color), deb=Number(p.doors_fronts_edgeband);
         const labor = p.has_drawers ? lDraw : lBase;
-        const boxMat  = Math.round((bsf*wBox/32)*550*100)/100;
-        const doorMat = Math.round((dsf*wDoor/32)*1250*100)/100;
-        const boxEB   = Math.round((beb+bebc)*8.30*100)/100;
-        const doorEB  = Math.round(deb*11.30*100)/100;
+        const boxMat  = Math.round((bsf*wBox/32)*pBoxMat*100)/100;
+        const doorMat = Math.round((dsf*wDoor/32)*pDoorMat*100)/100;
+        const boxEB   = Math.round((beb+bebc)*pBoxEB*100)/100;
+        const doorEB  = Math.round(deb*pDoorEB*100)/100;
         const baseUnit = boxMat+doorMat+boxEB+doorEB+labor;
         skuContext += `\n${p.sku} | ${p.description} | drawers=${p.has_drawers}\n`;
         skuContext += `  box_sf=${bsf} | doors_sf=${dsf} | box_eb=${beb}m+${bebc}m | door_eb=${deb}m\n`;
@@ -442,8 +449,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const modMode = hasModificationIntent(messages);
-  const isSarahRomero = detectSarahRomero(messages);
-  const referralRate = isSarahRomero ? 0.06 : 0;
+  const referralRate = proj?.referral_currency_rate ?? 0;
 
   const system = `You are Evita IA, quotation assistant for Evita Cabinets (Houston TX).
 
@@ -455,10 +461,10 @@ Deno.serve(async (req: Request) => {
 === MATERIAL COST FORMULA — CRITICAL ===
 NEVER guess SF values. Use ONLY values from the database section.
 Per unit (then x qty):
-  box_mat    = (box_sf x waste_box / 32) x 550
-  door_mat   = (doors_fronts_sf x waste_door / 32) x 1250
-  box_eb     = (box_edgeband_m + box_edgeband_color_m) x 8.30
-  door_eb    = doors_fronts_edgeband_m x 11.30
+  box_mat    = (box_sf x waste_box / 32) x ${pBoxMat}
+  door_mat   = (doors_fronts_sf x waste_door / 32) x ${pDoorMat}
+  box_eb     = (box_edgeband_m + box_edgeband_color_m) x ${pBoxEB}
+  door_eb    = doors_fronts_edgeband_m x ${pDoorEB}
   labor      = 400 (no drawers) | 600 (with drawers)
   hardware   = hinge_PAIRS x 130 + slide_SETS x 626.63
   subtotal   = (all above) x qty
@@ -545,16 +551,13 @@ Use these for ALL estimates unless user specifies otherwise:
   tariff_multiplier  : 0.25 (25%) — kitchen areas ONLY
   tax_percentage     : 8.25%
   install_usd_per_box: $150 USD/box
-  referral_rate      : 0% default | 6% ONLY for Sarah Romero projects
+  referral_rate      : ${(referralRate*100).toFixed(0)}% (from project settings)
   fx                 : use live exchange rate from LIVE DATA
 
 TARIFF AREAS RULE — CRITICAL:
   applies_tariff = TRUE  -> Kitchen, Dining, Coffee, Pantry, Bar, Butler's Pantry, Wet Bar
   applies_tariff = FALSE -> Closet, Bedroom, Bathroom, Office, Laundry, Storage, Garage
   Default to false when area type is unclear.
-
-SARAH ROMERO RULE: If conversation mentions "Sarah Romero" as client, apply referral_rate=0.06.
-${isSarahRomero ? 'SARAH ROMERO DETECTED — apply 6% referral to this estimate.' : ''}
 
 === ESTIMATE OUTPUT FORMAT ===
 Always show this exact breakdown table after every estimate:
@@ -570,7 +573,7 @@ PRICING BREAKDOWN
   Price ...................... $XX,XXX MXN
   Tariff (25% kitchen) ....... $X,XXX MXN
   Install & Delivery ......... $X,XXX MXN  (XX boxes x $150 USD)
-  ${isSarahRomero ? 'Referral (6%) .............. $X,XXX MXN' : ''}
+  Referral (${(referralRate*100).toFixed(0)}%) .............. $X,XXX MXN
   Tax (8.25%) ................ $X,XXX MXN
   -----------------------------------------
   TOTAL ...................... $XXX,XXX MXN
@@ -629,6 +632,13 @@ project.total_amount = FULL TOTAL (includes profit, tariff, tax, install)
 DO NOT use total_amount as "materials cost"
 When user asks for "just materials" from an open project, read MATERIALS ONLY
 directly from the COST BREAKDOWN — do not reverse-engineer or estimate.
+
+=== CLICKABLE LINKS ===
+When mentioning a project by name from LIVE DATA, wrap it as: [[project:PROJECT_UUID|Display Name]]
+When mentioning a material from search_materials results, wrap it as: [[material:MATERIAL_UUID|Display Name]]
+Example: "Your project [[project:abc-123|Kitchen Remodel]] has 5 areas."
+Example: "The material [[material:def-456|MDF 3/4 Maple]] costs $45.20/sheet."
+Always use these formats when an ID is available. The [id:...] in LIVE DATA is for your reference only — never output it directly.
 
 === LIVE DATA ===
 ${liveData}${skuContext}
