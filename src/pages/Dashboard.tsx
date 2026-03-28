@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   FolderOpen,
   DollarSign,
@@ -83,12 +84,8 @@ interface HardwareTrend {
   total_quantity: number;
 }
 
-interface DashboardProps {
-  onNavigate: (page: string) => void;
-  onNavigateToProject: (projectId: string) => void;
-}
-
-export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
+export function Dashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
     totalProjects: 0,
     wonProjects: 0,
@@ -659,7 +656,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
             <h2 className="text-lg font-semibold text-slate-900">Recent Projects</h2>
           </div>
           <button
-            onClick={() => onNavigate('projects')}
+            onClick={() => navigate('/projects')}
             className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center"
           >
             View all
@@ -682,7 +679,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
               return (
                 <div
                   key={project.id}
-                  onClick={() => onNavigateToProject(project.id)}
+                  onClick={() => navigate(`/projects/${project.id}`)}
                   className="group p-4 rounded-xl border border-slate-200/60 hover:border-blue-400/60 hover:shadow-md cursor-pointer transition-all glass-white"
                 >
                   <div className="flex items-start justify-between mb-2">
@@ -720,7 +717,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
             <FolderOpen className="h-12 w-12 mx-auto mb-3 text-slate-300" />
             <p className="text-sm">No projects yet</p>
             <button
-              onClick={() => onNavigate('projects')}
+              onClick={() => navigate('/projects')}
               className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               Create your first project
@@ -1133,19 +1130,19 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
           </p>
           <div className="space-y-2">
             <button
-              onClick={() => onNavigate('projects')}
+              onClick={() => navigate('/projects')}
               className="w-full text-left bg-white/20 hover:bg-white/30 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
             >
               Create New Project
             </button>
             <button
-              onClick={() => onNavigate('products')}
+              onClick={() => navigate('/products')}
               className="w-full text-left bg-white/20 hover:bg-white/30 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
             >
               Manage Products
             </button>
             <button
-              onClick={() => onNavigate('prices')}
+              onClick={() => navigate('/prices')}
               className="w-full text-left bg-white/20 hover:bg-white/30 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
             >
               Update Prices

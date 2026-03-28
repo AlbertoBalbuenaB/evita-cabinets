@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, FolderOpen, Calendar, MapPin, Pencil as Edit2, Trash2, Tag, Search, Filter, TrendingUp, DollarSign, CheckCircle2, Clock, FileText, X, XCircle, AlertCircle, Ban, Copy, Eye, MoreVertical, AlertTriangle, Send, User, Upload, CheckSquare2, Square, Link2, Grid3x3 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
@@ -15,14 +16,9 @@ import { getSettings } from '../lib/settingsStore';
 
 type SortBy = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc' | 'amount_desc' | 'amount_asc';
 
-interface ProjectsProps {
-  selectedProjectId?: string | null;
-  onClearSelection?: () => void;
-  onActiveTabChange?: (tab: string | null) => void;
-  onProjectOpen?: (projectId: string | null) => void;
-}
-
-export function Projects({ selectedProjectId, onClearSelection, onActiveTabChange, onProjectOpen }: ProjectsProps = {}) {
+export function Projects() {
+  const { id: routeProjectId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [exchangeRate, setExchangeRate] = useState(18);
@@ -55,17 +51,15 @@ export function Projects({ selectedProjectId, onClearSelection, onActiveTabChang
   }
 
   useEffect(() => {
-    if (selectedProjectId && projects.length > 0) {
-      const project = projects.find(p => p.id === selectedProjectId);
+    if (routeProjectId && projects.length > 0) {
+      const project = projects.find(p => p.id === routeProjectId);
       if (project) {
         setSelectedProject(project);
-        if (onProjectOpen) onProjectOpen(project.id);
-        if (onClearSelection) {
-          onClearSelection();
-        }
       }
+    } else if (!routeProjectId) {
+      setSelectedProject(null);
     }
-  }, [selectedProjectId, projects, onClearSelection, onProjectOpen]);
+  }, [routeProjectId, projects]);
 
   async function loadProjects() {
     try {
@@ -197,13 +191,7 @@ export function Projects({ selectedProjectId, onClearSelection, onActiveTabChang
 
   async function handleImportComplete(projectId: string) {
     await loadProjects();
-    setTimeout(() => {
-      const project = projects.find(p => p.id === projectId);
-      if (project) {
-        setSelectedProject(project);
-        if (onProjectOpen) onProjectOpen(project.id);
-      }
-    }, 500);
+    navigate(`/projects/${projectId}`);
   }
 
   function handleEdit(project: Project) {
@@ -292,15 +280,13 @@ export function Projects({ selectedProjectId, onClearSelection, onActiveTabChang
   }
 
   function handleViewProject(project: Project) {
-    setSelectedProject(project);
-    if (onProjectOpen) onProjectOpen(project.id);
+    navigate(`/projects/${project.id}`);
   }
 
   function handleBackToList() {
     setSelectedProject(null);
-    if (onProjectOpen) onProjectOpen(null);
     loadProjects();
-    if (onActiveTabChange) onActiveTabChange(null);
+    navigate('/projects');
   }
 
   function clearFilters() {
@@ -400,7 +386,7 @@ export function Projects({ selectedProjectId, onClearSelection, onActiveTabChang
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || typeFilter !== 'all' || customerFilter !== 'all' || monthFilter !== 'all' || yearFilter !== 'all';
 
   if (selectedProject) {
-    return <ProjectDetails project={selectedProject} onBack={handleBackToList} onActiveTabChange={onActiveTabChange} />;
+    return <ProjectDetails project={selectedProject} onBack={handleBackToList} />;
   }
 
   if (loading) {

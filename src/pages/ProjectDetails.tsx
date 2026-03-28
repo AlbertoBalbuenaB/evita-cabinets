@@ -41,14 +41,15 @@ import { ScheduleSection } from '../components/ScheduleSection';
 import { TasksSection } from '../components/TasksSection';
 import { DocumentationSection } from '../components/DocumentationSection';
 import { BitacoraSection } from '../components/BitacoraSection';
+import { useAiChatContext } from '../stores/aiChatContext';
 
 interface ProjectDetailsProps {
   project: Project;
   onBack: () => void;
-  onActiveTabChange?: (tab: string | null) => void;
 }
 
-export function ProjectDetails({ project: initialProject, onBack, onActiveTabChange }: ProjectDetailsProps) {
+export function ProjectDetails({ project: initialProject, onBack }: ProjectDetailsProps) {
+  const setActiveProjectTab = useAiChatContext(s => s.setActiveProjectTab);
   const [project, setProject] = useState<Project>(initialProject);
   const [areas, setAreas] = useState<(ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[] })[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -66,13 +67,13 @@ export function ProjectDetails({ project: initialProject, onBack, onActiveTabCha
   const [activeTab, setActiveTab] = useState<'info' | 'pricing' | 'analytics' | 'history' | 'management'>('info');
 
   useEffect(() => {
-    if (onActiveTabChange) onActiveTabChange(activeTab);
-  }, [activeTab, onActiveTabChange]);
+    setActiveProjectTab(activeTab);
+  }, [activeTab, setActiveProjectTab]);
 
   useEffect(() => {
-    if (onActiveTabChange) onActiveTabChange('info');
-    return () => { if (onActiveTabChange) onActiveTabChange(null); };
-  }, []);
+    setActiveProjectTab('info');
+    return () => { setActiveProjectTab(null); };
+  }, [setActiveProjectTab]);
 
   const [currencyDisplay, setCurrencyDisplay] = useState<'USD' | 'MXN' | 'BOTH'>('MXN');
   const [exchangeRate, setExchangeRate] = useState(18);

@@ -1,12 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Send, Sparkles, ChevronRight, RotateCcw, Loader2, History, ArrowLeft, MessageSquare } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-
-interface Props {
-  currentPage: string;
-  projectId: string | null;
-  activeProjectTab?: string | null;
-}
+import { useAiChatContext } from '../stores/aiChatContext';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -85,7 +81,23 @@ function formatDate(iso: string): string {
 
 const EVITA_IA_PASSWORD = import.meta.env.VITE_EVITA_IA_PASSWORD || 'EvitaCabinets';
 
-export function AiChat({ currentPage, projectId, activeProjectTab }: Props) {
+function derivePageContext(pathname: string): { currentPage: string; projectId: string | null } {
+  if (pathname.startsWith('/projects/')) {
+    const id = pathname.split('/')[2];
+    return { currentPage: 'projects', projectId: id || null };
+  }
+  if (pathname.startsWith('/projects')) return { currentPage: 'projects', projectId: null };
+  if (pathname.startsWith('/prices')) return { currentPage: 'prices', projectId: null };
+  if (pathname.startsWith('/products')) return { currentPage: 'products', projectId: null };
+  if (pathname.startsWith('/settings')) return { currentPage: 'settings', projectId: null };
+  if (pathname.startsWith('/templates')) return { currentPage: 'templates', projectId: null };
+  return { currentPage: 'dashboard', projectId: null };
+}
+
+export function AiChat() {
+  const { pathname } = useLocation();
+  const { currentPage, projectId } = derivePageContext(pathname);
+  const activeProjectTab = useAiChatContext(s => s.activeProjectTab);
   const [isOpen, setIsOpen] = useState(false);
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('evita-ia-unlocked') === '1');
   const [passwordInput, setPasswordInput] = useState('');
