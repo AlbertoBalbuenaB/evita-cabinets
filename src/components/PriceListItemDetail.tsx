@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import {
-  X, Pencil as Edit2, ExternalLink, Tag, Layers, Ruler, Package, DollarSign,
-  Grid2x2 as Grid, Hash, Link, Clock, TrendingUp, TrendingDown, Minus, Calendar,
+  X, Pencil as Edit2, ExternalLink, Tag, Layers, Ruler,
+  Grid2x2 as Grid, Hash, Clock, TrendingUp, TrendingDown, Minus, Calendar,
   FileText, ImageOff, Image as ImageIcon
 } from 'lucide-react';
 import { formatCurrency } from '../lib/calculations';
-import { Button } from './Button';
 import { supabase } from '../lib/supabase';
 import type { PriceListItem } from '../types';
 
@@ -32,7 +31,7 @@ interface PriceChangeEntry {
 
 function DetailRow({ icon, label, value }: DetailRowProps) {
   return (
-    <div className="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
+    <div className="flex items-start gap-3 py-2.5">
       <div className="flex-shrink-0 mt-0.5 text-slate-400">{icon}</div>
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
@@ -90,159 +89,153 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
     item.sf_per_sheet != null || item.sku_code || item.notes
   );
 
+  const hasSpecs = !!(item.material || item.dimensions || item.sf_per_sheet != null || item.sku_code);
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-50 md:flex md:items-center md:justify-center md:p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]">
+      {/* Modal — bottom sheet on mobile, centered on desktop */}
+      <div className="absolute inset-x-0 bottom-0 md:relative md:inset-auto bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-t-2xl md:rounded-2xl max-h-[90vh] md:max-h-[92vh] w-full md:max-w-lg overflow-hidden flex flex-col">
 
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 px-6 pt-5 pb-4">
-          <div className="flex items-start justify-between mb-3">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Price List Item</p>
-            <button
-              onClick={onClose}
-              className="flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
+        {/* Drag handle (mobile) */}
+        <div className="flex justify-center pt-2 pb-0 md:hidden">
+          <div className="w-10 h-1 rounded-full bg-slate-300/60" />
+        </div>
 
-          <h2 className="text-xl font-bold text-white leading-snug pr-4">
-            {item.concept_description}
-          </h2>
-          {item.sku_code && (
-            <p className="mt-1 text-sm text-slate-400 font-mono">{item.sku_code}</p>
-          )}
-
-          <div className="mt-4 flex items-end justify-between">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/10 text-slate-200 border border-white/10">
+        {/* Header with gradient accent */}
+        <div className="bg-gradient-to-br from-blue-600 to-blue-700 mx-3 mt-2 md:mx-0 md:mt-0 rounded-xl md:rounded-none md:rounded-t-2xl px-5 sm:px-6 pt-4 pb-4">
+          <div className="flex items-start justify-between mb-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/15 text-white/90 border border-white/10">
               <Tag className="h-3 w-3" />
               {item.type}
             </span>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-white">
+            <button
+              onClick={onClose}
+              className="flex-shrink-0 p-2 rounded-full bg-white/15 hover:bg-white/25 text-white/80 hover:text-white transition-colors backdrop-blur-sm"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <h2 className="text-lg sm:text-xl font-bold text-white leading-snug pr-8">
+            {item.concept_description}
+          </h2>
+          {item.sku_code && (
+            <p className="mt-1 text-sm text-blue-200/80 font-mono">{item.sku_code}</p>
+          )}
+
+          <div className="mt-3 flex items-end justify-between">
+            <div>
+              <div className="text-2xl sm:text-3xl font-bold text-white tabular-nums">
                 {formatCurrency(item.price)}
-                <span className="text-sm font-normal text-slate-400 ml-1">/ {item.unit}</span>
               </div>
-              <div className="flex items-center justify-end gap-1 mt-0.5">
-                <Calendar className="h-3 w-3 text-slate-500" />
-                <span className="text-xs text-slate-500">
-                  Updated {formatDate(item.price_last_updated_at)}
-                </span>
-              </div>
+              <span className="text-sm text-blue-200/80">per {item.unit}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3 w-3 text-blue-200/60" />
+              <span className="text-xs text-blue-200/60">
+                {formatDate(item.price_last_updated_at)}
+              </span>
             </div>
           </div>
         </div>
 
-        {item.image_url && !imgError && (
-          <div className="relative bg-slate-100 border-b border-slate-200" style={{ height: '180px' }}>
-            <img
-              src={item.image_url}
-              alt={item.concept_description}
-              className="w-full h-full object-cover"
-              onError={() => setImgError(true)}
-            />
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-3">
+
+          {/* Reference Image */}
+          {item.image_url && !imgError && (
+            <div className="relative rounded-xl overflow-hidden bg-slate-100 border border-slate-200/50" style={{ height: '180px' }}>
+              <img
+                src={item.image_url}
+                alt={item.concept_description}
+                className="w-full h-full object-cover"
+                onError={() => setImgError(true)}
+              />
+              <a
+                href={item.image_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute bottom-2 right-2 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors backdrop-blur-sm"
+                title="Open full image"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+              <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-black/40 text-white backdrop-blur-sm flex items-center gap-1.5">
+                <ImageIcon className="h-3 w-3" />
+                <span className="text-xs font-medium">Reference Image</span>
+              </div>
+            </div>
+          )}
+
+          {/* Specifications section */}
+          {hasSpecs && (
+            <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Ruler className="h-4 w-4 text-slate-400" />
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Specifications</h3>
+              </div>
+              <div className="divide-y divide-slate-200/40">
+                {item.material && (
+                  <DetailRow icon={<Layers className="h-4 w-4" />} label="Material" value={item.material} />
+                )}
+                {item.dimensions && (
+                  <DetailRow icon={<Ruler className="h-4 w-4" />} label="Dimensions" value={item.dimensions} />
+                )}
+                {item.sf_per_sheet != null && (
+                  <DetailRow icon={<Grid className="h-4 w-4" />} label="Sq Ft / Sheet" value={`${item.sf_per_sheet} sf`} />
+                )}
+                {item.sku_code && (
+                  <DetailRow icon={<Hash className="h-4 w-4" />} label="SKU / Code" value={<span className="font-mono text-slate-700">{item.sku_code}</span>} />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Product Link */}
+          {item.product_url && (
             <a
-              href={item.image_url}
+              href={item.product_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-black/40 text-white hover:bg-black/60 transition-colors backdrop-blur-sm"
-              title="Open full image"
+              className="flex items-center gap-3 bg-slate-50/80 border border-slate-200/50 rounded-xl p-4 hover:bg-slate-100/80 transition-colors group"
             >
-              <ExternalLink className="h-3.5 w-3.5" />
+              <div className="p-2 rounded-lg bg-blue-50 text-blue-500 group-hover:bg-blue-100 transition-colors">
+                <ExternalLink className="h-4 w-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-700">View Product Page</p>
+                <p className="text-xs text-slate-400 truncate">{item.product_url}</p>
+              </div>
             </a>
-            <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/40 text-white backdrop-blur-sm flex items-center gap-1">
-              <ImageIcon className="h-3 w-3" />
-              <span className="text-xs">Reference Image</span>
-            </div>
-          </div>
-        )}
-
-        <div className="flex-1 overflow-y-auto px-6 py-3">
-          {item.material && (
-            <DetailRow
-              icon={<Layers className="h-4 w-4" />}
-              label="Material"
-              value={item.material}
-            />
           )}
 
-          {item.dimensions && (
-            <DetailRow
-              icon={<Ruler className="h-4 w-4" />}
-              label="Dimensions"
-              value={item.dimensions}
-            />
-          )}
-
-          <DetailRow
-            icon={<Package className="h-4 w-4" />}
-            label="Unit"
-            value={item.unit}
-          />
-
-          <DetailRow
-            icon={<DollarSign className="h-4 w-4" />}
-            label="Price"
-            value={<span className="font-semibold text-slate-900">{formatCurrency(item.price)}</span>}
-          />
-
-          {item.sf_per_sheet != null && (
-            <DetailRow
-              icon={<Grid className="h-4 w-4" />}
-              label="Square Feet per Sheet"
-              value={`${item.sf_per_sheet} sf`}
-            />
-          )}
-
-          {item.sku_code && (
-            <DetailRow
-              icon={<Hash className="h-4 w-4" />}
-              label="SKU / Code"
-              value={<span className="font-mono text-slate-700">{item.sku_code}</span>}
-            />
-          )}
-
-          {item.product_url && (
-            <DetailRow
-              icon={<Link className="h-4 w-4" />}
-              label="Product Link"
-              value={
-                <a
-                  href={item.product_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline transition-colors break-all"
-                >
-                  <span className="truncate max-w-xs">{item.product_url}</span>
-                  <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
-                </a>
-              }
-            />
-          )}
-
+          {/* Notes */}
           {item.notes && (
-            <DetailRow
-              icon={<FileText className="h-4 w-4" />}
-              label="Notes / Observations"
-              value={<span className="whitespace-pre-wrap leading-relaxed">{item.notes}</span>}
-            />
+            <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="h-4 w-4 text-slate-400" />
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Notes</h3>
+              </div>
+              <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{item.notes}</p>
+            </div>
           )}
 
+          {/* Empty state */}
           {!hasAdditionalDetails && (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mb-2">
+            <div className="flex flex-col items-center justify-center py-6 text-center bg-slate-50/80 border border-slate-200/50 rounded-xl">
+              <div className="w-10 h-10 bg-white/80 rounded-full flex items-center justify-center mb-2 border border-slate-200/50">
                 <ImageOff className="h-5 w-5 text-slate-300" />
               </div>
               <p className="text-sm text-slate-400">No additional details available.</p>
             </div>
           )}
 
-          <div className="mt-4 mb-2">
-            <div className="flex items-center gap-2 mb-3 pt-2 border-t border-slate-100">
+          {/* Price History */}
+          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
               <Clock className="h-4 w-4 text-slate-400" />
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Price History</h3>
             </div>
@@ -250,11 +243,11 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
             {historyLoading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-slate-100 rounded-lg animate-pulse" />
+                  <div key={i} className="h-12 bg-white/60 rounded-xl animate-pulse" />
                 ))}
               </div>
             ) : history.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-6 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="flex flex-col items-center justify-center py-6 bg-white/60 rounded-xl border border-slate-200/40">
                 <TrendingUp className="h-7 w-7 text-slate-300 mb-2" />
                 <p className="text-sm text-slate-400">No price changes recorded yet</p>
               </div>
@@ -268,7 +261,7 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
                   return (
                     <div
                       key={entry.id}
-                      className="flex items-center gap-3 px-3 py-2.5 bg-slate-50 rounded-lg border border-slate-100 hover:border-slate-200 transition-colors"
+                      className="flex items-center gap-3 px-3 py-2.5 bg-white/60 rounded-xl border border-slate-200/40 hover:border-slate-300/60 transition-colors"
                     >
                       <div className="flex-shrink-0">
                         {increased ? (
@@ -315,31 +308,30 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
               </div>
             )}
           </div>
+
+          {/* Metadata */}
+          <div className="flex items-center justify-center gap-3 text-xs text-slate-400 pt-1 pb-2">
+            <span>Added {formatDate(item.created_at)}</span>
+            <span className="text-slate-300">·</span>
+            <span>Updated {formatDate(item.updated_at)}</span>
+          </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3 bg-white">
-          {item.product_url ? (
-            <a
-              href={item.product_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Visit Product Page
-            </a>
-          ) : (
-            <span />
-          )}
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={onClose}>
-              Close
-            </Button>
-            <Button size="sm" onClick={() => onEdit(item)}>
-              <Edit2 className="h-3.5 w-3.5 mr-1.5" />
-              Edit Item
-            </Button>
-          </div>
+        {/* Footer actions — sticky on mobile */}
+        <div className="sticky bottom-0 px-4 sm:px-5 py-4 border-t border-slate-200/40 flex items-center justify-end gap-2.5 bg-white/80 backdrop-blur-lg pb-safe">
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white/60 hover:bg-white/80 border border-slate-200/50 rounded-xl transition-colors"
+          >
+            Close
+          </button>
+          <button
+            onClick={() => onEdit(item)}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-white bg-blue-600/90 hover:bg-blue-700 rounded-xl transition-colors backdrop-blur-sm shadow-sm"
+          >
+            <Edit2 className="h-3.5 w-3.5" />
+            Edit Item
+          </button>
         </div>
       </div>
     </div>
