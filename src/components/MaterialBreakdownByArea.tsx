@@ -41,6 +41,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
         .select(`
           id,
           name,
+          quantity,
           projects:project_id (name)
         `);
 
@@ -94,7 +95,8 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
 
       const { data: products, error: productsError } = await supabase
         .from('products_catalog')
-        .select('sku, box_sf, doors_fronts_sf, total_edgeband, box_edgeband, box_edgeband_color');
+        .select('sku, box_sf, doors_fronts_sf, total_edgeband, box_edgeband, box_edgeband_color')
+        .limit(2000);
 
       if (productsError) throw productsError;
 
@@ -109,6 +111,8 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
 
         if (areaCabinets.length === 0 && areaCountertops.length === 0) return;
 
+        const areaQty = area.quantity ?? 1;
+
         const boxMaterialSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number }>();
         const doorsMaterialSheets = new Map<string, { sheetsNeeded: number; totalSF: number; cost: number }>();
         const boxEdgebandRolls = new Map<string, { rollsNeeded: number; totalMeters: number; cost: number }>();
@@ -121,7 +125,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
 
         areaCabinets.forEach((cabinet: any) => {
           const product = productsMap.get(cabinet.product_sku || '');
-          const qty = cabinet.quantity || 1;
+          const qty = (cabinet.quantity || 1) * areaQty;
 
           if (cabinet.box_material_id && product) {
             const name = priceListMap.get(cabinet.box_material_id) || 'Unknown Box Material';
@@ -131,7 +135,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
             boxMaterialSheets.set(name, {
               sheetsNeeded: 0,
               totalSF: existing.totalSF + totalSF,
-              cost: existing.cost + (cabinet.box_material_cost || 0),
+              cost: existing.cost + (cabinet.box_material_cost || 0) * areaQty,
             });
           }
 
@@ -143,7 +147,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
             doorsMaterialSheets.set(name, {
               sheetsNeeded: 0,
               totalSF: existing.totalSF + totalSF,
-              cost: existing.cost + (cabinet.doors_material_cost || 0),
+              cost: existing.cost + (cabinet.doors_material_cost || 0) * areaQty,
             });
           }
 
@@ -155,7 +159,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
             boxEdgebandRolls.set(name, {
               rollsNeeded: existing.rollsNeeded + Math.ceil(totalMeters / ROLL_LENGTH_METERS),
               totalMeters: existing.totalMeters + totalMeters,
-              cost: existing.cost + (cabinet.box_edgeband_cost || 0),
+              cost: existing.cost + (cabinet.box_edgeband_cost || 0) * areaQty,
             });
           }
 
@@ -167,12 +171,12 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
             doorsEdgebandRolls.set(name, {
               rollsNeeded: existing.rollsNeeded + Math.ceil(totalMeters / ROLL_LENGTH_METERS),
               totalMeters: existing.totalMeters + totalMeters,
-              cost: existing.cost + (cabinet.doors_edgeband_cost || 0),
+              cost: existing.cost + (cabinet.doors_edgeband_cost || 0) * areaQty,
             });
           }
 
           if (cabinet.hardware && Array.isArray(cabinet.hardware) && cabinet.hardware.length > 0) {
-            const totalHardwareCost = cabinet.hardware_cost || 0;
+            const totalHardwareCost = (cabinet.hardware_cost || 0) * areaQty;
             const totalHardwareItems = cabinet.hardware.reduce((sum: number, hw: any) => sum + (hw.quantity_per_cabinet || 0), 0);
 
             (cabinet.hardware as any[]).forEach((hw: any) => {
@@ -197,7 +201,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
           }
 
           if (cabinet.accessories && Array.isArray(cabinet.accessories) && cabinet.accessories.length > 0) {
-            const totalAccessoriesCost = cabinet.accessories_cost || 0;
+            const totalAccessoriesCost = (cabinet.accessories_cost || 0) * areaQty;
             const totalAccessoryItems = cabinet.accessories.reduce((sum: number, acc: any) => sum + (acc.quantity_per_cabinet || 0), 0);
 
             (cabinet.accessories as any[]).forEach((acc: any) => {
@@ -221,13 +225,13 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
             });
           }
 
-          totalCost += cabinet.subtotal || 0;
+          totalCost += (cabinet.subtotal || 0) * areaQty;
         });
 
         areaCountertops.forEach((countertop: any) => {
           const name = countertop.item_name || 'Unknown Countertop';
-          const qty = countertop.quantity || 0;
-          const cost = countertop.subtotal || 0;
+          const qty = (countertop.quantity || 0) * areaQty;
+          const cost = (countertop.subtotal || 0) * areaQty;
 
           const existing = countertopsMap.get(name) || { quantity: 0, cost: 0 };
           countertopsMap.set(name, {
@@ -248,7 +252,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
 
         areaBreakdowns.push({
           areaId: area.id,
-          areaName: area.name,
+          areaName: areaQty > 1 ? `${area.name} (×${areaQty})` : area.name,
           projectName: projectId ? undefined : ((area.projects as any)?.name || 'Unknown Project'),
           boxMaterialSheets,
           doorsMaterialSheets,
@@ -258,8 +262,8 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
           accessories,
           countertops: countertopsMap,
           totalCost,
-          cabinetCount: areaCabinets.length,
-          countertopCount: areaCountertops.length,
+          cabinetCount: areaCabinets.length * areaQty,
+          countertopCount: areaCountertops.length * areaQty,
         });
       });
 

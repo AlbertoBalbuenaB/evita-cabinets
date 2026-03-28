@@ -10,6 +10,7 @@ import {
 } from '../lib/versioningSystem';
 import { recalculateAreaSheetMaterialCosts } from '../lib/sheetMaterials';
 import { recalculateAreaEdgebandCosts } from '../lib/edgebandRolls';
+import { clearProjectStaleness } from '../lib/priceUpdateSystem';
 import { supabase } from '../lib/supabase';
 
 interface MaterialPriceUpdateModalProps {
@@ -130,6 +131,8 @@ export function MaterialPriceUpdateModal({
         undefined,
         { recalculated_at: new Date().toISOString() }
       );
+
+      await clearProjectStaleness(projectId);
 
       for (const areaId of affectedAreas) {
         await recalculateAreaSheetMaterialCosts(areaId);

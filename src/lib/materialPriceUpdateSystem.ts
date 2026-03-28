@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { fetchAllProducts } from './fetchAllProducts';
 import type { PriceListItem, Product, AreaCabinet } from '../types';
 import {
   calculateBoxMaterialCost,
@@ -7,14 +8,16 @@ import {
   calculateDoorsEdgebandCost,
   calculateInteriorFinishCost,
   calculateHardwareCost,
+  calculateAccessoriesCost,
   calculateLaborCost,
+  calculateDoorProfileCost,
 } from './calculations';
 import { getSettings } from './settingsStore';
 
 export interface MaterialImpact {
   materialId: string;
   materialName: string;
-  materialType: 'box_material' | 'box_edgeband' | 'box_interior_finish' | 'doors_material' | 'doors_edgeband' | 'doors_interior_finish' | 'hardware';
+  materialType: 'box_material' | 'box_edgeband' | 'box_interior_finish' | 'doors_material' | 'doors_edgeband' | 'doors_interior_finish' | 'hardware' | 'accessories' | 'door_profile';
   oldPrice: number;
   currentPrice: number;
   priceChangeDate: string;
@@ -47,30 +50,38 @@ export async function analyzeMaterialPriceChanges(projectId: string): Promise<Ma
     throw new Error('Project not found');
   }
 
-  const [areasResult, priceListResult, productsResult, settingsData] = await Promise.all([
+  const [areasResult, priceListResult, products, settingsData] = await Promise.all([
     supabase
       .from('project_areas')
       .select('id, name')
       .eq('project_id', projectId),
     supabase.from('price_list').select('*').eq('is_active', true),
-    supabase.from('products_catalog').select('*'),
+    fetchAllProducts({ onlyActive: false }),
     getSettings(),
   ]);
 
   const areas = areasResult.data || [];
   const priceList = priceListResult.data || [];
-  const products = productsResult.data || [];
 
   const materialImpactMap = new Map<string, MaterialImpact>();
   const affectedCabinetsSet = new Set<string>();
 
-  for (const area of areas) {
-    const cabinetsResult = await supabase
-      .from('area_cabinets')
-      .select('*')
-      .eq('area_id', area.id);
+  const allCabinetsResult = await supabase
+    .from('area_cabinets')
+    .select('*')
+    .in('area_id', areas.map(a => a.id));
 
-    const cabinets = cabinetsResult.data || [];
+  const allCabinets = allCabinetsResult.data || [];
+  const cabinetsByArea = new Map<string, typeof allCabinets>();
+  for (const cabinet of allCabinets) {
+    if (!cabinetsByArea.has(cabinet.area_id)) {
+      cabinetsByArea.set(cabinet.area_id, []);
+    }
+    cabinetsByArea.get(cabinet.area_id)!.push(cabinet);
+  }
+
+  for (const area of areas) {
+    const cabinets = cabinetsByArea.get(area.id) || [];
 
     for (const cabinet of cabinets) {
       const product = products.find(p => p.sku === cabinet.product_sku);
@@ -153,6 +164,64 @@ export async function analyzeMaterialPriceChanges(projectId: string): Promise<Ma
         'doors_interior_finish_id',
         'doors_interior_finish_cost',
         'doors_interior_finish',
+        area.name,
+        priceList,
+        materialImpactMap,
+        affectedCabinetsSet,
+        settingsData,
+        project.created_at
+      );
+
+      const cabinetAccessories = Array.isArray(cabinet.accessories) ? cabinet.accessories : [];
+      if (cabinetAccessories.length > 0) {
+        const oldAccessoriesCost = cabinet.accessories_cost || 0;
+        const newAccessoriesCost = calculateAccessoriesCost(cabinetAccessories, cabinet.quantity, priceList);
+
+        if (Math.abs(newAccessoriesCost - oldAccessoriesCost) > 0.01) {
+          const accessoriesKey = 'accessories_combined';
+
+          if (!materialImpactMap.has(accessoriesKey)) {
+            materialImpactMap.set(accessoriesKey, {
+              materialId: accessoriesKey,
+              materialName: 'Accessories (combined)',
+              materialType: 'accessories',
+              oldPrice: 0,
+              currentPrice: 0,
+              priceChangeDate: project.created_at,
+              priceChangePercentage: 0,
+              affectedCabinetsCount: 0,
+              totalOldCost: 0,
+              totalNewCost: 0,
+              totalDifference: 0,
+              percentageChange: 0,
+              affectedAreas: [],
+            });
+          }
+
+          const impact = materialImpactMap.get(accessoriesKey)!;
+          impact.affectedCabinetsCount++;
+          impact.totalOldCost += oldAccessoriesCost;
+          impact.totalNewCost += newAccessoriesCost;
+          impact.totalDifference += (newAccessoriesCost - oldAccessoriesCost);
+
+          if (!impact.affectedAreas.includes(area.name)) {
+            impact.affectedAreas.push(area.name);
+          }
+
+          if (impact.totalOldCost !== 0) {
+            impact.percentageChange = ((impact.totalNewCost - impact.totalOldCost) / impact.totalOldCost) * 100;
+          }
+
+          affectedCabinetsSet.add(cabinet.id);
+        }
+      }
+
+      await checkMaterialChange(
+        cabinet,
+        product,
+        'door_profile_id',
+        'door_profile_cost',
+        'door_profile',
         area.name,
         priceList,
         materialImpactMap,
@@ -278,6 +347,8 @@ function getOriginalPriceField(materialType: MaterialImpact['materialType']): st
     'doors_edgeband': 'original_doors_edgeband_price',
     'doors_interior_finish': 'original_doors_interior_finish_price',
     'hardware': '',
+    'accessories': '',
+    'door_profile': '',
   };
   return fieldMap[materialType];
 }
@@ -304,7 +375,8 @@ async function calculateImplicitPrice(
 
     case 'box_edgeband':
     case 'doors_edgeband':
-      // For edgeband, calculate linear feet used
+    case 'door_profile':
+      // For edgeband/door profile, calculate linear meters used
       const lf = materialType === 'box_edgeband'
         ? product.box_edgeband || 0
         : product.doors_fronts_edgeband || 0;
@@ -365,6 +437,12 @@ async function calculateNewCost(
       return calculateDoorsEdgebandCost(product, material, cabinet.quantity);
     case 'doors_interior_finish':
       return calculateInteriorFinishCost(product, material, cabinet.quantity, false);
+    case 'accessories': {
+      const accessories = Array.isArray(cabinet.accessories) ? cabinet.accessories : [];
+      return calculateAccessoriesCost(accessories, cabinet.quantity, priceList);
+    }
+    case 'door_profile':
+      return calculateDoorProfileCost(product, material, cabinet.quantity);
     default:
       return 0;
   }
@@ -378,35 +456,27 @@ export async function updateSelectedMaterials(
   const errors: string[] = [];
   let updated = 0;
 
-  const [priceListResult, productsResult, settingsData, areasResult] = await Promise.all([
+  const [priceListResult, products, settingsData, areasResult] = await Promise.all([
     supabase.from('price_list').select('*').eq('is_active', true),
-    supabase.from('products_catalog').select('*'),
+    fetchAllProducts({ onlyActive: false }),
     getSettings(),
     supabase.from('project_areas').select('id').eq('project_id', projectId),
   ]);
 
   const priceList = priceListResult.data || [];
-  const products = productsResult.data || [];
   const areas = areasResult.data || [];
 
   let processedCount = 0;
-  let totalCabinets = 0;
 
-  for (const area of areas) {
-    const { data: cabinets } = await supabase
-      .from('area_cabinets')
-      .select('id')
-      .eq('area_id', area.id);
-    totalCabinets += (cabinets || []).length;
-  }
+  const { data: allCabinets } = await supabase
+    .from('area_cabinets')
+    .select('*')
+    .in('area_id', areas.map(a => a.id));
 
-  for (const area of areas) {
-    const { data: cabinets } = await supabase
-      .from('area_cabinets')
-      .select('*')
-      .eq('area_id', area.id);
+  const cabinetsToProcess = allCabinets || [];
+  const totalCabinets = cabinetsToProcess.length;
 
-    for (const cabinet of cabinets || []) {
+  for (const cabinet of cabinetsToProcess) {
       processedCount++;
       if (onProgress) {
         onProgress(`Updating cabinet ${processedCount} of ${totalCabinets}`, processedCount, totalCabinets);
@@ -421,7 +491,8 @@ export async function updateSelectedMaterials(
         cabinet.box_interior_finish_id === id ||
         cabinet.doors_material_id === id ||
         cabinet.doors_edgeband_id === id ||
-        cabinet.doors_interior_finish_id === id
+        cabinet.doors_interior_finish_id === id ||
+        cabinet.door_profile_id === id
       );
 
       if (!usesSelectedMaterial) continue;
@@ -450,6 +521,10 @@ export async function updateSelectedMaterials(
           updateData.doors_interior_finish_cost = costs.doorsInteriorFinishCost;
         }
 
+        if (selectedMaterialIds.includes(cabinet.door_profile_id || '')) {
+          updateData.door_profile_cost = costs.doorProfileCost;
+        }
+
         const subtotal = (
           (updateData.box_material_cost ?? cabinet.box_material_cost) +
           (updateData.box_edgeband_cost ?? cabinet.box_edgeband_cost) +
@@ -458,7 +533,9 @@ export async function updateSelectedMaterials(
           (updateData.doors_edgeband_cost ?? cabinet.doors_edgeband_cost) +
           (updateData.doors_interior_finish_cost ?? cabinet.doors_interior_finish_cost) +
           cabinet.hardware_cost +
-          cabinet.labor_cost
+          cabinet.accessories_cost +
+          cabinet.labor_cost +
+          (updateData.door_profile_cost ?? (cabinet.door_profile_cost || 0))
         );
 
         updateData.subtotal = subtotal;
@@ -476,7 +553,6 @@ export async function updateSelectedMaterials(
       } catch (error: any) {
         errors.push(`Error processing cabinet ${cabinet.id}: ${error.message}`);
       }
-    }
   }
 
   return { updated, errors };
@@ -516,7 +592,14 @@ async function recalculateCabinetCosts(
 
   const hardware = Array.isArray(cabinet.hardware) ? cabinet.hardware : [];
   const hardwareCost = calculateHardwareCost(hardware, cabinet.quantity, priceList);
+  const accessories = Array.isArray(cabinet.accessories) ? cabinet.accessories : [];
+  const accessoriesCost = calculateAccessoriesCost(accessories, cabinet.quantity, priceList);
   const laborCost = calculateLaborCost(product, cabinet.quantity, settings.laborCostNoDrawers, settings.laborCostWithDrawers, settings.laborCostAccessories);
+
+  const doorProfileItem = cabinet.door_profile_id ? priceList.find(p => p.id === cabinet.door_profile_id) : null;
+  const doorProfileCost = doorProfileItem
+    ? calculateDoorProfileCost(product, doorProfileItem, cabinet.quantity)
+    : 0;
 
   return {
     boxMaterialCost,
@@ -526,6 +609,19 @@ async function recalculateCabinetCosts(
     doorsEdgebandCost,
     doorsInteriorFinishCost,
     hardwareCost,
+    accessoriesCost,
     laborCost,
+    doorProfileCost,
+    subtotal:
+      boxMaterialCost +
+      boxEdgebandCost +
+      boxInteriorFinishCost +
+      doorsMaterialCost +
+      doorsEdgebandCost +
+      doorsInteriorFinishCost +
+      hardwareCost +
+      accessoriesCost +
+      laborCost +
+      doorProfileCost,
   };
 }

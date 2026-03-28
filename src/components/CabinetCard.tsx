@@ -1,9 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Edit2, Trash2, Copy, ChevronDown, ChevronUp, Bookmark, Package, Layers, Ruler, Hash, Wrench, Boxes } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Pencil as Edit2, Trash2, Copy, ChevronDown, ChevronUp, Bookmark, Package, Layers, Ruler, Hash, Wrench, Boxes, MoveRight } from 'lucide-react';
 import { Button } from './Button';
 import { formatCurrency } from '../lib/calculations';
 import { calculateCabinetMaterialSummary, type CabinetMaterialSummary } from '../lib/cabinetMaterialSummary';
 import type { AreaCabinet, Product, PriceListItem } from '../types';
+
+interface AreaOption {
+  id: string;
+  name: string;
+}
 
 interface CabinetCardProps {
   cabinet: AreaCabinet;
@@ -11,16 +16,48 @@ interface CabinetCardProps {
   onDelete: () => void;
   onDuplicate: () => void;
   onSaveAsTemplate?: () => void;
+  onMove?: (targetAreaId: string) => void;
+  availableAreas?: AreaOption[];
   productDescription?: string;
   product?: Product;
   priceList?: PriceListItem[];
 }
 
-export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTemplate, productDescription, product, priceList }: CabinetCardProps) {
+export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTemplate, onMove, availableAreas, productDescription, product, priceList }: CabinetCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showMaterialSummary, setShowMaterialSummary] = useState(false);
   const [materialSummary, setMaterialSummary] = useState<CabinetMaterialSummary | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
+  const [showMoveMenu, setShowMoveMenu] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const moveButtonRef = useRef<HTMLDivElement>(null);
+  const moveMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        moveMenuRef.current && !moveMenuRef.current.contains(e.target as Node) &&
+        moveButtonRef.current && !moveButtonRef.current.contains(e.target as Node)
+      ) {
+        setShowMoveMenu(false);
+      }
+    }
+    if (showMoveMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMoveMenu]);
+
+  function handleToggleMoveMenu() {
+    if (!showMoveMenu && moveButtonRef.current) {
+      const rect = moveButtonRef.current.getBoundingClientRect();
+      setMenuPos({
+        top: rect.bottom + 4,
+        right: window.innerWidth - rect.right,
+      });
+    }
+    setShowMoveMenu(!showMoveMenu);
+  }
 
   useEffect(() => {
     if (showMaterialSummary && product && priceList && !materialSummary) {
@@ -62,7 +99,7 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
 
           <div className="flex items-center justify-end sm:space-x-4">
 
-            <div className="flex space-x-1">
+            <div className="flex space-x-1 items-center">
               <Button variant="ghost" size="sm" onClick={() => setIsExpanded(!isExpanded)}>
                 {isExpanded ? (
                   <ChevronUp className="h-4 w-4" />
@@ -86,6 +123,46 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
               <Button variant="ghost" size="sm" onClick={onDuplicate}>
                 <Copy className="h-4 w-4" />
               </Button>
+              {onMove && availableAreas && availableAreas.length > 0 && (
+                <div ref={moveButtonRef}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleToggleMoveMenu}
+                    title="Move to another area"
+                  >
+                    <MoveRight className="h-4 w-4 text-teal-600" />
+                  </Button>
+                  {showMoveMenu && menuPos && (
+                    <div
+                      ref={moveMenuRef}
+                      style={{
+                        position: 'fixed',
+                        top: menuPos.top,
+                        right: menuPos.right,
+                        zIndex: 9999,
+                      }}
+                      className="bg-white border border-slate-200 rounded-lg shadow-xl py-1 min-w-[200px] max-h-64 overflow-y-auto"
+                    >
+                      <div className="px-3 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 sticky top-0 bg-white">
+                        Move to Area
+                      </div>
+                      {availableAreas.map((a) => (
+                        <button
+                          key={a.id}
+                          className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition-colors"
+                          onClick={() => {
+                            setShowMoveMenu(false);
+                            onMove(a.id);
+                          }}
+                        >
+                          {a.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <Button variant="ghost" size="sm" onClick={onDelete}>
                 <Trash2 className="h-4 w-4 text-red-600" />
               </Button>

@@ -1,10 +1,12 @@
 import { supabase } from './supabase';
+import { fetchAllProducts } from './fetchAllProducts';
 import {
   calculateBoxMaterialCost,
   calculateBoxEdgebandCost,
   calculateDoorsMaterialCost,
   calculateDoorsEdgebandCost,
   calculateInteriorFinishCost,
+  calculateDoorProfileCost,
 } from './calculations';
 import { recalculateAreaSheetMaterialCosts } from './sheetMaterials';
 import type { AreaCabinet, PriceListItem, Product } from '../types';
@@ -16,7 +18,9 @@ export type MaterialChangeType =
   | 'doors_edgeband'
   | 'box_interior_finish'
   | 'doors_interior_finish'
-  | 'hardware';
+  | 'door_profile';
+  // Note: hardware is intentionally excluded — hardware is a JSON array, not a single ID.
+  // Hardware bulk changes are handled by the dedicated bulkHardwareChange module.
 
 export type ChangeScope = 'area' | 'selected_areas' | 'project';
 
@@ -90,6 +94,10 @@ export async function getMaterialsInUse(
     case 'doors_interior_finish':
       materialColumn = 'doors_interior_finish_id';
       costColumn = 'doors_interior_finish_cost';
+      break;
+    case 'door_profile':
+      materialColumn = 'door_profile_id';
+      costColumn = 'door_profile_cost';
       break;
     default:
       throw new Error(`Unknown change type: ${changeType}`);
@@ -180,6 +188,10 @@ export async function previewBulkMaterialChange(
       materialColumn = 'doors_interior_finish_id';
       costColumn = 'doors_interior_finish_cost';
       break;
+    case 'door_profile':
+      materialColumn = 'door_profile_id';
+      costColumn = 'door_profile_cost';
+      break;
     default:
       throw new Error(`Unknown change type: ${changeType}`);
   }
@@ -206,9 +218,9 @@ export async function previewBulkMaterialChange(
 
   if (error) throw error;
 
-  const [{ data: newMaterial }, { data: products }, { data: priceList }] = await Promise.all([
+  const [{ data: newMaterial }, products, { data: priceList }] = await Promise.all([
     supabase.from('price_list').select('*').eq('id', newMaterialId).single(),
-    supabase.from('products_catalog').select('*'),
+    fetchAllProducts({ onlyActive: false }),
     supabase.from('price_list').select('*'),
   ]);
 
@@ -216,7 +228,7 @@ export async function previewBulkMaterialChange(
     throw new Error('New material not found');
   }
 
-  const productsMap = new Map(products?.map(p => [p.sku, p]) || []);
+  const productsMap = new Map(products.map(p => [p.sku, p]));
   const priceListMap = new Map(priceList?.map(p => [p.id, p]) || []);
 
   let totalCostBefore = 0;
@@ -256,6 +268,9 @@ export async function previewBulkMaterialChange(
         case 'doors_interior_finish':
           const isBox = changeType === 'box_interior_finish';
           newCost = calculateInteriorFinishCost(product, newMaterial, cabinet.quantity, isBox);
+          break;
+        case 'door_profile':
+          newCost = calculateDoorProfileCost(product, newMaterial, cabinet.quantity);
           break;
       }
     } catch (error) {
@@ -378,6 +393,10 @@ export async function executeBulkMaterialChange(
           updates.doors_interior_finish_cost = cabinet.newCost;
           updates.original_doors_interior_finish_price = newMaterial?.price || null;
           break;
+        case 'door_profile':
+          updates.door_profile_id = newMaterialId;
+          updates.door_profile_cost = cabinet.newCost;
+          break;
       }
 
       const { data: currentCabinet } = await supabase
@@ -394,7 +413,10 @@ export async function executeBulkMaterialChange(
           (changeType === 'doors_material' ? updates.doors_material_cost : currentCabinet.doors_material_cost || 0) +
           (changeType === 'doors_edgeband' ? updates.doors_edgeband_cost : currentCabinet.doors_edgeband_cost || 0) +
           (changeType === 'doors_interior_finish' ? updates.doors_interior_finish_cost : currentCabinet.doors_interior_finish_cost || 0) +
+          (changeType === 'door_profile' ? updates.door_profile_cost : currentCabinet.door_profile_cost || 0) +
+          (currentCabinet.back_panel_material_cost || 0) +
           (currentCabinet.hardware_cost || 0) +
+          (currentCabinet.accessories_cost || 0) +
           (currentCabinet.labor_cost || 0);
 
         updates.subtotal = newSubtotal;
@@ -473,8 +495,7 @@ export async function validateMaterialReplacement(
 
   const isEdgeband = (type: string) => type.includes('edgeband');
 
-  const isHardware = (type: string) =>
-    type.includes('hinge') || type.includes('slide') || type.includes('handle') || type.includes('hardware');
+  const isDoorProfile = (type: string) => type.includes('door profile');
 
   if (isSheetMaterial(oldType) && !isSheetMaterial(newType)) {
     return { valid: false, error: 'Cannot replace sheet material with non-sheet material' };
@@ -484,8 +505,8 @@ export async function validateMaterialReplacement(
     return { valid: false, error: 'Cannot replace edgeband with non-edgeband material' };
   }
 
-  if (isHardware(oldType) && !isHardware(newType)) {
-    return { valid: false, error: 'Cannot replace hardware with non-hardware material' };
+  if (isDoorProfile(oldType) && !isDoorProfile(newType)) {
+    return { valid: false, error: 'Cannot replace door profile with a non-door profile item' };
   }
 
   return { valid: true };

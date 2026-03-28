@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, Filter, X, TrendingUp, BarChart3, Clock, Bookmark, Edit2, Trash2, Copy } from 'lucide-react';
+import { Search, Filter, X, TrendingUp, BarChart3, Clock, Bookmark, CreditCard as Edit2, Trash2, Copy } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
@@ -26,7 +26,11 @@ const TEMPLATE_CATEGORIES: TemplateCategory[] = [
   'General',
 ];
 
-export function Templates() {
+interface TemplatesProps {
+  embedded?: boolean;
+}
+
+export function Templates({ embedded = false }: TemplatesProps) {
   const [templates, setTemplates] = useState<CabinetTemplate[]>([]);
   const [filteredTemplates, setFilteredTemplates] = useState<CabinetTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -158,18 +162,28 @@ export function Templates() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Cabinet Templates</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Reusable cabinet configurations for faster quotations
-          </p>
+      {!embedded && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Cabinet Templates</h1>
+            <p className="mt-1 text-sm text-slate-600">
+              Reusable cabinet configurations for faster quotations
+            </p>
+          </div>
+          <Button onClick={handleShowAnalytics} variant="secondary">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            View Analytics
+          </Button>
         </div>
-        <Button onClick={handleShowAnalytics} variant="secondary">
-          <BarChart3 className="h-4 w-4 mr-2" />
-          View Analytics
-        </Button>
-      </div>
+      )}
+      {embedded && (
+        <div className="flex justify-end">
+          <Button onClick={handleShowAnalytics} variant="secondary">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            View Analytics
+          </Button>
+        </div>
+      )}
 
       {recentTemplates.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

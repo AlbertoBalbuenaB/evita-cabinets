@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Plus, Search, Edit2, Trash2, Check, X, Archive, ArchiveRestore, Library } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Plus, Search, Pencil as Edit2, Trash2, Check, X, Archive, ArchiveRestore, Library, Package, ToggleLeft, ToggleRight, Bookmark } from 'lucide-react';
+import { ClosetCatalogForm } from '../components/ClosetCatalogForm';
+import { ProductFormModal } from '../components/ProductFormModal';
 import { supabase } from '../lib/supabase';
+import { fetchAllProducts } from '../lib/fetchAllProducts';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
@@ -8,10 +11,12 @@ import { CollectionSelector } from '../components/CollectionSelector';
 import { SafeEditModal } from '../components/SafeEditModal';
 import { checkProductUsage } from '../lib/productUsageChecker';
 import { getAllCollections, archiveProduct, restoreProduct } from '../lib/collectionManager';
-import type { Product, ProductInsert } from '../types';
+import { Templates } from './Templates';
+import type { Product, ProductInsert, ClosetCatalogItem } from '../types';
 import type { ProductUsage } from '../lib/productUsageChecker';
 
 export function ProductsCatalog() {
+  const [activeTab, setActiveTab] = useState<'products' | 'closets' | 'templates'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [collections, setCollections] = useState<string[]>([]);
@@ -36,19 +41,8 @@ export function ProductsCatalog() {
 
   async function loadProducts() {
     try {
-      let query = supabase
-        .from('products_catalog')
-        .select('*')
-        .eq('is_active', true);
-
-      if (!showArchived) {
-        query = query.eq('status', 'active');
-      }
-
-      const { data, error } = await query.order('sku');
-
-      if (error) throw error;
-      setProducts(data || []);
+      const data = await fetchAllProducts({ onlyActive: !showArchived });
+      setProducts(data);
     } catch (error) {
       console.error('Error loading products:', error);
     } finally {
@@ -206,16 +200,48 @@ export function ProductsCatalog() {
     <div>
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Products Catalog</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Cabinets Catalog</h1>
           <p className="mt-2 text-slate-600">
-            Manage your cabinet products and organize them into collections
+            Manage cabinet products, closet library and reusable templates
           </p>
         </div>
-        <Button onClick={handleAddNew}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Product
-        </Button>
+        {activeTab === 'products' && (
+          <Button onClick={handleAddNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
+        )}
       </div>
+
+      <div className="flex border-b border-slate-200 mb-6">
+        <button
+          onClick={() => setActiveTab('products')}
+          className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'products' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
+        >
+          <Library className="h-4 w-4" />
+          Cabinet Catalog
+        </button>
+        <button
+          onClick={() => setActiveTab('closets')}
+          className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'closets' ? 'border-teal-600 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
+        >
+          <Package className="h-4 w-4" />
+          Closet Library
+        </button>
+        <button
+          onClick={() => setActiveTab('templates')}
+          className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'templates' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
+        >
+          <Bookmark className="h-4 w-4" />
+          Templates
+        </button>
+      </div>
+
+      {activeTab === 'closets' && <ClosetLibraryTab />}
+
+      {activeTab === 'templates' && <Templates embedded />}
+
+      {activeTab === 'products' && <div>
 
       <div className="mb-6 space-y-4">
         <div className="flex items-center space-x-4">
@@ -285,6 +311,15 @@ export function ProductsCatalog() {
                 <th className="px-6 py-3 text-center text-xs font-medium text-slate-700 uppercase tracking-wider">
                   Drawers
                 </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">
+                  Labor Cost
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-slate-700 uppercase tracking-wider">
+                  Boxes
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-slate-700 uppercase tracking-wider">
+                  RTA Default
+                </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-slate-700 uppercase tracking-wider">
                   Status
                 </th>
@@ -296,7 +331,7 @@ export function ProductsCatalog() {
             <tbody className="bg-white divide-y divide-slate-200">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-8 text-center text-slate-500">
+                  <td colSpan={12} className="px-6 py-8 text-center text-slate-500">
                     No products found. {searchTerm ? 'Try a different search.' : 'Add your first product to get started.'}
                   </td>
                 </tr>
@@ -328,6 +363,23 @@ export function ProductsCatalog() {
                         <Check className="h-5 w-5 text-green-600 mx-auto" />
                       ) : (
                         <X className="h-5 w-5 text-slate-300 mx-auto" />
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                      {product.custom_labor_cost !== null && product.custom_labor_cost !== undefined ? (
+                        <span className="text-slate-900">${product.custom_labor_cost.toFixed(2)}</span>
+                      ) : (
+                        <span className="text-slate-400">Global</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-slate-900">
+                      {product.boxes_per_unit ?? 1}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      {product.default_is_rta ? (
+                        <Check className="h-5 w-5 text-green-600 mx-auto" />
+                      ) : (
+                        <span className="text-slate-300">—</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -404,6 +456,189 @@ export function ProductsCatalog() {
           pendingUpdates={pendingUpdates}
         />
       )}
+    </div>}
+    </div>
+  );
+}
+
+function ClosetLibraryTab() {
+  const [closetItems, setClosetItems] = useState<ClosetCatalogItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterLine, setFilterLine] = useState<'all' | 'Evita Plus' | 'Evita Premium'>('all');
+  const [showInactive, setShowInactive] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ClosetCatalogItem | null>(null);
+
+  useEffect(() => {
+    loadClosetItems();
+  }, [showInactive]);
+
+  async function loadClosetItems() {
+    setLoading(true);
+    try {
+      let query = supabase.from('closet_catalog').select('*').order('evita_line').order('description').order('height_in').order('width_in');
+      if (!showInactive) {
+        query = query.eq('is_active', true);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      setClosetItems((data || []) as ClosetCatalogItem[]);
+    } catch (error) {
+      console.error('Error loading closet catalog:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function toggleActive(item: ClosetCatalogItem) {
+    const { error } = await supabase
+      .from('closet_catalog')
+      .update({ is_active: !item.is_active })
+      .eq('id', item.id);
+    if (!error) {
+      setClosetItems(prev => prev.map(ci => ci.id === item.id ? { ...ci, is_active: !ci.is_active } : ci));
+    }
+  }
+
+  const filtered = useMemo(() => {
+    let result = closetItems;
+    if (filterLine !== 'all') result = result.filter(ci => ci.evita_line === filterLine);
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      result = result.filter(ci =>
+        ci.description.toLowerCase().includes(q) ||
+        ci.cabinet_code.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [closetItems, filterLine, searchTerm]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="text-slate-500">Loading closet catalog...</div>
+      </div>
+    );
+  }
+
+  function openAdd() {
+    setEditingItem(null);
+    setFormOpen(true);
+  }
+
+  function openEdit(item: ClosetCatalogItem) {
+    setEditingItem(item);
+    setFormOpen(true);
+  }
+
+  function closeForm() {
+    setFormOpen(false);
+    setEditingItem(null);
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="text-xs text-slate-500">{filtered.length} items</div>
+        <Button onClick={openAdd} size="sm">
+          <Plus className="h-4 w-4 mr-1" />
+          Add Cabinet
+        </Button>
+      </div>
+
+      <div className="mb-4 flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="Search by description or code..."
+            className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+          />
+        </div>
+        <select
+          value={filterLine}
+          onChange={e => setFilterLine(e.target.value as any)}
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+        >
+          <option value="all">All Lines</option>
+          <option value="Evita Plus">Evita Plus</option>
+          <option value="Evita Premium">Evita Premium</option>
+        </select>
+        <label className="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 text-sm">
+          <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} className="w-4 h-4 text-teal-600 border-slate-300 rounded" />
+          <span className="text-slate-700">Show Inactive</span>
+        </label>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-slate-200">
+        <table className="w-full text-sm">
+          <thead className="bg-teal-50 border-b border-teal-200">
+            <tr>
+              <th className="text-left px-4 py-3 font-semibold text-teal-900">Code</th>
+              <th className="text-left px-4 py-3 font-semibold text-teal-900">Line</th>
+              <th className="text-left px-4 py-3 font-semibold text-teal-900">Description</th>
+              <th className="text-right px-4 py-3 font-semibold text-teal-900">W"</th>
+              <th className="text-right px-4 py-3 font-semibold text-teal-900">H"</th>
+              <th className="text-right px-4 py-3 font-semibold text-teal-900">D"</th>
+              <th className="text-right px-4 py-3 font-semibold text-teal-900">Price w/ Backs</th>
+              <th className="text-right px-4 py-3 font-semibold text-teal-900">Price w/o Backs</th>
+              <th className="text-right px-4 py-3 font-semibold text-teal-900">Boxes</th>
+              <th className="text-center px-4 py-3 font-semibold text-teal-900">Active</th>
+              <th className="text-center px-4 py-3 font-semibold text-teal-900">Edit</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={11} className="text-center py-10 text-slate-400">No items found</td>
+              </tr>
+            ) : (
+              filtered.map(item => (
+                <tr key={item.id} className={`hover:bg-slate-50 transition-colors ${!item.is_active ? 'opacity-50' : ''}`}>
+                  <td className="px-4 py-2 font-mono text-xs text-slate-600">{item.cabinet_code}</td>
+                  <td className="px-4 py-2">
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${item.evita_line === 'Evita Premium' ? 'bg-amber-100 text-amber-800' : 'bg-teal-100 text-teal-800'}`}>
+                      {item.evita_line}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-slate-900">{item.description}</td>
+                  <td className="px-4 py-2 text-right text-slate-700">{item.width_in}"</td>
+                  <td className="px-4 py-2 text-right text-slate-700">{item.height_in}"</td>
+                  <td className="px-4 py-2 text-right text-slate-700">{item.depth_in}"</td>
+                  <td className="px-4 py-2 text-right font-medium text-slate-900">
+                    {item.price_with_backs_usd != null ? `$${item.price_with_backs_usd.toFixed(2)}` : '—'}
+                  </td>
+                  <td className="px-4 py-2 text-right font-medium text-slate-900">
+                    {item.price_without_backs_usd != null ? `$${item.price_without_backs_usd.toFixed(2)}` : '—'}
+                  </td>
+                  <td className="px-4 py-2 text-right text-slate-700">{item.boxes_count}</td>
+                  <td className="px-4 py-2 text-center">
+                    <button onClick={() => toggleActive(item)} className="text-slate-400 hover:text-teal-600 transition-colors" title={item.is_active ? 'Deactivate' : 'Activate'}>
+                      {item.is_active ? <ToggleRight className="h-5 w-5 text-teal-600" /> : <ToggleLeft className="h-5 w-5" />}
+                    </button>
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <button onClick={() => openEdit(item)} className="text-slate-400 hover:text-teal-700 transition-colors" title="Edit">
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {formOpen && (
+        <ClosetCatalogForm
+          item={editingItem}
+          onClose={closeForm}
+          onSaved={() => { closeForm(); loadClosetItems(); }}
+        />
+      )}
     </div>
   );
 }
@@ -456,191 +691,4 @@ function SafeEditWrapper({
   }
 
   return null;
-}
-
-interface ProductFormModalProps {
-  product: Product | null;
-  onSave: (product: ProductInsert) => void;
-  onClose: () => void;
-  safeEditMode?: boolean;
-}
-
-function ProductFormModal({ product, onSave, onClose, safeEditMode }: ProductFormModalProps) {
-  const [formData, setFormData] = useState<ProductInsert>({
-    sku: product?.sku || '',
-    description: product?.description || '',
-    box_sf: product?.box_sf || 0,
-    box_edgeband: product?.box_edgeband || 0,
-    box_edgeband_color: product?.box_edgeband_color || 0,
-    doors_fronts_sf: product?.doors_fronts_sf || 0,
-    doors_fronts_edgeband: product?.doors_fronts_edgeband || 0,
-    total_edgeband: product?.total_edgeband || 0,
-    has_drawers: product?.has_drawers || false,
-    collection_name: product?.collection_name || 'Standard Catalog',
-    status: product?.status || 'active',
-  });
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    onSave(formData);
-  }
-
-  return (
-    <Modal
-      isOpen={true}
-      onClose={onClose}
-      title={product ? (safeEditMode ? 'Edit Product (In Use)' : 'Edit Product') : 'Add New Product'}
-      size="lg"
-    >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="SKU / Code"
-            value={formData.sku}
-            onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-            required
-            placeholder="301-9x12x12"
-            disabled={safeEditMode}
-          />
-
-          <div className="flex items-end">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.has_drawers}
-                onChange={(e) =>
-                  setFormData({ ...formData, has_drawers: e.target.checked })
-                }
-                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm font-medium text-slate-700">Has Drawers</span>
-            </label>
-          </div>
-        </div>
-
-        <Input
-          label="Description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          required
-          placeholder="Wall Hung Cabinet | 1 Door"
-        />
-
-        <CollectionSelector
-          value={formData.collection_name || 'Standard Catalog'}
-          onChange={(collection) => setFormData({ ...formData, collection_name: collection })}
-        />
-
-        <div className="border-t border-slate-200 pt-4">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3">Box Construction</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Input
-              label="Box Square Feet"
-              type="number"
-              step="0.01"
-              value={formData.box_sf}
-              onChange={(e) =>
-                setFormData({ ...formData, box_sf: parseFloat(e.target.value) || 0 })
-              }
-              required
-            />
-            <Input
-              label="Box Edgeband (m)"
-              type="number"
-              step="0.01"
-              value={formData.box_edgeband || 0}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  box_edgeband: parseFloat(e.target.value) || 0,
-                })
-              }
-            />
-            <Input
-              label="Box Edgeband Color (m)"
-              type="number"
-              step="0.01"
-              value={formData.box_edgeband_color || 0}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  box_edgeband_color: parseFloat(e.target.value) || 0,
-                })
-              }
-            />
-          </div>
-        </div>
-
-        <div className="border-t border-slate-200 pt-4">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3">
-            Doors & Drawer Fronts
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Doors & Fronts Square Feet"
-              type="number"
-              step="0.01"
-              value={formData.doors_fronts_sf}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  doors_fronts_sf: parseFloat(e.target.value) || 0,
-                })
-              }
-              required
-            />
-            <Input
-              label="Doors Edgeband (m)"
-              type="number"
-              step="0.01"
-              value={formData.doors_fronts_edgeband || 0}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  doors_fronts_edgeband: parseFloat(e.target.value) || 0,
-                })
-              }
-            />
-          </div>
-        </div>
-
-        <div className="border-t border-slate-200 pt-4">
-          <Input
-            label="Total Edgeband (m)"
-            type="number"
-            step="0.01"
-            value={formData.total_edgeband}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                total_edgeband: parseFloat(e.target.value) || 0,
-              })
-            }
-            required
-          />
-          <p className="mt-1 text-xs text-slate-500">
-            This is the total edgeband used for cost calculations
-          </p>
-        </div>
-
-        {safeEditMode && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <p className="text-xs text-amber-900">
-              <strong>Note:</strong> This product is in use. Changes will create a new version to
-              protect historical data.
-            </p>
-          </div>
-        )}
-
-        <div className="flex justify-end space-x-3 pt-4">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit">
-            {product ? (safeEditMode ? 'Continue to Version' : 'Update Product') : 'Add Product'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  );
 }

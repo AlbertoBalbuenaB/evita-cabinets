@@ -1,68 +1,125 @@
 import { useMemo } from 'react';
-import { BarChart3, PieChart, TrendingUp } from 'lucide-react';
+import { BarChart3, Package, Truck, TrendingUp, DollarSign, Layers, Boxes } from 'lucide-react';
 import { formatCurrency } from '../lib/calculations';
-import { countActualCabinets, countCabinetEntries } from '../lib/cabinetFilters';
-import type { ProjectArea, AreaCabinet, AreaItem, AreaCountertop } from '../types';
+import { countActualCabinets } from '../lib/cabinetFilters';
+import { calculateAreaBoxesAndPallets } from '../lib/boxesAndPallets';
+import type { ProjectArea, AreaCabinet, AreaItem, AreaCountertop, AreaClosetItem, Product } from '../types';
+
+type EnrichedArea = ProjectArea & {
+  cabinets: AreaCabinet[];
+  items: AreaItem[];
+  countertops: AreaCountertop[];
+  closetItems?: AreaClosetItem[];
+};
 
 interface ProjectChartsProps {
-  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[];
+  areas: EnrichedArea[];
+  products: Product[];
 }
 
-export function ProjectCharts({ areas }: ProjectChartsProps) {
-  const analytics = useMemo(() => {
-    const calculateTaxesForArea = (cabinets: AreaCabinet[]) => {
-      return cabinets.reduce((sum, cabinet) => {
-        const boxMaterialTax = cabinet.box_material_cost * 0;
-        const boxEdgebandTax = cabinet.box_edgeband_cost * 0;
-        const boxInteriorTax = cabinet.box_interior_finish_cost * 0;
-        const doorsMaterialTax = cabinet.doors_material_cost * 0;
-        const doorsEdgebandTax = cabinet.doors_edgeband_cost * 0;
-        const doorsInteriorTax = cabinet.doors_interior_finish_cost * 0;
-        const hardwareTax = cabinet.hardware_cost * 0;
+const COLOR_PALETTE: Record<string, string> = {
+  'bg-blue-500': '#3b82f6',
+  'bg-blue-400': '#60a5fa',
+  'bg-blue-300': '#93c5fd',
+  'bg-green-500': '#22c55e',
+  'bg-green-400': '#4ade80',
+  'bg-green-300': '#86efac',
+  'bg-amber-500': '#f59e0b',
+  'bg-amber-600': '#d97706',
+  'bg-orange-500': '#f97316',
+  'bg-teal-500': '#14b8a6',
+  'bg-red-500': '#ef4444',
+  'bg-slate-500': '#64748b',
+};
 
+function KpiCard({
+  label,
+  value,
+  sub,
+  icon,
+  accent = 'text-slate-900',
+}: {
+  label: string;
+  value: React.ReactNode;
+  sub?: string;
+  icon: React.ReactNode;
+  accent?: string;
+}) {
+  return (
+    <div className="glass-blue p-4 flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</span>
+        <span className="text-slate-300">{icon}</span>
+      </div>
+      <div className={`text-2xl font-bold leading-none ${accent}`}>{value}</div>
+      {sub && <div className="text-xs text-slate-400">{sub}</div>}
+    </div>
+  );
+}
+
+export function ProjectCharts({ areas, products }: ProjectChartsProps) {
+  const analytics = useMemo(() => {
+    const calculateTaxesForArea = (cabinets: AreaCabinet[], areaQty: number) => {
+      return cabinets.reduce((sum, cabinet) => {
         const totalBaseCost =
           cabinet.box_material_cost + cabinet.box_edgeband_cost + cabinet.box_interior_finish_cost +
           cabinet.doors_material_cost + cabinet.doors_edgeband_cost + cabinet.doors_interior_finish_cost +
           cabinet.hardware_cost;
-
         const taxAmount = cabinet.subtotal - cabinet.labor_cost - totalBaseCost;
         return sum + Math.max(0, taxAmount);
-      }, 0);
+      }, 0) * areaQty;
     };
 
     const areasCosts = areas.map((area) => {
-      const cabinetsTotal = (area.cabinets || []).reduce((sum, c) => sum + c.subtotal, 0);
-      const itemsTotal = (area.items || []).reduce((sum, i) => sum + i.subtotal, 0);
-      const countertopsTotal = (area.countertops || []).reduce((sum, ct) => sum + ct.subtotal, 0);
-      const cabinetsCount = countActualCabinets(area.cabinets || []);
+      const areaQty = area.quantity ?? 1;
+      const cabinetsTotal = (area.cabinets || []).reduce((sum, c) => sum + c.subtotal, 0) * areaQty;
+      const itemsTotal = (area.items || []).reduce((sum, i) => sum + i.subtotal, 0) * areaQty;
+      const countertopsTotal = (area.countertops || []).reduce((sum, ct) => sum + ct.subtotal, 0) * areaQty;
+      const closetItemsTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0) * areaQty;
+      const cabinetsCount = countActualCabinets(area.cabinets || []) * areaQty;
+      const displayName = areaQty > 1 ? `${area.name} (x${areaQty})` : area.name;
       return {
-        name: area.name,
-        total: cabinetsTotal + itemsTotal + countertopsTotal,
-        taxes: calculateTaxesForArea(area.cabinets || []),
+        name: displayName,
+        quantity: areaQty,
+        total: cabinetsTotal + itemsTotal + countertopsTotal + closetItemsTotal,
         cabinets: cabinetsCount,
-        cabinetEntries: countCabinetEntries(area.cabinets || []),
         items: (area.items || []).length,
         countertops: (area.countertops || []).length,
+        closetItems: (area.closetItems || []).length,
+        cabinetsRaw: cabinetsTotal,
+        itemsRaw: itemsTotal,
+        countertopsRaw: countertopsTotal,
+        closetItemsRaw: closetItemsTotal,
       };
     });
 
-    const allCabinets = areas.flatMap((a) => a.cabinets || []);
-    const allItems = areas.flatMap((a) => a.items || []);
-    const allCountertops = areas.flatMap((a) => a.countertops || []);
-    const totalItemsCost = allItems.reduce((sum, i) => sum + i.subtotal, 0);
-    const totalCountertopsCost = allCountertops.reduce((sum, ct) => sum + ct.subtotal, 0);
+    const totalItemsCost = areas.reduce(
+      (sum, area) => sum + (area.items || []).reduce((s, i) => s + i.subtotal, 0) * (area.quantity ?? 1),
+      0
+    );
+    const totalCountertopsCost = areas.reduce(
+      (sum, area) => sum + (area.countertops || []).reduce((s, ct) => s + ct.subtotal, 0) * (area.quantity ?? 1),
+      0
+    );
+    const totalClosetItemsCost = areas.reduce(
+      (sum, area) => sum + (area.closetItems || []).reduce((s, ci) => s + ci.subtotal_mxn, 0) * (area.quantity ?? 1),
+      0
+    );
 
-    const totalProjectTaxes = areasCosts.reduce((sum, area) => sum + area.taxes, 0);
+    const totalProjectTaxes = areas.reduce(
+      (sum, area) => sum + calculateTaxesForArea(area.cabinets || [], area.quantity ?? 1),
+      0
+    );
 
     const materialsCosts = {
-      boxMaterial: allCabinets.reduce((sum, c) => sum + c.box_material_cost, 0),
-      boxEdgeband: allCabinets.reduce((sum, c) => sum + c.box_edgeband_cost, 0),
-      boxInterior: allCabinets.reduce((sum, c) => sum + c.box_interior_finish_cost, 0),
-      doorsMaterial: allCabinets.reduce((sum, c) => sum + c.doors_material_cost, 0),
-      doorsEdgeband: allCabinets.reduce((sum, c) => sum + c.doors_edgeband_cost, 0),
-      doorsInterior: allCabinets.reduce((sum, c) => sum + c.doors_interior_finish_cost, 0),
-      hardware: allCabinets.reduce((sum, c) => sum + c.hardware_cost, 0),
-      labor: allCabinets.reduce((sum, c) => sum + c.labor_cost, 0),
+      boxMaterial: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.box_material_cost, 0) * (area.quantity ?? 1), 0),
+      boxEdgeband: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.box_edgeband_cost, 0) * (area.quantity ?? 1), 0),
+      boxInterior: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.box_interior_finish_cost, 0) * (area.quantity ?? 1), 0),
+      doorsMaterial: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.doors_material_cost, 0) * (area.quantity ?? 1), 0),
+      doorsEdgeband: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.doors_edgeband_cost, 0) * (area.quantity ?? 1), 0),
+      doorsInterior: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.doors_interior_finish_cost, 0) * (area.quantity ?? 1), 0),
+      hardware: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.hardware_cost, 0) * (area.quantity ?? 1), 0),
+      labor: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.labor_cost, 0) * (area.quantity ?? 1), 0),
       taxes: totalProjectTaxes,
     };
 
@@ -75,21 +132,36 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
       { name: 'Doors Interior', cost: materialsCosts.doorsInterior, color: 'bg-green-300' },
       { name: 'Hardware', cost: materialsCosts.hardware, color: 'bg-amber-500' },
       { name: 'Countertops', cost: totalCountertopsCost, color: 'bg-orange-500' },
+      { name: 'Prefab Closets', cost: totalClosetItemsCost, color: 'bg-teal-500' },
       { name: 'Individual Items', cost: totalItemsCost, color: 'bg-amber-600' },
       { name: 'Taxes', cost: materialsCosts.taxes, color: 'bg-red-500' },
       { name: 'Labor', cost: materialsCosts.labor, color: 'bg-slate-500' },
     ].filter((item) => item.cost > 0);
 
     const totalCost = materialsBreakdown.reduce((sum, item) => sum + item.cost, 0);
-
     const maxAreaCost = Math.max(...areasCosts.map((a) => a.total), 1);
     const maxMaterialCost = Math.max(...materialsBreakdown.map((m) => m.cost), 1);
 
-    const totalCabinets = countActualCabinets(allCabinets);
-    const totalCabinetEntries = countCabinetEntries(allCabinets);
-    const totalSKUs = new Set(allCabinets.map((c) => c.product_sku)).size;
-    const cabinetsCost = allCabinets.reduce((sum, c) => sum + c.subtotal, 0);
+    const totalCabinets = areas.reduce(
+      (sum, area) => sum + countActualCabinets(area.cabinets || []) * (area.quantity ?? 1),
+      0
+    );
+    const totalSKUs = new Set(areas.flatMap((a) => (a.cabinets || []).map((c) => c.product_sku))).size;
+    const cabinetsCost = areas.reduce(
+      (sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.subtotal, 0) * (area.quantity ?? 1),
+      0
+    );
     const avgCostPerCabinet = totalCabinets > 0 ? cabinetsCost / totalCabinets : 0;
+    const totalEffectiveAreas = areas.reduce((sum, area) => sum + (area.quantity ?? 1), 0);
+
+    const totalBoxes = areas.reduce((sum, area) => {
+      const { boxes } = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
+      return sum + boxes * (area.quantity ?? 1);
+    }, 0);
+    const totalPallets = areas.reduce((sum, area) => {
+      const { pallets } = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
+      return sum + pallets * (area.quantity ?? 1);
+    }, 0);
 
     return {
       areasCosts,
@@ -98,154 +170,158 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
       maxMaterialCost,
       totalCost,
       totalCabinets,
-      totalCabinetEntries,
       totalSKUs,
-      totalProjectTaxes,
-      cabinetsCost,
       avgCostPerCabinet,
-      totalItems: allItems.length,
-      itemsCost: totalItemsCost,
-      totalCountertops: allCountertops.length,
-      countertopsCost: totalCountertopsCost,
+      distinctAreas: areas.length,
+      totalEffectiveAreas,
+      totalBoxes,
+      totalPallets,
     };
-  }, [areas]);
+  }, [areas, products]);
 
-  if (areas.length === 0) {
-    return null;
-  }
+  if (areas.length === 0) return null;
+
+  const { areasCosts, materialsBreakdown, totalCost, maxAreaCost, maxMaterialCost } = analytics;
 
   return (
     <div className="no-print space-y-6">
-      <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900">Project Analytics</h3>
-          <TrendingUp className="h-5 w-5 text-slate-400" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 overflow-hidden">
-            <div className="text-sm text-slate-600 mb-1">Total Cabinets</div>
-            <div className="text-2xl sm:text-3xl font-bold text-blue-600 break-all">{analytics.totalCabinets}</div>
-            <div className="text-xs text-slate-500 mt-1 truncate">{analytics.totalCabinetEntries} entries</div>
-          </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 overflow-hidden">
-            <div className="text-sm text-slate-600 mb-1">Avg Cost/Cabinet</div>
-            <div className="text-2xl sm:text-3xl font-bold text-purple-600 break-all">{formatCurrency(analytics.avgCostPerCabinet)}</div>
-            <div className="text-xs text-slate-500 mt-1 truncate">Per unit</div>
-          </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 overflow-hidden">
-            <div className="text-sm text-slate-600 mb-1">Cabinets Value</div>
-            <div className="text-2xl sm:text-3xl font-bold text-green-600 break-all">{formatCurrency(analytics.cabinetsCost)}</div>
-            <div className="text-xs text-slate-500 mt-1 truncate">{analytics.totalSKUs} unique SKUs</div>
-          </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 overflow-hidden">
-            <div className="text-sm text-slate-600 mb-1">Countertops</div>
-            <div className="text-2xl sm:text-3xl font-bold text-orange-600 break-all">{analytics.totalCountertops}</div>
-            <div className="text-xs text-slate-500 mt-1 truncate">{formatCurrency(analytics.countertopsCost)} value</div>
-          </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 overflow-hidden">
-            <div className="text-sm text-slate-600 mb-1">Additional Items</div>
-            <div className="text-2xl sm:text-3xl font-bold text-amber-600 break-all">{analytics.totalItems}</div>
-            <div className="text-xs text-slate-500 mt-1 truncate">{formatCurrency(analytics.itemsCost)} value</div>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <KpiCard
+          label="Project Value"
+          value={formatCurrency(analytics.totalCost)}
+          sub="Total materials cost"
+          icon={<DollarSign className="h-5 w-5" />}
+        />
+        <KpiCard
+          label="Areas"
+          value={analytics.totalEffectiveAreas}
+          sub={analytics.distinctAreas !== analytics.totalEffectiveAreas ? `${analytics.distinctAreas} entries` : undefined}
+          icon={<Layers className="h-5 w-5" />}
+        />
+        <KpiCard
+          label="Total Cabinets"
+          value={analytics.totalCabinets}
+          sub={`${analytics.totalSKUs} unique SKUs`}
+          icon={<Boxes className="h-5 w-5" />}
+          accent="text-blue-700"
+        />
+        <KpiCard
+          label="Avg / Cabinet"
+          value={formatCurrency(analytics.avgCostPerCabinet)}
+          sub="Per cabinet unit"
+          icon={<TrendingUp className="h-5 w-5" />}
+        />
+        <KpiCard
+          label="Total Boxes"
+          value={analytics.totalBoxes}
+          sub="Shipping units"
+          icon={<Package className="h-5 w-5" />}
+        />
+        <KpiCard
+          label="Total Pallets"
+          value={analytics.totalPallets}
+          sub="Pallet count"
+          icon={<Truck className="h-5 w-5" />}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">Project Summary</h3>
-            <TrendingUp className="h-5 w-5 text-slate-400" />
-          </div>
-          <div className="space-y-4">
-            <div>
-              <div className="text-sm text-slate-600">Total Areas</div>
-              <div className="text-2xl sm:text-3xl font-bold text-slate-900 break-all">{areas.length}</div>
-            </div>
-            <div>
-              <div className="text-sm text-slate-600">Total Project Value</div>
-              <div className="text-xl sm:text-2xl font-bold text-slate-900 break-all">{formatCurrency(analytics.totalCost)}</div>
-            </div>
-            <div>
-              <div className="text-sm text-slate-600">Total Taxes</div>
-              <div className="text-xl sm:text-2xl font-bold text-slate-900 break-all">{formatCurrency(analytics.totalProjectTaxes)}</div>
-            </div>
-          </div>
+      <div className="glass-white p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-base font-semibold text-slate-900">Cost Distribution by Area</h3>
+          <BarChart3 className="h-4 w-4 text-slate-400" />
         </div>
+        <div className="space-y-3">
+          {areasCosts.map((area) => {
+            const pct = totalCost > 0 ? (area.total / totalCost) * 100 : 0;
+            const barPct = (area.total / maxAreaCost) * 100;
+            const parts = [
+              { label: 'Cabinets', value: area.cabinetsRaw, color: 'bg-blue-500' },
+              { label: 'Countertops', value: area.countertopsRaw, color: 'bg-orange-400' },
+              { label: 'Closets', value: area.closetItemsRaw, color: 'bg-teal-500' },
+              { label: 'Items', value: area.itemsRaw, color: 'bg-amber-500' },
+            ].filter((p) => p.value > 0);
 
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">Cost by Area</h3>
-            <BarChart3 className="h-5 w-5 text-slate-400" />
-          </div>
-          <div className="space-y-3">
-            {analytics.areasCosts.map((area) => {
-              const percentage = (area.total / analytics.maxAreaCost) * 100;
-              const costPercentage = analytics.totalCost > 0 ? (area.total / analytics.totalCost) * 100 : 0;
-
-              return (
-                <div key={area.name}>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium text-slate-700">{area.name}</span>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-xs text-slate-500">
-                        {area.cabinets} cabinets
-                        {area.countertops > 0 && ` • ${area.countertops} countertops`}
-                        {area.items > 0 && ` • ${area.items} items`}
-                      </span>
-                      <span className="text-xs text-red-600">Tax: {formatCurrency(area.taxes)}</span>
-                      <span className="text-sm font-semibold text-slate-900">
-                        {formatCurrency(area.total)}
-                      </span>
-                      <span className="text-xs text-slate-500 w-12 text-right">
-                        {costPercentage.toFixed(1)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="relative h-8 bg-slate-100 rounded-lg overflow-hidden">
-                    <div
-                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg transition-all duration-500"
-                      style={{ width: `${percentage}%` }}
-                    />
+            return (
+              <div key={area.name}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm font-medium text-slate-800 truncate max-w-xs">{area.name}</span>
+                  <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                    <span className="text-sm font-semibold text-slate-900">{formatCurrency(area.total)}</span>
+                    <span className="text-xs text-slate-400 w-10 text-right">{pct.toFixed(1)}%</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+                <div className="relative h-7 bg-slate-100 rounded-lg overflow-hidden">
+                  {parts.length > 0 ? (
+                    (() => {
+                      let offset = 0;
+                      return parts.map((part) => {
+                        const partPct = area.total > 0 ? (part.value / area.total) * barPct : 0;
+                        const el = (
+                          <div
+                            key={part.label}
+                            title={`${part.label}: ${formatCurrency(part.value)}`}
+                            className={`absolute top-0 h-full ${part.color} transition-all duration-500`}
+                            style={{ left: `${offset}%`, width: `${partPct}%` }}
+                          />
+                        );
+                        offset += partPct;
+                        return el;
+                      });
+                    })()
+                  ) : (
+                    <div
+                      className="absolute top-0 left-0 h-full bg-blue-400 transition-all duration-500 rounded-lg"
+                      style={{ width: `${barPct}%` }}
+                    />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-4 pt-4 border-t border-slate-100">
+          {[
+            { label: 'Cabinets', color: 'bg-blue-500' },
+            { label: 'Countertops', color: 'bg-orange-400' },
+            { label: 'Closets', color: 'bg-teal-500' },
+            { label: 'Items', color: 'bg-amber-500' },
+          ].map((l) => (
+            <div key={l.label} className="flex items-center gap-1.5">
+              <div className={`w-2.5 h-2.5 rounded-sm ${l.color}`} />
+              <span className="text-xs text-slate-500">{l.label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-slate-900">Cost Distribution by Material</h3>
-          <PieChart className="h-5 w-5 text-slate-400" />
+      <div className="glass-white p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-base font-semibold text-slate-900">Cost Composition by Category</h3>
+          <span className="text-xs text-slate-400">% of total project cost</span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            {analytics.materialsBreakdown.map((material) => {
-              const percentage = (material.cost / analytics.maxMaterialCost) * 100;
-              const totalPercentage = (material.cost / analytics.totalCost) * 100;
-
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-3 space-y-2.5">
+            {materialsBreakdown.map((material) => {
+              const barPct = (material.cost / maxMaterialCost) * 100;
+              const totalPct = totalCost > 0 ? (material.cost / totalCost) * 100 : 0;
               return (
                 <div key={material.name}>
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="flex items-center">
-                      <div className={`w-3 h-3 ${material.color} rounded mr-2`} />
-                      <span className="text-sm font-medium text-slate-700">{material.name}</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2.5 h-2.5 rounded-sm flex-shrink-0 ${material.color}`} />
+                      <span className="text-sm text-slate-700">{material.name}</span>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-sm font-semibold text-slate-900">
-                        {formatCurrency(material.cost)}
-                      </span>
-                      <span className="text-xs text-slate-500 w-12 text-right">
-                        {totalPercentage.toFixed(1)}%
-                      </span>
+                    <div className="flex items-center gap-3 ml-4">
+                      <span className="text-sm font-semibold text-slate-900">{formatCurrency(material.cost)}</span>
+                      <span className="text-xs text-slate-400 w-10 text-right">{totalPct.toFixed(1)}%</span>
                     </div>
                   </div>
-                  <div className="relative h-6 bg-slate-100 rounded overflow-hidden">
+                  <div className="relative h-5 bg-slate-100 rounded overflow-hidden">
                     <div
-                      className={`absolute top-0 left-0 h-full ${material.color} transition-all duration-500`}
-                      style={{ width: `${percentage}%` }}
+                      className={`absolute top-0 left-0 h-full ${material.color} transition-all duration-500 rounded`}
+                      style={{ width: `${barPct}%` }}
                     />
                   </div>
                 </div>
@@ -253,94 +329,50 @@ export function ProjectCharts({ areas }: ProjectChartsProps) {
             })}
           </div>
 
-          <div className="flex items-center justify-center">
-            <div className="relative w-64 h-64">
-              <svg viewBox="0 0 200 200" className="transform -rotate-90">
-                {analytics.materialsBreakdown.reduce(
+          <div className="lg:col-span-2 flex items-center justify-center">
+            <div className="relative w-52 h-52">
+              <svg viewBox="0 0 200 200" className="transform -rotate-90 w-full h-full">
+                {materialsBreakdown.reduce(
                   (acc, material, index) => {
-                    const percentage = (material.cost / analytics.totalCost) * 100;
-                    const circumference = 2 * Math.PI * 80;
+                    const percentage = (material.cost / totalCost) * 100;
+                    const circumference = 2 * Math.PI * 75;
                     const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
                     const strokeDashoffset = -acc.offset;
-
                     acc.offset += (percentage / 100) * circumference;
-
-                    const colorMap: Record<string, string> = {
-                      'bg-blue-500': '#3b82f6',
-                      'bg-blue-400': '#60a5fa',
-                      'bg-blue-300': '#93c5fd',
-                      'bg-green-500': '#22c55e',
-                      'bg-green-400': '#4ade80',
-                      'bg-green-300': '#86efac',
-                      'bg-amber-500': '#f59e0b',
-                      'bg-amber-600': '#d97706',
-                      'bg-orange-500': '#f97316',
-                      'bg-red-500': '#ef4444',
-                      'bg-slate-500': '#64748b',
-                    };
-
                     acc.elements.push(
                       <circle
                         key={index}
                         cx="100"
                         cy="100"
-                        r="80"
+                        r="75"
                         fill="none"
-                        stroke={colorMap[material.color] || '#3b82f6'}
-                        strokeWidth="40"
+                        stroke={COLOR_PALETTE[material.color] || '#3b82f6'}
+                        strokeWidth="32"
                         strokeDasharray={strokeDasharray}
                         strokeDashoffset={strokeDashoffset}
                         className="transition-all duration-500"
                       />
                     );
-
                     return acc;
                   },
                   { offset: 0, elements: [] as JSX.Element[] }
                 ).elements}
               </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-sm text-slate-600">Total Cost</div>
-                <div className="text-xl font-bold text-slate-900">
-                  {formatCurrency(analytics.totalCost)}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                <div className="text-xs text-slate-500 mb-0.5">Total</div>
+                <div className="text-base font-bold text-slate-900 leading-tight">
+                  {formatCurrency(totalCost)}
                 </div>
+                {materialsBreakdown.length > 0 && (() => {
+                  const top = materialsBreakdown.reduce((max, m) => (m.cost > max.cost ? m : max));
+                  const topPct = totalCost > 0 ? (top.cost / totalCost) * 100 : 0;
+                  return (
+                    <div className="text-xs text-slate-400 mt-1 leading-tight">
+                      {top.name}<br />{topPct.toFixed(0)}%
+                    </div>
+                  );
+                })()}
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-sm p-6 text-white">
-        <h3 className="text-lg font-semibold mb-4">Quick Insights</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <div className="text-sm text-blue-100">Most Expensive Area</div>
-            <div className="text-xl font-bold">
-              {analytics.areasCosts.length > 0
-                ? analytics.areasCosts.reduce((max, area) => (area.total > max.total ? area : max))
-                    .name
-                : 'N/A'}
-            </div>
-          </div>
-          <div>
-            <div className="text-sm text-blue-100">Highest Cost Material</div>
-            <div className="text-xl font-bold">
-              {analytics.materialsBreakdown.length > 0
-                ? analytics.materialsBreakdown.reduce((max, mat) => (mat.cost > max.cost ? mat : max))
-                    .name
-                : 'N/A'}
-            </div>
-          </div>
-          <div>
-            <div className="text-sm text-blue-100">Total Taxes</div>
-            <div className="text-xl font-bold">
-              {formatCurrency(analytics.totalProjectTaxes)}
-            </div>
-          </div>
-          <div>
-            <div className="text-sm text-blue-100">Avg Cost per Cabinet</div>
-            <div className="text-xl font-bold">
-              {formatCurrency(analytics.avgCostPerCabinet)}
             </div>
           </div>
         </div>

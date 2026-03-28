@@ -72,7 +72,8 @@ export async function generateProjectBrief(projectId: string): Promise<string> {
 
     const { data: products } = await supabase
       .from('products_catalog')
-      .select('*');
+      .select('*')
+      .limit(2000);
 
     const productMap = new Map<string, Product>(
       products?.map(p => [p.sku, p]) || []

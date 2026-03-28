@@ -1,34 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import {
-  Plus,
-  FolderOpen,
-  Calendar,
-  MapPin,
-  Edit2,
-  Trash2,
-  Tag,
-  Search,
-  Filter,
-  TrendingUp,
-  DollarSign,
-  CheckCircle2,
-  Clock,
-  FileText,
-  X,
-  XCircle,
-  AlertCircle,
-  Ban,
-  Copy,
-  Eye,
-  MoreVertical,
-  AlertTriangle,
-  Send,
-  User,
-  Upload,
-  CheckSquare2,
-  Square,
-  Link2
-} from 'lucide-react';
+import { Plus, FolderOpen, Calendar, MapPin, Pencil as Edit2, Trash2, Tag, Search, Filter, TrendingUp, DollarSign, CheckCircle2, Clock, FileText, X, XCircle, AlertCircle, Ban, Copy, Eye, MoreVertical, AlertTriangle, Send, User, Upload, CheckSquare2, Square, Link2, Grid3x3 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -40,17 +11,21 @@ import { getProjectsWithStalePrices } from '../lib/priceUpdateSystem';
 import { ImportProjectModal } from '../components/ImportProjectModal';
 import { groupProjectsByGroupId } from '../lib/projectGrouping';
 import { ProjectGroupCard } from '../components/ProjectGroupCard';
+import { getSettings } from '../lib/settingsStore';
 
 type SortBy = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc' | 'amount_desc' | 'amount_asc';
 
 interface ProjectsProps {
   selectedProjectId?: string | null;
   onClearSelection?: () => void;
+  onActiveTabChange?: (tab: string | null) => void;
+  onProjectOpen?: (projectId: string | null) => void;
 }
 
-export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps = {}) {
+export function Projects({ selectedProjectId, onClearSelection, onActiveTabChange, onProjectOpen }: ProjectsProps = {}) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exchangeRate, setExchangeRate] = useState(18);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -71,6 +46,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
   useEffect(() => {
     loadProjects();
     loadStaleProjects();
+    getSettings().then(s => setExchangeRate(s.exchangeRateUsdToMxn));
   }, []);
 
   async function loadStaleProjects() {
@@ -83,12 +59,13 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
       const project = projects.find(p => p.id === selectedProjectId);
       if (project) {
         setSelectedProject(project);
+        if (onProjectOpen) onProjectOpen(project.id);
         if (onClearSelection) {
           onClearSelection();
         }
       }
     }
-  }, [selectedProjectId, projects, onClearSelection]);
+  }, [selectedProjectId, projects, onClearSelection, onProjectOpen]);
 
   async function loadProjects() {
     try {
@@ -224,6 +201,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
       const project = projects.find(p => p.id === projectId);
       if (project) {
         setSelectedProject(project);
+        if (onProjectOpen) onProjectOpen(project.id);
       }
     }, 500);
   }
@@ -315,11 +293,14 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
 
   function handleViewProject(project: Project) {
     setSelectedProject(project);
+    if (onProjectOpen) onProjectOpen(project.id);
   }
 
   function handleBackToList() {
     setSelectedProject(null);
+    if (onProjectOpen) onProjectOpen(null);
     loadProjects();
+    if (onActiveTabChange) onActiveTabChange(null);
   }
 
   function clearFilters() {
@@ -419,7 +400,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || typeFilter !== 'all' || customerFilter !== 'all' || monthFilter !== 'all' || yearFilter !== 'all';
 
   if (selectedProject) {
-    return <ProjectDetails project={selectedProject} onBack={handleBackToList} />;
+    return <ProjectDetails project={selectedProject} onBack={handleBackToList} onActiveTabChange={onActiveTabChange} />;
   }
 
   if (loading) {
@@ -438,7 +419,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
             <h1 className="text-3xl font-bold text-slate-900">Projects</h1>
             <p className="mt-2 text-slate-600">Manage your millwork quotations</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2">
             <Button
               onClick={toggleSelectionMode}
               size="lg"
@@ -446,29 +427,29 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
             >
               {selectionMode ? (
                 <>
-                  <CheckSquare2 className="h-5 w-5 mr-2" />
-                  Cancel Selection
+                  <CheckSquare2 className="h-5 w-5 sm:mr-2" />
+                  <span className="hidden sm:inline">Cancel Selection</span>
                 </>
               ) : (
                 <>
-                  <Square className="h-5 w-5 mr-2" />
-                  Select
+                  <Square className="h-5 w-5 sm:mr-2" />
+                  <span className="hidden sm:inline">Select</span>
                 </>
               )}
             </Button>
             <Button onClick={() => setIsImportModalOpen(true)} size="lg" variant="secondary">
-              <Upload className="h-5 w-5 mr-2" />
-              Import Project
+              <Upload className="h-5 w-5 sm:mr-2" />
+              <span className="hidden sm:inline">Import Project</span>
             </Button>
             <Button onClick={handleAddNew} size="lg">
-              <Plus className="h-5 w-5 mr-2" />
-              New Project
+              <Plus className="h-5 w-5 sm:mr-2" />
+              <span className="hidden sm:inline">New Project</span>
             </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+          <div className="glass-blue rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <Clock className="h-8 w-8 text-blue-600" />
               <span className="text-3xl font-bold text-blue-900">{stats.pending + stats.estimating}</span>
@@ -477,20 +458,20 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
             <p className="text-xs text-blue-700 mt-1">
               {stats.pending} pending · {stats.estimating} estimating
             </p>
-            <p className="text-sm font-bold text-blue-900 mt-2">{formatCurrency(stats.activeValue)}</p>
+            <p className="text-sm font-bold text-blue-900 mt-2">{formatCurrency(stats.activeValue / exchangeRate, 'USD')}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+          <div className="glass-green rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <CheckCircle2 className="h-8 w-8 text-green-600" />
               <span className="text-3xl font-bold text-green-900">{stats.awarded}</span>
             </div>
             <p className="text-sm font-medium text-green-900">Awarded</p>
             <p className="text-xs text-green-700 mt-1">Won projects</p>
-            <p className="text-sm font-bold text-green-900 mt-2">{formatCurrency(stats.awardedValue)}</p>
+            <p className="text-sm font-bold text-green-900 mt-2">{formatCurrency(stats.awardedValue / exchangeRate, 'USD')}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border border-red-200">
+          <div className="glass-white p-4" style={{ background: 'rgba(254,226,226,0.55)', border: '1px solid rgba(252,165,165,0.5)' }}>
             <div className="flex items-center justify-between mb-2">
               <XCircle className="h-8 w-8 text-red-600" />
               <span className="text-3xl font-bold text-red-900">{stats.lost + stats.disqualified + stats.cancelled}</span>
@@ -499,25 +480,25 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
             <p className="text-xs text-red-700 mt-1">
               {stats.lost} lost · {stats.disqualified} disqualified · {stats.cancelled} cancelled
             </p>
-            <p className="text-sm font-bold text-red-900 mt-2">{formatCurrency(stats.lostValue)}</p>
+            <p className="text-sm font-bold text-red-900 mt-2">{formatCurrency(stats.lostValue / exchangeRate, 'USD')}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+          <div className="glass-white p-4">
             <div className="flex items-center justify-between mb-2">
-              <DollarSign className="h-8 w-8 text-purple-600" />
-              <span className="text-2xl font-bold text-purple-900">
-                {formatCurrency(stats.totalValue)}
+              <DollarSign className="h-8 w-8 text-slate-600" />
+              <span className="text-2xl font-bold text-slate-900">
+                {formatCurrency(stats.totalValue / exchangeRate, 'USD')}
               </span>
             </div>
-            <p className="text-sm font-medium text-purple-900">Total Value</p>
-            <p className="text-xs text-purple-700 mt-1">{stats.total} total projects</p>
-            <p className="text-xs text-purple-700">
+            <p className="text-sm font-medium text-slate-900">Total Value</p>
+            <p className="text-xs text-slate-600 mt-1">{stats.total} total projects</p>
+            <p className="text-xs text-slate-600">
               Win Rate: {stats.total > 0 ? ((stats.awarded / stats.total) * 100).toFixed(1) : 0}%
             </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-6">
+        <div className="glass-white p-4 mb-6">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
@@ -666,13 +647,22 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
         </div>
 
         {filteredAndSortedProjects.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-slate-600 mb-4">
-              {hasActiveFilters ? 'No projects match your filters' : 'No projects yet'}
+          <div className="text-center py-16 px-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
+              <FolderOpen className="h-8 w-8 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-700 mb-2">
+              {hasActiveFilters ? 'No matching projects' : 'No projects yet'}
+            </h3>
+            <p className="text-sm text-slate-500 mb-6 max-w-sm mx-auto">
+              {hasActiveFilters
+                ? 'Try adjusting your search or filters to find what you are looking for.'
+                : 'Create your first project to start generating millwork quotations.'}
             </p>
             {!hasActiveFilters && <Button onClick={handleAddNew}>Create Your First Project</Button>}
             {hasActiveFilters && (
               <Button variant="secondary" onClick={clearFilters}>
+                <X className="h-4 w-4 mr-2" />
                 Clear Filters
               </Button>
             )}
@@ -681,7 +671,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
       </div>
 
       {filteredAndSortedProjects.length > 0 && projectGroups && projectGroups.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {projectGroups.map((group) =>
             group?.versionCount === 1 ? (
               <ProjectCard
@@ -693,6 +683,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
                 onDuplicate={handleDuplicate}
                 onStatusChange={handleQuickStatusChange}
                 staleProjectIds={staleProjectIds}
+                exchangeRate={exchangeRate}
                 selectionMode={selectionMode}
                 isSelected={selectedProjectIds.includes(group.primaryProject.id)}
                 onSelect={handleProjectSelect}
@@ -709,6 +700,7 @@ export function Projects({ selectedProjectId, onClearSelection }: ProjectsProps 
                 onStatusChange={handleQuickStatusChange}
                 onUngroup={handleUngroupProject}
                 staleProjectIds={staleProjectIds}
+                exchangeRate={exchangeRate}
                 selectionMode={selectionMode}
                 selectedProjectIds={selectedProjectIds}
                 onSelect={handleProjectSelect}
@@ -764,28 +756,29 @@ interface ProjectCardProps {
   onDuplicate: (project: Project) => void;
   onStatusChange: (project: Project, status: ProjectStatus) => void;
   staleProjectIds: string[];
+  exchangeRate: number;
   selectionMode?: boolean;
   isSelected?: boolean;
   onSelect?: (projectId: string, checked: boolean) => void;
 }
 
-function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusChange, staleProjectIds, selectionMode, isSelected, onSelect }: ProjectCardProps) {
+function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusChange, staleProjectIds, exchangeRate, selectionMode, isSelected, onSelect }: ProjectCardProps) {
   const [showActions, setShowActions] = useState(false);
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'Pending':
         return {
-          color: 'bg-slate-100 text-slate-800 border-slate-300',
+          color: 'bg-blue-100 text-blue-800 border-blue-300',
           icon: <Clock className="h-3.5 w-3.5" />,
         };
       case 'Estimating':
         return {
-          color: 'bg-blue-100 text-blue-800 border-blue-300',
+          color: 'bg-orange-100 text-orange-800 border-orange-300',
           icon: <FileText className="h-3.5 w-3.5" />,
         };
       case 'Sent':
         return {
-          color: 'bg-purple-100 text-purple-800 border-purple-300',
+          color: 'bg-cyan-100 text-cyan-800 border-cyan-300',
           icon: <Send className="h-3.5 w-3.5" />,
         };
       case 'Awarded':
@@ -800,12 +793,12 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
         };
       case 'Disqualified':
         return {
-          color: 'bg-orange-100 text-orange-800 border-orange-300',
+          color: 'bg-slate-100 text-slate-700 border-slate-300',
           icon: <Ban className="h-3.5 w-3.5" />,
         };
       case 'Cancelled':
         return {
-          color: 'bg-gray-100 text-gray-800 border-gray-300',
+          color: 'bg-gray-100 text-gray-700 border-gray-300',
           icon: <AlertCircle className="h-3.5 w-3.5" />,
         };
       default:
@@ -834,8 +827,8 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
   const statusConfig = getStatusConfig(project.status);
 
   return (
-    <div className="group bg-white rounded-lg shadow-sm border border-slate-200 hover:shadow-lg hover:border-blue-300 transition-all duration-200 overflow-hidden relative">
-      <div className="h-2 bg-gradient-to-r from-blue-500 to-purple-500" />
+    <div className="group bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all duration-200 overflow-hidden relative">
+      <div className="h-1.5 bg-blue-500" />
 
       {selectionMode && (
         <div className="absolute top-4 left-4 z-10">
@@ -862,7 +855,7 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
             className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
             title="More actions"
           >
-            <MoreVertical className="h-4 w-4 text-slate-600" />
+            <MoreVertical className="h-4 w-4 text-slate-500" />
           </button>
 
           {showActions && (
@@ -910,6 +903,39 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    onStatusChange(project, 'Pending');
+                    setShowActions(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-blue-700"
+                >
+                  <Clock className="h-4 w-4" />
+                  Mark as Pending
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(project, 'Estimating');
+                    setShowActions(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-orange-700"
+                >
+                  <FileText className="h-4 w-4" />
+                  Mark as Estimating
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(project, 'Sent');
+                    setShowActions(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-cyan-700"
+                >
+                  <Send className="h-4 w-4" />
+                  Mark as Sent
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
                     onStatusChange(project, 'Awarded');
                     setShowActions(false);
                   }}
@@ -929,6 +955,28 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
                   <XCircle className="h-4 w-4" />
                   Mark as Lost
                 </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(project, 'Disqualified');
+                    setShowActions(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-600"
+                >
+                  <Ban className="h-4 w-4" />
+                  Mark as Disqualified
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(project, 'Cancelled');
+                    setShowActions(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-gray-600"
+                >
+                  <AlertCircle className="h-4 w-4" />
+                  Mark as Cancelled
+                </button>
                 <div className="border-t border-slate-200 my-1" />
                 <button
                   onClick={(e) => {
@@ -947,59 +995,62 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
         </div>
       </div>
 
-      <div className="p-6 cursor-pointer" onClick={() => onView(project)}>
-        <div className="flex justify-between items-start mb-3 pr-8">
-          <div className="flex items-start gap-2 flex-1">
-            <h3 className="text-lg font-semibold text-slate-900 line-clamp-2 flex-1 group-hover:text-blue-600 transition-colors">
+      <div className="p-5 cursor-pointer" onClick={() => onView(project)}>
+        <div className="pr-8 mb-3">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-base font-semibold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug flex-1">
               {project.name}
             </h3>
             {staleProjectIds.includes(project.id) && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 border border-yellow-300" title="Price updates available">
+              <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200 flex-shrink-0" title="Price updates available">
                 <AlertTriangle className="h-3 w-3" />
               </span>
             )}
           </div>
-          <span
-            className={`ml-3 inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full border ${statusConfig.color}`}
-          >
+        </div>
+
+        <div className="mb-3">
+          <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full border ${statusConfig.color}`}>
             {statusConfig.icon}
             {project.status}
           </span>
         </div>
 
-        {project.customer && (
-          <div className="flex items-center text-sm text-slate-600 mb-2">
-            <User className="h-4 w-4 mr-1.5 flex-shrink-0 text-slate-400" />
-            <span className="font-medium line-clamp-1">{project.customer}</span>
+        <div className="space-y-1.5 mb-4">
+          {project.customer && (
+            <div className="flex items-center text-sm text-slate-600">
+              <User className="h-3.5 w-3.5 mr-2 flex-shrink-0 text-slate-400" />
+              <span className="font-medium">{project.customer}</span>
+            </div>
+          )}
+
+          {project.address && (
+            <div className="flex items-start text-sm text-slate-500">
+              <MapPin className="h-3.5 w-3.5 mr-2 mt-0.5 flex-shrink-0 text-slate-400" />
+              <span className="line-clamp-2 leading-snug">{project.address}</span>
+            </div>
+          )}
+
+          <div className="flex items-center text-sm text-slate-500">
+            <Calendar className="h-3.5 w-3.5 mr-2 flex-shrink-0 text-slate-400" />
+            <span>{format(new Date(project.quote_date + 'T00:00:00'), 'MMM dd, yyyy')}</span>
           </div>
-        )}
 
-        {project.address && (
-          <div className="flex items-center text-sm text-slate-600 mb-2">
-            <MapPin className="h-4 w-4 mr-1.5 flex-shrink-0 text-slate-400" />
-            <span className="line-clamp-1">{project.address}</span>
+          <div className="flex items-center text-sm text-slate-500">
+            <span className="mr-2 text-slate-400">{getTypeIcon(project.project_type)}</span>
+            <span>{project.project_type}</span>
           </div>
-        )}
-
-        <div className="flex items-center text-sm text-slate-600 mb-2">
-          <Calendar className="h-4 w-4 mr-1.5 flex-shrink-0 text-slate-400" />
-          <span>{format(new Date(project.quote_date + 'T00:00:00'), 'MMM dd, yyyy')}</span>
-        </div>
-
-        <div className="flex items-center text-sm text-slate-600 mb-4">
-          <span className="mr-1.5 text-slate-400">{getTypeIcon(project.project_type)}</span>
-          <span className="font-medium">{project.project_type}</span>
         </div>
 
         {project.project_details && (
-          <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <p className="text-xs text-slate-600 line-clamp-2">{project.project_details}</p>
+          <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{project.project_details}</p>
           </div>
         )}
 
-        <div className="pt-4 border-t border-slate-200">
-          <div className="text-2xl font-bold text-slate-900 mb-4">
-            {formatCurrency(project.total_amount)}
+        <div className="pt-3 border-t border-slate-100">
+          <div className="text-2xl font-bold text-slate-900 mb-3">
+            {formatCurrency(project.total_amount / exchangeRate, 'USD')}
           </div>
 
           <div className="flex gap-2">

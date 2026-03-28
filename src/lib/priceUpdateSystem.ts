@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { fetchAllProducts } from './fetchAllProducts';
 import type { PriceListItem, Product, AreaCabinet } from '../types';
 import {
   calculateBoxMaterialCost,
@@ -9,12 +10,14 @@ import {
   calculateHardwareCost,
   calculateAccessoriesCost,
   calculateLaborCost,
+  calculateDoorProfileCost,
+  parseDimensions,
 } from './calculations';
 import { getSettings } from './settingsStore';
 import { recalculateAreaSheetMaterialCosts } from './sheetMaterials';
 
 export interface MaterialChange {
-  materialType: 'box_material' | 'box_edgeband' | 'box_interior_finish' | 'doors_material' | 'doors_edgeband' | 'doors_interior_finish' | 'hardware' | 'accessories';
+  materialType: 'box_material' | 'box_edgeband' | 'box_interior_finish' | 'doors_material' | 'doors_edgeband' | 'doors_interior_finish' | 'hardware' | 'accessories' | 'door_profile';
   materialId: string;
   materialName: string;
   oldCost: number;
@@ -48,32 +51,40 @@ export interface ProjectPriceAnalysis {
 }
 
 export async function analyzeProjectPriceChanges(projectId: string): Promise<ProjectPriceAnalysis> {
-  const [areasResult, priceListResult, productsResult, settingsData] = await Promise.all([
+  const [areasResult, priceListResult, products, settingsData] = await Promise.all([
     supabase
       .from('project_areas')
       .select('id, name')
       .eq('project_id', projectId),
     supabase.from('price_list').select('*').eq('is_active', true),
-    supabase.from('products_catalog').select('*'),
+    fetchAllProducts({ onlyActive: false }),
     getSettings(),
   ]);
 
   const areas = areasResult.data || [];
   const priceList = priceListResult.data || [];
-  const products = productsResult.data || [];
 
   const affectedAreas: AffectedArea[] = [];
   let totalDifference = 0;
   let affectedCabinetsCount = 0;
   const affectedMaterialsSet = new Set<string>();
 
-  for (const area of areas) {
-    const cabinetsResult = await supabase
-      .from('area_cabinets')
-      .select('*')
-      .eq('area_id', area.id);
+  const allCabinetsResult = await supabase
+    .from('area_cabinets')
+    .select('*')
+    .in('area_id', areas.map(a => a.id));
 
-    const cabinets = cabinetsResult.data || [];
+  const allCabinets = allCabinetsResult.data || [];
+  const cabinetsByArea = new Map<string, typeof allCabinets>();
+  for (const cabinet of allCabinets) {
+    if (!cabinetsByArea.has(cabinet.area_id)) {
+      cabinetsByArea.set(cabinet.area_id, []);
+    }
+    cabinetsByArea.get(cabinet.area_id)!.push(cabinet);
+  }
+
+  for (const area of areas) {
+    const cabinets = cabinetsByArea.get(area.id) || [];
     const affectedCabinets: AffectedCabinet[] = [];
 
     for (const cabinet of cabinets) {
@@ -216,6 +227,38 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
         }
       }
 
+      if (hasSignificantDifference(costs.doorProfileCost, cabinet.door_profile_cost || 0) && cabinet.door_profile_id) {
+        const material = priceList.find(p => p.id === cabinet.door_profile_id);
+        if (material) {
+          materialChanges.push({
+            materialType: 'door_profile',
+            materialId: material.id,
+            materialName: material.concept_description,
+            oldCost: cabinet.door_profile_cost || 0,
+            newCost: costs.doorProfileCost,
+            difference: costs.doorProfileCost - (cabinet.door_profile_cost || 0),
+            percentageChange: (cabinet.door_profile_cost || 0) > 0 ? ((costs.doorProfileCost - (cabinet.door_profile_cost || 0)) / (cabinet.door_profile_cost || 0)) * 100 : 0,
+          });
+          affectedMaterialsSet.add(material.id);
+        }
+      }
+
+      if (cabinet.use_back_panel_material && hasSignificantDifference(costs.backPanelMaterialCost, cabinet.back_panel_material_cost || 0) && cabinet.back_panel_material_id) {
+        const material = priceList.find(p => p.id === cabinet.back_panel_material_id);
+        if (material) {
+          materialChanges.push({
+            materialType: 'box_material',
+            materialId: material.id,
+            materialName: material.concept_description,
+            oldCost: cabinet.back_panel_material_cost || 0,
+            newCost: costs.backPanelMaterialCost,
+            difference: costs.backPanelMaterialCost - (cabinet.back_panel_material_cost || 0),
+            percentageChange: (cabinet.back_panel_material_cost || 0) > 0 ? ((costs.backPanelMaterialCost - (cabinet.back_panel_material_cost || 0)) / (cabinet.back_panel_material_cost || 0)) * 100 : 0,
+          });
+          affectedMaterialsSet.add(material.id);
+        }
+      }
+
       if (materialChanges.length > 0) {
         const cabinetTotalDifference = materialChanges.reduce((sum, change) => sum + change.difference, 0);
         affectedCabinets.push({
@@ -289,6 +332,22 @@ async function recalculateCabinetCosts(
   const accessoriesCost = calculateAccessoriesCost(accessories, cabinet.quantity, priceList);
   const laborCost = calculateLaborCost(product, cabinet.quantity, settings.laborCostNoDrawers, settings.laborCostWithDrawers, settings.laborCostAccessories);
 
+  const doorProfileItem = cabinet.door_profile_id ? priceList.find(p => p.id === cabinet.door_profile_id) : null;
+  const doorProfileCost = doorProfileItem
+    ? calculateDoorProfileCost(product, doorProfileItem, cabinet.quantity)
+    : 0;
+
+  const backPanelMaterial = cabinet.use_back_panel_material && cabinet.back_panel_material_id
+    ? priceList.find(p => p.id === cabinet.back_panel_material_id)
+    : null;
+  const backPanelMaterialCost = backPanelMaterial && cabinet.back_panel_sf && cabinet.back_panel_sf > 0
+    ? (() => {
+        const price = backPanelMaterial.price_with_tax || backPanelMaterial.price;
+        const sfPerSheet = backPanelMaterial.sf_per_sheet || parseDimensions(backPanelMaterial.dimensions);
+        return cabinet.back_panel_sf * (price / sfPerSheet);
+      })()
+    : (cabinet.back_panel_material_cost || 0);
+
   return {
     boxMaterialCost,
     boxEdgebandCost,
@@ -296,9 +355,11 @@ async function recalculateCabinetCosts(
     doorsMaterialCost,
     doorsEdgebandCost,
     doorsInteriorFinishCost,
+    backPanelMaterialCost,
     hardwareCost,
     accessoriesCost,
     laborCost,
+    doorProfileCost,
     subtotal:
       boxMaterialCost +
       boxEdgebandCost +
@@ -306,9 +367,11 @@ async function recalculateCabinetCosts(
       doorsMaterialCost +
       doorsEdgebandCost +
       doorsInteriorFinishCost +
+      backPanelMaterialCost +
       hardwareCost +
       accessoriesCost +
-      laborCost,
+      laborCost +
+      doorProfileCost,
   };
 }
 
@@ -320,14 +383,13 @@ export async function updateCabinetPrices(
   let updated = 0;
   let failed = 0;
 
-  const [priceListResult, productsResult, settingsData] = await Promise.all([
+  const [priceListResult, products, settingsData] = await Promise.all([
     supabase.from('price_list').select('*').eq('is_active', true),
-    supabase.from('products_catalog').select('*'),
+    fetchAllProducts({ onlyActive: false }),
     getSettings(),
   ]);
 
   const priceList = priceListResult.data || [];
-  const products = productsResult.data || [];
 
   for (let i = 0; i < cabinetIds.length; i++) {
     const cabinetId = cabinetIds[i];
@@ -367,9 +429,11 @@ export async function updateCabinetPrices(
           doors_material_cost: costs.doorsMaterialCost,
           doors_edgeband_cost: costs.doorsEdgebandCost,
           doors_interior_finish_cost: costs.doorsInteriorFinishCost,
+          back_panel_material_cost: costs.backPanelMaterialCost,
           hardware_cost: costs.hardwareCost,
           accessories_cost: costs.accessoriesCost,
           labor_cost: costs.laborCost,
+          door_profile_cost: costs.doorProfileCost,
           subtotal: costs.subtotal,
         })
         .eq('id', cabinetId);
@@ -453,6 +517,17 @@ export async function updateProjectPrices(
   }
 }
 
+export async function clearProjectStaleness(projectId: string): Promise<void> {
+  await supabase
+    .from('project_price_staleness')
+    .update({
+      has_stale_prices: false,
+      affected_material_count: 0,
+      last_checked_at: new Date().toISOString(),
+    })
+    .eq('project_id', projectId);
+}
+
 export async function checkProjectHasStalePrices(projectId: string): Promise<boolean> {
   const { data, error } = await supabase
     .from('project_price_staleness')
@@ -461,7 +536,17 @@ export async function checkProjectHasStalePrices(projectId: string): Promise<boo
     .maybeSingle();
 
   if (error || !data) {
-    return false;
+    const analysis = await analyzeProjectPriceChanges(projectId);
+    const isStale = analysis.hasStalePrices;
+
+    await supabase
+      .from('project_price_staleness')
+      .upsert(
+        { project_id: projectId, has_stale_prices: isStale, last_checked_at: new Date().toISOString() },
+        { onConflict: 'project_id' }
+      );
+
+    return isStale;
   }
 
   return data.has_stale_prices;
@@ -478,4 +563,49 @@ export async function getProjectsWithStalePrices(): Promise<string[]> {
   }
 
   return data.map(row => row.project_id);
+}
+
+export async function recalculateClosetItemsForExchangeRate(newRate: number): Promise<number> {
+  const { data: closetItems, error } = await supabase
+    .from('area_closet_items')
+    .select('id, unit_price_usd, hardware_cost, quantity');
+
+  if (error || !closetItems || closetItems.length === 0) return 0;
+
+  let updatedCount = 0;
+  for (const item of closetItems) {
+    const unitPriceMxn = item.unit_price_usd * newRate;
+    const hardwareCostPerUnit = item.quantity > 0 ? item.hardware_cost / item.quantity : 0;
+    const subtotalMxn = (unitPriceMxn + hardwareCostPerUnit) * item.quantity;
+
+    const { error: updateError } = await supabase
+      .from('area_closet_items')
+      .update({
+        unit_price_mxn: unitPriceMxn,
+        subtotal_mxn: subtotalMxn,
+      })
+      .eq('id', item.id);
+
+    if (!updateError) updatedCount++;
+  }
+
+  return updatedCount;
+}
+
+export async function markAllProjectsStale(): Promise<void> {
+  const { data: projects, error } = await supabase
+    .from('projects')
+    .select('id');
+
+  if (error || !projects || projects.length === 0) return;
+
+  const rows = projects.map(p => ({
+    project_id: p.id,
+    has_stale_prices: true,
+    last_checked_at: new Date().toISOString(),
+  }));
+
+  await supabase
+    .from('project_price_staleness')
+    .upsert(rows, { onConflict: 'project_id' });
 }

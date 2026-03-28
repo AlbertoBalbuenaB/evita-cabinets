@@ -36,14 +36,15 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-2 sm:p-4">
         <div
-          className="fixed inset-0 bg-black bg-opacity-30 transition-opacity"
+          className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-[2px] transition-opacity"
           onClick={onClose}
         />
 
         <div
-          className={`relative bg-white rounded-lg shadow-xl ${sizeClasses[size]} w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col`}
+          className={`relative glass-white ${sizeClasses[size]} w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col`}
+          style={{ borderRadius: '16px' }}
         >
-          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200">
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200/60">
             <h2 className="text-lg sm:text-xl font-semibold text-slate-900 pr-2">{title}</h2>
             <Button
               variant="ghost"

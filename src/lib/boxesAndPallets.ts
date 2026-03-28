@@ -1,4 +1,4 @@
-import type { AreaCabinet, Product } from '../types';
+import type { AreaCabinet, AreaClosetItem, Product } from '../types';
 import { isAccessoryPanel } from './cabinetFilters';
 
 export interface BoxesPalletsCalculation {
@@ -14,21 +14,13 @@ export function calculateBoxesForCabinet(
   if (!product) return 0;
 
   const sku = product.sku;
-  const description = product.description;
   const quantity = cabinet.quantity;
 
   if (isAccessoryPanel(sku)) {
-    const boxSF = product.original_box_sf ?? product.box_sf ?? 0;
-    const doorsSF = product.original_doors_fronts_sf ?? product.doors_fronts_sf ?? 0;
-    const totalSqFt = (boxSF + doorsSF) * quantity;
-    return Math.ceil(totalSqFt / 32);
+    return 0;
   }
 
-  if (description.includes('Tall Storage') || description.includes('Double Oven')) {
-    return quantity * 2;
-  }
-
-  return quantity;
+  return (product.boxes_per_unit ?? 1) * quantity;
 }
 
 export function calculatePalletsForCabinet(
@@ -58,7 +50,8 @@ export function calculateAccessoriesSqFt(
 
 export function calculateAreaBoxesAndPallets(
   cabinets: AreaCabinet[],
-  products: Product[]
+  products: Product[],
+  closetItems: AreaClosetItem[] = []
 ): BoxesPalletsCalculation {
   let totalBoxes = 0;
   let totalPalletsRaw = 0;
@@ -75,6 +68,11 @@ export function calculateAreaBoxesAndPallets(
 
     const accessoriesSqFt = calculateAccessoriesSqFt(cabinet, product);
     totalAccessoriesSqFt += accessoriesSqFt;
+  });
+
+  closetItems.forEach((ci) => {
+    totalBoxes += ci.boxes_count;
+    totalPalletsRaw += ci.boxes_count / 19;
   });
 
   return {

@@ -78,6 +78,9 @@ export async function createTemplateFromCabinet(
   const doorsInteriorFinish = cabinet.doors_interior_finish_id
     ? priceList.find(p => p.id === cabinet.doors_interior_finish_id)
     : null;
+  const doorProfile = cabinet.door_profile_id
+    ? priceList.find(p => p.id === cabinet.door_profile_id)
+    : null;
 
   const templateData: CabinetTemplateInsert = {
     name: templateName,
@@ -108,6 +111,8 @@ export async function createTemplateFromCabinet(
     original_doors_material_price: doorsMaterial?.price || null,
     original_doors_edgeband_price: doorsEdgeband?.price || null,
     original_doors_interior_finish_price: doorsInteriorFinish?.price || null,
+    door_profile_id: cabinet.door_profile_id || null,
+    door_profile_name: doorProfile?.concept_description || null,
   };
 
   const { data, error } = await supabase

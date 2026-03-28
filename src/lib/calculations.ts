@@ -87,6 +87,16 @@ export function calculateDoorsEdgebandCost(
   return calculateEdgebandCost(totalMeters, edgeband);
 }
 
+export function calculateDoorProfileCost(
+  product: Product,
+  doorProfile: PriceListItem,
+  quantity: number
+): number {
+  const totalMeters = (product.doors_fronts_edgeband || 0) * quantity;
+  const price = doorProfile.price_with_tax || doorProfile.price;
+  return totalMeters * price;
+}
+
 export function calculateInteriorFinishCost(
   product: Product,
   finish: PriceListItem,
@@ -120,7 +130,7 @@ export function calculateHardwareCost(
 export function calculateAccessoriesCost(
   accessories: Array<{ accessory_id: string; quantity_per_cabinet: number }>,
   cabinetQuantity: number,
-  priceList: Array<{ id: string; price: number }>
+  priceList: Array<{ id: string; price: number; price_with_tax?: number | null }>
 ): number {
   if (!Array.isArray(accessories) || accessories.length === 0) {
     return 0;
@@ -132,7 +142,8 @@ export function calculateAccessoriesCost(
       console.warn(`Accessory with ID ${accessory.accessory_id} not found in price list`);
       return total;
     }
-    return total + priceItem.price * accessory.quantity_per_cabinet * cabinetQuantity;
+    const price = priceItem.price_with_tax || priceItem.price;
+    return total + price * accessory.quantity_per_cabinet * cabinetQuantity;
   }, 0);
 }
 
@@ -143,6 +154,10 @@ export function calculateLaborCost(
   laborCostWithDrawers: number = 600,
   laborCostAccessories: number = 100
 ): number {
+  if (product.custom_labor_cost !== null && product.custom_labor_cost !== undefined) {
+    return product.custom_labor_cost * quantity;
+  }
+
   if (product.sku.startsWith('460')) {
     return laborCostAccessories * quantity;
   }

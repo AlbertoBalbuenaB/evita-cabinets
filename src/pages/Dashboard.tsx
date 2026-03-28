@@ -19,6 +19,7 @@ import { formatCurrency } from '../lib/calculations';
 import { seedSampleData } from '../utils/seedData';
 import { Button } from '../components/Button';
 import { isAccessoryPanel } from '../lib/cabinetFilters';
+import { getSettings } from '../lib/settingsStore';
 
 interface DashboardStats {
   totalProjects: number;
@@ -109,10 +110,12 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
+  const [exchangeRate, setExchangeRate] = useState(18);
 
   useEffect(() => {
     loadStats();
     loadTrends();
+    getSettings().then(s => setExchangeRate(s.exchangeRateUsdToMxn));
   }, []);
 
   useEffect(() => {
@@ -532,14 +535,14 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
     },
     {
       label: 'Total Quoted Value',
-      value: formatCurrency(stats.totalValue),
+      value: formatCurrency(stats.totalValue / exchangeRate, 'USD'),
       subtext: `${stats.totalProjects} projects`,
       icon: DollarSign,
       color: 'bg-amber-500',
     },
     {
       label: 'Won Value',
-      value: formatCurrency(stats.wonValue),
+      value: formatCurrency(stats.wonValue / exchangeRate, 'USD'),
       subtext: `${stats.wonProjects} projects won`,
       icon: CheckCircle2,
       color: 'bg-emerald-500',
@@ -649,7 +652,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
         </div>
       </div>
 
-      <div className="mb-6 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="mb-6 glass-white p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <FolderOpen className="h-5 w-5 text-blue-600 mr-2" />
@@ -669,18 +672,18 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
               const statusColors: Record<string, string> = {
                 'Awarded': 'bg-green-100 text-green-700 border-green-200',
                 'Pending': 'bg-blue-100 text-blue-700 border-blue-200',
-                'Estimating': 'bg-blue-100 text-blue-700 border-blue-200',
-                'Sent': 'bg-purple-100 text-purple-700 border-purple-200',
+                'Estimating': 'bg-orange-100 text-orange-700 border-orange-200',
+                'Sent': 'bg-cyan-100 text-cyan-700 border-cyan-200',
                 'Lost': 'bg-red-100 text-red-700 border-red-200',
-                'Disqualified': 'bg-orange-100 text-orange-700 border-orange-200',
-                'Cancelled': 'bg-gray-100 text-gray-700 border-gray-200',
+                'Disqualified': 'bg-slate-100 text-slate-600 border-slate-200',
+                'Cancelled': 'bg-gray-100 text-gray-600 border-gray-200',
               };
 
               return (
                 <div
                   key={project.id}
                   onClick={() => onNavigateToProject(project.id)}
-                  className="group p-4 rounded-lg border-2 border-slate-200 hover:border-blue-400 hover:shadow-md cursor-pointer transition-all bg-white"
+                  className="group p-4 rounded-xl border border-slate-200/60 hover:border-blue-400/60 hover:shadow-md cursor-pointer transition-all glass-white"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="text-sm font-semibold text-slate-900 truncate flex-1 mr-2">
@@ -705,7 +708,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
                       {new Date(project.quote_date).toLocaleDateString()}
                     </span>
                     <span className="text-sm font-bold text-slate-900">
-                      {formatCurrency(project.total_amount)}
+                      {formatCurrency(project.total_amount / exchangeRate, 'USD')}
                     </span>
                   </div>
                 </div>
@@ -732,7 +735,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
           return (
             <div
               key={card.label}
-              className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-hidden"
+              className="glass-blue p-6 overflow-hidden"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -752,7 +755,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="glass-white p-6">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Project Status</h2>
           <div className="space-y-3">
             {statusCards.map((card) => {
@@ -777,7 +780,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
           </div>
         </div>
 
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="lg:col-span-2 glass-white p-6">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">
             Monthly Projects (Last 6 Months)
           </h2>
@@ -831,7 +834,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="glass-white p-6">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">
           Monthly Quoted Value (Last 6 Months)
         </h2>
@@ -849,10 +852,10 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
                     </span>
                     <div className="flex items-center space-x-4">
                       <span className="text-xs text-slate-500">
-                        Total: {formatCurrency(data.totalValue)}
+                        Total: {formatCurrency(data.totalValue / exchangeRate, 'USD')}
                       </span>
                       <span className="text-xs font-semibold text-green-600">
-                        Won: {formatCurrency(data.wonValue)}
+                        Won: {formatCurrency(data.wonValue / exchangeRate, 'USD')}
                       </span>
                     </div>
                   </div>
@@ -886,7 +889,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {topCabinets.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <div className="glass-white p-6">
                 <div className="flex items-center mb-4">
                   <Package className="h-5 w-5 text-blue-600 mr-2" />
                   <h3 className="text-lg font-semibold text-slate-900">Top 5 Most Quoted Cabinets</h3>
@@ -930,7 +933,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
             )}
 
             {doorMaterialTrends.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <div className="glass-white p-6">
                 <div className="flex items-center mb-4">
                   <Package className="h-5 w-5 text-purple-600 mr-2" />
                   <h3 className="text-lg font-semibold text-slate-900">Popular Door Materials</h3>
@@ -969,7 +972,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
             )}
 
             {boxMaterialTrends.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <div className="glass-white p-6">
                 <div className="flex items-center mb-4">
                   <Package className="h-5 w-5 text-orange-600 mr-2" />
                   <h3 className="text-lg font-semibold text-slate-900">Popular Box Materials</h3>
@@ -1008,7 +1011,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
             )}
 
             {hardwareTrends.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <div className="glass-white p-6">
                 <div className="flex items-center mb-4">
                   <Package className="h-5 w-5 text-teal-600 mr-2" />
                   <h3 className="text-lg font-semibold text-slate-900">Most Used Hardware</h3>
@@ -1049,7 +1052,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
       )}
 
       {projectTypeStats.length > 0 && (
-        <div className="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="mt-6 glass-white p-6">
           <div className="flex items-center mb-4">
             <Tag className="h-5 w-5 text-blue-600 mr-2" />
             <h2 className="text-lg font-semibold text-slate-900">Project Type Analytics</h2>
@@ -1091,11 +1094,11 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
                     </div>
                     <div className="pt-2">
                       <div className="text-xs opacity-90">Total Value</div>
-                      <div className="text-lg font-bold">{formatCurrency(typeData.totalValue)}</div>
+                      <div className="text-lg font-bold">{formatCurrency(typeData.totalValue / exchangeRate, 'USD')}</div>
                     </div>
                     <div>
                       <div className="text-xs opacity-90">Won Value</div>
-                      <div className="text-base font-semibold">{formatCurrency(typeData.wonValue)}</div>
+                      <div className="text-base font-semibold">{formatCurrency(typeData.wonValue / exchangeRate, 'USD')}</div>
                     </div>
                   </div>
                 </div>
@@ -1106,7 +1109,7 @@ export function Dashboard({ onNavigate, onNavigateToProject }: DashboardProps) {
       )}
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="glass-white p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-slate-900">Catalog Status</h2>
             <Package className="h-5 w-5 text-slate-400" />

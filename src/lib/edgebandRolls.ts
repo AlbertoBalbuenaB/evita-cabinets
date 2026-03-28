@@ -37,7 +37,8 @@ export async function calculateAreaEdgebandRolls(
 
   const { data: products, error: productsError } = await supabase
     .from('products_catalog')
-    .select('*');
+    .select('*')
+    .limit(2000);
 
   if (productsError || !products) {
     console.error('Error loading products:', productsError);
@@ -216,8 +217,11 @@ export async function recalculateAreaEdgebandCosts(areaId: string): Promise<bool
         cabinet.doors_material_cost +
         cost.doorsEdgebandCost +
         cabinet.doors_interior_finish_cost +
+        (cabinet.back_panel_material_cost || 0) +
         cabinet.hardware_cost +
-        cabinet.labor_cost;
+        cabinet.accessories_cost +
+        cabinet.labor_cost +
+        (cabinet.door_profile_cost || 0);
 
       const { error: updateError } = await supabase
         .from('area_cabinets')

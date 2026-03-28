@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { Product } from '../types';
+import { fetchAllProducts } from './fetchAllProducts';
 
 export async function getAllCollections(): Promise<string[]> {
   try {
@@ -24,20 +25,8 @@ export async function getProductsByCollection(
   includeArchived = false
 ): Promise<Product[]> {
   try {
-    let query = supabase
-      .from('products_catalog')
-      .select('*')
-      .eq('is_active', true)
-      .eq('collection_name', collectionName);
-
-    if (!includeArchived) {
-      query = query.eq('status', 'active');
-    }
-
-    const { data, error } = await query.order('sku');
-
-    if (error) throw error;
-    return data || [];
+    const allProducts = await fetchAllProducts({ onlyActive: !includeArchived });
+    return allProducts.filter(p => p.collection_name === collectionName);
   } catch (error) {
     console.error('Error fetching products by collection:', error);
     return [];

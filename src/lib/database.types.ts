@@ -25,6 +25,9 @@ export interface Database {
           original_box_sf: number | null;
           original_doors_fronts_sf: number | null;
           waste_applied: boolean | null;
+          custom_labor_cost: number | null;
+          boxes_per_unit: number;
+          default_is_rta: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -43,6 +46,9 @@ export interface Database {
           original_box_sf?: number | null;
           original_doors_fronts_sf?: number | null;
           waste_applied?: boolean | null;
+          custom_labor_cost?: number | null;
+          boxes_per_unit?: number;
+          default_is_rta?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -61,6 +67,9 @@ export interface Database {
           original_box_sf?: number | null;
           original_doors_fronts_sf?: number | null;
           waste_applied?: boolean | null;
+          custom_labor_cost?: number | null;
+          boxes_per_unit?: number;
+          default_is_rta?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -79,9 +88,13 @@ export interface Database {
           tax_rate: number | null;
           base_price: number | null;
           price_with_tax: number | null;
+          product_url: string | null;
+          image_url: string | null;
+          notes: string | null;
           is_active: boolean;
           created_at: string;
           updated_at: string;
+          price_last_updated_at: string;
         };
         Insert: {
           id?: string;
@@ -96,9 +109,13 @@ export interface Database {
           tax_rate?: number | null;
           base_price?: number | null;
           price_with_tax?: number | null;
+          product_url?: string | null;
+          image_url?: string | null;
+          notes?: string | null;
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
+          price_last_updated_at?: string;
         };
         Update: {
           id?: string;
@@ -113,9 +130,13 @@ export interface Database {
           tax_rate?: number | null;
           base_price?: number | null;
           price_with_tax?: number | null;
+          product_url?: string | null;
+          image_url?: string | null;
+          notes?: string | null;
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
+          price_last_updated_at?: string;
         };
       };
       projects: {
@@ -129,16 +150,23 @@ export interface Database {
           status: string;
           project_type: string;
           other_expenses: number;
+          other_expenses_label: string | null;
           tariff_multiplier: number;
           profit_multiplier: number;
           tax_percentage: number;
           install_delivery: number;
+          install_delivery_usd: number;
+          install_delivery_per_box_usd: number;
           referral_currency_rate: number;
           project_details: string | null;
           project_brief: string | null;
           disclaimer_tariff_info: string | null;
           disclaimer_price_validity: string | null;
           group_id: string | null;
+          pdf_project_name: string | null;
+          pdf_customer: string | null;
+          pdf_address: string | null;
+          pdf_project_brief: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -152,16 +180,23 @@ export interface Database {
           status?: string;
           project_type?: string;
           other_expenses?: number;
+          other_expenses_label?: string | null;
           tariff_multiplier?: number;
           profit_multiplier?: number;
           tax_percentage?: number;
           install_delivery?: number;
+          install_delivery_usd?: number;
+          install_delivery_per_box_usd?: number;
           referral_currency_rate?: number;
           project_details?: string | null;
           project_brief?: string | null;
           disclaimer_tariff_info?: string | null;
           disclaimer_price_validity?: string | null;
           group_id?: string | null;
+          pdf_project_name?: string | null;
+          pdf_customer?: string | null;
+          pdf_address?: string | null;
+          pdf_project_brief?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -175,16 +210,23 @@ export interface Database {
           status?: string;
           project_type?: string;
           other_expenses?: number;
+          other_expenses_label?: string | null;
           tariff_multiplier?: number;
           profit_multiplier?: number;
           tax_percentage?: number;
           install_delivery?: number;
+          install_delivery_usd?: number;
+          install_delivery_per_box_usd?: number;
           referral_currency_rate?: number;
           project_details?: string | null;
           project_brief?: string | null;
           disclaimer_tariff_info?: string | null;
           disclaimer_price_validity?: string | null;
           group_id?: string | null;
+          pdf_project_name?: string | null;
+          pdf_customer?: string | null;
+          pdf_address?: string | null;
+          pdf_project_brief?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -196,6 +238,8 @@ export interface Database {
           name: string;
           display_order: number;
           subtotal: number;
+          applies_tariff: boolean;
+          quantity: number;
           created_at: string;
         };
         Insert: {
@@ -204,6 +248,8 @@ export interface Database {
           name: string;
           display_order?: number;
           subtotal?: number;
+          applies_tariff?: boolean;
+          quantity?: number;
           created_at?: string;
         };
         Update: {
@@ -212,7 +258,283 @@ export interface Database {
           name?: string;
           display_order?: number;
           subtotal?: number;
+          applies_tariff?: boolean;
+          quantity?: number;
           created_at?: string;
+        };
+      };
+      settings: {
+        Row: {
+          id: string;
+          key: string;
+          value: string;
+          category: string;
+          description: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          key: string;
+          value: string;
+          category: string;
+          description?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          key?: string;
+          value?: string;
+          category?: string;
+          description?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      team_members: {
+        Row: {
+          id: string;
+          name: string;
+          role: string | null;
+          email: string | null;
+          display_order: number;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          role?: string | null;
+          email?: string | null;
+          display_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          role?: string | null;
+          email?: string | null;
+          display_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+        };
+      };
+      project_documents: {
+        Row: {
+          id: string;
+          project_id: string;
+          label: string;
+          url: string;
+          display_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          label: string;
+          url?: string;
+          display_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          label?: string;
+          url?: string;
+          display_order?: number;
+          created_at?: string;
+        };
+      };
+      project_tasks: {
+        Row: {
+          id: string;
+          project_id: string;
+          title: string;
+          details: string | null;
+          due_date: string | null;
+          assignee_id: string | null;
+          status: string;
+          display_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          title: string;
+          details?: string | null;
+          due_date?: string | null;
+          assignee_id?: string | null;
+          status?: string;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          title?: string;
+          details?: string | null;
+          due_date?: string | null;
+          assignee_id?: string | null;
+          status?: string;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      project_activities: {
+        Row: {
+          id: string;
+          project_id: string;
+          name: string;
+          start_date: string;
+          end_date: string;
+          display_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          name: string;
+          start_date: string;
+          end_date: string;
+          display_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          name?: string;
+          start_date?: string;
+          end_date?: string;
+          display_order?: number;
+          created_at?: string;
+        };
+      };
+      project_logs: {
+        Row: {
+          id: string;
+          project_id: string;
+          comment: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          comment: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          comment?: string;
+          created_at?: string;
+        };
+      };
+      closet_catalog: {
+        Row: {
+          id: string;
+          cabinet_code: string;
+          evita_line: string;
+          description: string;
+          height_in: number;
+          width_in: number;
+          depth_in: number;
+          price_with_backs_usd: number | null;
+          price_without_backs_usd: number | null;
+          has_backs_option: boolean;
+          boxes_count: number;
+          dimensions_locked: boolean;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          cabinet_code: string;
+          evita_line: string;
+          description: string;
+          height_in: number;
+          width_in: number;
+          depth_in: number;
+          price_with_backs_usd?: number | null;
+          price_without_backs_usd?: number | null;
+          has_backs_option?: boolean;
+          boxes_count?: number;
+          dimensions_locked?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          cabinet_code?: string;
+          evita_line?: string;
+          description?: string;
+          height_in?: number;
+          width_in?: number;
+          depth_in?: number;
+          price_with_backs_usd?: number | null;
+          price_without_backs_usd?: number | null;
+          has_backs_option?: boolean;
+          boxes_count?: number;
+          dimensions_locked?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      area_closet_items: {
+        Row: {
+          id: string;
+          area_id: string;
+          closet_catalog_id: string;
+          quantity: number;
+          with_backs: boolean;
+          unit_price_usd: number;
+          unit_price_mxn: number;
+          hardware: import('./database.types').Json;
+          hardware_cost: number;
+          subtotal_mxn: number;
+          boxes_count: number;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          area_id: string;
+          closet_catalog_id: string;
+          quantity?: number;
+          with_backs?: boolean;
+          unit_price_usd?: number;
+          unit_price_mxn?: number;
+          hardware?: import('./database.types').Json;
+          hardware_cost?: number;
+          subtotal_mxn?: number;
+          boxes_count?: number;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          area_id?: string;
+          closet_catalog_id?: string;
+          quantity?: number;
+          with_backs?: boolean;
+          unit_price_usd?: number;
+          unit_price_mxn?: number;
+          hardware?: import('./database.types').Json;
+          hardware_cost?: number;
+          subtotal_mxn?: number;
+          boxes_count?: number;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
       };
       area_cabinets: {
@@ -248,6 +570,8 @@ export interface Database {
           back_panel_sf: number;
           back_panel_material_cost: number;
           original_back_panel_material_price: number | null;
+          door_profile_id: string | null;
+          door_profile_cost: number;
         };
         Insert: {
           id?: string;
@@ -281,6 +605,8 @@ export interface Database {
           back_panel_sf?: number;
           back_panel_material_cost?: number;
           original_back_panel_material_price?: number | null;
+          door_profile_id?: string | null;
+          door_profile_cost?: number;
         };
         Update: {
           id?: string;
@@ -314,6 +640,8 @@ export interface Database {
           back_panel_sf?: number;
           back_panel_material_cost?: number;
           original_back_panel_material_price?: number | null;
+          door_profile_id?: string | null;
+          door_profile_cost?: number;
         };
       };
     };

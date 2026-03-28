@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { fetchAllProducts } from './fetchAllProducts';
 import type { PriceListItem, Product, AreaCabinet } from '../types';
 import {
   calculateBoxMaterialCost,
@@ -8,6 +9,9 @@ import {
   calculateInteriorFinishCost,
   calculateHardwareCost,
   calculateLaborCost,
+  calculateAccessoriesCost,
+  calculateDoorProfileCost,
+  parseDimensions,
 } from './calculations';
 import { getSettings } from './settingsStore';
 
@@ -102,14 +106,13 @@ export async function recalculateAllCabinetPrices(
   let updated = 0;
   const areaChanges = new Map<string, { previous: number; new: number }>();
 
-  const [priceListResult, productsResult, settingsData] = await Promise.all([
+  const [priceListResult, products, settingsData] = await Promise.all([
     supabase.from('price_list').select('*').eq('is_active', true),
-    supabase.from('products_catalog').select('*'),
+    fetchAllProducts({ onlyActive: false }),
     getSettings(),
   ]);
 
   const priceList = priceListResult.data || [];
-  const products = productsResult.data || [];
 
   const areasQuery = areaIds.length > 0
     ? supabase.from('project_areas').select('*').in('id', areaIds)
@@ -166,8 +169,11 @@ export async function recalculateAllCabinetPrices(
           doors_material_cost: costs.doorsMaterialCost,
           doors_edgeband_cost: costs.doorsEdgebandCost,
           doors_interior_finish_cost: costs.doorsInteriorFinishCost,
+          back_panel_material_cost: costs.backPanelMaterialCost,
           hardware_cost: costs.hardwareCost,
+          accessories_cost: costs.accessoriesCost,
           labor_cost: costs.laborCost,
+          door_profile_cost: costs.doorProfileCost,
           subtotal: costs.subtotal,
           original_box_material_price: boxMaterial?.price || null,
           original_box_edgeband_price: boxEdgeband?.price || null,
@@ -193,11 +199,18 @@ export async function recalculateAllCabinetPrices(
       }
     }
 
-    areaChanges.set(area.id, { previous: previousAreaTotal, new: newAreaTotal });
+    const { data: areaClosetItems } = await supabase
+      .from('area_closet_items')
+      .select('subtotal_mxn')
+      .eq('area_id', area.id);
+
+    const closetItemsTotal = (areaClosetItems || []).reduce((sum: number, ci: any) => sum + (ci.subtotal_mxn || 0), 0);
+
+    areaChanges.set(area.id, { previous: previousAreaTotal, new: newAreaTotal + closetItemsTotal });
 
     await supabase
       .from('project_areas')
-      .update({ subtotal: newAreaTotal })
+      .update({ subtotal: newAreaTotal + closetItemsTotal })
       .eq('id', area.id);
   }
 
@@ -244,11 +257,31 @@ async function recalculateCabinetCosts(
 
   const hardware = Array.isArray(cabinet.hardware) ? cabinet.hardware : [];
   const hardwareCost = calculateHardwareCost(hardware, cabinet.quantity, priceList);
+  const accessories = Array.isArray(cabinet.accessories)
+    ? cabinet.accessories as Array<{ accessory_id: string; quantity_per_cabinet: number }>
+    : [];
+  const accessoriesCost = calculateAccessoriesCost(accessories, cabinet.quantity, priceList);
   const laborCost = calculateLaborCost(product, cabinet.quantity, settings.laborCostNoDrawers, settings.laborCostWithDrawers, settings.laborCostAccessories);
+
+  const doorProfileItem = cabinet.door_profile_id ? priceList.find(p => p.id === cabinet.door_profile_id) : null;
+  const doorProfileCost = doorProfileItem && product
+    ? calculateDoorProfileCost(product, doorProfileItem, cabinet.quantity)
+    : 0;
+
+  const backPanelMaterial = cabinet.use_back_panel_material && cabinet.back_panel_material_id
+    ? priceList.find(p => p.id === cabinet.back_panel_material_id)
+    : null;
+  const backPanelMaterialCost = backPanelMaterial && cabinet.back_panel_sf && cabinet.back_panel_sf > 0
+    ? (() => {
+        const price = backPanelMaterial.price_with_tax || backPanelMaterial.price;
+        const sfPerSheet = backPanelMaterial.sf_per_sheet || parseDimensions(backPanelMaterial.dimensions);
+        return cabinet.back_panel_sf * (price / sfPerSheet);
+      })()
+    : (cabinet.back_panel_material_cost || 0);
 
   const subtotal = boxMaterialCost + boxEdgebandCost + boxInteriorFinishCost +
                    doorsMaterialCost + doorsEdgebandCost + doorsInteriorFinishCost +
-                   hardwareCost + laborCost;
+                   backPanelMaterialCost + hardwareCost + accessoriesCost + laborCost + doorProfileCost;
 
   return {
     boxMaterialCost,
@@ -257,8 +290,11 @@ async function recalculateCabinetCosts(
     doorsMaterialCost,
     doorsEdgebandCost,
     doorsInteriorFinishCost,
+    backPanelMaterialCost,
     hardwareCost,
+    accessoriesCost,
     laborCost,
+    doorProfileCost,
     subtotal,
   };
 }

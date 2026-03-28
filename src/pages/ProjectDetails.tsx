@@ -1,20 +1,23 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Edit2, Trash2, Copy, Printer, BarChart3, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, TrendingUp, Save, Hammer, RefreshCw, Search, X, Download, FileSpreadsheet, AlertTriangle, History, GripVertical, ChevronUp, ChevronDown, FileJson } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { fetchAllProducts } from '../lib/fetchAllProducts';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
 import { formatCurrency } from '../lib/calculations';
-import type { Project, ProjectArea, AreaCabinet, ProjectAreaInsert, Product, AreaItem, AreaCountertop, PriceListItem } from '../types';
+import type { Project, ProjectArea, AreaCabinet, ProjectAreaInsert, Product, AreaItem, AreaCountertop, AreaClosetItem, PriceListItem, TeamMember } from '../types';
 import { CabinetForm } from '../components/CabinetForm';
 import { ItemForm } from '../components/ItemForm';
 import { CountertopForm } from '../components/CountertopForm';
+import { ClosetForm } from '../components/ClosetForm';
 import { CabinetCard } from '../components/CabinetCard';
 import { MaterialBreakdown } from '../components/MaterialBreakdown';
 import { AreaMaterialBreakdown } from '../components/AreaMaterialBreakdown';
 import { ProjectCharts } from '../components/ProjectCharts';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { printQuotation, printQuotationUSD } from '../utils/printQuotation';
+import { filterProjectBriefForPDF } from '../utils/filterProjectBrief';
 import { BoxesPalletsBreakdown } from '../components/BoxesPalletsBreakdown';
 import { calculateAreaBoxesAndPallets } from '../lib/boxesAndPallets';
 import { getSettings } from '../lib/settingsStore';
@@ -31,16 +34,23 @@ import { getVersionHistory } from '../lib/versioningSystem';
 import { updateProjectBrief } from '../lib/projectBrief';
 import { ProjectVersionHistory } from './ProjectVersionHistory';
 import { FloatingActionBar } from '../components/FloatingActionBar';
+import { ProductFormModal } from '../components/ProductFormModal';
+import type { ProductInsert } from '../types';
 import { exportProjectToJSON } from '../utils/projectExportImport';
+import { ScheduleSection } from '../components/ScheduleSection';
+import { TasksSection } from '../components/TasksSection';
+import { DocumentationSection } from '../components/DocumentationSection';
+import { BitacoraSection } from '../components/BitacoraSection';
 
 interface ProjectDetailsProps {
   project: Project;
   onBack: () => void;
+  onActiveTabChange?: (tab: string | null) => void;
 }
 
-export function ProjectDetails({ project: initialProject, onBack }: ProjectDetailsProps) {
+export function ProjectDetails({ project: initialProject, onBack, onActiveTabChange }: ProjectDetailsProps) {
   const [project, setProject] = useState<Project>(initialProject);
-  const [areas, setAreas] = useState<(ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[]>([]);
+  const [areas, setAreas] = useState<(ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[] })[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAreaModalOpen, setIsAreaModalOpen] = useState(false);
@@ -51,14 +61,28 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
   const [editingItem, setEditingItem] = useState<AreaItem | null>(null);
   const [selectedAreaForCountertop, setSelectedAreaForCountertop] = useState<string | null>(null);
   const [editingCountertop, setEditingCountertop] = useState<AreaCountertop | null>(null);
-  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [selectedAreaForCloset, setSelectedAreaForCloset] = useState<string | null>(null);
+  const [editingClosetItem, setEditingClosetItem] = useState<AreaClosetItem | null>(null);
+  const [activeTab, setActiveTab] = useState<'info' | 'pricing' | 'analytics' | 'history' | 'management'>('info');
+
+  useEffect(() => {
+    if (onActiveTabChange) onActiveTabChange(activeTab);
+  }, [activeTab, onActiveTabChange]);
+
+  useEffect(() => {
+    if (onActiveTabChange) onActiveTabChange('info');
+    return () => { if (onActiveTabChange) onActiveTabChange(null); };
+  }, []);
+
   const [currencyDisplay, setCurrencyDisplay] = useState<'USD' | 'MXN' | 'BOTH'>('MXN');
   const [exchangeRate, setExchangeRate] = useState(18);
   const [otherExpenses, setOtherExpenses] = useState(project.other_expenses || 0);
+  const [otherExpensesLabel, setOtherExpensesLabel] = useState(project.other_expenses_label || 'Other Expenses');
   const [profitMultiplier, setProfitMultiplier] = useState(project.profit_multiplier || 0);
   const [tariffMultiplier, setTariffMultiplier] = useState(project.tariff_multiplier || 0);
   const [taxPercentage, setTaxPercentage] = useState(project.tax_percentage || 0);
-  const [installDelivery, setInstallDelivery] = useState(project.install_delivery || 0);
+  const [installDelivery, setInstallDelivery] = useState((project as any).install_delivery_usd || 0);
+  const [installDeliveryPerBox, setInstallDeliveryPerBox] = useState((project as any).install_delivery_per_box_usd || 0);
   const [referralRate, setReferralRate] = useState(project.referral_currency_rate || 0);
   const [savingTemplateCabinet, setSavingTemplateCabinet] = useState<AreaCabinet | null>(null);
   const [priceList, setPriceList] = useState<PriceListItem[]>([]);
@@ -68,26 +92,44 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
   const [areaSearchQuery, setAreaSearchQuery] = useState('');
   const [hasStalePrices, setHasStalePrices] = useState(false);
   const [isBulkPriceUpdateOpen, setIsBulkPriceUpdateOpen] = useState(false);
-  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [versionCount, setVersionCount] = useState(0);
-  const [isPrintMenuOpen, setIsPrintMenuOpen] = useState(false);
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
-  const [isEditingDate, setIsEditingDate] = useState(false);
+const [isEditingDate, setIsEditingDate] = useState(false);
   const [editedQuoteDate, setEditedQuoteDate] = useState(project.quote_date);
-  const [draggedAreaIndex, setDraggedAreaIndex] = useState<number | null>(null);
   const [hasAreasOrderChanged, setHasAreasOrderChanged] = useState(false);
   const [savingAreasOrder, setSavingAreasOrder] = useState(false);
-  const [autoScrollInterval, setAutoScrollInterval] = useState<number | null>(null);
-  const [dropIndicatorPosition, setDropIndicatorPosition] = useState<'before' | 'after' | null>(null);
-  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
-  const [disclaimerTariffInfo, setDisclaimerTariffInfo] = useState(project.disclaimer_tariff_info || 'Please note that the international tariff effective October 10 is 25%; however, only 11% of this tariff directly impacts the cost of this project.');
-  const [disclaimerPriceValidity, setDisclaimerPriceValidity] = useState(project.disclaimer_price_validity || 'Grand Total includes delivery cost and tax, but does not include unloading or installation services.\n\n*Price is valid for 30 days and is subject to change due to international tariff rates.');
+  const [hasLoadedManagement, setHasLoadedManagement] = useState(false);
+  const [managementTeamMembers, setManagementTeamMembers] = useState<TeamMember[]>([]);
+  const [draggedCabinet, setDraggedCabinet] = useState<{ areaId: string; index: number } | null>(null);
+  const [cabinetDropTarget, setCabinetDropTarget] = useState<{ areaId: string; index: number; position: 'before' | 'after' } | null>(null);
+  const DEFAULT_TARIFF_INFO = 'Grand Total includes design services, delivery costs, installation and tax.';
+  const DEFAULT_PRICE_VALIDITY = '*Price is valid for 15 days.\n*Preliminary quote, based off of our best interpretation of the provided plans. Pricing is subject to change once final layout and finishes have been approved.\n*A Design Retainer is required prior to commencing drawings. The design retainer will be credited back to the purchase of cabinets.';
+  const [disclaimerTariffInfo, setDisclaimerTariffInfo] = useState(project.disclaimer_tariff_info || DEFAULT_TARIFF_INFO);
+  const [disclaimerPriceValidity, setDisclaimerPriceValidity] = useState(project.disclaimer_price_validity || DEFAULT_PRICE_VALIDITY);
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+
+  const [pdfProjectName, setPdfProjectName] = useState(project.pdf_project_name ?? project.name);
+  const [pdfCustomer, setPdfCustomer] = useState(project.pdf_customer ?? (project.customer || ''));
+  const [pdfAddress, setPdfAddress] = useState(project.pdf_address ?? (project.address || ''));
+  const [pdfProjectBrief, setPdfProjectBrief] = useState(
+    project.pdf_project_brief ?? filterProjectBriefForPDF(project.project_brief || '')
+  );
+
+  const isPdfNameModified = pdfProjectName !== project.name;
+  const isPdfCustomerModified = pdfCustomer !== (project.customer || '');
+  const isPdfAddressModified = pdfAddress !== (project.address || '');
+  const isPdfBriefModified = pdfProjectBrief !== filterProjectBriefForPDF(project.project_brief || '');
+  const isAnyPdfFieldModified = isPdfNameModified || isPdfCustomerModified || isPdfAddressModified || isPdfBriefModified;
 
   useEffect(() => {
     setProject(initialProject);
     setEditedQuoteDate(initialProject.quote_date);
-    setDisclaimerTariffInfo(initialProject.disclaimer_tariff_info || 'Please note that the international tariff effective October 10 is 25%; however, only 11% of this tariff directly impacts the cost of this project.');
-    setDisclaimerPriceValidity(initialProject.disclaimer_price_validity || 'Grand Total includes delivery cost and tax, but does not include unloading or installation services.\\n\\n*Price is valid for 30 days and is subject to change due to international tariff rates.');
+    setDisclaimerTariffInfo(initialProject.disclaimer_tariff_info || DEFAULT_TARIFF_INFO);
+    setDisclaimerPriceValidity(initialProject.disclaimer_price_validity || DEFAULT_PRICE_VALIDITY);
+    setPdfProjectName(initialProject.pdf_project_name ?? initialProject.name);
+    setPdfCustomer(initialProject.pdf_customer ?? (initialProject.customer || ''));
+    setPdfAddress(initialProject.pdf_address ?? (initialProject.address || ''));
+    setPdfProjectBrief(initialProject.pdf_project_brief ?? filterProjectBriefForPDF(initialProject.project_brief || ''));
   }, [initialProject]);
 
   useEffect(() => {
@@ -97,12 +139,32 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
   }, [project.id]);
 
   useEffect(() => {
-    return () => {
-      if (autoScrollInterval) {
-        cancelAnimationFrame(autoScrollInterval);
-      }
-    };
-  }, [autoScrollInterval]);
+    if (installDeliveryPerBox > 0) {
+      const boxes = areas.reduce((sum, area) => {
+        const { boxes: b } = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
+        return sum + b * (area.quantity ?? 1);
+      }, 0);
+      setInstallDelivery(installDeliveryPerBox * boxes);
+    }
+  }, [installDeliveryPerBox, areas, products]);
+
+  useEffect(() => {
+    if (activeTab === 'management' && !hasLoadedManagement) {
+      (async () => {
+        try {
+          const { data } = await supabase
+            .from('team_members')
+            .select('*')
+            .eq('is_active', true)
+            .order('display_order');
+          setManagementTeamMembers(data || []);
+        } catch (error) {
+          console.error('Error loading team members:', error);
+        }
+        setHasLoadedManagement(true);
+      })();
+    }
+  }, [activeTab, hasLoadedManagement]);
 
   async function loadProject() {
     try {
@@ -136,13 +198,13 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
 
   async function loadAreas() {
     try {
-      const [areasResult, productsResult, priceListResult, settingsData] = await Promise.all([
+      const [areasResult, allProducts, priceListResult, settingsData] = await Promise.all([
         supabase
           .from('project_areas')
           .select('*')
           .eq('project_id', project.id)
           .order('display_order'),
-        supabase.from('products_catalog').select('*'),
+        fetchAllProducts({ onlyActive: false }),
         supabase.from('price_list').select('*').eq('is_active', true),
         getSettings(),
       ]);
@@ -150,38 +212,37 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
       const { data: areasData, error: areasError } = areasResult;
       if (areasError) throw areasError;
 
-      setProducts(productsResult.data || []);
+      setProducts(allProducts);
       setPriceList(priceListResult.data || []);
       setExchangeRate(settingsData.exchangeRateUsdToMxn);
 
-      const areasWithCabinetsAndItems = await Promise.all(
-        (areasData || []).map(async (area) => {
-          const [cabinetsResult, itemsResult, countertopsResult] = await Promise.all([
-            supabase
-              .from('area_cabinets')
-              .select('*')
-              .eq('area_id', area.id)
-              .order('created_at'),
-            supabase
-              .from('area_items')
-              .select('*')
-              .eq('area_id', area.id)
-              .order('created_at'),
-            supabase
-              .from('area_countertops')
-              .select('*')
-              .eq('area_id', area.id)
-              .order('created_at'),
-          ]);
+      const areaIds = (areasData || []).map((a) => a.id);
 
-          return {
-            ...area,
-            cabinets: cabinetsResult.data || [],
-            items: itemsResult.data || [],
-            countertops: countertopsResult.data || [],
-          };
-        })
-      );
+      const [allCabinetsResult, allItemsResult, allCountertopsResult, allClosetItemsResult] = areaIds.length > 0
+        ? await Promise.all([
+            supabase.from('area_cabinets').select('*').in('area_id', areaIds).order('display_order').order('created_at'),
+            supabase.from('area_items').select('*').in('area_id', areaIds).order('created_at'),
+            supabase.from('area_countertops').select('*').in('area_id', areaIds).order('created_at'),
+            supabase.from('area_closet_items').select('*, catalog_item:closet_catalog(*)').in('area_id', areaIds).order('created_at'),
+          ])
+        : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }];
+
+      const allCabinets: AreaCabinet[] = allCabinetsResult.data || [];
+      const allItems: AreaItem[] = allItemsResult.data || [];
+      const allCountertops: AreaCountertop[] = allCountertopsResult.data || [];
+      const allClosetItems: AreaClosetItem[] = (allClosetItemsResult.data || []) as AreaClosetItem[];
+
+      const areasWithCabinetsAndItems = (areasData || []).map((area) => {
+        const result = {
+          ...area,
+          cabinets: allCabinets.filter((c) => c.area_id === area.id),
+          items: allItems.filter((i) => i.area_id === area.id),
+          countertops: allCountertops.filter((ct) => ct.area_id === area.id),
+          closetItems: allClosetItems.filter((ci) => ci.area_id === area.id),
+        };
+        console.log('[loadAreas] area sample:', { id: area.id, name: area.name, cabinetCount: result.cabinets.length, itemCount: result.items.length, countertopCount: result.countertops.length, closetCount: result.closetItems.length, firstCabinet: result.cabinets[0] ?? null });
+        return result;
+      });
 
       setAreas(areasWithCabinetsAndItems);
       await updateProjectTotal(areasWithCabinetsAndItems);
@@ -192,25 +253,65 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
     }
   }
 
-  async function updateProjectTotal(areasData: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[]) {
-    const total = areasData.reduce((sum, area) => {
+  async function updateProjectTotal(
+    areasData: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[] })[],
+    opts?: {
+      profitMultiplier?: number;
+      tariffMultiplier?: number;
+      taxPercentage?: number;
+      installDelivery?: number;
+      referralRate?: number;
+      otherExpenses?: number;
+    }
+  ) {
+    const _profitMultiplier = opts?.profitMultiplier ?? profitMultiplier;
+    const _tariffMultiplier = opts?.tariffMultiplier ?? tariffMultiplier;
+    const _taxPercentage = opts?.taxPercentage ?? taxPercentage;
+    // installDelivery state is in USD — convert to MXN for all calculations
+    const _installDeliveryUsd = opts?.installDelivery ?? installDelivery;
+    const _installDeliveryMxn = _installDeliveryUsd * exchangeRate;
+    const _referralRate = opts?.referralRate ?? referralRate;
+    const _otherExpenses = opts?.otherExpenses ?? otherExpenses;
+
+    const materialsSubtotal = areasData.reduce((sum, area) => {
+      const qty = area.quantity ?? 1;
       const cabinetsTotal = area.cabinets.reduce((s, c) => s + c.subtotal, 0);
       const itemsTotal = area.items.reduce((s, i) => s + i.subtotal, 0);
       const countertopsTotal = area.countertops.reduce((s, ct) => s + ct.subtotal, 0);
-      return sum + cabinetsTotal + itemsTotal + countertopsTotal;
+      const closetItemsTotal = area.closetItems.reduce((s, ci) => s + ci.subtotal_mxn, 0);
+      return sum + (cabinetsTotal + itemsTotal + countertopsTotal + closetItemsTotal) * qty;
     }, 0);
+
+    const price = _profitMultiplier > 0 && _profitMultiplier < 1
+      ? materialsSubtotal / (1 - _profitMultiplier)
+      : materialsSubtotal;
+    const tariffableSubtotal = areasData.reduce((sum, area) => {
+      if (area.applies_tariff !== true) return sum;
+      const qty = area.quantity ?? 1;
+      return sum + (
+        area.cabinets.reduce((s, c) => s + c.subtotal, 0) +
+        area.items.reduce((s, i) => s + i.subtotal, 0) +
+        area.countertops.reduce((s, ct) => s + ct.subtotal, 0) +
+        area.closetItems.reduce((s, ci) => s + ci.subtotal_mxn, 0)
+      ) * qty;
+    }, 0);
+    const tariffAmount = tariffableSubtotal * _tariffMultiplier;
+    const referralAmount = (price + _installDeliveryMxn) * _referralRate;
+    const taxAmount = (price + tariffAmount + referralAmount) * (_taxPercentage / 100);
+    const fullProjectTotal = price + tariffAmount + referralAmount + taxAmount + _installDeliveryMxn + _otherExpenses;
 
     try {
       await supabase
         .from('projects')
-        .update({ total_amount: total })
+        .update({ total_amount: fullProjectTotal })
         .eq('id', project.id);
 
       for (const area of areasData) {
         const cabinetsTotal = area.cabinets.reduce((s, c) => s + c.subtotal, 0);
         const itemsTotal = area.items.reduce((s, i) => s + i.subtotal, 0);
         const countertopsTotal = area.countertops.reduce((s, ct) => s + ct.subtotal, 0);
-        const areaTotal = cabinetsTotal + itemsTotal + countertopsTotal;
+        const closetItemsTotal = area.closetItems.reduce((s, ci) => s + ci.subtotal_mxn, 0);
+        const areaTotal = cabinetsTotal + itemsTotal + countertopsTotal + closetItemsTotal;
         await supabase
           .from('project_areas')
           .update({ subtotal: areaTotal })
@@ -249,6 +350,67 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
     } catch (error) {
       console.error('Error saving area:', error);
       alert('Failed to save area');
+    }
+  }
+
+  async function handleDuplicateArea(area: ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[] }) {
+    if (!confirm(`Duplicate area "${area.name}" with all its cabinets and items?`)) return;
+
+    try {
+      const maxOrder = Math.max(...areas.map((a) => a.display_order), -1);
+      const { data: newArea, error: areaError } = await supabase
+        .from('project_areas')
+        .insert([{
+          project_id: area.project_id,
+          name: `${area.name} (Copy)`,
+          display_order: maxOrder + 1,
+          applies_tariff: area.applies_tariff,
+        }])
+        .select()
+        .single();
+
+      if (areaError || !newArea) throw areaError ?? new Error('Failed to create area');
+
+      if (area.cabinets.length > 0) {
+        const cabinetsToInsert = area.cabinets.map(({ id, created_at, ...rest }) => ({
+          ...rest,
+          area_id: newArea.id,
+        }));
+        const { error: cabinetsError } = await supabase.from('area_cabinets').insert(cabinetsToInsert);
+        if (cabinetsError) throw cabinetsError;
+      }
+
+      if (area.items.length > 0) {
+        const itemsToInsert = area.items.map(({ id, created_at, updated_at, ...rest }) => ({
+          ...rest,
+          area_id: newArea.id,
+        }));
+        const { error: itemsError } = await supabase.from('area_items').insert(itemsToInsert);
+        if (itemsError) throw itemsError;
+      }
+
+      if (area.countertops.length > 0) {
+        const countertopsToInsert = area.countertops.map(({ id, created_at, updated_at, ...rest }) => ({
+          ...rest,
+          area_id: newArea.id,
+        }));
+        const { error: countertopsError } = await supabase.from('area_countertops').insert(countertopsToInsert);
+        if (countertopsError) throw countertopsError;
+      }
+
+      if (area.closetItems.length > 0) {
+        const closetItemsToInsert = area.closetItems.map(({ id, created_at, updated_at, catalog_item, ...rest }) => ({
+          ...rest,
+          area_id: newArea.id,
+        }));
+        const { error: closetError } = await supabase.from('area_closet_items').insert(closetItemsToInsert);
+        if (closetError) throw closetError;
+      }
+
+      await loadAreas();
+    } catch (error) {
+      console.error('Error duplicating area:', error);
+      alert('Failed to duplicate area');
     }
   }
 
@@ -291,13 +453,39 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
   async function handleDuplicateCabinet(cabinet: AreaCabinet) {
     try {
       const { id, created_at, ...cabinetData } = cabinet;
-      const { error } = await supabase.from('area_cabinets').insert([cabinetData]);
+      const area = areas.find(a => a.id === cabinet.area_id);
+      const maxOrder = area ? Math.max(...area.cabinets.map(c => (c as any).display_order ?? 0), -1) : -1;
+      const { error } = await supabase.from('area_cabinets').insert([{ ...cabinetData, display_order: maxOrder + 1 }]);
 
       if (error) throw error;
       await loadAreas();
     } catch (error) {
       console.error('Error duplicating cabinet:', error);
       alert('Failed to duplicate cabinet');
+    }
+  }
+
+  async function handleMoveCabinet(cabinet: AreaCabinet, targetAreaId: string) {
+    if (cabinet.area_id === targetAreaId) return;
+
+    const sourceAreaId = cabinet.area_id;
+
+    try {
+      const { error } = await supabase
+        .from('area_cabinets')
+        .update({ area_id: targetAreaId })
+        .eq('id', cabinet.id);
+
+      if (error) throw error;
+
+      await recalculateAreaSheetMaterialCosts(sourceAreaId);
+      await recalculateAreaEdgebandCosts(sourceAreaId);
+      await recalculateAreaSheetMaterialCosts(targetAreaId);
+      await recalculateAreaEdgebandCosts(targetAreaId);
+      await loadAreas();
+    } catch (error) {
+      console.error('Error moving cabinet:', error);
+      alert('Failed to move cabinet');
     }
   }
 
@@ -355,9 +543,28 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
     await loadAreas();
   }
 
+  async function handleDeleteClosetItem(closetItemId: string) {
+    if (!confirm('Are you sure you want to delete this closet item?')) return;
+
+    try {
+      const { error } = await supabase.from('area_closet_items').delete().eq('id', closetItemId);
+      if (error) throw error;
+      await loadAreas();
+    } catch (error) {
+      console.error('Error deleting closet item:', error);
+      alert('Failed to delete closet item');
+    }
+  }
+
   async function handleCloseCountertopForm() {
     setSelectedAreaForCountertop(null);
     setEditingCountertop(null);
+    await loadAreas();
+  }
+
+  async function handleCloseClosetForm() {
+    setSelectedAreaForCloset(null);
+    setEditingClosetItem(null);
     await loadAreas();
   }
 
@@ -390,11 +597,21 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
   }
 
   async function handlePrint() {
-    await printQuotation(project, areas, products);
+    await printQuotation(project, areas, products, priceList, {
+      pdfProjectName: isPdfNameModified ? pdfProjectName : undefined,
+      pdfCustomer: isPdfCustomerModified ? pdfCustomer : undefined,
+      pdfAddress: isPdfAddressModified ? pdfAddress : undefined,
+      pdfProjectBrief: isPdfBriefModified ? pdfProjectBrief : undefined,
+    });
   }
 
   async function handlePrintUSD() {
-    await printQuotationUSD(project, areas, exchangeRate, products);
+    await printQuotationUSD(project, areas, exchangeRate, products, priceList, disclaimerTariffInfo, disclaimerPriceValidity, {
+      pdfProjectName: isPdfNameModified ? pdfProjectName : undefined,
+      pdfCustomer: isPdfCustomerModified ? pdfCustomer : undefined,
+      pdfAddress: isPdfAddressModified ? pdfAddress : undefined,
+      pdfProjectBrief: isPdfBriefModified ? pdfProjectBrief : undefined,
+    });
   }
 
   async function handleSaveChanges() {
@@ -473,92 +690,24 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
     }
   }
 
-  function handleAutoScroll(clientY: number) {
-    const threshold = 100;
-    const viewportHeight = window.innerHeight;
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const scrollHeight = document.documentElement.scrollHeight;
-    const maxScroll = scrollHeight - viewportHeight;
-
-    let scrollAmount = 0;
-
-    if (clientY < threshold && scrollTop > 0) {
-      const distance = threshold - clientY;
-      scrollAmount = -(distance / threshold) * 15;
-    } else if (clientY > viewportHeight - threshold && scrollTop < maxScroll) {
-      const distance = clientY - (viewportHeight - threshold);
-      scrollAmount = (distance / threshold) * 15;
-    }
-
-    if (scrollAmount !== 0) {
-      window.scrollBy({ top: scrollAmount, behavior: 'auto' });
+  async function handleSaveNewProduct(product: ProductInsert) {
+    try {
+      const { error } = await supabase
+        .from('products_catalog')
+        .insert([product]);
+      if (error) throw error;
+      const { data } = await supabase
+        .from('products_catalog')
+        .select('*')
+        .order('sku');
+      if (data) setProducts(data);
+      setIsAddProductOpen(false);
+    } catch (err) {
+      console.error('Error saving product:', err);
+      alert('Failed to save product');
     }
   }
 
-  function calculateDropPosition(e: React.DragEvent<HTMLDivElement>, targetElement: HTMLElement): 'before' | 'after' {
-    const rect = targetElement.getBoundingClientRect();
-    const midpoint = rect.top + rect.height / 2;
-    return e.clientY < midpoint ? 'before' : 'after';
-  }
-
-  function cleanupDragState() {
-    if (autoScrollInterval) {
-      cancelAnimationFrame(autoScrollInterval);
-      setAutoScrollInterval(null);
-    }
-    setDropIndicatorPosition(null);
-    setDropTargetIndex(null);
-  }
-
-  function handleDragStart(e: React.DragEvent<HTMLDivElement>, index: number) {
-    setDraggedAreaIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', e.currentTarget.innerHTML);
-    e.currentTarget.style.opacity = '0.5';
-    e.currentTarget.style.transform = 'scale(0.95)';
-    e.currentTarget.classList.add('area-dragging');
-  }
-
-  function handleDragEnd(e: React.DragEvent<HTMLDivElement>) {
-    e.currentTarget.style.opacity = '1';
-    e.currentTarget.style.transform = '';
-    e.currentTarget.classList.remove('area-dragging');
-    setDraggedAreaIndex(null);
-    cleanupDragState();
-  }
-
-  function handleDragOver(e: React.DragEvent<HTMLDivElement>, index: number) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-
-    handleAutoScroll(e.clientY);
-
-    if (draggedAreaIndex !== null && draggedAreaIndex !== index) {
-      const position = calculateDropPosition(e, e.currentTarget);
-      setDropIndicatorPosition(position);
-      setDropTargetIndex(index);
-    }
-  }
-
-  function handleDrop(e: React.DragEvent<HTMLDivElement>, dropIndex: number) {
-    e.preventDefault();
-
-    cleanupDragState();
-
-    if (draggedAreaIndex === null || draggedAreaIndex === dropIndex) {
-      return;
-    }
-
-    const newAreas = [...areas];
-    const draggedArea = newAreas[draggedAreaIndex];
-
-    newAreas.splice(draggedAreaIndex, 1);
-    newAreas.splice(dropIndex, 0, draggedArea);
-
-    setAreas(newAreas);
-    setHasAreasOrderChanged(true);
-    setDraggedAreaIndex(null);
-  }
 
   async function saveAreasOrder() {
     if (!hasAreasOrderChanged) return;
@@ -609,22 +758,92 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
     setHasAreasOrderChanged(true);
   }
 
+  function handleCabinetDragStart(e: React.DragEvent<HTMLDivElement>, areaId: string, index: number) {
+    setDraggedCabinet({ areaId, index });
+    e.dataTransfer.effectAllowed = 'move';
+    e.currentTarget.style.opacity = '0.5';
+  }
+
+  function handleCabinetDragEnd(e: React.DragEvent<HTMLDivElement>) {
+    e.currentTarget.style.opacity = '1';
+    setDraggedCabinet(null);
+    setCabinetDropTarget(null);
+  }
+
+  function handleCabinetDragOver(e: React.DragEvent<HTMLDivElement>, areaId: string, index: number) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedCabinet && draggedCabinet.areaId === areaId) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midpoint = rect.top + rect.height / 2;
+      const position = e.clientY < midpoint ? 'before' : 'after';
+      setCabinetDropTarget({ areaId, index, position });
+    }
+  }
+
+  async function handleCabinetDrop(e: React.DragEvent<HTMLDivElement>, areaId: string, dropIndex: number) {
+    e.preventDefault();
+    setCabinetDropTarget(null);
+
+    if (!draggedCabinet || draggedCabinet.areaId !== areaId || draggedCabinet.index === dropIndex) {
+      setDraggedCabinet(null);
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midpoint = rect.top + rect.height / 2;
+    const dropAfter = e.clientY >= midpoint;
+
+    const areaIndex = areas.findIndex(a => a.id === areaId);
+    if (areaIndex === -1) { setDraggedCabinet(null); return; }
+
+    const newCabinets = [...areas[areaIndex].cabinets];
+    const [moved] = newCabinets.splice(draggedCabinet.index, 1);
+    let insertAt = dropAfter ? dropIndex : dropIndex;
+    if (draggedCabinet.index < dropIndex) insertAt = dropAfter ? dropIndex : dropIndex - 1;
+    else insertAt = dropAfter ? dropIndex + 1 : dropIndex;
+    newCabinets.splice(Math.max(0, Math.min(insertAt, newCabinets.length)), 0, moved);
+
+    const newAreas = areas.map((a, i) =>
+      i === areaIndex ? { ...a, cabinets: newCabinets } : a
+    );
+    setAreas(newAreas);
+    setDraggedCabinet(null);
+
+    for (let i = 0; i < newCabinets.length; i++) {
+      await supabase
+        .from('area_cabinets')
+        .update({ display_order: i })
+        .eq('id', newCabinets[i].id);
+    }
+  }
+
   const cabinetsSubtotal = areas.reduce(
-    (sum, area) => sum + area.cabinets.reduce((s, c) => s + c.subtotal, 0),
+    (sum, area) => sum + area.cabinets.reduce((s, c) => s + c.subtotal, 0) * (area.quantity ?? 1),
     0
   );
 
   const itemsSubtotal = areas.reduce(
-    (sum, area) => sum + area.items.reduce((s, i) => s + i.subtotal, 0),
+    (sum, area) => sum + area.items.reduce((s, i) => s + i.subtotal, 0) * (area.quantity ?? 1),
     0
   );
 
   const countertopsSubtotal = areas.reduce(
-    (sum, area) => sum + area.countertops.reduce((s, ct) => s + ct.subtotal, 0),
+    (sum, area) => sum + area.countertops.reduce((s, ct) => s + ct.subtotal, 0) * (area.quantity ?? 1),
     0
   );
 
-  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal;
+  const closetItemsSubtotal = areas.reduce(
+    (sum, area) => sum + (area.closetItems || []).reduce((s, ci) => s + ci.subtotal_mxn, 0) * (area.quantity ?? 1),
+    0
+  );
+
+  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal + closetItemsSubtotal;
+
+  const totalProjectBoxes = areas.reduce((sum, area) => {
+    const { boxes } = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
+    return sum + boxes * (area.quantity ?? 1);
+  }, 0);
 
   // Price (Sale Price of Materials)
   const price = profitMultiplier > 0 && profitMultiplier < 1
@@ -632,17 +851,29 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
     : materialsSubtotal;
   const profitAmount = price - materialsSubtotal;
 
-  // Tariff - Calculated on Material Cost (not on Price)
-  const tariffAmount = materialsSubtotal * tariffMultiplier;
+  // Tariff - Calculated on Material Cost only for areas where applies_tariff is enabled
+  const tariffableSubtotal = areas.reduce((sum, area) => {
+    if (area.applies_tariff !== true) return sum;
+    const qty = area.quantity ?? 1;
+    return sum + (
+      area.cabinets.reduce((s, c) => s + c.subtotal, 0) +
+      area.items.reduce((s, i) => s + i.subtotal, 0) +
+      area.countertops.reduce((s, ct) => s + ct.subtotal, 0) +
+      (area.closetItems || []).reduce((s, ci) => s + ci.subtotal_mxn, 0)
+    ) * qty;
+  }, 0);
+  const tariffAmount = tariffableSubtotal * tariffMultiplier;
+
+  const installDeliveryMxn = installDelivery * exchangeRate;
 
   // Referral Fee - Applied to (Price + Install Cost)
-  const referralAmount = (price + installDelivery) * referralRate;
+  const referralAmount = (price + installDeliveryMxn) * referralRate;
 
   // Tax - Applied to (Price + Tariff)
-  const taxAmount = (price + tariffAmount) * (taxPercentage / 100);
+  const taxAmount = (price + tariffAmount + referralAmount) * (taxPercentage / 100);
 
   // Grand Total
-  const projectTotal = price + tariffAmount + referralAmount + taxAmount + installDelivery + otherExpenses;
+  const projectTotal = price + tariffAmount + referralAmount + taxAmount + installDeliveryMxn + otherExpenses;
 
   const formatPrice = (amount: number) => {
     const amountInUSD = amount / exchangeRate;
@@ -665,21 +896,48 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
   };
 
   async function updateProjectCosts() {
+    const filteredOriginalBrief = filterProjectBriefForPDF(project.project_brief || '');
     try {
       await supabase
         .from('projects')
         .update({
           other_expenses: otherExpenses,
+          other_expenses_label: otherExpensesLabel || 'Other Expenses',
           profit_multiplier: profitMultiplier,
           tariff_multiplier: tariffMultiplier,
           tax_percentage: taxPercentage,
-          install_delivery: installDelivery,
+          install_delivery_usd: installDelivery,
+          install_delivery_per_box_usd: installDeliveryPerBox,
+          install_delivery: installDeliveryMxn,
           referral_currency_rate: referralRate,
           total_amount: projectTotal,
           disclaimer_tariff_info: disclaimerTariffInfo,
           disclaimer_price_validity: disclaimerPriceValidity,
+          pdf_project_name: pdfProjectName !== project.name ? pdfProjectName : null,
+          pdf_customer: pdfCustomer !== (project.customer || '') ? pdfCustomer : null,
+          pdf_address: pdfAddress !== (project.address || '') ? pdfAddress : null,
+          pdf_project_brief: pdfProjectBrief !== filteredOriginalBrief ? pdfProjectBrief : null,
         })
         .eq('id', project.id);
+      setProject(prev => ({
+        ...prev,
+        install_delivery: installDeliveryMxn,
+        install_delivery_usd: installDelivery,
+        install_delivery_per_box_usd: installDeliveryPerBox,
+        profit_multiplier: profitMultiplier,
+        tariff_multiplier: tariffMultiplier,
+        tax_percentage: taxPercentage,
+        other_expenses: otherExpenses,
+        other_expenses_label: otherExpensesLabel,
+        referral_currency_rate: referralRate,
+        total_amount: projectTotal,
+        disclaimer_tariff_info: disclaimerTariffInfo,
+        disclaimer_price_validity: disclaimerPriceValidity,
+        pdf_project_name: pdfProjectName !== project.name ? pdfProjectName : null,
+        pdf_customer: pdfCustomer !== (project.customer || '') ? pdfCustomer : null,
+        pdf_address: pdfAddress !== (project.address || '') ? pdfAddress : null,
+        pdf_project_brief: pdfProjectBrief !== filteredOriginalBrief ? pdfProjectBrief : null,
+      }));
     } catch (error) {
       console.error('Error updating project costs:', error);
     }
@@ -693,39 +951,135 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
     );
   }
 
-  if (showVersionHistory) {
-    return (
-      <ProjectVersionHistory
-        projectId={project.id}
-        projectName={project.name}
-        onBack={() => {
-          setShowVersionHistory(false);
-          loadVersionCount();
-        }}
-      />
-    );
-  }
+  const tabs = [
+    { id: 'info' as const, label: 'Info', icon: Receipt },
+    { id: 'pricing' as const, label: 'Pricing', icon: Calculator },
+    { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
+    { id: 'history' as const, label: 'History', icon: History },
+    { id: 'management' as const, label: 'Project Management', icon: Hammer },
+  ];
 
   return (
     <div>
-      <div className="mb-6">
-        <Button variant="ghost" onClick={onBack} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Projects
-        </Button>
+      <div style={{ position: 'fixed', top: '56px', left: 0, right: 0, zIndex: 40, background: 'white', borderBottom: '1px solid #e2e8f0' }}>
+        <div className="max-w-7xl mx-auto flex items-center h-12 px-4 sm:px-6 lg:px-8" style={{ maxWidth: '80rem', margin: '0 auto', display: 'flex', alignItems: 'center', height: '48px', padding: '0 24px' }}>
+          <button
+            onClick={onBack}
+            className="flex items-center text-sm text-slate-500 hover:text-slate-900 transition-colors px-3 flex-shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            Back
+          </button>
+          <div className="flex flex-1 items-center overflow-x-auto">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex flex-1 justify-center items-center gap-1.5 px-3 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                    isActive
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ height: '48px' }} />
+
+      <FloatingActionBar
+        onAddArea={() => setIsAreaModalOpen(true)}
+        onChangeMaterials={() => {
+          setBulkChangePreselectedAreaId(undefined);
+          setIsBulkMaterialChangeOpen(true);
+        }}
+        onRecalculatePrices={() => setIsBulkPriceUpdateOpen(true)}
+        onSaveChanges={handleSaveChanges}
+        onPrint={handlePrint}
+        onPrintUSD={handlePrintUSD}
+        onExportCSV={handleExportAreasCSV}
+        onExportDetailedCSV={handleExportDetailedAreasCSV}
+        onExportJSON={handleExportJSON}
+        onAddProduct={() => setIsAddProductOpen(true)}
+        onSaveAreasOrder={saveAreasOrder}
+        hasAreasOrderChanged={hasAreasOrderChanged}
+        savingAreasOrder={savingAreasOrder}
+        areasEmpty={areas.length === 0}
+      />
+
+      <div className="mb-6 mt-6">
 
         <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm mb-6">
-          <div className="mb-4">
-            <div className="flex-1">
+          <div className="flex justify-between items-start gap-6">
+            <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                 <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{project.name}</h1>
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-block w-fit ${
-                  project.status === 'won' ? 'bg-green-100 text-green-700' :
-                  project.status === 'pending' ? 'bg-blue-100 text-blue-700' :
-                  'bg-red-100 text-red-700'
-                }`}>
-                  {project.status.toUpperCase()}
-                </span>
+                <div className="relative inline-block">
+                  {isStatusMenuOpen && (
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setIsStatusMenuOpen(false)}
+                    />
+                  )}
+                  <button
+                    onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
+                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold cursor-pointer select-none transition-opacity hover:opacity-80 ${
+                      project.status === 'Awarded' ? 'bg-green-100 text-green-700' :
+                      project.status === 'Pending' ? 'bg-blue-100 text-blue-700' :
+                      project.status === 'Estimating' ? 'bg-orange-100 text-orange-700' :
+                      project.status === 'Sent' ? 'bg-cyan-100 text-cyan-700' :
+                      project.status === 'Lost' ? 'bg-red-100 text-red-700' :
+                      project.status === 'Disqualified' ? 'bg-slate-100 text-slate-600' :
+                      project.status === 'Cancelled' ? 'bg-gray-100 text-gray-600' :
+                      'bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {project.status ? project.status.toUpperCase() : 'NO STATUS'}
+                    <ChevronDown className="h-3 w-3 opacity-70" />
+                  </button>
+                  {isStatusMenuOpen && (
+                    <div className="absolute left-0 top-full mt-1 z-20 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+                      {(['Pending', 'Estimating', 'Sent', 'Lost', 'Awarded', 'Disqualified', 'Cancelled'] as const).map((status) => (
+                        <button
+                          key={status}
+                          onClick={async () => {
+                            try {
+                              const { error } = await supabase
+                                .from('projects')
+                                .update({ status, updated_at: new Date().toISOString() })
+                                .eq('id', project.id);
+                              if (error) throw error;
+                              setProject(prev => ({ ...prev, status }));
+                              setIsStatusMenuOpen(false);
+                            } catch (err) {
+                              console.error('Error updating status:', err);
+                            }
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 text-left"
+                        >
+                          <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${
+                            status === 'Awarded' ? 'bg-green-500' :
+                            status === 'Pending' ? 'bg-blue-500' :
+                            status === 'Estimating' ? 'bg-orange-500' :
+                            status === 'Sent' ? 'bg-cyan-500' :
+                            status === 'Lost' ? 'bg-red-500' :
+                            status === 'Disqualified' ? 'bg-slate-400' :
+                            'bg-gray-400'
+                          }`} />
+                          {status}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               {project.address && (
                 <p className="text-slate-600 flex items-center gap-2 text-sm sm:text-base">
@@ -781,8 +1135,6 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                             })
                             .eq('id', project.id);
                           if (error) throw error;
-
-                          // Force complete reload to ensure all components refresh
                           window.location.reload();
                         } catch (error) {
                           console.error('Error updating date:', error);
@@ -806,183 +1158,63 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                 )}
               </div>
             </div>
-          </div>
 
-          <div className="border-t border-slate-200 pt-4 mt-4">
-            <div className="flex flex-col lg:flex-row items-start gap-4">
-              {areas.length > 0 && (
-                <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                  <div className="relative">
-                    <Button
-                      onClick={() => setIsPrintMenuOpen(!isPrintMenuOpen)}
-                      className="w-full sm:w-auto"
+            <div className="flex-shrink-0 text-right">
+              <div className="text-xs text-slate-400 uppercase tracking-wide mb-1">Project Total</div>
+              <div className="text-2xl font-bold text-slate-900 leading-tight">
+                {formatPrice(projectTotal)}{' '}
+                <span className="text-sm font-normal text-slate-500">
+                  {currencyDisplay === 'BOTH' ? 'MXN + USD' : currencyDisplay}
+                </span>
+              </div>
+              <div className="mt-3 flex justify-end">
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    background: '#e9ecef',
+                    borderRadius: '7px',
+                    padding: '3px',
+                    gap: '2px',
+                  }}
+                >
+                  {(['USD', 'MXN', 'BOTH'] as const).map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setCurrencyDisplay(c)}
+                      style={{
+                        fontSize: '11px',
+                        padding: '4px 12px',
+                        borderRadius: '5px',
+                        border: currencyDisplay === c ? '0.5px solid #d1d5db' : 'none',
+                        background: currencyDisplay === c ? 'white' : 'transparent',
+                        color: currencyDisplay === c ? '#0f172a' : '#64748b',
+                        cursor: 'pointer',
+                        fontWeight: currencyDisplay === c ? 600 : 400,
+                        transition: 'all 0.15s ease',
+                      }}
                     >
-                      <Printer className="h-4 w-4 mr-2" />
-                      Print
-                    </Button>
-                    {isPrintMenuOpen && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-30"
-                          onClick={() => setIsPrintMenuOpen(false)}
-                        />
-                        <div className="absolute top-full left-0 mt-2 w-72 rounded-lg shadow-xl bg-white border border-slate-200 z-40">
-                          <div className="py-1">
-                            <button
-                              onClick={() => {
-                                handlePrint();
-                                setIsPrintMenuOpen(false);
-                              }}
-                              className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3"
-                            >
-                              <Printer className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                              <div>
-                                <div className="font-medium">Standard PDF</div>
-                                <div className="text-xs text-slate-500">MXN with all details</div>
-                              </div>
-                            </button>
-                            <button
-                              onClick={() => {
-                                handlePrintUSD();
-                                setIsPrintMenuOpen(false);
-                              }}
-                              className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3"
-                            >
-                              <DollarSign className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                              <div>
-                                <div className="font-medium">USD Summary PDF</div>
-                                <div className="text-xs text-slate-500">Price, tariff, profit & tax by area</div>
-                              </div>
-                            </button>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="relative">
-                    <Button
-                      onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-                      className="w-full sm:w-auto"
-                    >
-                      <FileSpreadsheet className="h-4 w-4 mr-2" />
-                      CSV
-                    </Button>
-                    {isExportMenuOpen && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-30"
-                          onClick={() => setIsExportMenuOpen(false)}
-                        />
-                        <div className="absolute top-full left-0 mt-2 w-72 rounded-lg shadow-xl bg-white border border-slate-200 z-40">
-                          <div className="py-1">
-                            <button
-                              onClick={() => {
-                                handleExportAreasCSV();
-                                setIsExportMenuOpen(false);
-                              }}
-                              className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3"
-                            >
-                              <Download className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                              <div>
-                                <div className="font-medium">Areas Summary</div>
-                                <div className="text-xs text-slate-500">Export area totals</div>
-                              </div>
-                            </button>
-                            <button
-                              onClick={() => {
-                                handleExportDetailedAreasCSV();
-                                setIsExportMenuOpen(false);
-                              }}
-                              className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3"
-                            >
-                              <FileSpreadsheet className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                              <div>
-                                <div className="font-medium">Detailed Report</div>
-                                <div className="text-xs text-slate-500">Export all items & details</div>
-                              </div>
-                            </button>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  <Button
-                    onClick={handleExportJSON}
-                    variant="secondary"
-                    className="w-full sm:w-auto"
-                  >
-                    <FileJson className="h-4 w-4 mr-2" />
-                    Export JSON
-                  </Button>
-                </div>
-              )}
-
-              <div className="bg-white border border-slate-200 rounded-lg p-4 w-full lg:w-auto lg:min-w-[200px] lg:ml-auto">
-                <div className="text-xs text-slate-600 mb-2 font-medium">Display Currency</div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    size="sm"
-                    variant={currencyDisplay === 'USD' ? 'primary' : 'secondary'}
-                    onClick={() => setCurrencyDisplay('USD')}
-                    className="flex-1 lg:flex-none"
-                  >
-                    USD
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={currencyDisplay === 'MXN' ? 'primary' : 'secondary'}
-                    onClick={() => setCurrencyDisplay('MXN')}
-                    className="flex-1 lg:flex-none"
-                  >
-                    MXN
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={currencyDisplay === 'BOTH' ? 'primary' : 'secondary'}
-                    onClick={() => setCurrencyDisplay('BOTH')}
-                    className="flex-1 lg:flex-none"
-                  >
-                    Both
-                  </Button>
-                </div>
-                <div className="mt-3 pt-3 border-t border-slate-200">
-                  <div className="text-xs text-slate-500 mb-1">Project Total</div>
-                  <div className="text-lg sm:text-xl font-bold text-slate-900">
-                    {formatPrice(projectTotal)}
-                  </div>
+                      {c === 'BOTH' ? 'Both' : c}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {project.project_details && (
-              <div className="p-4 bg-white border border-slate-200 rounded-lg">
-                <h3 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                  <Receipt className="h-4 w-4" />
-                  Notes
-                </h3>
-                <p className="text-sm text-slate-600 whitespace-pre-wrap">{project.project_details}</p>
-              </div>
-            )}
-
-            {project.project_brief && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  Project Brief
-                </h3>
-                <p className="text-sm text-blue-900 whitespace-pre-wrap font-mono">{project.project_brief}</p>
-              </div>
-            )}
-          </div>
+          {project.project_details && (
+            <div className="mt-4 p-4 bg-white border border-slate-200 rounded-lg">
+              <h3 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                <Receipt className="h-4 w-4" />
+                Notes
+              </h3>
+              <p className="text-sm text-slate-600 whitespace-pre-wrap">{project.project_details}</p>
+            </div>
+          )}
         </div>
 
       </div>
 
-      {hasStalePrices && (
+      {activeTab === 'pricing' && hasStalePrices && (
         <div className="mb-6 bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
           <div className="flex items-start">
             <AlertTriangle className="h-6 w-6 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
@@ -1014,18 +1246,30 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
         </div>
       )}
 
+      {activeTab === 'info' && (
       <div className="mb-6 space-y-4">
 
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
+        <div className="glass-indigo p-4">
           <div className="flex items-center mb-4">
-            <DollarSign className="h-5 w-5 text-green-600 mr-2" />
+            <DollarSign className="h-5 w-5 text-blue-600 mr-2" />
             <h3 className="text-lg font-semibold text-slate-900">Additional Costs</h3>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Other Expenses
+                Other Expenses Label
+              </label>
+              <input
+                type="text"
+                value={otherExpensesLabel}
+                onChange={(e) => setOtherExpensesLabel(e.target.value)}
+                onBlur={updateProjectCosts}
+                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                placeholder="Other Expenses"
+              />
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {otherExpensesLabel || 'Other Expenses'} Amount
               </label>
               <input
                 type="number"
@@ -1037,24 +1281,49 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                 className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0.00"
               />
-              <p className="mt-1 text-xs text-slate-500">Flat amount</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Flat amount{otherExpenses > 0 && exchangeRate > 0 ? ` · $${(otherExpenses / exchangeRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD` : ''}
+              </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Install & Delivery
+                Design services, Install & Delivery (USD)
               </label>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 value={installDelivery}
-                onChange={(e) => setInstallDelivery(parseFloat(e.target.value) || 0)}
+                onChange={(e) => {
+                  setInstallDelivery(parseFloat(e.target.value) || 0);
+                  if (installDeliveryPerBox > 0) setInstallDeliveryPerBox(0);
+                }}
                 onBlur={updateProjectCosts}
                 className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0.00"
               />
-              <p className="mt-1 text-xs text-slate-500">Flat amount</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Flat amount in USD{installDelivery > 0 && exchangeRate > 0 ? ` · $${(installDelivery * exchangeRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN` : ''}
+              </p>
+              <label className="block text-sm font-medium text-slate-700 mb-1 mt-3">
+                Per-box rate (USD)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={installDeliveryPerBox}
+                onChange={(e) => setInstallDeliveryPerBox(parseFloat(e.target.value) || 0)}
+                onBlur={updateProjectCosts}
+                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0.00"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                {installDeliveryPerBox > 0 && exchangeRate > 0
+                  ? `$${installDeliveryPerBox.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/box × ${totalProjectBoxes} boxes = $${(installDeliveryPerBox * totalProjectBoxes).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (≈ $${(installDeliveryPerBox * totalProjectBoxes * exchangeRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN)`
+                  : 'Multiplied by total project boxes'}
+              </p>
             </div>
 
             <div>
@@ -1139,6 +1408,7 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
               <div>
                 <p className="text-sm text-slate-600">Cabinets Subtotal:</p>
                 <p className="text-sm text-slate-600">Countertops Subtotal:</p>
+                <p className="text-sm text-slate-600">Prefab Closets Subtotal:</p>
                 <p className="text-sm text-slate-600">Individual Items Subtotal:</p>
                 <p className="text-sm text-slate-600 mt-2 pt-2 border-t border-slate-300">Materials Subtotal:</p>
                 {profitMultiplier > 0 && <p className="text-sm text-slate-600">Profit ({(profitMultiplier * 100).toFixed(1)}%):</p>}
@@ -1146,13 +1416,14 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                 {tariffMultiplier > 0 && <p className="text-sm text-slate-600">Tariff ({(tariffMultiplier * 100).toFixed(2)}%):</p>}
                 {referralRate > 0 && <p className="text-sm text-slate-600">Referral Fee ({(referralRate * 100).toFixed(2)}%):</p>}
                 {taxPercentage > 0 && <p className="text-sm text-slate-600">Tax ({taxPercentage}%):</p>}
-                <p className="text-sm text-slate-600">Install & Delivery:</p>
-                <p className="text-sm text-slate-600">Other Expenses:</p>
+                <p className="text-sm text-slate-600">Design services, Install & Delivery:</p>
+                <p className="text-sm text-slate-600">{otherExpensesLabel || 'Other Expenses'}:</p>
                 <p className="text-base font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">Total:</p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-slate-700">{formatPrice(cabinetsSubtotal)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(countertopsSubtotal)}</p>
+                <p className="text-sm font-medium text-slate-700">{formatPrice(closetItemsSubtotal)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(itemsSubtotal)}</p>
                 <p className="text-sm font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(materialsSubtotal)}</p>
                 {profitMultiplier > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(profitAmount)}</p>}
@@ -1160,7 +1431,7 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                 {tariffMultiplier > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(tariffAmount)}</p>}
                 {referralRate > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(referralAmount)}</p>}
                 {taxPercentage > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(taxAmount)}</p>}
-                <p className="text-sm font-medium text-slate-700">{formatPrice(installDelivery)}</p>
+                <p className="text-sm font-medium text-slate-700">{formatPrice(installDeliveryMxn)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(otherExpenses)}</p>
                 <p className="text-base font-bold text-slate-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(projectTotal)}</p>
               </div>
@@ -1213,9 +1484,175 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
             </div>
           </div>
         </div>
-      </div>
 
-      {showAnalytics && areas.length > 0 && (
+        <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center">
+              <FileText className="h-5 w-5 text-blue-600 mr-2" />
+              <h3 className="text-lg font-semibold text-slate-900">PDF Project Details</h3>
+            </div>
+            {isAnyPdfFieldModified && (
+              <button
+                onClick={() => {
+                  setPdfProjectName(project.name);
+                  setPdfCustomer(project.customer || '');
+                  setPdfAddress(project.address || '');
+                  setPdfProjectBrief(filterProjectBriefForPDF(project.project_brief || ''));
+                  setTimeout(updateProjectCosts, 0);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Reset All
+              </button>
+            )}
+          </div>
+          <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg mb-4">
+            <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-blue-700 leading-relaxed">
+              These values default to your Project Brief. Changes here only affect PDF output and will not modify your original Project Brief.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-slate-700">Project Name</label>
+                  {isPdfNameModified && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                      Modified
+                    </span>
+                  )}
+                </div>
+                {isPdfNameModified && (
+                  <button
+                    onClick={() => { setPdfProjectName(project.name); setTimeout(updateProjectCosts, 0); }}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset
+                  </button>
+                )}
+              </div>
+              <input
+                type="text"
+                value={pdfProjectName}
+                onChange={(e) => setPdfProjectName(e.target.value)}
+                onBlur={updateProjectCosts}
+                className="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Project name as it appears on PDFs"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-slate-700">Customer</label>
+                  {isPdfCustomerModified && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                      Modified
+                    </span>
+                  )}
+                </div>
+                {isPdfCustomerModified && (
+                  <button
+                    onClick={() => { setPdfCustomer(project.customer || ''); setTimeout(updateProjectCosts, 0); }}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset
+                  </button>
+                )}
+              </div>
+              <input
+                type="text"
+                value={pdfCustomer}
+                onChange={(e) => setPdfCustomer(e.target.value)}
+                onBlur={updateProjectCosts}
+                className="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Customer name as it appears on PDFs"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-slate-700">Address</label>
+                  {isPdfAddressModified && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                      Modified
+                    </span>
+                  )}
+                </div>
+                {isPdfAddressModified && (
+                  <button
+                    onClick={() => { setPdfAddress(project.address || ''); setTimeout(updateProjectCosts, 0); }}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset
+                  </button>
+                )}
+              </div>
+              <input
+                type="text"
+                value={pdfAddress}
+                onChange={(e) => setPdfAddress(e.target.value)}
+                onBlur={updateProjectCosts}
+                className="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Address as it appears on PDFs"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-slate-700">Project Brief / Details</label>
+                  {isPdfBriefModified && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                      Modified
+                    </span>
+                  )}
+                </div>
+                {isPdfBriefModified && (
+                  <button
+                    onClick={() => { setPdfProjectBrief(filterProjectBriefForPDF(project.project_brief || '')); setTimeout(updateProjectCosts, 0); }}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset
+                  </button>
+                )}
+              </div>
+              <textarea
+                value={pdfProjectBrief}
+                onChange={(e) => setPdfProjectBrief(e.target.value)}
+                onBlur={updateProjectCosts}
+                rows={6}
+                className="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono"
+                placeholder="Project details as they appear on PDFs (CABINET TYPES, ACCESSORIES, and OTHER sections are excluded automatically)"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                This is the filtered version shown in PDFs — CABINET TYPES, ACCESSORIES, and OTHER sections are excluded.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {project.project_brief && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
+            <h3 className="text-sm font-semibold text-blue-900 flex items-center gap-2 mb-3">
+              <Package className="h-4 w-4" />
+              Project Brief
+            </h3>
+            <p className="text-sm text-blue-900 whitespace-pre-wrap font-mono">{project.project_brief}</p>
+          </div>
+        )}
+      </div>
+      )}
+
+      {activeTab === 'analytics' && (
         <ErrorBoundary>
           <div className="mb-6 space-y-6">
             {loading ? (
@@ -1223,66 +1660,44 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <p className="text-slate-600">Loading analytics...</p>
               </div>
-            ) : (
+            ) : areas.length > 0 ? (
               <>
-            <ProjectCharts areas={areas} />
+                <ProjectCharts areas={areas} products={products} />
 
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-slate-200 p-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-              <Package className="h-5 w-5 mr-2" />
-              Shipping - Boxes & Pallets
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="bg-white rounded-lg p-4 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between mb-2">
-                  <Package className="h-5 w-5 text-blue-600" />
-                  <span className="text-sm text-slate-500">Total Boxes</span>
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-slate-900 break-all">
-                  {areas.reduce((sum, area) => {
-                    const { boxes } = calculateAreaBoxesAndPallets(area.cabinets, products);
-                    return sum + boxes;
-                  }, 0)}
-                </div>
-              </div>
-              <div className="bg-white rounded-lg p-4 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between mb-2">
-                  <Truck className="h-5 w-5 text-green-600" />
-                  <span className="text-sm text-slate-500">Total Pallets</span>
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-slate-900 break-all">
-                  {areas.reduce((sum, area) => {
-                    const { pallets } = calculateAreaBoxesAndPallets(area.cabinets, products);
-                    return sum + pallets;
-                  }, 0)}
-                </div>
-              </div>
-              <div className="bg-white rounded-lg p-4 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between mb-2">
-                  <Package className="h-5 w-5 text-purple-600" />
-                  <span className="text-sm text-slate-500">Total Acc. ft²</span>
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-slate-900 break-all">
-                  {areas.reduce((sum, area) => {
-                    const { accessoriesSqFt } = calculateAreaBoxesAndPallets(area.cabinets, products);
-                    return sum + accessoriesSqFt;
-                  }, 0).toFixed(2)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <MaterialBreakdown
-            cabinets={areas.flatMap(a => a.cabinets || [])}
-            items={areas.flatMap(a => a.items || [])}
-            countertops={areas.flatMap(a => a.countertops || [])}
-          />
+                <MaterialBreakdown areas={areas} />
               </>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
+                <BarChart3 className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+                <p className="text-slate-500 font-medium">No data yet</p>
+                <p className="text-sm text-slate-400 mt-1">Add areas and cabinets to see analytics</p>
+              </div>
             )}
           </div>
         </ErrorBoundary>
       )}
 
+      {activeTab === 'history' && (
+        <ProjectVersionHistory
+          projectId={project.id}
+          projectName={project.name}
+          onBack={() => {
+            setActiveTab('pricing');
+            loadVersionCount();
+          }}
+        />
+      )}
+
+      {activeTab === 'management' && (
+        <div className="space-y-6">
+          <ScheduleSection projectId={project.id} />
+          <TasksSection projectId={project.id} teamMembers={managementTeamMembers} />
+          <DocumentationSection projectId={project.id} />
+          <BitacoraSection projectId={project.id} />
+        </div>
+      )}
+
+      {activeTab === 'pricing' && (
       <div className="space-y-6">
         {areas.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
@@ -1346,29 +1761,12 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
             <div
               key={area.id}
               className="bg-white rounded-lg shadow-sm border border-slate-200 transition-all duration-200 relative"
-              draggable={areas.length > 1}
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragEnd={handleDragEnd}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDrop={(e) => handleDrop(e, index)}
             >
-              {dropTargetIndex === index && dropIndicatorPosition === 'before' && (
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-green-500 z-50 shadow-lg" style={{ marginTop: '-2px' }} />
-              )}
-              {dropTargetIndex === index && dropIndicatorPosition === 'after' && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-green-500 z-50 shadow-lg" style={{ marginBottom: '-2px' }} />
-              )}
               <div className="border-b border-slate-200 p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                   <div className="flex items-start gap-2 flex-1">
                     {areas.length > 1 && (
                       <div className="flex items-center gap-1">
-                        <button
-                          className="cursor-grab active:cursor-grabbing hover:bg-slate-100 rounded p-1 transition-colors"
-                          title="Drag to reorder"
-                        >
-                          <GripVertical className="h-5 w-5 text-slate-400" />
-                        </button>
                         <div className="flex flex-col gap-0">
                           <button
                             onClick={(e) => {
@@ -1409,14 +1807,71 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                   </div>
 
                   <div className="flex items-center justify-between sm:justify-end gap-3 sm:space-x-4 sm:gap-0">
-                    <div className="text-left sm:text-right">
-                      <div className="text-xs sm:text-sm text-slate-600">Area Total</div>
-                      <div className="text-base sm:text-xl font-bold text-slate-900">
-                        {formatCurrency(
-                          area.cabinets.reduce((sum, c) => sum + c.subtotal, 0) +
-                          area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0) +
-                          area.items.reduce((sum, i) => sum + i.subtotal, 0)
-                        )}
+                    {tariffMultiplier > 0 && (
+                      <button
+                        onClick={async () => {
+                          const newValue = !(area.applies_tariff === true);
+                          setAreas(prev => prev.map(a => a.id === area.id ? { ...a, applies_tariff: newValue } : a));
+                          const { error } = await supabase
+                            .from('project_areas')
+                            .update({ applies_tariff: newValue })
+                            .eq('id', area.id);
+                          if (error) {
+                            setAreas(prev => prev.map(a => a.id === area.id ? { ...a, applies_tariff: !newValue } : a));
+                          }
+                        }}
+                        title={area.applies_tariff === true ? 'Tariff applied to this area — click to disable' : 'Tariff not applied — click to enable'}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                          area.applies_tariff === true
+                            ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
+                            : 'bg-slate-100 border-slate-200 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                        }`}
+                      >
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${area.applies_tariff === true ? 'bg-amber-500' : 'bg-slate-300'}`} />
+                        Tariff
+                      </button>
+                    )}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <label className="text-xs text-slate-500 font-medium whitespace-nowrap">Qty</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={area.quantity ?? 1}
+                          onChange={async (e) => {
+                            const newQty = Math.max(1, parseInt(e.target.value) || 1);
+                            setAreas(prev => prev.map(a => a.id === area.id ? { ...a, quantity: newQty } : a));
+                            await supabase.from('project_areas').update({ quantity: newQty }).eq('id', area.id);
+                            await updateProjectTotal(
+                              areas.map(a => a.id === area.id ? { ...a, quantity: newQty } : a)
+                            );
+                          }}
+                          className={`w-14 px-1.5 py-1 text-sm text-center border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            (area.quantity ?? 1) > 1
+                              ? 'border-blue-300 bg-blue-50 text-blue-800 font-semibold'
+                              : 'border-slate-200 bg-slate-50 text-slate-400'
+                          }`}
+                          title="Area quantity multiplier — all subtotals are multiplied by this number"
+                        />
+                      </div>
+                      <div className="text-left sm:text-right">
+                        <div className="text-xs sm:text-sm text-slate-600">Area Total</div>
+                        {(() => {
+                          const rawTotal =
+                            area.cabinets.reduce((sum, c) => sum + c.subtotal, 0) +
+                            area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0) +
+                            area.items.reduce((sum, i) => sum + i.subtotal, 0) +
+                            (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
+                          const qty = area.quantity ?? 1;
+                          return qty > 1 ? (
+                            <div>
+                              <div className="text-xs text-slate-500">{formatCurrency(rawTotal)} × {qty}</div>
+                              <div className="text-base sm:text-xl font-bold text-blue-900">{formatCurrency(rawTotal * qty)}</div>
+                            </div>
+                          ) : (
+                            <div className="text-base sm:text-xl font-bold text-slate-900">{formatCurrency(rawTotal)}</div>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -1446,6 +1901,14 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                         onClick={() => handleAddCabinet(area.id)}
                       >
                         <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDuplicateArea(area)}
+                        title="Duplicate area"
+                      >
+                        <Copy className="h-4 w-4 text-slate-600" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -1483,11 +1946,17 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                     <ListPlus className="h-4 w-4 mr-2" />
                     Add Item
                   </Button>
+                  {/* TEMP_DISABLED: Remove this comment block to re-enable the Add Closet button
+                  <Button size="sm" variant="outline" onClick={() => { setSelectedAreaForCloset(area.id); setEditingClosetItem(null); }} className="w-full sm:w-auto border-teal-300 hover:bg-teal-50">
+                    <Package className="h-4 w-4 mr-2" />
+                    Add Closet
+                  </Button>
+                  */}
                 </div>
 
-                {area.cabinets.length === 0 && area.items.length === 0 && area.countertops.length === 0 ? (
+                {area.cabinets.length === 0 && area.items.length === 0 && area.countertops.length === 0 && (area.closetItems || []).length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-slate-600 mb-3">No cabinets, countertops, or items in this area</p>
+                    <p className="text-slate-600 mb-3">No cabinets, countertops, items, or closets in this area</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1503,20 +1972,52 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                           <AreaMaterialBreakdown areaId={area.id} />
                         )}
 
-                        {area.cabinets.map((cabinet) => {
+                        {area.cabinets.map((cabinet, cabinetIndex) => {
                           const product = products.find(p => p.sku === cabinet.product_sku);
+                          const otherAreas = areas.filter(a => a.id !== area.id).map(a => ({ id: a.id, name: a.name }));
+                          const isDropBefore = cabinetDropTarget?.areaId === area.id && cabinetDropTarget?.index === cabinetIndex && cabinetDropTarget?.position === 'before';
+                          const isDropAfter = cabinetDropTarget?.areaId === area.id && cabinetDropTarget?.index === cabinetIndex && cabinetDropTarget?.position === 'after';
                           return (
-                            <CabinetCard
+                            <div
                               key={cabinet.id}
-                              cabinet={cabinet}
-                              onEdit={() => handleEditCabinet(cabinet)}
-                              onDelete={() => handleDeleteCabinet(cabinet)}
-                              onDuplicate={() => handleDuplicateCabinet(cabinet)}
-                              onSaveAsTemplate={() => handleSaveAsTemplate(cabinet)}
-                              productDescription={product?.description}
-                              product={product}
-                              priceList={priceList}
-                            />
+                              className="relative"
+                              draggable={area.cabinets.length > 1}
+                              onDragStart={(e) => handleCabinetDragStart(e, area.id, cabinetIndex)}
+                              onDragEnd={handleCabinetDragEnd}
+                              onDragOver={(e) => handleCabinetDragOver(e, area.id, cabinetIndex)}
+                              onDrop={(e) => handleCabinetDrop(e, area.id, cabinetIndex)}
+                            >
+                              {isDropBefore && (
+                                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-green-500 z-10" style={{ marginTop: '-1px' }} />
+                              )}
+                              {isDropAfter && (
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-green-500 z-10" style={{ marginBottom: '-1px' }} />
+                              )}
+                              <div className="flex items-start gap-2">
+                                {area.cabinets.length > 1 && (
+                                  <div
+                                    className="flex-shrink-0 mt-3 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-slate-100 transition-colors"
+                                    title="Drag to reorder"
+                                  >
+                                    <GripVertical className="h-4 w-4 text-slate-300" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <CabinetCard
+                                    cabinet={cabinet}
+                                    onEdit={() => handleEditCabinet(cabinet)}
+                                    onDelete={() => handleDeleteCabinet(cabinet)}
+                                    onDuplicate={() => handleDuplicateCabinet(cabinet)}
+                                    onSaveAsTemplate={() => handleSaveAsTemplate(cabinet)}
+                                    onMove={otherAreas.length > 0 ? (targetAreaId) => handleMoveCabinet(cabinet, targetAreaId) : undefined}
+                                    availableAreas={otherAreas}
+                                    productDescription={product?.description}
+                                    product={product}
+                                    priceList={priceList}
+                                  />
+                                </div>
+                              </div>
+                            </div>
                           );
                         })}
                       </>
@@ -1648,6 +2149,88 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
                         </div>
                       </div>
                     )}
+
+                    {(area.closetItems || []).length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-slate-700 text-sm">Prefab Closets</h4>
+                        <div className="space-y-2">
+                          {(area.closetItems || []).map((closetItem) => (
+                            <div
+                              key={closetItem.id}
+                              className="bg-teal-50 border border-teal-200 rounded-lg p-4"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2 flex-wrap gap-1">
+                                    <h4 className="font-semibold text-slate-900">
+                                      {closetItem.catalog_item
+                                        ? `${closetItem.catalog_item.evita_line} — ${closetItem.catalog_item.description}`
+                                        : 'Closet Item'}
+                                    </h4>
+                                    <span className="text-xs bg-teal-100 text-teal-800 px-2 py-0.5 rounded">
+                                      Prefab Closet
+                                    </span>
+                                    {closetItem.catalog_item && (
+                                      <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                                        {closetItem.catalog_item.cabinet_code}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {closetItem.catalog_item && (
+                                    <div className="mt-1 text-xs text-teal-700">
+                                      {closetItem.catalog_item.width_in}" W × {closetItem.catalog_item.height_in}" H × {closetItem.catalog_item.depth_in}" D
+                                      {closetItem.catalog_item.has_backs_option && (
+                                        <span className="ml-2">{closetItem.with_backs ? '(with backs)' : '(no backs)'}</span>
+                                      )}
+                                    </div>
+                                  )}
+                                  <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                                    <div className="flex justify-between">
+                                      <span className="text-slate-600">Quantity:</span>
+                                      <span className="font-medium">{closetItem.quantity}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-slate-600">Unit Price:</span>
+                                      <span className="font-medium">${closetItem.unit_price_usd.toFixed(2)} USD</span>
+                                    </div>
+                                    <div className="flex justify-between col-span-2 pt-1 border-t border-teal-200">
+                                      <span className="text-slate-600 font-medium">Subtotal:</span>
+                                      <span className="font-semibold text-teal-900">
+                                        {formatPrice(closetItem.subtotal_mxn)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {closetItem.notes && (
+                                    <div className="mt-2 text-xs text-slate-600 italic">
+                                      Note: {closetItem.notes}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex space-x-1 ml-4">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedAreaForCloset(closetItem.area_id);
+                                      setEditingClosetItem(closetItem);
+                                    }}
+                                  >
+                                    <Edit2 className="h-4 w-4 text-slate-600" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteClosetItem(closetItem.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1657,6 +2240,7 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
           </>
         )}
       </div>
+      )}
 
       {isAreaModalOpen && (
         <AreaFormModal
@@ -1666,6 +2250,7 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
             setIsAreaModalOpen(false);
             setEditingArea(null);
           }}
+          tariffMultiplier={tariffMultiplier}
         />
       )}
 
@@ -1690,6 +2275,14 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
           areaId={selectedAreaForCountertop}
           countertop={editingCountertop}
           onClose={handleCloseCountertopForm}
+        />
+      )}
+
+      {selectedAreaForCloset && (
+        <ClosetForm
+          areaId={selectedAreaForCloset}
+          closetItem={editingClosetItem}
+          onClose={handleCloseClosetForm}
         />
       )}
 
@@ -1728,23 +2321,13 @@ export function ProjectDetails({ project: initialProject, onBack }: ProjectDetai
         }}
       />
 
-      <FloatingActionBar
-        onAddArea={() => setIsAreaModalOpen(true)}
-        onChangeMaterials={() => {
-          setBulkChangePreselectedAreaId(undefined);
-          setIsBulkMaterialChangeOpen(true);
-        }}
-        onRecalculatePrices={() => setIsBulkPriceUpdateOpen(true)}
-        onVersionHistory={() => setShowVersionHistory(true)}
-        onSaveChanges={handleSaveChanges}
-        onToggleAnalytics={() => setShowAnalytics(!showAnalytics)}
-        onSaveAreasOrder={saveAreasOrder}
-        hasAreasOrderChanged={hasAreasOrderChanged}
-        savingAreasOrder={savingAreasOrder}
-        showAnalytics={showAnalytics}
-        versionCount={versionCount}
-        areasEmpty={areas.length === 0}
-      />
+      {isAddProductOpen && (
+        <ProductFormModal
+          product={null}
+          onSave={handleSaveNewProduct}
+          onClose={() => setIsAddProductOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -1753,10 +2336,12 @@ interface AreaFormModalProps {
   area: ProjectArea | null;
   onSave: (area: ProjectAreaInsert) => void;
   onClose: () => void;
+  tariffMultiplier: number;
 }
 
-function AreaFormModal({ area, onSave, onClose }: AreaFormModalProps) {
+function AreaFormModal({ area, onSave, onClose, tariffMultiplier }: AreaFormModalProps) {
   const [name, setName] = useState(area?.name || '');
+  const [appliesTariff, setAppliesTariff] = useState(area ? (area.applies_tariff ?? true) : true);
 
   const areaPresets = [
     'Kitchen',
@@ -1773,7 +2358,7 @@ function AreaFormModal({ area, onSave, onClose }: AreaFormModalProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSave({ name });
+    onSave({ name, applies_tariff: appliesTariff });
   }
 
   return (
@@ -1807,6 +2392,36 @@ function AreaFormModal({ area, onSave, onClose }: AreaFormModalProps) {
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {tariffMultiplier > 0 && (
+          <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
+            <button
+              type="button"
+              onClick={() => setAppliesTariff((v) => !v)}
+              className="flex items-center gap-3 w-full text-left"
+            >
+              <div
+                className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${
+                  appliesTariff ? 'bg-amber-500' : 'bg-slate-300'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                    appliesTariff ? 'translate-x-4' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-700">Apply Tariff to this area</p>
+                <p className="text-xs text-slate-500">
+                  {appliesTariff
+                    ? 'Tariff will be included in this area\'s total'
+                    : 'Tariff will not be applied to this area'}
+                </p>
+              </div>
+            </button>
           </div>
         )}
 

@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Save, Upload, AlertCircle, Plus, Trash2, RefreshCw } from 'lucide-react';
+import { Save, Upload, AlertCircle, Plus, Trash2, RefreshCw, Download, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { clearSettingsCache } from '../lib/settingsStore';
-import type { Setting, TaxByType, CustomType, CustomUnit } from '../types';
+import { downloadFullBackup, type BackupSummary } from '../utils/backupExport';
+import type { Setting, TaxByType, CustomType, CustomUnit, TeamMember } from '../types';
 
 export function Settings() {
   const [settings, setSettings] = useState<Setting[]>([]);
   const [taxesByType, setTaxesByType] = useState<TaxByType[]>([]);
   const [customTypes, setCustomTypes] = useState<CustomType[]>([]);
   const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [applyingWaste, setApplyingWaste] = useState(false);
@@ -18,15 +20,22 @@ export function Settings() {
   const [showDataImport, setShowDataImport] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
   const [newUnitName, setNewUnitName] = useState('');
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState('');
+  const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newTaxType, setNewTaxType] = useState('');
   const [newTaxRate, setNewTaxRate] = useState(0);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupProgress, setBackupProgress] = useState('');
+  const [backupResult, setBackupResult] = useState<BackupSummary | null>(null);
 
   useEffect(() => {
     loadSettings();
     loadTaxesByType();
     loadCustomTypes();
     loadCustomUnits();
+    loadTeamMembers();
   }, []);
 
   async function loadSettings() {
@@ -285,6 +294,57 @@ export function Settings() {
     }
   }
 
+  async function loadTeamMembers() {
+    try {
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (error) throw error;
+      setTeamMembers(data || []);
+    } catch (error) {
+      console.error('Error loading team members:', error);
+    }
+  }
+
+  async function addTeamMember() {
+    if (!newMemberName.trim()) return;
+
+    try {
+      const { error } = await supabase.from('team_members').insert({
+        name: newMemberName,
+        role: newMemberRole || null,
+        email: newMemberEmail || null,
+      });
+      if (error) throw error;
+
+      setNewMemberName('');
+      setNewMemberRole('');
+      setNewMemberEmail('');
+      loadTeamMembers();
+      setMessage({ type: 'success', text: 'Team member added successfully' });
+      setTimeout(() => setMessage(null), 3000);
+    } catch (error) {
+      console.error('Error adding team member:', error);
+      setMessage({ type: 'error', text: 'Failed to add team member' });
+    }
+  }
+
+  async function deleteTeamMember(id: string) {
+    try {
+      const { error } = await supabase.from('team_members').delete().eq('id', id);
+      if (error) throw error;
+      loadTeamMembers();
+      setMessage({ type: 'success', text: 'Team member removed successfully' });
+      setTimeout(() => setMessage(null), 3000);
+    } catch (error) {
+      console.error('Error deleting team member:', error);
+      setMessage({ type: 'error', text: 'Failed to remove team member' });
+    }
+  }
+
   async function applyTaxesToPriceList() {
     setApplyingTaxes(true);
     setMessage(null);
@@ -331,6 +391,21 @@ export function Settings() {
     }
   }
 
+  async function handleDownloadBackup() {
+    setBackupLoading(true);
+    setBackupResult(null);
+    setBackupProgress('Preparing backup...');
+    try {
+      const summary = await downloadFullBackup((step) => setBackupProgress(step));
+      setBackupResult(summary);
+    } catch (error) {
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Backup failed' });
+    } finally {
+      setBackupLoading(false);
+      setBackupProgress('');
+    }
+  }
+
   const laborSettings = settings.filter((s) => s.category === 'labor');
   const wasteSettings = settings.filter((s) => s.category === 'waste');
   const currencySettings = settings.filter((s) => s.category === 'currency');
@@ -368,6 +443,63 @@ export function Settings() {
           <span>{message.text}</span>
         </div>
       )}
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">Local Backup</h2>
+            <p className="text-slate-500 text-sm mt-1">
+              Download a ZIP archive with all your data for safe local storage. The files are compatible for re-importing into this system.
+            </p>
+          </div>
+          <Button
+            onClick={handleDownloadBackup}
+            disabled={backupLoading}
+            variant="primary"
+          >
+            {backupLoading ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                {backupProgress || 'Preparing...'}
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                Download Backup
+              </>
+            )}
+          </Button>
+        </div>
+
+        <div className="mt-5 grid grid-cols-3 gap-4">
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Projects</p>
+            <p className="text-sm text-slate-700">Exported as individual <code className="bg-slate-200 px-1 rounded text-xs">.evita.json</code> files, ready to re-import via the Projects page.</p>
+          </div>
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Products Catalog</p>
+            <p className="text-sm text-slate-700">Exported as <code className="bg-slate-200 px-1 rounded text-xs">products_catalog.csv</code>, compatible with the CSV import in this page.</p>
+          </div>
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Price List</p>
+            <p className="text-sm text-slate-700">Exported as <code className="bg-slate-200 px-1 rounded text-xs">price_list.csv</code>, compatible with the CSV import in this page.</p>
+          </div>
+        </div>
+
+        {backupResult && (
+          <div className="mt-4 flex items-start space-x-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-green-800">Backup downloaded successfully</p>
+              <p className="text-sm text-green-700 mt-0.5">
+                {backupResult.projectCount} {backupResult.projectCount === 1 ? 'project' : 'projects'},{' '}
+                {backupResult.productCount} {backupResult.productCount === 1 ? 'product' : 'products'},{' '}
+                {backupResult.priceListCount} price list {backupResult.priceListCount === 1 ? 'item' : 'items'} &mdash; saved as <strong>{backupResult.fileName}</strong>
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {showDataImport && (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -721,6 +853,74 @@ export function Settings() {
             <p className="text-xs text-slate-500 mt-2">
               This will update all products in the catalog using the waste percentages above.
             </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <h2 className="text-xl font-semibold text-slate-900 mb-6">Team Members</h2>
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Manage team members who can be assigned to project tasks.
+          </p>
+
+          {teamMembers.length > 0 && (
+            <div className="space-y-2">
+              {teamMembers.map((member) => (
+                <div key={member.id} className="flex items-center justify-between bg-slate-50 px-4 py-3 rounded-lg">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <span className="text-sm font-medium text-slate-900">{member.name}</span>
+                    {member.role && <span className="text-sm text-slate-500">{member.role}</span>}
+                    {member.email && <span className="text-sm text-slate-400">{member.email}</span>}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteTeamMember(member.id)}
+                    className="text-red-600 hover:text-red-700 flex-shrink-0"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="pt-4 border-t border-slate-200">
+            <h3 className="text-sm font-medium text-slate-700 mb-3">Add Team Member</h3>
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <label className="block text-xs text-slate-600 mb-1">Name *</label>
+                <Input
+                  type="text"
+                  value={newMemberName}
+                  onChange={(e) => setNewMemberName(e.target.value)}
+                  placeholder="Full name"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs text-slate-600 mb-1">Role</label>
+                <Input
+                  type="text"
+                  value={newMemberRole}
+                  onChange={(e) => setNewMemberRole(e.target.value)}
+                  placeholder="e.g., Designer, PM"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs text-slate-600 mb-1">Email</label>
+                <Input
+                  type="email"
+                  value={newMemberEmail}
+                  onChange={(e) => setNewMemberEmail(e.target.value)}
+                  placeholder="email@example.com"
+                />
+              </div>
+              <Button onClick={addTeamMember} disabled={!newMemberName.trim()}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add
+              </Button>
+            </div>
           </div>
         </div>
       </div>

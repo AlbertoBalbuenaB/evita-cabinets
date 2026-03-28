@@ -1,32 +1,51 @@
 import { formatCurrency } from '../lib/calculations';
 import { calculateAreaBoxesAndPallets } from '../lib/boxesAndPallets';
 import { supabase } from '../lib/supabase';
-import type { Project, ProjectArea, AreaCabinet, AreaItem, AreaCountertop, Product } from '../types';
+import type { Project, ProjectArea, AreaCabinet, AreaItem, AreaCountertop, AreaClosetItem, Product, PriceListItem } from '../types';
+import { filterProjectBriefForPDF, renderBriefBlocksAsHTML } from './filterProjectBrief';
+
+export interface PDFOverrides {
+  pdfProjectName?: string;
+  pdfCustomer?: string;
+  pdfAddress?: string;
+  pdfProjectBrief?: string;
+}
 
 export async function printQuotation(
   project: Project,
-  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[],
-  products: Product[] = []
+  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems?: AreaClosetItem[] })[],
+  products: Product[] = [],
+  priceList: PriceListItem[] = [],
+  overrides: PDFOverrides = {}
 ) {
+  const resolvedName = overrides.pdfProjectName ?? project.name;
+  const resolvedAddress = overrides.pdfAddress ?? (project.address || '');
+  const resolvedBrief = overrides.pdfProjectBrief ?? filterProjectBriefForPDF(project.project_brief || '');
   const cabinetsSubtotal = areas.reduce(
-    (sum, area) => sum + area.cabinets.reduce((s, c) => s + c.subtotal, 0),
+    (sum, area) => sum + area.cabinets.reduce((s, c) => s + c.subtotal, 0) * (area.quantity ?? 1),
     0
   );
 
   const itemsSubtotal = areas.reduce(
-    (sum, area) => sum + area.items.reduce((s, i) => s + i.subtotal, 0),
+    (sum, area) => sum + area.items.reduce((s, i) => s + i.subtotal, 0) * (area.quantity ?? 1),
     0
   );
 
   const countertopsSubtotal = areas.reduce(
-    (sum, area) => sum + area.countertops.reduce((s, ct) => s + ct.subtotal, 0),
+    (sum, area) => sum + area.countertops.reduce((s, ct) => s + ct.subtotal, 0) * (area.quantity ?? 1),
     0
   );
 
-  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal;
+  const closetItemsSubtotal = areas.reduce(
+    (sum, area) => sum + (area.closetItems || []).reduce((s, ci) => s + ci.subtotal_mxn, 0) * (area.quantity ?? 1),
+    0
+  );
+
+  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal + closetItemsSubtotal;
   const otherExpenses = project.other_expenses || 0;
-  const installDelivery = project.install_delivery || 0;
-  const projectTotal = materialsSubtotal + otherExpenses + installDelivery;
+  // install_delivery stored in MXN in DB
+  const installDeliveryMxn = project.install_delivery || 0;
+  const projectTotal = materialsSubtotal + otherExpenses + installDeliveryMxn;
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -35,25 +54,57 @@ export async function printQuotation(
   }
 
   const areaBreakdown = areas.map(area => {
+    const qty = area.quantity ?? 1;
     const areaCabinetsTotal = area.cabinets.reduce((sum, c) => sum + c.subtotal, 0);
     const areaItemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
-    const areaCountertopsTotal = area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0);
-    const areaTotal = areaCabinetsTotal + areaItemsTotal + areaCountertopsTotal;
+    const areaClosetTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
+    const rawTotal = areaCabinetsTotal + areaItemsTotal + areaClosetTotal;
+    const areaTotal = rawTotal * qty;
 
-    const boxesPalletsCalc = calculateAreaBoxesAndPallets(area.cabinets, products);
+    const boxesPalletsCalc = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
 
     return {
-      name: area.name,
-      boxes: boxesPalletsCalc.boxes,
-      pallets: boxesPalletsCalc.pallets,
-      sf: boxesPalletsCalc.accessoriesSqFt.toFixed(2),
+      name: qty > 1 ? `${area.name} (×${qty})` : area.name,
+      boxes: boxesPalletsCalc.boxes * qty,
+      pallets: boxesPalletsCalc.pallets * qty,
+      sf: (boxesPalletsCalc.accessoriesSqFt * qty).toFixed(2),
       total: areaTotal
     };
   });
 
-  const totalBoxes = areaBreakdown.reduce((sum, a) => sum + a.boxes, 0);
+  const cabinetAreaBreakdown = areaBreakdown.filter((_, i) => {
+    const area = areas[i];
+    const hasClosets = (area.closetItems || []).length > 0;
+    return !(area.cabinets.length === 0 && !hasClosets && (area.countertops.length > 0 || area.items.length > 0));
+  });
+
+  const totalBoxes = cabinetAreaBreakdown.reduce((sum, a) => sum + a.boxes, 0);
   const totalPallets = areaBreakdown.reduce((sum, a) => sum + a.pallets, 0);
-  const totalSF = areaBreakdown.reduce((sum, a) => sum + parseFloat(a.sf), 0);
+  const totalSF = cabinetAreaBreakdown.reduce((sum, a) => sum + parseFloat(a.sf), 0);
+  const cabinetAreasDisplayTotal = cabinetAreaBreakdown.reduce((sum, a) => sum + a.total, 0);
+
+  interface CountertopGroup {
+    itemName: string;
+    qty: number;
+    unit: string;
+    subtotal: number;
+  }
+  const mxnCountertopGroupMap = new Map<string, CountertopGroup>();
+  for (const area of areas) {
+    for (const ct of area.countertops) {
+      const existing = mxnCountertopGroupMap.get(ct.item_name);
+      const plItem = priceList.find(p => p.id === ct.price_list_item_id);
+      const unit = plItem?.unit || '';
+      if (existing) {
+        existing.qty += ct.quantity;
+        existing.subtotal += ct.subtotal;
+      } else {
+        mxnCountertopGroupMap.set(ct.item_name, { itemName: ct.item_name, qty: ct.quantity, unit, subtotal: ct.subtotal });
+      }
+    }
+  }
+  const mxnCountertopGroups = Array.from(mxnCountertopGroupMap.values());
+
 
   let logoUrl = '';
   try {
@@ -85,7 +136,7 @@ export async function printQuotation(
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Quotation - ${project.name}</title>
+      <title>Quotation - ${resolvedName}</title>
       <style>
         * {
           margin: 0;
@@ -225,20 +276,37 @@ export async function printQuotation(
           font-weight: 600;
         }
 
-        .pricing-table tfoot td {
+        .totals-block {
+          page-break-inside: avoid;
+          page-break-before: avoid;
+        }
+
+        .totals-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        .totals-table td {
           padding: 12px;
           font-weight: 700;
           font-size: 10pt;
-          border-top: 2px solid #000;
           background-color: #f8f9fa;
         }
 
-        .pricing-table tfoot td.center {
+        .totals-table td.center {
           text-align: center;
         }
 
-        .pricing-table tfoot td.right {
+        .totals-table td.right {
           text-align: right;
+        }
+
+        .totals-table tr:first-child td {
+          border-top: 2px solid #000;
+        }
+
+        .totals-table tr:last-child td {
+          border-top: 2px solid #333;
         }
 
         .notes-box {
@@ -333,6 +401,42 @@ export async function printQuotation(
           font-weight: 600;
         }
 
+        .countertop-row td {
+          background-color: #fff7ed;
+          font-style: italic;
+          border-bottom: 1px solid #e0e0e0;
+          font-weight: 600;
+        }
+
+        .ct-section-header td {
+          background-color: #ffedd5;
+          font-size: 8pt;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding: 6px 12px;
+          border-top: 1px solid #fed7aa;
+          color: #9a3412;
+        }
+
+        .closet-row td {
+          background-color: #f0fdfa;
+          font-style: italic;
+          border-bottom: 1px solid #e0e0e0;
+          font-weight: 600;
+        }
+
+        .closet-section-header td {
+          background-color: #ccfbf1;
+          font-size: 8pt;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding: 6px 12px;
+          border-top: 1px solid #99f6e4;
+          color: #0f766e;
+        }
+
         @media print {
           body {
             print-color-adjust: exact;
@@ -357,7 +461,7 @@ export async function printQuotation(
         <div class="company-info">
           <p><strong>6400 Westpark Dr # 465, Houston, TX 77057</strong></p>
           <p>www.evitacabinets.com</p>
-          <p>34-6234-9223</p>
+          <p>346-234-9223</p>
           <p>info@evitacabinets.com</p>
         </div>
       </div>
@@ -365,9 +469,9 @@ export async function printQuotation(
       <div class="project-header">
         <div class="project-header-left">
           <span class="project-label">Project</span>
-          <div class="project-name">${project.name}</div>
+          <div class="project-name">${resolvedName}</div>
           <span class="project-label">Address</span>
-          <div style="font-size: 10pt; font-weight: 600; margin-top: 2px;">${project.address || '-'}</div>
+          <div style="font-size: 10pt; font-weight: 600; margin-top: 2px;">${resolvedAddress || '-'}</div>
         </div>
         <div style="text-align: right;">
           <span class="project-label">Date</span>
@@ -391,7 +495,7 @@ export async function printQuotation(
           </tr>
         </thead>
         <tbody>
-          ${areaBreakdown.map(area => `
+          ${cabinetAreaBreakdown.map(area => `
             <tr>
               <td>${area.name}</td>
               <td class="center">${area.boxes}</td>
@@ -400,15 +504,38 @@ export async function printQuotation(
             </tr>
           `).join('')}
         </tbody>
-        <tfoot>
+      </table>
+      <div class="totals-block">
+        <table class="totals-table">
           <tr>
-            <td><strong>Total</strong></td>
+            <td><strong>Totals</strong></td>
             <td class="center"><strong>${totalBoxes}</strong></td>
             <td class="right">${totalSF.toFixed(2)}</td>
-            <td class="right">${formatCurrency(materialsSubtotal)}</td>
+            <td class="right">${formatCurrency(cabinetAreasDisplayTotal)}</td>
           </tr>
-        </tfoot>
-      </table>
+          ${mxnCountertopGroups.length > 0 ? `
+          <tr class="ct-section-header">
+            <td colspan="4">Countertops</td>
+          </tr>
+          ${mxnCountertopGroups.map(g => {
+            const qtyDisplay = g.unit ? `${g.qty} ${g.unit}` : `${g.qty}`;
+            return `
+          <tr class="countertop-row">
+            <td>${g.itemName}</td>
+            <td class="center"></td>
+            <td class="right">${qtyDisplay}</td>
+            <td class="right">${formatCurrency(g.subtotal)}</td>
+          </tr>`;
+          }).join('')}
+          ` : ''}
+          <tr>
+            <td><strong>Grand Total</strong></td>
+            <td class="center"></td>
+            <td class="right"></td>
+            <td class="right"><strong>${formatCurrency(materialsSubtotal)}</strong></td>
+          </tr>
+        </table>
+      </div>
 
       ${totalPallets > 0 ? `
         <div class="notes-box">
@@ -417,25 +544,7 @@ export async function printQuotation(
         </div>
       ` : ''}
 
-      ${project.project_brief ? `
-        <div class="project-details">
-          <h3>Project Brief</h3>
-          <ul>
-            ${project.project_brief.split('\n').filter(line => line.trim()).map(line => {
-              const trimmed = line.trim();
-              if (trimmed.startsWith('•')) {
-                return `<li>${trimmed.substring(1).trim()}</li>`;
-              } else if (trimmed.startsWith('-')) {
-                return `<li>${trimmed.substring(1).trim()}</li>`;
-              } else if (trimmed.match(/^[A-Z][a-z\s&/()]+:/)) {
-                const [label, ...rest] = trimmed.split(':');
-                return `<li><strong>${label}:</strong>${rest.join(':')}</li>`;
-              }
-              return `<li>${trimmed}</li>`;
-            }).join('')}
-          </ul>
-        </div>
-      ` : ''}
+      ${renderBriefBlocksAsHTML(resolvedBrief)}
 
       <script>
         window.onload = function() {
@@ -467,10 +576,17 @@ export async function printQuotation(
 
 export async function printQuotationUSD(
   project: Project,
-  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[],
+  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems?: AreaClosetItem[] })[],
   exchangeRate: number,
-  products: Product[] = []
+  products: Product[] = [],
+  priceList: PriceListItem[] = [],
+  disclaimerTariffInfo = '',
+  disclaimerPriceValidity = '',
+  overrides: PDFOverrides = {}
 ) {
+  const resolvedName = overrides.pdfProjectName ?? project.name;
+  const resolvedAddress = overrides.pdfAddress ?? (project.address || '');
+  const resolvedBrief = overrides.pdfProjectBrief ?? filterProjectBriefForPDF(project.project_brief || '');
   const formatUSD = (amount: number) => {
     const amountInUSD = amount / exchangeRate;
     return new Intl.NumberFormat('en-US', {
@@ -488,21 +604,22 @@ export async function printQuotationUSD(
 
   // First pass: calculate original prices, tariffs, and taxes (NOT inflated)
   const baseAreaData = areas.map(area => {
+    const qty = area.quantity ?? 1;
     const areaCabinetsTotal = area.cabinets.reduce((sum, c) => sum + c.subtotal, 0);
     const areaItemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
-    const areaCountertopsTotal = area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0);
-    const areaMaterialsSubtotal = areaCabinetsTotal + areaItemsTotal + areaCountertopsTotal;
+    const areaClosetTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
+    const areaMaterialsSubtotal = (areaCabinetsTotal + areaItemsTotal + areaClosetTotal) * qty;
 
     const areaPrice = profitMultiplier > 0 && profitMultiplier < 1
       ? areaMaterialsSubtotal / (1 - profitMultiplier)
       : areaMaterialsSubtotal;
 
-    // Calculate tariff and tax based on ORIGINAL price (not inflated)
-    const areaTariff = areaMaterialsSubtotal * tariffMultiplier;
+    // Calculate tariff and tax based on ORIGINAL price (not inflated), only when flag is enabled
+    const areaTariff = area.applies_tariff === true ? areaMaterialsSubtotal * tariffMultiplier : 0;
     const areaTax = (areaPrice + areaTariff) * (taxPercentage / 100);
 
     return {
-      name: area.name,
+      name: qty > 1 ? `${area.name} (×${qty})` : area.name,
       basePrice: areaPrice,
       tariff: areaTariff,
       tax: areaTax
@@ -510,40 +627,85 @@ export async function printQuotationUSD(
   });
 
   const totalBasePrice = baseAreaData.reduce((sum, a) => sum + a.basePrice, 0);
-  const installDelivery = project.install_delivery || 0;
-  const totalReferralAmount = (totalBasePrice + installDelivery) * referralRate;
+  // install_delivery in DB is stored in MXN (= install_delivery_usd * exchangeRate)
+  // Use it directly since all other calculations in this function are in MXN
+  const installDeliveryMxn = project.install_delivery || 0;
+  const totalReferralAmount = (totalBasePrice + installDeliveryMxn) * referralRate;
 
-  // Second pass: distribute referral fee proportionally for DISPLAY ONLY
-  // Tariff and tax remain unchanged (not recalculated)
-  const areaBreakdown = baseAreaData.map(area => {
-    // Calculate this area's weight (proportion of total price)
-    const weight = totalBasePrice > 0 ? area.basePrice / totalBasePrice : 0;
-
-    // Distribute referral fee proportionally to this area
+  // Second pass: distribute referral fee proportionally and recalculate tax including referral
+  const areaBreakdown = areas.map((area, i) => {
+    const base = baseAreaData[i];
+    const weight = totalBasePrice > 0 ? base.basePrice / totalBasePrice : 0;
     const referralPortionForArea = totalReferralAmount * weight;
-
-    // Display price includes the hidden referral fee
-    const displayPrice = area.basePrice + referralPortionForArea;
-
-    // Use ORIGINAL tariff and tax (not recalculated on inflated price)
-    const areaTotal = displayPrice + area.tariff + area.tax;
+    const displayPrice = base.basePrice + referralPortionForArea;
+    const areaTaxWithReferral = (base.basePrice + base.tariff + referralPortionForArea) * (taxPercentage / 100);
+    const areaTotal = displayPrice + base.tariff + areaTaxWithReferral;
+    const { boxes: rawBoxes } = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
+    const boxes = rawBoxes * (area.quantity ?? 1);
 
     return {
-      name: area.name,
+      name: base.name,
+      boxes,
       price: displayPrice,
-      tariff: area.tariff,
-      tax: area.tax,
+      tariff: base.tariff,
+      tax: areaTaxWithReferral,
       total: areaTotal
     };
   });
 
-  const totalPrice = areaBreakdown.reduce((sum, a) => sum + a.price, 0);
-  const totalTariff = areaBreakdown.reduce((sum, a) => sum + a.tariff, 0);
-  const totalTax = areaBreakdown.reduce((sum, a) => sum + a.tax, 0);
-  const grandTotal = areaBreakdown.reduce((sum, a) => sum + a.total, 0);
+  const usdCabinetAreaBreakdown = areaBreakdown.filter((_, i) => {
+    const area = areas[i];
+    const hasClosets = (area.closetItems || []).length > 0;
+    return !(area.cabinets.length === 0 && !hasClosets && (area.countertops.length > 0 || area.items.length > 0));
+  });
 
+  const totalBoxesUSD = usdCabinetAreaBreakdown.reduce((sum, a) => sum + a.boxes, 0);
+  const totalPrice = usdCabinetAreaBreakdown.reduce((sum, a) => sum + a.price, 0);
+  const totalTariff = usdCabinetAreaBreakdown.reduce((sum, a) => sum + a.tariff, 0);
+  const totalTax = usdCabinetAreaBreakdown.reduce((sum, a) => sum + a.tax, 0);
+  const cabinetGrandTotal = usdCabinetAreaBreakdown.reduce((sum, a) => sum + a.total, 0);
+
+  const grandTotal = areaBreakdown.reduce((sum, a) => sum + a.total, 0);
   const otherExpenses = project.other_expenses || 0;
-  const finalTotal = grandTotal + otherExpenses + installDelivery;
+  const otherExpensesLabel = project.other_expenses_label || 'Other Expenses';
+
+  interface USDCountertopGroup {
+    itemName: string;
+    qty: number;
+    unit: string;
+    displayPrice: number;
+    tariff: number;
+    tax: number;
+    total: number;
+  }
+  const usdCountertopGroupMap = new Map<string, { itemName: string; qty: number; unit: string; subtotalMXN: number }>();
+  for (const area of areas) {
+    for (const ct of area.countertops) {
+      const existing = usdCountertopGroupMap.get(ct.item_name);
+      const plItem = priceList.find(p => p.id === ct.price_list_item_id);
+      const unit = plItem?.unit || '';
+      if (existing) {
+        existing.qty += ct.quantity;
+        existing.subtotalMXN += ct.subtotal;
+      } else {
+        usdCountertopGroupMap.set(ct.item_name, { itemName: ct.item_name, qty: ct.quantity, unit, subtotalMXN: ct.subtotal });
+      }
+    }
+  }
+  const usdCountertopGroups: USDCountertopGroup[] = Array.from(usdCountertopGroupMap.values()).map(g => {
+    const groupPrice = profitMultiplier > 0 && profitMultiplier < 1
+      ? g.subtotalMXN / (1 - profitMultiplier)
+      : g.subtotalMXN;
+    const referralPortion = totalBasePrice > 0 ? (groupPrice / totalBasePrice) * totalReferralAmount : 0;
+    const displayPrice = groupPrice + referralPortion;
+    const groupTax = displayPrice * (taxPercentage / 100);
+    const groupTotal = displayPrice + groupTax;
+    return { itemName: g.itemName, qty: g.qty, unit: g.unit, displayPrice, tariff: 0, tax: groupTax, total: groupTotal };
+  });
+
+  const totalCountertopGroupsTotal = usdCountertopGroups.reduce((sum, g) => sum + g.total, 0);
+
+  const finalTotal = grandTotal + totalCountertopGroupsTotal + otherExpenses + installDeliveryMxn;
 
   let logoUrl = '';
   try {
@@ -573,7 +735,7 @@ export async function printQuotationUSD(
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>USD Quotation - ${project.name}</title>
+      <title>USD Quotation - ${resolvedName}</title>
       <style>
         * {
           margin: 0;
@@ -688,16 +850,33 @@ export async function printQuotationUSD(
           font-weight: 600;
         }
 
-        .pricing-table tfoot td {
+        .totals-block {
+          page-break-inside: avoid;
+          page-break-before: avoid;
+        }
+
+        .totals-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        .totals-table td {
           padding: 12px;
           font-weight: 700;
           font-size: 10pt;
-          border-top: 2px solid #000;
           background-color: #f8f9fa;
         }
 
-        .pricing-table tfoot td.right {
+        .totals-table td.right {
           text-align: right;
+        }
+
+        .totals-table tr:first-child td {
+          border-top: 2px solid #000;
+        }
+
+        .totals-table tr:last-child td {
+          border-top: 2px solid #333;
         }
 
         .notes-box {
@@ -751,6 +930,42 @@ export async function printQuotationUSD(
           font-weight: 600;
         }
 
+        .countertop-row td {
+          background-color: #fff7ed;
+          font-style: italic;
+          border-bottom: 1px solid #e0e0e0;
+          font-weight: 600;
+        }
+
+        .ct-section-header td {
+          background-color: #ffedd5;
+          font-size: 8pt;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding: 6px 12px;
+          border-top: 1px solid #fed7aa;
+          color: #9a3412;
+        }
+
+        .closet-row td {
+          background-color: #f0fdfa;
+          font-style: italic;
+          border-bottom: 1px solid #e0e0e0;
+          font-weight: 600;
+        }
+
+        .closet-section-header td {
+          background-color: #ccfbf1;
+          font-size: 8pt;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          padding: 6px 12px;
+          border-top: 1px solid #99f6e4;
+          color: #0f766e;
+        }
+
         @media print {
           body {
             print-color-adjust: exact;
@@ -771,7 +986,7 @@ export async function printQuotationUSD(
         <div class="company-info">
           <p><strong>6400 Westpark Dr # 465, Houston, TX 77057</strong></p>
           <p>www.evitacabinets.com</p>
-          <p>34-6234-9223</p>
+          <p>346-234-9223</p>
           <p>info@evitacabinets.com</p>
         </div>
       </div>
@@ -779,9 +994,9 @@ export async function printQuotationUSD(
       <div class="project-header">
         <div class="project-header-left">
           <span class="project-label">Project</span>
-          <div class="project-name">${project.name}</div>
+          <div class="project-name">${resolvedName}</div>
           <span class="project-label">Address</span>
-          <div style="font-size: 10pt; font-weight: 600; margin-top: 2px;">${project.address || '-'}</div>
+          <div style="font-size: 10pt; font-weight: 600; margin-top: 2px;">${resolvedAddress || '-'}</div>
         </div>
         <div style="text-align: right;">
           <span class="project-label">Date</span>
@@ -799,104 +1014,85 @@ export async function printQuotationUSD(
         <thead>
           <tr>
             <th>Area/Concept</th>
+            <th class="right">Boxes Qty</th>
             <th class="right">Price</th>
-            <th class="right">Tariff</th>
-            <th class="right">Tax</th>
+            <th class="right">Tax (${taxPercentage}%)</th>
             <th class="right">Total w/Tax</th>
           </tr>
         </thead>
         <tbody>
-          ${areaBreakdown.map(area => `
+          ${usdCabinetAreaBreakdown.map(area => `
             <tr>
               <td>${area.name}</td>
-              <td class="right">${formatUSD(area.price)}</td>
-              <td class="right">${formatUSD(area.tariff)}</td>
+              <td class="right">${area.boxes}</td>
+              <td class="right">${formatUSD(area.price + area.tariff)}</td>
               <td class="right">${formatUSD(area.tax)}</td>
               <td class="right">${formatUSD(area.total)}</td>
             </tr>
           `).join('')}
         </tbody>
-        <tfoot>
+      </table>
+      <div class="totals-block">
+        <table class="totals-table">
           <tr>
             <td><strong>Totals</strong></td>
-            <td class="right">${formatUSD(totalPrice)}</td>
-            <td class="right">${formatUSD(totalTariff)}</td>
+            <td class="right"><strong>${totalBoxesUSD}</strong></td>
+            <td class="right">${formatUSD(totalPrice + totalTariff)}</td>
             <td class="right">${formatUSD(totalTax)}</td>
-            <td class="right">${formatUSD(grandTotal)}</td>
+            <td class="right">${formatUSD(cabinetGrandTotal)}</td>
           </tr>
-          ${installDelivery > 0 ? `
+          ${usdCountertopGroups.length > 0 ? `
+          <tr class="ct-section-header">
+            <td colspan="5">Countertops</td>
+          </tr>
+          ${usdCountertopGroups.map(g => {
+            const qtyDisplay = g.unit ? `${g.qty} ${g.unit}` : `${g.qty}`;
+            return `
+          <tr class="countertop-row">
+            <td>${g.itemName}</td>
+            <td class="right">${qtyDisplay}</td>
+            <td class="right">${formatUSD(g.displayPrice + g.tariff)}</td>
+            <td class="right">${formatUSD(g.tax)}</td>
+            <td class="right">${formatUSD(g.total)}</td>
+          </tr>`;
+          }).join('')}
+          ` : ''}
+          ${installDeliveryMxn > 0 ? `
           <tr>
-            <td><strong>Install & Delivery</strong></td>
+            <td><strong>Design services, Install & Delivery</strong></td>
             <td class="right"></td>
             <td class="right"></td>
             <td class="right"></td>
-            <td class="right">${formatUSD(installDelivery)}</td>
+            <td class="right">${formatUSD(installDeliveryMxn)}</td>
           </tr>
           ` : ''}
           ${otherExpenses > 0 ? `
           <tr>
-            <td><strong>Other Expenses</strong></td>
+            <td><strong>${otherExpensesLabel}</strong></td>
             <td class="right"></td>
             <td class="right"></td>
             <td class="right"></td>
             <td class="right">${formatUSD(otherExpenses)}</td>
           </tr>
           ` : ''}
-          <tr style="border-top: 2px solid #333;">
+          <tr>
             <td><strong>Grand Total</strong></td>
             <td class="right"></td>
             <td class="right"></td>
             <td class="right"></td>
             <td class="right"><strong>${formatUSD(finalTotal)}</strong></td>
           </tr>
-        </tfoot>
-      </table>
+        </table>
+      </div>
 
-      ${(() => {
-        const disclaimerTariff = project.disclaimer_tariff_info || 'Please note that the international tariff effective October 10 is 25%; however, only 11% of this tariff directly impacts the cost of this project.';
-        const disclaimerValidity = project.disclaimer_price_validity || 'Grand Total includes delivery cost and tax, but does not include unloading or installation services.\n\n*Price is valid for 30 days and is subject to change due to international tariff rates.';
-
-        // Split the price validity disclaimer into lines
-        const validityLines = disclaimerValidity.split('\n').filter(line => line.trim());
-        const mainText = validityLines[0] || '';
-        const footnoteText = validityLines.slice(1).join(' ').trim();
-
-        return `
-          <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
-            <p style="margin: 0 0 12px 0; font-size: 8pt; color: #666; line-height: 1.5;">
-              ${disclaimerTariff}
-            </p>
-            <p style="margin: 0; font-size: 8pt; color: #333; line-height: 1.5;">
-              <strong>${mainText}</strong>
-            </p>
-            ${footnoteText ? `
-            <p style="margin: 8px 0 0 0; font-size: 7pt; color: #999; font-style: italic;">
-              ${footnoteText}
-            </p>
-            ` : ''}
-          </div>
-        `;
-      })()}
-
-      ${project.project_brief ? `
-        <div class="project-details">
-          <h3>Project Details</h3>
-          <ul>
-            ${project.project_brief.split('\n').filter(line => line.trim()).map(line => {
-              const trimmed = line.trim();
-              if (trimmed.startsWith('•')) {
-                return `<li>${trimmed.substring(1).trim()}</li>`;
-              } else if (trimmed.startsWith('-')) {
-                return `<li>${trimmed.substring(1).trim()}</li>`;
-              } else if (trimmed.match(/^[A-Z][a-z\s&/()]+:/)) {
-                const [label, ...rest] = trimmed.split(':');
-                return `<li><strong>${label}:</strong>${rest.join(':')}</li>`;
-              }
-              return `<li>${trimmed}</li>`;
-            }).join('')}
-          </ul>
-        </div>
+      ${(disclaimerTariffInfo || disclaimerPriceValidity) ? `
+      <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
+        ${disclaimerTariffInfo ? `<p style="margin: 0 0 8px 0; font-size: 8pt; color: #333; line-height: 1.5; font-style: italic;">${disclaimerTariffInfo.replace(/\n/g, '<br>')}</p>` : ''}
+        ${disclaimerPriceValidity ? `<p style="margin: 0; font-size: 8pt; color: #333; line-height: 1.6;">${disclaimerPriceValidity.split('\n').filter(l => l.trim()).map(l => `<strong>${l}</strong>`).join('<br>')}</p>` : ''}
+      </div>
       ` : ''}
+
+      ${renderBriefBlocksAsHTML(resolvedBrief)}
 
       <script>
         window.onload = function() {

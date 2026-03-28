@@ -50,6 +50,42 @@ export interface AreaCountertop {
   updated_at?: string;
 }
 
+export interface ClosetCatalogItem {
+  id: string;
+  cabinet_code: string;
+  evita_line: 'Evita Plus' | 'Evita Premium';
+  description: string;
+  height_in: number;
+  width_in: number;
+  depth_in: number;
+  price_with_backs_usd: number | null;
+  price_without_backs_usd: number | null;
+  has_backs_option: boolean;
+  boxes_count: number;
+  dimensions_locked: boolean;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AreaClosetItem {
+  id: string;
+  area_id: string;
+  closet_catalog_id: string;
+  quantity: number;
+  with_backs: boolean;
+  unit_price_usd: number;
+  unit_price_mxn: number;
+  hardware: HardwareItem[];
+  hardware_cost: number;
+  subtotal_mxn: number;
+  boxes_count: number;
+  notes: string | null;
+  created_at?: string;
+  updated_at?: string;
+  catalog_item?: ClosetCatalogItem;
+}
+
 export type Setting = Database['public']['Tables']['settings']['Row'];
 export type SettingInsert = Database['public']['Tables']['settings']['Insert'];
 export type SettingUpdate = Database['public']['Tables']['settings']['Update'];
@@ -74,6 +110,25 @@ export interface CustomUnit {
   created_at?: string;
 }
 
+export type TeamMember = Database['public']['Tables']['team_members']['Row'];
+export type TeamMemberInsert = Database['public']['Tables']['team_members']['Insert'];
+
+export type ProjectDocument = Database['public']['Tables']['project_documents']['Row'];
+export type ProjectDocumentInsert = Database['public']['Tables']['project_documents']['Insert'];
+
+export type ProjectTask = Database['public']['Tables']['project_tasks']['Row'];
+export type ProjectTaskInsert = Database['public']['Tables']['project_tasks']['Insert'];
+
+export interface ProjectTaskWithAssignee extends ProjectTask {
+  assignee_name?: string;
+}
+
+export type ProjectActivity = Database['public']['Tables']['project_activities']['Row'];
+export type ProjectActivityInsert = Database['public']['Tables']['project_activities']['Insert'];
+
+export type ProjectLog = Database['public']['Tables']['project_logs']['Row'];
+export type ProjectLogInsert = Database['public']['Tables']['project_logs']['Insert'];
+
 export interface HardwareItem {
   hardware_id: string;
   quantity_per_cabinet: number;
@@ -95,6 +150,7 @@ export interface CabinetCostBreakdown {
   accessoriesCost: number;
   laborCost: number;
   backPanelMaterialCost: number;
+  doorProfileCost: number;
   subtotal: number;
 }
 
@@ -144,6 +200,8 @@ export interface CabinetTemplate {
   original_doors_edgeband_price: number | null;
   original_doors_interior_finish_price: number | null;
   original_back_panel_material_price: number | null;
+  door_profile_id: string | null;
+  door_profile_name: string | null;
   usage_count: number;
   last_used_at: string | null;
   created_at: string;
@@ -185,6 +243,8 @@ export interface CabinetTemplateInsert {
   original_doors_edgeband_price?: number | null;
   original_doors_interior_finish_price?: number | null;
   original_back_panel_material_price?: number | null;
+  door_profile_id?: string | null;
+  door_profile_name?: string | null;
 }
 
 export interface TemplateUsageLog {

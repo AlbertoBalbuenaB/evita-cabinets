@@ -18,6 +18,7 @@ export function CollectionSelector({
   const [collections, setCollections] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
+  const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export function CollectionSelector({
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newValue = e.target.value;
     setInputValue(newValue);
+    setIsSearching(true);
     if (allowCreate) {
       onChange(newValue);
     }
@@ -50,17 +52,26 @@ export function CollectionSelector({
 
   function handleSelectCollection(collection: string) {
     setInputValue(collection);
+    setIsSearching(false);
     onChange(collection);
     setIsOpen(false);
   }
 
   function handleBlur() {
-    setTimeout(() => setIsOpen(false), 200);
+    setTimeout(() => {
+      setIsOpen(false);
+      setIsSearching(false);
+    }, 200);
   }
 
-  const filteredCollections = collections.filter((c) =>
-    c.toLowerCase().includes(inputValue.toLowerCase())
-  );
+  function handleFocus() {
+    setIsSearching(false);
+    setIsOpen(true);
+  }
+
+  const filteredCollections = isSearching
+    ? collections.filter((c) => c.toLowerCase().includes(inputValue.toLowerCase()))
+    : collections;
 
   const showCreateOption =
     allowCreate &&
@@ -77,7 +88,7 @@ export function CollectionSelector({
           type="text"
           value={inputValue}
           onChange={handleInputChange}
-          onFocus={() => setIsOpen(true)}
+          onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder={placeholder}
           className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -102,7 +113,9 @@ export function CollectionSelector({
                     key={collection}
                     type="button"
                     onClick={() => handleSelectCollection(collection)}
-                    className="w-full text-left px-3 py-2 hover:bg-slate-100 text-sm text-slate-700"
+                    className={`w-full text-left px-3 py-2 hover:bg-slate-100 text-sm ${
+                      collection === value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-700'
+                    }`}
                   >
                     {collection}
                   </button>

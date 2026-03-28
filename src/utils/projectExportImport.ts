@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Project, ProjectArea, AreaCabinet, AreaItem, AreaCountertop, HardwareItem, AccessoryItem } from '../types';
+import type { Project, ProjectArea, AreaCabinet, AreaItem, AreaCountertop, AreaClosetItem, HardwareItem, AccessoryItem } from '../types';
 
 export interface ProjectExport {
   exportVersion: "1.0";
@@ -10,12 +10,14 @@ export interface ProjectExport {
     cabinets: AreaCabinet[];
     items: AreaItem[];
     countertops: AreaCountertop[];
+    closetItems: AreaClosetItem[];
   }>;
   metadata: {
     totalAreas: number;
     totalCabinets: number;
     totalItems: number;
     totalCountertops: number;
+    totalClosetItems: number;
     originalProjectId: string;
   };
 }
@@ -40,6 +42,7 @@ export interface ImportSummary {
   cabinetsImported: number;
   itemsImported: number;
   countertopsImported: number;
+  closetItemsImported: number;
 }
 
 export async function exportProjectToJSON(projectId: string): Promise<void> {
@@ -63,21 +66,24 @@ export async function exportProjectToJSON(projectId: string): Promise<void> {
 
     const areas = await Promise.all(
       (projectAreas || []).map(async (area) => {
-        const [cabinetsResult, itemsResult, countertopsResult] = await Promise.all([
+        const [cabinetsResult, itemsResult, countertopsResult, closetItemsResult] = await Promise.all([
           supabase.from('area_cabinets').select('*').eq('area_id', area.id),
           supabase.from('area_items').select('*').eq('area_id', area.id),
           supabase.from('area_countertops').select('*').eq('area_id', area.id),
+          supabase.from('area_closet_items').select('*').eq('area_id', area.id),
         ]);
 
         if (cabinetsResult.error) throw new Error(`Error loading cabinets: ${cabinetsResult.error.message}`);
         if (itemsResult.error) throw new Error(`Error loading items: ${itemsResult.error.message}`);
         if (countertopsResult.error) throw new Error(`Error loading countertops: ${countertopsResult.error.message}`);
+        if (closetItemsResult.error) throw new Error(`Error loading closet items: ${closetItemsResult.error.message}`);
 
         return {
           area,
           cabinets: cabinetsResult.data || [],
           items: itemsResult.data || [],
           countertops: countertopsResult.data || [],
+          closetItems: (closetItemsResult.data || []) as AreaClosetItem[],
         };
       })
     );
@@ -92,6 +98,7 @@ export async function exportProjectToJSON(projectId: string): Promise<void> {
         totalCabinets: areas.reduce((sum, a) => sum + a.cabinets.length, 0),
         totalItems: areas.reduce((sum, a) => sum + a.items.length, 0),
         totalCountertops: areas.reduce((sum, a) => sum + a.countertops.length, 0),
+        totalClosetItems: areas.reduce((sum, a) => sum + a.closetItems.length, 0),
         originalProjectId: projectId,
       },
     };
@@ -237,10 +244,13 @@ export async function performProjectImport(
       status: project.status,
       quote_date: project.quote_date,
       other_expenses: project.other_expenses || 0,
+      other_expenses_label: project.other_expenses_label || 'Other Expenses',
       profit_multiplier: project.profit_multiplier || 0,
       tariff_multiplier: project.tariff_multiplier || 0,
       tax_percentage: project.tax_percentage || 0,
       install_delivery: project.install_delivery || 0,
+      install_delivery_usd: (project as any).install_delivery_usd || 0,
+      install_delivery_per_box_usd: (project as any).install_delivery_per_box_usd || 0,
       referral_currency_rate: project.referral_currency_rate || 0,
       project_brief: project.project_brief,
       disclaimer_tariff_info: project.disclaimer_tariff_info,
@@ -261,14 +271,17 @@ export async function performProjectImport(
     let totalCabinets = 0;
     let totalItems = 0;
     let totalCountertops = 0;
+    let totalClosetItems = 0;
 
     for (const areaData of areas) {
-      const { area, cabinets, items, countertops } = areaData;
+      const { area, cabinets, items, countertops, closetItems = [] } = areaData;
 
       const areaInsert = {
         project_id: newProject.id,
         name: area.name,
         display_order: area.display_order,
+        applies_tariff: area.applies_tariff ?? true,
+        quantity: (area as any).quantity ?? 1,
       };
 
       const { data: newArea, error: areaError } = await supabase
@@ -340,6 +353,26 @@ export async function performProjectImport(
 
         totalCountertops += countertops.length;
       }
+
+      if (closetItems.length > 0) {
+        const closetInserts = closetItems.map(ci => {
+          const { id, area_id, created_at, updated_at, catalog_item, ...ciData } = ci as any;
+          return {
+            ...ciData,
+            area_id: newArea.id,
+          };
+        });
+
+        const { error: closetError } = await supabase
+          .from('area_closet_items')
+          .insert(closetInserts);
+
+        if (closetError) {
+          throw new Error(`Failed to create closet items: ${closetError.message}`);
+        }
+
+        totalClosetItems += closetItems.length;
+      }
     }
 
     return {
@@ -350,6 +383,7 @@ export async function performProjectImport(
         cabinetsImported: totalCabinets,
         itemsImported: totalItems,
         countertopsImported: totalCountertops,
+        closetItemsImported: totalClosetItems,
       },
     };
   } catch (error) {
@@ -362,6 +396,7 @@ export async function performProjectImport(
         cabinetsImported: 0,
         itemsImported: 0,
         countertopsImported: 0,
+        closetItemsImported: 0,
       },
       error: error instanceof Error ? error.message : 'Unknown import error',
     };
@@ -417,6 +452,16 @@ function extractMaterialIds(projectData: ProjectExport): Set<string> {
     });
   });
 
+  return ids;
+}
+
+function extractClosetCatalogIds(projectData: ProjectExport): Set<string> {
+  const ids = new Set<string>();
+  projectData.areas.forEach(areaData => {
+    (areaData.closetItems || []).forEach(ci => {
+      if (ci.closet_catalog_id) ids.add(ci.closet_catalog_id);
+    });
+  });
   return ids;
 }
 

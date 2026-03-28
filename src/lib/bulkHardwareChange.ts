@@ -286,7 +286,10 @@ export async function executeBulkHardwareChange(
           (fullCabinet.doors_material_cost || 0) +
           (fullCabinet.doors_edgeband_cost || 0) +
           (fullCabinet.doors_interior_finish_cost || 0) +
+          (fullCabinet.back_panel_material_cost || 0) +
           cabinet.newCost +
+          (fullCabinet.accessories_cost || 0) +
+          (fullCabinet.door_profile_cost || 0) +
           (fullCabinet.labor_cost || 0);
 
         updates.subtotal = newSubtotal;

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronRight, Info, Bookmark, Layers, AlertCircle, Package } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { fetchAllProducts } from '../lib/fetchAllProducts';
 import { Button } from './Button';
 import { Input } from './Input';
 import { Modal } from './Modal';
@@ -19,6 +20,7 @@ import {
   calculateAccessoriesCost,
   calculateLaborCost,
   calculateBackPanelMaterialCost,
+  calculateDoorProfileCost,
   formatCurrency,
 } from '../lib/calculations';
 import type {
@@ -84,18 +86,37 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
   const [backPanelWidthInches, setBackPanelWidthInches] = useState(cabinet?.back_panel_width_inches || 0);
   const [backPanelHeightInches, setBackPanelHeightInches] = useState(cabinet?.back_panel_height_inches || 0);
 
+  const [doorProfileId, setDoorProfileId] = useState(cabinet?.door_profile_id || '');
+
   const backPanelSF = useBackPanelMaterial && backPanelWidthInches && backPanelHeightInches
     ? (backPanelWidthInches * backPanelHeightInches) / 144
     : 0;
 
   useEffect(() => {
-    if (selectedProduct) {
-      const hasDrawers = selectedProduct.description.toLowerCase().includes('drawer');
-      if (cabinet === null) {
-        setIsRta(!hasDrawers);
-      }
+    if (selectedProduct && cabinet === null) {
+      setIsRta(selectedProduct.default_is_rta);
     }
   }, [selectedProduct, cabinet]);
+
+  const notApplyMaterialId = useMemo(
+    () => priceList.find((p) => p.concept_description === 'Not Apply' && p.type === 'Laminate')?.id ?? '',
+    [priceList]
+  );
+
+  const notApplyEdgebandId = useMemo(
+    () => priceList.find((p) => p.concept_description === 'Not Apply' && p.type === 'Edgeband')?.id ?? '',
+    [priceList]
+  );
+
+  useEffect(() => {
+    if (!notApplyMaterialId || !notApplyEdgebandId) return;
+    if (!cabinet) {
+      if (!boxMaterialId) setBoxMaterialId(notApplyMaterialId);
+      if (!boxEdgebandId) setBoxEdgebandId(notApplyEdgebandId);
+      if (!doorsMaterialId) setDoorsMaterialId(notApplyMaterialId);
+      if (!doorsEdgebandId) setDoorsEdgebandId(notApplyEdgebandId);
+    }
+  }, [notApplyMaterialId, notApplyEdgebandId]);
 
   useEffect(() => {
     loadData();
@@ -103,18 +124,18 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
 
   async function loadData() {
     try {
-      const [productsRes, pricesRes, settingsData] = await Promise.all([
-        supabase.from('products_catalog').select('*').eq('is_active', true).eq('status', 'active').order('sku'),
+      const [products, pricesRes, settingsData] = await Promise.all([
+        fetchAllProducts({ onlyActive: true }),
         supabase.from('price_list').select('*').eq('is_active', true).order('concept_description'),
         getSettings(),
       ]);
 
-      setProducts(productsRes.data || []);
+      setProducts(products);
       setPriceList(pricesRes.data || []);
       setSettings(settingsData);
 
       if (cabinet?.product_sku) {
-        const product = (productsRes.data as any[])?.find((p: any) => p.sku === cabinet.product_sku);
+        const product = products.find((p) => p.sku === cabinet.product_sku);
         setSelectedProduct(product || null);
       }
     } catch (error) {
@@ -122,6 +143,22 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleBoxMaterialChange(value: string) {
+    setBoxMaterialId(value === '' ? notApplyMaterialId : value);
+  }
+
+  function handleBoxEdgebandChange(value: string) {
+    setBoxEdgebandId(value === '' ? notApplyEdgebandId : value);
+  }
+
+  function handleDoorsMaterialChange(value: string) {
+    setDoorsMaterialId(value === '' ? notApplyMaterialId : value);
+  }
+
+  function handleDoorsEdgebandChange(value: string) {
+    setDoorsEdgebandId(value === '' ? notApplyEdgebandId : value);
   }
 
   function calculateCosts() {
@@ -168,6 +205,11 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
     const accessoriesCost = calculateAccessoriesCost(accessories, quantity, priceList);
     const laborCost = calculateLaborCost(selectedProduct, quantity, settings.laborCostNoDrawers, settings.laborCostWithDrawers, settings.laborCostAccessories);
 
+    const doorProfileItem = doorProfileId ? priceList.find((p) => p.id === doorProfileId) : null;
+    const doorProfileCost = doorProfileItem
+      ? calculateDoorProfileCost(selectedProduct, doorProfileItem, quantity)
+      : 0;
+
     const subtotal =
       boxMaterialCost +
       boxEdgebandCost +
@@ -178,7 +220,8 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       backPanelMaterialCost +
       hardwareCost +
       accessoriesCost +
-      laborCost;
+      laborCost +
+      doorProfileCost;
 
     return {
       boxMaterialCost,
@@ -191,6 +234,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       hardwareCost,
       accessoriesCost,
       laborCost,
+      doorProfileCost,
       subtotal,
     };
   }
@@ -219,6 +263,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
     setBackPanelMaterialId(template.back_panel_material_id || '');
     setBackPanelWidthInches(template.back_panel_width_inches || 0);
     setBackPanelHeightInches(template.back_panel_height_inches || 0);
+    setDoorProfileId(template.door_profile_id || '');
 
     setLoadedTemplateId(template.id);
     setShowTemplateSelector(false);
@@ -283,6 +328,8 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       original_doors_edgeband_price: doorsEdgeband?.price || null,
       original_doors_interior_finish_price: doorsInteriorFinish?.price || null,
       original_back_panel_material_price: backPanelMaterial?.price || null,
+      door_profile_id: doorProfileId || null,
+      door_profile_cost: costs.doorProfileCost,
     };
 
 
@@ -299,7 +346,16 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
           throw error;
         }
       } else {
-        const { data, error } = await supabase.from('area_cabinets').insert([cabinetData as any]).select();
+        const { data: existingCabinets } = await supabase
+          .from('area_cabinets')
+          .select('display_order')
+          .eq('area_id', areaId)
+          .order('display_order', { ascending: false })
+          .limit(1);
+        const nextOrder = existingCabinets && existingCabinets.length > 0
+          ? (existingCabinets[0].display_order ?? 0) + 1
+          : 0;
+        const { data, error } = await supabase.from('area_cabinets').insert([{ ...cabinetData, display_order: nextOrder } as any]).select();
 
         if (error) {
           console.error('Insert error details:', error);
@@ -370,6 +426,8 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
 
     return !isSheetMaterial && !isEdgeband;
   });
+
+  const doorProfileMaterials = priceList.filter((p) => p.type === 'Door Profile');
 
   const costs = calculateCosts();
 
@@ -485,7 +543,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   label="Material"
                   placeholder="Select material..."
                   value={boxMaterialId}
-                  onChange={setBoxMaterialId}
+                  onChange={handleBoxMaterialChange}
                   options={sheetMaterials.map((item) => ({
                     value: item.id,
                     label: `${item.concept_description} - ${item.dimensions} - ${formatCurrency(item.price)}/${item.unit}`,
@@ -497,7 +555,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   label="Edgeband"
                   placeholder="Select edgeband..."
                   value={boxEdgebandId}
-                  onChange={setBoxEdgebandId}
+                  onChange={handleBoxEdgebandChange}
                   options={edgebandMaterials.map((item) => ({
                     value: item.id,
                     label: `${item.concept_description} - ${item.dimensions} - ${formatCurrency(item.price)}/${item.unit}`,
@@ -655,7 +713,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   <h3 className="text-lg font-semibold text-slate-900">Doors & Drawer Fronts</h3>
                   {costs && costs.doorsMaterialCost > 0 && (
                     <span className="ml-2 text-sm font-medium text-blue-600">
-                      {formatCurrency(costs.doorsMaterialCost + costs.doorsEdgebandCost + costs.doorsInteriorFinishCost)}
+                      {formatCurrency(costs.doorsMaterialCost + costs.doorsEdgebandCost + costs.doorsInteriorFinishCost + costs.doorProfileCost)}
                     </span>
                   )}
                 </div>
@@ -670,7 +728,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   label="Material"
                   placeholder="Select material..."
                   value={doorsMaterialId}
-                  onChange={setDoorsMaterialId}
+                  onChange={handleDoorsMaterialChange}
                   options={sheetMaterials.map((item) => ({
                     value: item.id,
                     label: `${item.concept_description} - ${item.dimensions} - ${formatCurrency(item.price)}/${item.unit}`,
@@ -682,7 +740,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   label="Edgeband"
                   placeholder="Select edgeband..."
                   value={doorsEdgebandId}
-                  onChange={setDoorsEdgebandId}
+                  onChange={handleDoorsEdgebandChange}
                   options={edgebandMaterials.map((item) => ({
                     value: item.id,
                     label: `${item.concept_description} - ${item.dimensions} - ${formatCurrency(item.price)}/${item.unit}`,
@@ -740,6 +798,37 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     </div>
                   </div>
                 )}
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Door Profile <span className="text-slate-400 font-normal">(optional)</span>
+                  </label>
+                  {doorProfileMaterials.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic">
+                      No door profiles in price list. Add items with Type = "Door Profile" to enable this.
+                    </p>
+                  ) : (
+                    <>
+                      <AutocompleteSelect
+                        placeholder="Select door profile..."
+                        value={doorProfileId}
+                        onChange={setDoorProfileId}
+                        options={[
+                          { value: '', label: 'None' },
+                          ...doorProfileMaterials.map((item) => ({
+                            value: item.id,
+                            label: `${item.concept_description} - ${formatCurrency(item.price_with_tax || item.price)}/ML`,
+                          })),
+                        ]}
+                      />
+                      {doorProfileId && selectedProduct && (selectedProduct.doors_fronts_edgeband || 0) > 0 && costs && costs.doorProfileCost > 0 && (
+                        <p className="text-xs text-slate-500 mt-1">
+                          {((selectedProduct.doors_fronts_edgeband || 0) * quantity).toFixed(2)} ML × {formatCurrency((() => { const p = priceList.find(x => x.id === doorProfileId); return p ? (p.price_with_tax || p.price) : 0; })())}/ML = {formatCurrency(costs.doorProfileCost)}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
                 </div>
               )}
             </div>
@@ -993,6 +1082,12 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                       </span>
                     </div>
                   )}
+                  {costs.doorProfileCost > 0 && (
+                    <div className="flex justify-between bg-slate-50 -mx-2 px-2 py-1 rounded">
+                      <span className="text-slate-600">Door Profile:</span>
+                      <span className="font-medium">{formatCurrency(costs.doorProfileCost)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-slate-600">Hardware:</span>
                     <span className="font-medium">{formatCurrency(costs.hardwareCost)}</span>
@@ -1003,7 +1098,9 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600">
-                      Labor (${selectedProduct.has_drawers ? settings.laborCostWithDrawers : settings.laborCostNoDrawers} per cabinet):
+                      Labor ({selectedProduct.custom_labor_cost !== null && selectedProduct.custom_labor_cost !== undefined
+                        ? `$${selectedProduct.custom_labor_cost} custom`
+                        : `$${selectedProduct.has_drawers ? settings.laborCostWithDrawers : settings.laborCostNoDrawers} per cabinet`}):
                     </span>
                     <span className="font-medium">{formatCurrency(costs.laborCost)}</span>
                   </div>

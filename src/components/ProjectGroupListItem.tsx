@@ -1,21 +1,5 @@
 import { useState } from 'react';
-import {
-  ChevronDown,
-  ChevronUp,
-  Calendar,
-  MapPin,
-  Edit2,
-  Trash2,
-  Eye,
-  Copy,
-  MoreVertical,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  User,
-  Layers,
-  Unlink,
-} from 'lucide-react';
+import { ChevronDown, ChevronUp, Calendar, MapPin, Pencil as Edit2, Trash2, Eye, Copy, MoreVertical, AlertTriangle, CheckCircle2, XCircle, User, Layers, Unlink } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from './Button';
 import { formatCurrency } from '../lib/calculations';
@@ -60,19 +44,19 @@ export function ProjectGroupListItem({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Pending':
-        return 'bg-slate-100 text-slate-700';
-      case 'Estimating':
         return 'bg-blue-100 text-blue-700';
+      case 'Estimating':
+        return 'bg-orange-100 text-orange-700';
       case 'Sent':
-        return 'bg-purple-100 text-purple-700';
+        return 'bg-cyan-100 text-cyan-700';
       case 'Awarded':
         return 'bg-green-100 text-green-700';
       case 'Lost':
         return 'bg-red-100 text-red-700';
       case 'Disqualified':
-        return 'bg-orange-100 text-orange-700';
+        return 'bg-slate-100 text-slate-600';
       case 'Cancelled':
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-gray-100 text-gray-600';
       default:
         return 'bg-slate-100 text-slate-700';
     }
