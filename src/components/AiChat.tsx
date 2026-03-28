@@ -57,23 +57,29 @@ const SUGGESTIONS = [
 
 function formatInline(text: string, keyPrefix: string = ''): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
-  const regex = /(\*\*(.+?)\*\*|`([^`]+)`)/g;
-  let last = 0;
-  let match: RegExpExecArray | null;
-  let idx = 0;
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > last) {
-      parts.push(text.slice(last, match.index));
+  // Split by ** for bold, then handle backticks within each segment
+  const boldSegments = text.split('**');
+  boldSegments.forEach((segment, si) => {
+    if (segment === '') return;
+    // Odd indices are bold content
+    const isBold = si % 2 === 1;
+    // Handle backtick code within this segment
+    const codeParts = segment.split(/`([^`]+)`/);
+    const children: React.ReactNode[] = [];
+    codeParts.forEach((part, ci) => {
+      if (part === '') return;
+      if (ci % 2 === 1) {
+        children.push(<code key={`${keyPrefix}${si}c${ci}`} className="font-mono text-xs bg-slate-100 text-slate-700 px-1 py-0.5 rounded">{part}</code>);
+      } else {
+        children.push(part);
+      }
+    });
+    if (isBold) {
+      parts.push(<strong key={`${keyPrefix}b${si}`} className="font-semibold text-slate-900">{children}</strong>);
+    } else {
+      parts.push(...children);
     }
-    if (match[2]) {
-      parts.push(<strong key={`${keyPrefix}b${idx}`} className="font-semibold text-slate-900">{match[2]}</strong>);
-    } else if (match[3]) {
-      parts.push(<code key={`${keyPrefix}c${idx}`} className="font-mono text-xs bg-slate-100 text-slate-700 px-1 py-0.5 rounded">{match[3]}</code>);
-    }
-    last = match.index + match[0].length;
-    idx++;
-  }
-  if (last < text.length) parts.push(text.slice(last));
+  });
   return parts;
 }
 
