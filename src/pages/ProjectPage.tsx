@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
+import { ImportQuotationModal } from '../components/ImportQuotationModal';
 import { formatCurrency } from '../lib/calculations';
 import { useSettingsStore } from '../lib/settingsStore';
 import { ScheduleSection } from '../components/ScheduleSection';
@@ -37,6 +38,7 @@ export function ProjectPage() {
   // Management
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [managementLoaded, setManagementLoaded] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   useEffect(() => {
     if (!projectId) { navigate('/projects', { replace: true }); return; }
@@ -287,10 +289,15 @@ export function ProjectPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-900">{quotations.length} Quotation{quotations.length !== 1 ? 's' : ''}</h3>
-            <Button size="sm" onClick={handleNewQuotation}>
-              <Plus className="h-4 w-4 mr-1" />
-              New Quotation
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setImportModalOpen(true)}>
+                Import
+              </Button>
+              <Button size="sm" onClick={handleNewQuotation}>
+                <Plus className="h-4 w-4 mr-1" />
+                New Quotation
+              </Button>
+            </div>
           </div>
           {quotations.length === 0 ? (
             <div className="glass-white p-12 text-center">
@@ -360,6 +367,16 @@ export function ProjectPage() {
           <p className="text-slate-500">Compare quotation versions, track price changes, and visualize project evolution. Coming soon.</p>
         </div>
       )}
+
+      <ImportQuotationModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        projectId={project.id}
+        onSuccess={(quotationId) => {
+          setImportModalOpen(false);
+          navigate(`/projects/${project.id}/quotations/${quotationId}`);
+        }}
+      />
     </div>
   );
 }

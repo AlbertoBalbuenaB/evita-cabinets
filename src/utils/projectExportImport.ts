@@ -45,7 +45,11 @@ export interface ImportSummary {
   closetItemsImported: number;
 }
 
-export async function exportProjectToJSON(projectId: string): Promise<void> {
+export async function exportQuotationToJSON(quotationId: string): Promise<void> {
+  return exportProjectToJSON(quotationId);
+}
+
+async function exportProjectToJSON(projectId: string): Promise<void> {
   try {
     const { data: project, error: projectError } = await supabase
       .from('quotations')
@@ -125,9 +129,8 @@ export async function exportProjectToJSON(projectId: string): Promise<void> {
   }
 }
 
-export async function validateProjectImport(
-  file: File,
-  importMode: 'new' | 'version'
+export async function validateQuotationImport(
+  file: File
 ): Promise<ValidationResult> {
   try {
     if (file.size > 10 * 1024 * 1024) {
@@ -188,7 +191,7 @@ export async function validateProjectImport(
     const materialIds = extractMaterialIds(projectData);
     const warnings = await checkMaterialsAvailability(materialIds, projectData);
 
-    const newProjectName = await generateProjectName(projectData.project.name, importMode);
+    const newProjectName = projectData.project.name;
 
     return {
       isValid: true,
@@ -208,41 +211,39 @@ export async function validateProjectImport(
   }
 }
 
-export async function performProjectImport(
+export async function performQuotationImport(
   projectData: ProjectExport,
-  newProjectName: string,
-  importMode: 'new' | 'version' = 'new'
-): Promise<{ success: boolean; projectId: string; summary: ImportSummary; error?: string }> {
+  projectId: string,
+  versionLabel?: string
+): Promise<{ success: boolean; quotationId: string; summary: ImportSummary; error?: string }> {
   try {
     const { project, areas } = projectData;
 
-    let groupId: string;
+    // Auto-calculate version number
+    const { data: existing } = await supabase
+      .from('quotations')
+      .select('version_number')
+      .eq('project_id', projectId)
+      .order('version_number', { ascending: false })
+      .limit(1);
 
-    if (importMode === 'version') {
-      const baseName = project.name;
-      const { data: existingProjects } = await supabase
-        .from('quotations')
-        .select('group_id')
-        .ilike('name', `${baseName}%`)
-        .not('group_id', 'is', null)
-        .limit(1);
+    const nextVersion = (existing?.[0]?.version_number ?? 0) + 1;
+    const label = versionLabel || `v${nextVersion}`;
 
-      if (existingProjects && existingProjects.length > 0 && existingProjects[0].group_id) {
-        groupId = existingProjects[0].group_id;
-      } else {
-        groupId = crypto.randomUUID();
-      }
-    } else {
-      groupId = crypto.randomUUID();
-    }
+    // Get project hub for name
+    const { data: hub } = await supabase.from('projects').select('name').eq('id', projectId).single();
+    const hubName = hub?.name || project.name;
 
-    const projectInsert = {
-      name: newProjectName,
+    const quotationInsert = {
+      project_id: projectId,
+      name: `${hubName} - ${label}`,
+      version_label: label,
+      version_number: nextVersion,
       customer: project.customer,
       address: project.address,
       project_type: project.project_type,
-      status: project.status,
-      quote_date: project.quote_date,
+      status: 'Estimating',
+      quote_date: new Date().toISOString().split('T')[0],
       other_expenses: project.other_expenses || 0,
       other_expenses_label: project.other_expenses_label || 'Other Expenses',
       profit_multiplier: project.profit_multiplier || 0,
@@ -255,17 +256,16 @@ export async function performProjectImport(
       project_brief: project.project_brief,
       disclaimer_tariff_info: project.disclaimer_tariff_info,
       disclaimer_price_validity: project.disclaimer_price_validity,
-      group_id: groupId,
     };
 
-    const { data: newProject, error: projectError } = await supabase
+    const { data: newQuotation, error: quotationError } = await supabase
       .from('quotations')
-      .insert([projectInsert])
+      .insert([quotationInsert])
       .select()
       .single();
 
-    if (projectError || !newProject) {
-      throw new Error(`Failed to create project: ${projectError?.message || 'Unknown error'}`);
+    if (quotationError || !newQuotation) {
+      throw new Error(`Failed to create quotation: ${quotationError?.message || 'Unknown error'}`);
     }
 
     let totalCabinets = 0;
@@ -277,7 +277,7 @@ export async function performProjectImport(
       const { area, cabinets, items, countertops, closetItems = [] } = areaData;
 
       const areaInsert = {
-        project_id: newProject.id,
+        project_id: newQuotation.id,
         name: area.name,
         display_order: area.display_order,
         applies_tariff: area.applies_tariff ?? true,
@@ -377,7 +377,7 @@ export async function performProjectImport(
 
     return {
       success: true,
-      projectId: newProject.id,
+      quotationId: newQuotation.id,
       summary: {
         areasImported: areas.length,
         cabinetsImported: totalCabinets,
@@ -390,7 +390,7 @@ export async function performProjectImport(
     console.error('Import error:', error);
     return {
       success: false,
-      projectId: '',
+      quotationId: '',
       summary: {
         areasImported: 0,
         cabinetsImported: 0,
@@ -402,6 +402,55 @@ export async function performProjectImport(
     };
   }
 }
+
+/** Creates a project hub + imports the first quotation into it */
+export async function createProjectWithFirstQuotation(
+  projectData: ProjectExport,
+  projectName: string
+): Promise<{ success: boolean; projectId: string; quotationId: string; summary: ImportSummary; error?: string }> {
+  try {
+    const srcProject = projectData.project;
+
+    const { data: hub, error: hubError } = await supabase
+      .from('projects')
+      .insert({
+        name: projectName,
+        customer: srcProject.customer,
+        address: srcProject.address,
+        project_type: srcProject.project_type,
+        project_details: srcProject.project_details,
+        project_brief: srcProject.project_brief,
+      })
+      .select('id')
+      .single();
+
+    if (hubError || !hub) {
+      throw new Error(`Failed to create project: ${hubError?.message || 'Unknown error'}`);
+    }
+
+    const result = await performQuotationImport(projectData, hub.id, 'Original');
+
+    return {
+      success: result.success,
+      projectId: hub.id,
+      quotationId: result.quotationId,
+      summary: result.summary,
+      error: result.error,
+    };
+  } catch (error) {
+    console.error('Create project + import error:', error);
+    return {
+      success: false,
+      projectId: '',
+      quotationId: '',
+      summary: { areasImported: 0, cabinetsImported: 0, itemsImported: 0, countertopsImported: 0, closetItemsImported: 0 },
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/** @deprecated Use performQuotationImport */
+export const performProjectImport = performQuotationImport as any;
 
 function validateExportStructure(data: any): boolean {
   return (
@@ -647,3 +696,6 @@ export function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 }
+
+/** @deprecated Use validateQuotationImport */
+export const validateProjectImport = validateQuotationImport;

@@ -36,7 +36,7 @@ import { ProjectVersionHistory } from './ProjectVersionHistory';
 import { FloatingActionBar } from '../components/FloatingActionBar';
 import { ProductFormModal } from '../components/ProductFormModal';
 import type { ProductInsert } from '../types';
-import { exportProjectToJSON } from '../utils/projectExportImport';
+import { exportQuotationToJSON } from '../utils/projectExportImport';
 import { ScheduleSection } from '../components/ScheduleSection';
 import { TasksSection } from '../components/TasksSection';
 import { DocumentationSection } from '../components/DocumentationSection';
@@ -684,7 +684,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     }
 
     try {
-      await exportProjectToJSON(project.id);
+      await exportQuotationToJSON(project.id);
     } catch (error) {
       console.error('Export error:', error);
       alert('Failed to export project. Please try again.');
