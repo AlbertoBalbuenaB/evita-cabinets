@@ -158,10 +158,10 @@ export function ProjectCharts({ areas, products }: ProjectChartsProps) {
       const { boxes } = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
       return sum + boxes * (area.quantity ?? 1);
     }, 0);
-    const totalPallets = areas.reduce((sum, area) => {
-      const { pallets } = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
-      return sum + pallets * (area.quantity ?? 1);
-    }, 0);
+    const totalPallets = Math.ceil(areas.reduce((sum, area) => {
+      const { palletsRaw } = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
+      return sum + palletsRaw * (area.quantity ?? 1);
+    }, 0));
 
     return {
       areasCosts,

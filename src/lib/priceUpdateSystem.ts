@@ -594,7 +594,7 @@ export async function recalculateClosetItemsForExchangeRate(newRate: number): Pr
 
 export async function markAllProjectsStale(): Promise<void> {
   const { data: projects, error } = await supabase
-    .from('projects')
+    .from('quotations')
     .select('id');
 
   if (error || !projects || projects.length === 0) return;

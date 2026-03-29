@@ -165,7 +165,7 @@ function parseCSVLine(line: string): string[] {
 export async function clearAllData(): Promise<void> {
   await supabase.from('area_cabinets').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabase.from('project_areas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  await supabase.from('projects').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('quotations').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabase.from('products_catalog').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   await supabase.from('price_list').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 }

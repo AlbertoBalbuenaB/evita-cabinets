@@ -1,43 +1,43 @@
-import type { Project } from '../types';
+import type { Quotation } from '../types';
 
 export interface ProjectGroup {
   groupId: string;
-  projects: Project[];
-  primaryProject: Project;
+  projects: Quotation[];
+  primaryProject: Quotation;
   versionCount: number;
   totalValue: number;
   latestDate: string;
 }
 
-export function groupProjectsByGroupId(projects: Project[]): ProjectGroup[] {
-  const groupsMap = new Map<string, Project[]>();
+export function groupProjectsByGroupId(quotations: Quotation[]): ProjectGroup[] {
+  const groupsMap = new Map<string, Quotation[]>();
 
-  projects.forEach(project => {
-    const key = project.group_id || project.id;
+  quotations.forEach(q => {
+    const key = q.project_id;
 
     if (!groupsMap.has(key)) {
       groupsMap.set(key, []);
     }
 
-    groupsMap.get(key)!.push(project);
+    groupsMap.get(key)!.push(q);
   });
 
   const groups: ProjectGroup[] = [];
 
-  groupsMap.forEach((projectsInGroup, groupId) => {
-    const sortedProjects = projectsInGroup.sort((a, b) =>
+  groupsMap.forEach((quotationsInGroup, groupId) => {
+    const sortedQuotations = quotationsInGroup.sort((a, b) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
-    const primaryProject = sortedProjects[0];
-    const totalValue = projectsInGroup.reduce((sum, p) => sum + p.total_amount, 0);
-    const latestDate = sortedProjects[0].created_at;
+    const primaryQuotation = sortedQuotations[0];
+    const totalValue = quotationsInGroup.reduce((sum, q) => sum + q.total_amount, 0);
+    const latestDate = sortedQuotations[0].created_at;
 
     groups.push({
       groupId,
-      projects: sortedProjects,
-      primaryProject,
-      versionCount: projectsInGroup.length,
+      projects: sortedQuotations,
+      primaryProject: primaryQuotation,
+      versionCount: quotationsInGroup.length,
       totalValue,
       latestDate,
     });
@@ -48,25 +48,6 @@ export function groupProjectsByGroupId(projects: Project[]): ProjectGroup[] {
   );
 }
 
-export function getProjectVersionNumber(project: Project, allProjects: Project[]): number {
-  if (!project.group_id) return 1;
-
-  const groupProjects = allProjects
-    .filter(p => p.group_id === project.group_id)
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-
-  const index = groupProjects.findIndex(p => p.id === project.id);
-  return index + 1;
-}
-
-export function extractBaseName(projectName: string): string {
-  const versionPattern = / - v\d+$/;
-  const copyPattern = / \(Copy\)$/;
-  const importedPattern = / \(Imported\)$/;
-
-  return projectName
-    .replace(versionPattern, '')
-    .replace(copyPattern, '')
-    .replace(importedPattern, '')
-    .trim();
+export function getProjectVersionNumber(quotation: Quotation, allQuotations: Quotation[]): number {
+  return quotation.version_number ?? 1;
 }

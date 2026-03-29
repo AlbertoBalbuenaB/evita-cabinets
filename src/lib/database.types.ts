@@ -4,646 +4,1716 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
+  | Json[]
 
-export interface Database {
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
+  }
   public: {
     Tables: {
-      products_catalog: {
+      ai_chat_sessions: {
         Row: {
-          id: string;
-          sku: string;
-          description: string;
-          box_sf: number;
-          box_edgeband: number | null;
-          box_edgeband_color: number | null;
-          doors_fronts_sf: number;
-          doors_fronts_edgeband: number | null;
-          total_edgeband: number;
-          has_drawers: boolean;
-          is_active: boolean;
-          original_box_sf: number | null;
-          original_doors_fronts_sf: number | null;
-          waste_applied: boolean | null;
-          custom_labor_cost: number | null;
-          boxes_per_unit: number;
-          default_is_rta: boolean;
-          created_at: string;
-          updated_at: string;
-        };
+          created_at: string | null
+          id: string
+          messages: Json
+          session_key: string
+          title: string
+        }
         Insert: {
-          id?: string;
-          sku: string;
-          description: string;
-          box_sf: number;
-          box_edgeband?: number | null;
-          box_edgeband_color?: number | null;
-          doors_fronts_sf: number;
-          doors_fronts_edgeband?: number | null;
-          total_edgeband: number;
-          has_drawers?: boolean;
-          is_active?: boolean;
-          original_box_sf?: number | null;
-          original_doors_fronts_sf?: number | null;
-          waste_applied?: boolean | null;
-          custom_labor_cost?: number | null;
-          boxes_per_unit?: number;
-          default_is_rta?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
+          created_at?: string | null
+          id?: string
+          messages?: Json
+          session_key?: string
+          title?: string
+        }
         Update: {
-          id?: string;
-          sku?: string;
-          description?: string;
-          box_sf?: number;
-          box_edgeband?: number | null;
-          box_edgeband_color?: number | null;
-          doors_fronts_sf?: number;
-          doors_fronts_edgeband?: number | null;
-          total_edgeband?: number;
-          has_drawers?: boolean;
-          is_active?: boolean;
-          original_box_sf?: number | null;
-          original_doors_fronts_sf?: number | null;
-          waste_applied?: boolean | null;
-          custom_labor_cost?: number | null;
-          boxes_per_unit?: number;
-          default_is_rta?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      price_list: {
-        Row: {
-          id: string;
-          sku_code: string | null;
-          concept_description: string;
-          type: string;
-          material: string | null;
-          dimensions: string | null;
-          unit: string;
-          price: number;
-          sf_per_sheet: number | null;
-          tax_rate: number | null;
-          base_price: number | null;
-          price_with_tax: number | null;
-          product_url: string | null;
-          image_url: string | null;
-          notes: string | null;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-          price_last_updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          sku_code?: string | null;
-          concept_description: string;
-          type: string;
-          material?: string | null;
-          dimensions?: string | null;
-          unit: string;
-          price: number;
-          sf_per_sheet?: number | null;
-          tax_rate?: number | null;
-          base_price?: number | null;
-          price_with_tax?: number | null;
-          product_url?: string | null;
-          image_url?: string | null;
-          notes?: string | null;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-          price_last_updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          sku_code?: string | null;
-          concept_description?: string;
-          type?: string;
-          material?: string | null;
-          dimensions?: string | null;
-          unit?: string;
-          price?: number;
-          sf_per_sheet?: number | null;
-          tax_rate?: number | null;
-          base_price?: number | null;
-          price_with_tax?: number | null;
-          product_url?: string | null;
-          image_url?: string | null;
-          notes?: string | null;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-          price_last_updated_at?: string;
-        };
-      };
-      projects: {
-        Row: {
-          id: string;
-          name: string;
-          customer: string | null;
-          address: string | null;
-          quote_date: string;
-          total_amount: number;
-          status: string;
-          project_type: string;
-          other_expenses: number;
-          other_expenses_label: string | null;
-          tariff_multiplier: number;
-          profit_multiplier: number;
-          tax_percentage: number;
-          install_delivery: number;
-          install_delivery_usd: number;
-          install_delivery_per_box_usd: number;
-          referral_currency_rate: number;
-          project_details: string | null;
-          project_brief: string | null;
-          disclaimer_tariff_info: string | null;
-          disclaimer_price_validity: string | null;
-          group_id: string | null;
-          pdf_project_name: string | null;
-          pdf_customer: string | null;
-          pdf_address: string | null;
-          pdf_project_brief: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          customer?: string | null;
-          address?: string | null;
-          quote_date?: string;
-          total_amount?: number;
-          status?: string;
-          project_type?: string;
-          other_expenses?: number;
-          other_expenses_label?: string | null;
-          tariff_multiplier?: number;
-          profit_multiplier?: number;
-          tax_percentage?: number;
-          install_delivery?: number;
-          install_delivery_usd?: number;
-          install_delivery_per_box_usd?: number;
-          referral_currency_rate?: number;
-          project_details?: string | null;
-          project_brief?: string | null;
-          disclaimer_tariff_info?: string | null;
-          disclaimer_price_validity?: string | null;
-          group_id?: string | null;
-          pdf_project_name?: string | null;
-          pdf_customer?: string | null;
-          pdf_address?: string | null;
-          pdf_project_brief?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          customer?: string | null;
-          address?: string | null;
-          quote_date?: string;
-          total_amount?: number;
-          status?: string;
-          project_type?: string;
-          other_expenses?: number;
-          other_expenses_label?: string | null;
-          tariff_multiplier?: number;
-          profit_multiplier?: number;
-          tax_percentage?: number;
-          install_delivery?: number;
-          install_delivery_usd?: number;
-          install_delivery_per_box_usd?: number;
-          referral_currency_rate?: number;
-          project_details?: string | null;
-          project_brief?: string | null;
-          disclaimer_tariff_info?: string | null;
-          disclaimer_price_validity?: string | null;
-          group_id?: string | null;
-          pdf_project_name?: string | null;
-          pdf_customer?: string | null;
-          pdf_address?: string | null;
-          pdf_project_brief?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      project_areas: {
-        Row: {
-          id: string;
-          project_id: string;
-          name: string;
-          display_order: number;
-          subtotal: number;
-          applies_tariff: boolean;
-          quantity: number;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          project_id: string;
-          name: string;
-          display_order?: number;
-          subtotal?: number;
-          applies_tariff?: boolean;
-          quantity?: number;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          project_id?: string;
-          name?: string;
-          display_order?: number;
-          subtotal?: number;
-          applies_tariff?: boolean;
-          quantity?: number;
-          created_at?: string;
-        };
-      };
-      settings: {
-        Row: {
-          id: string;
-          key: string;
-          value: string;
-          category: string;
-          description: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          key: string;
-          value: string;
-          category: string;
-          description?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          key?: string;
-          value?: string;
-          category?: string;
-          description?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      team_members: {
-        Row: {
-          id: string;
-          name: string;
-          role: string | null;
-          email: string | null;
-          display_order: number;
-          is_active: boolean;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          role?: string | null;
-          email?: string | null;
-          display_order?: number;
-          is_active?: boolean;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          role?: string | null;
-          email?: string | null;
-          display_order?: number;
-          is_active?: boolean;
-          created_at?: string;
-        };
-      };
-      project_documents: {
-        Row: {
-          id: string;
-          project_id: string;
-          label: string;
-          url: string;
-          display_order: number;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          project_id: string;
-          label: string;
-          url?: string;
-          display_order?: number;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          project_id?: string;
-          label?: string;
-          url?: string;
-          display_order?: number;
-          created_at?: string;
-        };
-      };
-      project_tasks: {
-        Row: {
-          id: string;
-          project_id: string;
-          title: string;
-          details: string | null;
-          due_date: string | null;
-          assignee_id: string | null;
-          status: string;
-          display_order: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          project_id: string;
-          title: string;
-          details?: string | null;
-          due_date?: string | null;
-          assignee_id?: string | null;
-          status?: string;
-          display_order?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          project_id?: string;
-          title?: string;
-          details?: string | null;
-          due_date?: string | null;
-          assignee_id?: string | null;
-          status?: string;
-          display_order?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      project_activities: {
-        Row: {
-          id: string;
-          project_id: string;
-          name: string;
-          start_date: string;
-          end_date: string;
-          display_order: number;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          project_id: string;
-          name: string;
-          start_date: string;
-          end_date: string;
-          display_order?: number;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          project_id?: string;
-          name?: string;
-          start_date?: string;
-          end_date?: string;
-          display_order?: number;
-          created_at?: string;
-        };
-      };
-      project_logs: {
-        Row: {
-          id: string;
-          project_id: string;
-          comment: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          project_id: string;
-          comment: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          project_id?: string;
-          comment?: string;
-          created_at?: string;
-        };
-      };
-      closet_catalog: {
-        Row: {
-          id: string;
-          cabinet_code: string;
-          evita_line: string;
-          description: string;
-          height_in: number;
-          width_in: number;
-          depth_in: number;
-          price_with_backs_usd: number | null;
-          price_without_backs_usd: number | null;
-          has_backs_option: boolean;
-          boxes_count: number;
-          dimensions_locked: boolean;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          cabinet_code: string;
-          evita_line: string;
-          description: string;
-          height_in: number;
-          width_in: number;
-          depth_in: number;
-          price_with_backs_usd?: number | null;
-          price_without_backs_usd?: number | null;
-          has_backs_option?: boolean;
-          boxes_count?: number;
-          dimensions_locked?: boolean;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          cabinet_code?: string;
-          evita_line?: string;
-          description?: string;
-          height_in?: number;
-          width_in?: number;
-          depth_in?: number;
-          price_with_backs_usd?: number | null;
-          price_without_backs_usd?: number | null;
-          has_backs_option?: boolean;
-          boxes_count?: number;
-          dimensions_locked?: boolean;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      area_closet_items: {
-        Row: {
-          id: string;
-          area_id: string;
-          closet_catalog_id: string;
-          quantity: number;
-          with_backs: boolean;
-          unit_price_usd: number;
-          unit_price_mxn: number;
-          hardware: import('./database.types').Json;
-          hardware_cost: number;
-          subtotal_mxn: number;
-          boxes_count: number;
-          notes: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          area_id: string;
-          closet_catalog_id: string;
-          quantity?: number;
-          with_backs?: boolean;
-          unit_price_usd?: number;
-          unit_price_mxn?: number;
-          hardware?: import('./database.types').Json;
-          hardware_cost?: number;
-          subtotal_mxn?: number;
-          boxes_count?: number;
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          area_id?: string;
-          closet_catalog_id?: string;
-          quantity?: number;
-          with_backs?: boolean;
-          unit_price_usd?: number;
-          unit_price_mxn?: number;
-          hardware?: import('./database.types').Json;
-          hardware_cost?: number;
-          subtotal_mxn?: number;
-          boxes_count?: number;
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
+          created_at?: string | null
+          id?: string
+          messages?: Json
+          session_key?: string
+          title?: string
+        }
+        Relationships: []
+      }
       area_cabinets: {
         Row: {
-          id: string;
-          area_id: string;
-          product_sku: string | null;
-          quantity: number;
-          box_material_id: string | null;
-          box_edgeband_id: string | null;
-          box_interior_finish_id: string | null;
-          doors_material_id: string | null;
-          doors_edgeband_id: string | null;
-          doors_interior_finish_id: string | null;
-          hardware: Json;
-          accessories: Json;
-          box_material_cost: number;
-          box_edgeband_cost: number;
-          box_interior_finish_cost: number;
-          doors_material_cost: number;
-          doors_edgeband_cost: number;
-          doors_interior_finish_cost: number;
-          hardware_cost: number;
-          accessories_cost: number;
-          labor_cost: number;
-          subtotal: number;
-          created_at: string;
-          is_rta: boolean;
-          use_back_panel_material: boolean;
-          back_panel_material_id: string | null;
-          back_panel_width_inches: number | null;
-          back_panel_height_inches: number | null;
-          back_panel_sf: number;
-          back_panel_material_cost: number;
-          original_back_panel_material_price: number | null;
-          door_profile_id: string | null;
-          door_profile_cost: number;
-        };
+          accessories: Json
+          accessories_cost: number
+          area_id: string
+          back_panel_height_inches: number | null
+          back_panel_material_cost: number | null
+          back_panel_material_id: string | null
+          back_panel_sf: number | null
+          back_panel_width_inches: number | null
+          box_edgeband_cost: number | null
+          box_edgeband_id: string | null
+          box_interior_finish_cost: number | null
+          box_interior_finish_id: string | null
+          box_material_cost: number | null
+          box_material_id: string | null
+          created_at: string | null
+          display_order: number | null
+          door_profile_cost: number
+          door_profile_id: string | null
+          doors_edgeband_cost: number | null
+          doors_edgeband_id: string | null
+          doors_interior_finish_cost: number | null
+          doors_interior_finish_id: string | null
+          doors_material_cost: number | null
+          doors_material_id: string | null
+          hardware: Json | null
+          hardware_cost: number | null
+          id: string
+          is_rta: boolean
+          labor_cost: number | null
+          original_back_panel_material_price: number | null
+          original_box_edgeband_price: number | null
+          original_box_interior_finish_price: number | null
+          original_box_material_price: number | null
+          original_doors_edgeband_price: number | null
+          original_doors_interior_finish_price: number | null
+          original_doors_material_price: number | null
+          product_sku: string | null
+          quantity: number
+          subtotal: number | null
+          use_back_panel_material: boolean | null
+        }
         Insert: {
-          id?: string;
-          area_id: string;
-          product_sku?: string | null;
-          quantity?: number;
-          box_material_id?: string | null;
-          box_edgeband_id?: string | null;
-          box_interior_finish_id?: string | null;
-          doors_material_id?: string | null;
-          doors_edgeband_id?: string | null;
-          doors_interior_finish_id?: string | null;
-          hardware?: Json;
-          accessories?: Json;
-          box_material_cost?: number;
-          box_edgeband_cost?: number;
-          box_interior_finish_cost?: number;
-          doors_material_cost?: number;
-          doors_edgeband_cost?: number;
-          doors_interior_finish_cost?: number;
-          hardware_cost?: number;
-          accessories_cost?: number;
-          labor_cost?: number;
-          subtotal?: number;
-          created_at?: string;
-          is_rta?: boolean;
-          use_back_panel_material?: boolean;
-          back_panel_material_id?: string | null;
-          back_panel_width_inches?: number | null;
-          back_panel_height_inches?: number | null;
-          back_panel_sf?: number;
-          back_panel_material_cost?: number;
-          original_back_panel_material_price?: number | null;
-          door_profile_id?: string | null;
-          door_profile_cost?: number;
-        };
+          accessories?: Json
+          accessories_cost?: number
+          area_id: string
+          back_panel_height_inches?: number | null
+          back_panel_material_cost?: number | null
+          back_panel_material_id?: string | null
+          back_panel_sf?: number | null
+          back_panel_width_inches?: number | null
+          box_edgeband_cost?: number | null
+          box_edgeband_id?: string | null
+          box_interior_finish_cost?: number | null
+          box_interior_finish_id?: string | null
+          box_material_cost?: number | null
+          box_material_id?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          door_profile_cost?: number
+          door_profile_id?: string | null
+          doors_edgeband_cost?: number | null
+          doors_edgeband_id?: string | null
+          doors_interior_finish_cost?: number | null
+          doors_interior_finish_id?: string | null
+          doors_material_cost?: number | null
+          doors_material_id?: string | null
+          hardware?: Json | null
+          hardware_cost?: number | null
+          id?: string
+          is_rta?: boolean
+          labor_cost?: number | null
+          original_back_panel_material_price?: number | null
+          original_box_edgeband_price?: number | null
+          original_box_interior_finish_price?: number | null
+          original_box_material_price?: number | null
+          original_doors_edgeband_price?: number | null
+          original_doors_interior_finish_price?: number | null
+          original_doors_material_price?: number | null
+          product_sku?: string | null
+          quantity?: number
+          subtotal?: number | null
+          use_back_panel_material?: boolean | null
+        }
         Update: {
-          id?: string;
-          area_id?: string;
-          product_sku?: string | null;
-          quantity?: number;
-          box_material_id?: string | null;
-          box_edgeband_id?: string | null;
-          box_interior_finish_id?: string | null;
-          doors_material_id?: string | null;
-          doors_edgeband_id?: string | null;
-          doors_interior_finish_id?: string | null;
-          hardware?: Json;
-          accessories?: Json;
-          box_material_cost?: number;
-          box_edgeband_cost?: number;
-          box_interior_finish_cost?: number;
-          doors_material_cost?: number;
-          doors_edgeband_cost?: number;
-          doors_interior_finish_cost?: number;
-          hardware_cost?: number;
-          accessories_cost?: number;
-          labor_cost?: number;
-          subtotal?: number;
-          created_at?: string;
-          is_rta?: boolean;
-          use_back_panel_material?: boolean;
-          back_panel_material_id?: string | null;
-          back_panel_width_inches?: number | null;
-          back_panel_height_inches?: number | null;
-          back_panel_sf?: number;
-          back_panel_material_cost?: number;
-          original_back_panel_material_price?: number | null;
-          door_profile_id?: string | null;
-          door_profile_cost?: number;
-        };
-      };
-    };
-  };
+          accessories?: Json
+          accessories_cost?: number
+          area_id?: string
+          back_panel_height_inches?: number | null
+          back_panel_material_cost?: number | null
+          back_panel_material_id?: string | null
+          back_panel_sf?: number | null
+          back_panel_width_inches?: number | null
+          box_edgeband_cost?: number | null
+          box_edgeband_id?: string | null
+          box_interior_finish_cost?: number | null
+          box_interior_finish_id?: string | null
+          box_material_cost?: number | null
+          box_material_id?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          door_profile_cost?: number
+          door_profile_id?: string | null
+          doors_edgeband_cost?: number | null
+          doors_edgeband_id?: string | null
+          doors_interior_finish_cost?: number | null
+          doors_interior_finish_id?: string | null
+          doors_material_cost?: number | null
+          doors_material_id?: string | null
+          hardware?: Json | null
+          hardware_cost?: number | null
+          id?: string
+          is_rta?: boolean
+          labor_cost?: number | null
+          original_back_panel_material_price?: number | null
+          original_box_edgeband_price?: number | null
+          original_box_interior_finish_price?: number | null
+          original_box_material_price?: number | null
+          original_doors_edgeband_price?: number | null
+          original_doors_interior_finish_price?: number | null
+          original_doors_material_price?: number | null
+          product_sku?: string | null
+          quantity?: number
+          subtotal?: number | null
+          use_back_panel_material?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "area_cabinets_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "project_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_cabinets_back_panel_material_id_fkey"
+            columns: ["back_panel_material_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_cabinets_box_edgeband_id_fkey"
+            columns: ["box_edgeband_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_cabinets_box_interior_finish_id_fkey"
+            columns: ["box_interior_finish_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_cabinets_box_material_id_fkey"
+            columns: ["box_material_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_cabinets_doors_edgeband_id_fkey"
+            columns: ["doors_edgeband_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_cabinets_doors_interior_finish_id_fkey"
+            columns: ["doors_interior_finish_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_cabinets_doors_material_id_fkey"
+            columns: ["doors_material_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_cabinets_product_sku_fkey"
+            columns: ["product_sku"]
+            isOneToOne: false
+            referencedRelation: "products_catalog"
+            referencedColumns: ["sku"]
+          },
+        ]
+      }
+      area_closet_items: {
+        Row: {
+          area_id: string
+          boxes_count: number
+          closet_catalog_id: string
+          created_at: string | null
+          hardware: Json | null
+          hardware_cost: number
+          id: string
+          notes: string | null
+          quantity: number
+          subtotal_mxn: number
+          unit_price_mxn: number
+          unit_price_usd: number
+          updated_at: string | null
+          with_backs: boolean
+        }
+        Insert: {
+          area_id: string
+          boxes_count?: number
+          closet_catalog_id: string
+          created_at?: string | null
+          hardware?: Json | null
+          hardware_cost?: number
+          id?: string
+          notes?: string | null
+          quantity?: number
+          subtotal_mxn?: number
+          unit_price_mxn?: number
+          unit_price_usd?: number
+          updated_at?: string | null
+          with_backs?: boolean
+        }
+        Update: {
+          area_id?: string
+          boxes_count?: number
+          closet_catalog_id?: string
+          created_at?: string | null
+          hardware?: Json | null
+          hardware_cost?: number
+          id?: string
+          notes?: string | null
+          quantity?: number
+          subtotal_mxn?: number
+          unit_price_mxn?: number
+          unit_price_usd?: number
+          updated_at?: string | null
+          with_backs?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "area_closet_items_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "project_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_closet_items_closet_catalog_id_fkey"
+            columns: ["closet_catalog_id"]
+            isOneToOne: false
+            referencedRelation: "closet_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      area_countertops: {
+        Row: {
+          area_id: string
+          created_at: string | null
+          id: string
+          item_name: string
+          notes: string | null
+          price_list_item_id: string
+          quantity: number
+          subtotal: number
+          unit_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          area_id: string
+          created_at?: string | null
+          id?: string
+          item_name: string
+          notes?: string | null
+          price_list_item_id: string
+          quantity?: number
+          subtotal?: number
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Update: {
+          area_id?: string
+          created_at?: string | null
+          id?: string
+          item_name?: string
+          notes?: string | null
+          price_list_item_id?: string
+          quantity?: number
+          subtotal?: number
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "area_countertops_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "project_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_countertops_price_list_item_id_fkey"
+            columns: ["price_list_item_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      area_items: {
+        Row: {
+          area_id: string
+          created_at: string | null
+          id: string
+          item_name: string
+          notes: string | null
+          price_list_item_id: string
+          quantity: number
+          subtotal: number
+          unit_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          area_id: string
+          created_at?: string | null
+          id?: string
+          item_name: string
+          notes?: string | null
+          price_list_item_id: string
+          quantity?: number
+          subtotal?: number
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Update: {
+          area_id?: string
+          created_at?: string | null
+          id?: string
+          item_name?: string
+          notes?: string | null
+          price_list_item_id?: string
+          quantity?: number
+          subtotal?: number
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "area_items_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "project_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_items_price_list_item_id_fkey"
+            columns: ["price_list_item_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cabinet_templates: {
+        Row: {
+          accessories: Json
+          back_panel_height_inches: number | null
+          back_panel_material_id: string | null
+          back_panel_material_name: string | null
+          back_panel_width_inches: number | null
+          box_edgeband_id: string | null
+          box_edgeband_name: string | null
+          box_interior_finish_id: string | null
+          box_interior_finish_name: string | null
+          box_material_id: string | null
+          box_material_name: string | null
+          category: string
+          created_at: string | null
+          description: string | null
+          door_profile_id: string | null
+          door_profile_name: string | null
+          doors_edgeband_id: string | null
+          doors_edgeband_name: string | null
+          doors_interior_finish_id: string | null
+          doors_interior_finish_name: string | null
+          doors_material_id: string | null
+          doors_material_name: string | null
+          hardware: Json | null
+          id: string
+          is_rta: boolean | null
+          last_used_at: string | null
+          name: string
+          original_back_panel_material_price: number | null
+          original_box_edgeband_price: number | null
+          original_box_interior_finish_price: number | null
+          original_box_material_price: number | null
+          original_doors_edgeband_price: number | null
+          original_doors_interior_finish_price: number | null
+          original_doors_material_price: number | null
+          product_description: string | null
+          product_sku: string | null
+          updated_at: string | null
+          usage_count: number | null
+          use_back_panel_material: boolean | null
+          use_box_interior_finish: boolean | null
+          use_doors_interior_finish: boolean | null
+        }
+        Insert: {
+          accessories?: Json
+          back_panel_height_inches?: number | null
+          back_panel_material_id?: string | null
+          back_panel_material_name?: string | null
+          back_panel_width_inches?: number | null
+          box_edgeband_id?: string | null
+          box_edgeband_name?: string | null
+          box_interior_finish_id?: string | null
+          box_interior_finish_name?: string | null
+          box_material_id?: string | null
+          box_material_name?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          door_profile_id?: string | null
+          door_profile_name?: string | null
+          doors_edgeband_id?: string | null
+          doors_edgeband_name?: string | null
+          doors_interior_finish_id?: string | null
+          doors_interior_finish_name?: string | null
+          doors_material_id?: string | null
+          doors_material_name?: string | null
+          hardware?: Json | null
+          id?: string
+          is_rta?: boolean | null
+          last_used_at?: string | null
+          name: string
+          original_back_panel_material_price?: number | null
+          original_box_edgeband_price?: number | null
+          original_box_interior_finish_price?: number | null
+          original_box_material_price?: number | null
+          original_doors_edgeband_price?: number | null
+          original_doors_interior_finish_price?: number | null
+          original_doors_material_price?: number | null
+          product_description?: string | null
+          product_sku?: string | null
+          updated_at?: string | null
+          usage_count?: number | null
+          use_back_panel_material?: boolean | null
+          use_box_interior_finish?: boolean | null
+          use_doors_interior_finish?: boolean | null
+        }
+        Update: {
+          accessories?: Json
+          back_panel_height_inches?: number | null
+          back_panel_material_id?: string | null
+          back_panel_material_name?: string | null
+          back_panel_width_inches?: number | null
+          box_edgeband_id?: string | null
+          box_edgeband_name?: string | null
+          box_interior_finish_id?: string | null
+          box_interior_finish_name?: string | null
+          box_material_id?: string | null
+          box_material_name?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          door_profile_id?: string | null
+          door_profile_name?: string | null
+          doors_edgeband_id?: string | null
+          doors_edgeband_name?: string | null
+          doors_interior_finish_id?: string | null
+          doors_interior_finish_name?: string | null
+          doors_material_id?: string | null
+          doors_material_name?: string | null
+          hardware?: Json | null
+          id?: string
+          is_rta?: boolean | null
+          last_used_at?: string | null
+          name?: string
+          original_back_panel_material_price?: number | null
+          original_box_edgeband_price?: number | null
+          original_box_interior_finish_price?: number | null
+          original_box_material_price?: number | null
+          original_doors_edgeband_price?: number | null
+          original_doors_interior_finish_price?: number | null
+          original_doors_material_price?: number | null
+          product_description?: string | null
+          product_sku?: string | null
+          updated_at?: string | null
+          usage_count?: number | null
+          use_back_panel_material?: boolean | null
+          use_box_interior_finish?: boolean | null
+          use_doors_interior_finish?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cabinet_templates_back_panel_material_id_fkey"
+            columns: ["back_panel_material_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabinet_templates_box_edgeband_id_fkey"
+            columns: ["box_edgeband_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabinet_templates_box_interior_finish_id_fkey"
+            columns: ["box_interior_finish_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabinet_templates_box_material_id_fkey"
+            columns: ["box_material_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabinet_templates_doors_edgeband_id_fkey"
+            columns: ["doors_edgeband_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabinet_templates_doors_interior_finish_id_fkey"
+            columns: ["doors_interior_finish_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabinet_templates_doors_material_id_fkey"
+            columns: ["doors_material_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabinet_templates_product_sku_fkey"
+            columns: ["product_sku"]
+            isOneToOne: false
+            referencedRelation: "products_catalog"
+            referencedColumns: ["sku"]
+          },
+        ]
+      }
+      closet_catalog: {
+        Row: {
+          boxes_count: number
+          cabinet_code: string
+          created_at: string | null
+          depth_in: number
+          description: string
+          dimensions_locked: boolean
+          evita_line: string
+          has_backs_option: boolean
+          height_in: number
+          id: string
+          is_active: boolean
+          price_with_backs_usd: number | null
+          price_without_backs_usd: number | null
+          updated_at: string | null
+          width_in: number
+        }
+        Insert: {
+          boxes_count?: number
+          cabinet_code: string
+          created_at?: string | null
+          depth_in: number
+          description: string
+          dimensions_locked?: boolean
+          evita_line: string
+          has_backs_option?: boolean
+          height_in: number
+          id?: string
+          is_active?: boolean
+          price_with_backs_usd?: number | null
+          price_without_backs_usd?: number | null
+          updated_at?: string | null
+          width_in: number
+        }
+        Update: {
+          boxes_count?: number
+          cabinet_code?: string
+          created_at?: string | null
+          depth_in?: number
+          description?: string
+          dimensions_locked?: boolean
+          evita_line?: string
+          has_backs_option?: boolean
+          height_in?: number
+          id?: string
+          is_active?: boolean
+          price_with_backs_usd?: number | null
+          price_without_backs_usd?: number | null
+          updated_at?: string | null
+          width_in?: number
+        }
+        Relationships: []
+      }
+      custom_types: {
+        Row: {
+          created_at: string | null
+          id: string
+          type_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          type_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          type_name?: string
+        }
+        Relationships: []
+      }
+      custom_units: {
+        Row: {
+          created_at: string | null
+          id: string
+          unit_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          unit_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          unit_name?: string
+        }
+        Relationships: []
+      }
+      price_change_log: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          item_description: string
+          new_price: number
+          old_price: number
+          price_difference: number | null
+          price_list_item_id: string
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          item_description: string
+          new_price: number
+          old_price: number
+          price_difference?: number | null
+          price_list_item_id: string
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          item_description?: string
+          new_price?: number
+          old_price?: number
+          price_difference?: number | null
+          price_list_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_change_log_price_list_item_id_fkey"
+            columns: ["price_list_item_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_list: {
+        Row: {
+          base_price: number | null
+          concept_description: string
+          created_at: string | null
+          dimensions: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          material: string | null
+          notes: string | null
+          price: number
+          price_last_updated_at: string
+          price_with_tax: number | null
+          product_url: string | null
+          sf_per_sheet: number | null
+          sku_code: string | null
+          tax_rate: number | null
+          type: string
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_price?: number | null
+          concept_description: string
+          created_at?: string | null
+          dimensions?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          material?: string | null
+          notes?: string | null
+          price?: number
+          price_last_updated_at?: string
+          price_with_tax?: number | null
+          product_url?: string | null
+          sf_per_sheet?: number | null
+          sku_code?: string | null
+          tax_rate?: number | null
+          type: string
+          unit: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_price?: number | null
+          concept_description?: string
+          created_at?: string | null
+          dimensions?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          material?: string | null
+          notes?: string | null
+          price?: number
+          price_last_updated_at?: string
+          price_with_tax?: number | null
+          product_url?: string | null
+          sf_per_sheet?: number | null
+          sku_code?: string | null
+          tax_rate?: number | null
+          type?: string
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      products_catalog: {
+        Row: {
+          box_edgeband: number | null
+          box_edgeband_color: number | null
+          box_sf: number
+          boxes_per_unit: number
+          collection_name: string | null
+          created_at: string | null
+          custom_labor_cost: number | null
+          default_is_rta: boolean
+          description: string
+          doors_fronts_edgeband: number | null
+          doors_fronts_sf: number
+          has_drawers: boolean | null
+          id: string
+          is_active: boolean | null
+          original_box_sf: number | null
+          original_doors_fronts_sf: number | null
+          sku: string
+          status: string | null
+          total_edgeband: number
+          updated_at: string | null
+          waste_applied: boolean | null
+        }
+        Insert: {
+          box_edgeband?: number | null
+          box_edgeband_color?: number | null
+          box_sf?: number
+          boxes_per_unit?: number
+          collection_name?: string | null
+          created_at?: string | null
+          custom_labor_cost?: number | null
+          default_is_rta?: boolean
+          description: string
+          doors_fronts_edgeband?: number | null
+          doors_fronts_sf?: number
+          has_drawers?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          original_box_sf?: number | null
+          original_doors_fronts_sf?: number | null
+          sku: string
+          status?: string | null
+          total_edgeband?: number
+          updated_at?: string | null
+          waste_applied?: boolean | null
+        }
+        Update: {
+          box_edgeband?: number | null
+          box_edgeband_color?: number | null
+          box_sf?: number
+          boxes_per_unit?: number
+          collection_name?: string | null
+          created_at?: string | null
+          custom_labor_cost?: number | null
+          default_is_rta?: boolean
+          description?: string
+          doors_fronts_edgeband?: number | null
+          doors_fronts_sf?: number
+          has_drawers?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          original_box_sf?: number | null
+          original_doors_fronts_sf?: number | null
+          sku?: string
+          status?: string | null
+          total_edgeband?: number
+          updated_at?: string | null
+          waste_applied?: boolean | null
+        }
+        Relationships: []
+      }
+      project_activities: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          end_date: string
+          id: string
+          name: string
+          project_id: string | null
+          start_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number
+          end_date: string
+          id?: string
+          name: string
+          project_id?: string | null
+          start_date: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          end_date?: string
+          id?: string
+          name?: string
+          project_id?: string | null
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_activities_project_id_fkey_new"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_areas: {
+        Row: {
+          applies_tariff: boolean
+          created_at: string | null
+          display_order: number | null
+          id: string
+          name: string
+          project_id: string
+          quantity: number
+          subtotal: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          applies_tariff?: boolean
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          project_id: string
+          quantity?: number
+          subtotal?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          applies_tariff?: boolean
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+          project_id?: string
+          quantity?: number
+          subtotal?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_areas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_documents: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          id: string
+          label: string
+          project_id: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          label: string
+          project_id?: string | null
+          url?: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          label?: string
+          project_id?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_documents_project_id_fkey_new"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_logs: {
+        Row: {
+          comment: string
+          created_at: string | null
+          id: string
+          project_id: string | null
+        }
+        Insert: {
+          comment: string
+          created_at?: string | null
+          id?: string
+          project_id?: string | null
+        }
+        Update: {
+          comment?: string
+          created_at?: string | null
+          id?: string
+          project_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_logs_project_id_fkey_new"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_price_staleness: {
+        Row: {
+          affected_material_count: number | null
+          has_stale_prices: boolean | null
+          id: string
+          last_checked_at: string | null
+          project_id: string
+        }
+        Insert: {
+          affected_material_count?: number | null
+          has_stale_prices?: boolean | null
+          id?: string
+          last_checked_at?: string | null
+          project_id: string
+        }
+        Update: {
+          affected_material_count?: number | null
+          has_stale_prices?: boolean | null
+          id?: string
+          last_checked_at?: string | null
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_price_staleness_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_tasks: {
+        Row: {
+          assignee_id: string | null
+          created_at: string | null
+          details: string | null
+          display_order: number
+          due_date: string | null
+          id: string
+          project_id: string | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string | null
+          details?: string | null
+          display_order?: number
+          due_date?: string | null
+          id?: string
+          project_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string | null
+          details?: string | null
+          display_order?: number
+          due_date?: string | null
+          id?: string
+          project_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_project_id_fkey_new"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_version_details: {
+        Row: {
+          area_id: string | null
+          area_name: string
+          cabinets_affected_count: number
+          change_type: string
+          created_at: string | null
+          difference: number
+          difference_percentage: number
+          id: string
+          material_changes: Json | null
+          new_subtotal: number
+          previous_subtotal: number
+          price_changes: Json | null
+          version_id: string
+        }
+        Insert: {
+          area_id?: string | null
+          area_name: string
+          cabinets_affected_count?: number
+          change_type: string
+          created_at?: string | null
+          difference?: number
+          difference_percentage?: number
+          id?: string
+          material_changes?: Json | null
+          new_subtotal?: number
+          previous_subtotal?: number
+          price_changes?: Json | null
+          version_id: string
+        }
+        Update: {
+          area_id?: string | null
+          area_name?: string
+          cabinets_affected_count?: number
+          change_type?: string
+          created_at?: string | null
+          difference?: number
+          difference_percentage?: number
+          id?: string
+          material_changes?: Json | null
+          new_subtotal?: number
+          previous_subtotal?: number
+          price_changes?: Json | null
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_version_details_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "project_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_version_details_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "project_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_versions: {
+        Row: {
+          affected_areas: string[] | null
+          change_summary: Json | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          project_id: string
+          snapshot_data: Json
+          total_amount: number
+          version_name: string
+          version_number: number
+          version_type: string
+        }
+        Insert: {
+          affected_areas?: string[] | null
+          change_summary?: Json | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          project_id: string
+          snapshot_data?: Json
+          total_amount?: number
+          version_name: string
+          version_number: number
+          version_type: string
+        }
+        Update: {
+          affected_areas?: string[] | null
+          change_summary?: Json | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          project_id?: string
+          snapshot_data?: Json
+          total_amount?: number
+          version_name?: string
+          version_number?: number
+          version_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_versions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          customer: string | null
+          id: string
+          name: string
+          project_brief: string | null
+          project_details: string | null
+          project_type: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          customer?: string | null
+          id?: string
+          name: string
+          project_brief?: string | null
+          project_details?: string | null
+          project_type?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          customer?: string | null
+          id?: string
+          name?: string
+          project_brief?: string | null
+          project_details?: string | null
+          project_type?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      quotations: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          customer: string | null
+          disclaimer_price_validity: string | null
+          disclaimer_tariff_info: string | null
+          id: string
+          install_delivery: number | null
+          install_delivery_per_box: number | null
+          install_delivery_per_box_usd: number | null
+          install_delivery_usd: number | null
+          name: string
+          other_expenses: number | null
+          other_expenses_label: string | null
+          pdf_address: string | null
+          pdf_customer: string | null
+          pdf_project_brief: string | null
+          pdf_project_name: string | null
+          profit_multiplier: number | null
+          project_brief: string | null
+          project_details: string | null
+          project_id: string
+          project_type: string
+          quote_date: string
+          referral_currency_rate: number | null
+          status: string | null
+          tariff_multiplier: number | null
+          tax_percentage: number | null
+          total_amount: number | null
+          updated_at: string | null
+          version_label: string | null
+          version_number: number | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          customer?: string | null
+          disclaimer_price_validity?: string | null
+          disclaimer_tariff_info?: string | null
+          id?: string
+          install_delivery?: number | null
+          install_delivery_per_box?: number | null
+          install_delivery_per_box_usd?: number | null
+          install_delivery_usd?: number | null
+          name: string
+          other_expenses?: number | null
+          other_expenses_label?: string | null
+          pdf_address?: string | null
+          pdf_customer?: string | null
+          pdf_project_brief?: string | null
+          pdf_project_name?: string | null
+          profit_multiplier?: number | null
+          project_brief?: string | null
+          project_details?: string | null
+          project_id: string
+          project_type?: string
+          quote_date?: string
+          referral_currency_rate?: number | null
+          status?: string | null
+          tariff_multiplier?: number | null
+          tax_percentage?: number | null
+          total_amount?: number | null
+          updated_at?: string | null
+          version_label?: string | null
+          version_number?: number | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          customer?: string | null
+          disclaimer_price_validity?: string | null
+          disclaimer_tariff_info?: string | null
+          id?: string
+          install_delivery?: number | null
+          install_delivery_per_box?: number | null
+          install_delivery_per_box_usd?: number | null
+          install_delivery_usd?: number | null
+          name?: string
+          other_expenses?: number | null
+          other_expenses_label?: string | null
+          pdf_address?: string | null
+          pdf_customer?: string | null
+          pdf_project_brief?: string | null
+          pdf_project_name?: string | null
+          profit_multiplier?: number | null
+          project_brief?: string | null
+          project_details?: string | null
+          project_id?: string
+          project_type?: string
+          quote_date?: string
+          referral_currency_rate?: number | null
+          status?: string | null
+          tariff_multiplier?: number | null
+          tax_percentage?: number | null
+          total_amount?: number | null
+          updated_at?: string | null
+          version_label?: string | null
+          version_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          category: string
+          created_at: string | null
+          data_type: string
+          description: string
+          exchange_rate_usd_to_mxn: number
+          id: string
+          key: string
+          logo_url: string | null
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          data_type?: string
+          description: string
+          exchange_rate_usd_to_mxn?: number
+          id?: string
+          key: string
+          logo_url?: string | null
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          data_type?: string
+          description?: string
+          exchange_rate_usd_to_mxn?: number
+          id?: string
+          key?: string
+          logo_url?: string | null
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
+      taxes_by_type: {
+        Row: {
+          created_at: string | null
+          id: string
+          material_type: string
+          tax_percentage: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          material_type: string
+          tax_percentage?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          material_type?: string
+          tax_percentage?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          role: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          role?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          role?: string | null
+        }
+        Relationships: []
+      }
+      template_usage_log: {
+        Row: {
+          area_id: string
+          cabinet_id: string | null
+          id: string
+          project_id: string
+          quantity_used: number | null
+          template_id: string
+          used_at: string | null
+        }
+        Insert: {
+          area_id: string
+          cabinet_id?: string | null
+          id?: string
+          project_id: string
+          quantity_used?: number | null
+          template_id: string
+          used_at?: string | null
+        }
+        Update: {
+          area_id?: string
+          cabinet_id?: string | null
+          id?: string
+          project_id?: string
+          quantity_used?: number | null
+          template_id?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_usage_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_usage_log_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "cabinet_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      calculate_hardware_cost: {
+        Args: { p_cabinet_quantity: number; p_hardware_array: Json }
+        Returns: number
+      }
+      check_product_usage: {
+        Args: { product_sku_param: string }
+        Returns: {
+          project_names: string[]
+          usage_count: number
+        }[]
+      }
+      check_project_price_staleness: {
+        Args: { p_project_id: string }
+        Returns: boolean
+      }
+      count_cabinets_with_hardware: {
+        Args: {
+          p_area_ids: string[]
+          p_hardware_id: string
+          p_table_name: string
+        }
+        Returns: number
+      }
+      create_project_snapshot: { Args: { p_project_id: string }; Returns: Json }
+      evita_hardware_bulk_update: {
+        Args: {
+          p_area_filter?: string
+          p_hardware_id: string
+          p_price: number
+          p_project_id: string
+          p_qty_rule?: string
+          p_remove_id?: string
+          p_remove_price?: number
+        }
+        Returns: Json
+      }
+      get_hardware_category: {
+        Args: { p_hardware_id: string }
+        Returns: string
+      }
+      get_most_used_templates: {
+        Args: { limit_count?: number }
+        Returns: {
+          category: string
+          id: string
+          last_used_at: string
+          name: string
+          usage_count: number
+        }[]
+      }
+      get_next_version_number: {
+        Args: { p_project_id: string }
+        Returns: number
+      }
+      get_template_usage_by_category: {
+        Args: never
+        Returns: {
+          category: string
+          total_templates: number
+          total_uses: number
+        }[]
+      }
+      get_template_usage_timeline: {
+        Args: { days_back?: number }
+        Returns: {
+          usage_count: number
+          usage_date: string
+        }[]
+      }
+      refresh_project_price_staleness: {
+        Args: { p_project_id: string }
+        Returns: undefined
+      }
+      remove_hardware_from_cabinet: {
+        Args: { p_hardware_array: Json; p_hardware_id: string }
+        Returns: Json
+      }
+      update_hardware_in_cabinet: {
+        Args: {
+          p_hardware_array: Json
+          p_new_hardware_id: string
+          p_old_hardware_id: string
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

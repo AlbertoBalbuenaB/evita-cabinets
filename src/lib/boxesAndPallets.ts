@@ -3,6 +3,7 @@ import { isAccessoryPanel } from './cabinetFilters';
 
 export interface BoxesPalletsCalculation {
   boxes: number;
+  palletsRaw: number;
   pallets: number;
   accessoriesSqFt: number;
 }
@@ -77,6 +78,7 @@ export function calculateAreaBoxesAndPallets(
 
   return {
     boxes: totalBoxes,
+    palletsRaw: totalPalletsRaw,
     pallets: Math.ceil(totalPalletsRaw),
     accessoriesSqFt: totalAccessoriesSqFt,
   };

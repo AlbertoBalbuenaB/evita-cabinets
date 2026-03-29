@@ -73,7 +73,7 @@ export async function createProjectVersion(
   if (snapshotError) throw snapshotError;
 
   const { data: project } = await supabase
-    .from('projects')
+    .from('quotations')
     .select('total_amount')
     .eq('id', projectId)
     .single();
@@ -216,7 +216,7 @@ export async function recalculateAllCabinetPrices(
 
   const projectTotal = Array.from(areaChanges.values()).reduce((sum, change) => sum + change.new, 0);
   await supabase
-    .from('projects')
+    .from('quotations')
     .update({ total_amount: projectTotal })
     .eq('id', projectId);
 
@@ -405,7 +405,7 @@ export async function compareVersions(
       .rpc('create_project_snapshot', { p_project_id: projectId });
 
     const { data: project } = await supabase
-      .from('projects')
+      .from('quotations')
       .select('total_amount')
       .eq('id', projectId)
       .single();

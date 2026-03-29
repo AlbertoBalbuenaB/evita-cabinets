@@ -6,7 +6,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
 import { formatCurrency } from '../lib/calculations';
-import type { Project, ProjectArea, AreaCabinet, ProjectAreaInsert, Product, AreaItem, AreaCountertop, AreaClosetItem, PriceListItem, TeamMember } from '../types';
+import type { Quotation, ProjectArea, AreaCabinet, ProjectAreaInsert, Product, AreaItem, AreaCountertop, AreaClosetItem, PriceListItem, TeamMember } from '../types';
 import { CabinetForm } from '../components/CabinetForm';
 import { ItemForm } from '../components/ItemForm';
 import { CountertopForm } from '../components/CountertopForm';
@@ -36,7 +36,7 @@ import { ProjectVersionHistory } from './ProjectVersionHistory';
 import { FloatingActionBar } from '../components/FloatingActionBar';
 import { ProductFormModal } from '../components/ProductFormModal';
 import type { ProductInsert } from '../types';
-import { exportProjectToJSON } from '../utils/projectExportImport';
+import { exportQuotationToJSON } from '../utils/projectExportImport';
 import { ScheduleSection } from '../components/ScheduleSection';
 import { TasksSection } from '../components/TasksSection';
 import { DocumentationSection } from '../components/DocumentationSection';
@@ -44,13 +44,13 @@ import { BitacoraSection } from '../components/BitacoraSection';
 import { useAiChatContext } from '../stores/aiChatContext';
 
 interface ProjectDetailsProps {
-  project: Project;
+  project: Quotation;
   onBack: () => void;
 }
 
 export function ProjectDetails({ project: initialProject, onBack }: ProjectDetailsProps) {
   const setActiveProjectTab = useAiChatContext(s => s.setActiveProjectTab);
-  const [project, setProject] = useState<Project>(initialProject);
+  const [project, setProject] = useState<Quotation>(initialProject);
   const [areas, setAreas] = useState<(ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[] })[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,7 +171,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   async function loadProject() {
     try {
       const { data, error } = await supabase
-        .from('projects')
+        .from('quotations')
         .select('*')
         .eq('id', project.id)
         .single();
@@ -303,7 +303,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
     try {
       await supabase
-        .from('projects')
+        .from('quotations')
         .update({ total_amount: fullProjectTotal })
         .eq('id', project.id);
 
@@ -621,7 +621,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       const formattedDate = today.toISOString().split('T')[0];
 
       const { error } = await supabase
-        .from('projects')
+        .from('quotations')
         .update({
           quote_date: formattedDate,
           updated_at: new Date().toISOString()
@@ -643,7 +643,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   async function handleSaveDateChange() {
     try {
       const { error } = await supabase
-        .from('projects')
+        .from('quotations')
         .update({
           quote_date: editedQuoteDate,
           updated_at: new Date().toISOString()
@@ -684,7 +684,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     }
 
     try {
-      await exportProjectToJSON(project.id);
+      await exportQuotationToJSON(project.id);
     } catch (error) {
       console.error('Export error:', error);
       alert('Failed to export project. Please try again.');
@@ -900,7 +900,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     const filteredOriginalBrief = filterProjectBriefForPDF(project.project_brief || '');
     try {
       await supabase
-        .from('projects')
+        .from('quotations')
         .update({
           other_expenses: otherExpenses,
           other_expenses_label: otherExpensesLabel || 'Other Expenses',
@@ -1054,7 +1054,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                           onClick={async () => {
                             try {
                               const { error } = await supabase
-                                .from('projects')
+                                .from('quotations')
                                 .update({ status, updated_at: new Date().toISOString() })
                                 .eq('id', project.id);
                               if (error) throw error;
@@ -1129,7 +1129,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                         const today = new Date().toISOString().split('T')[0];
                         try {
                           const { error } = await supabase
-                            .from('projects')
+                            .from('quotations')
                             .update({
                               quote_date: today,
                               updated_at: new Date().toISOString()

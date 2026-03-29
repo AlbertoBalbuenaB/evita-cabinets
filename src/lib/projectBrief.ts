@@ -352,7 +352,7 @@ export async function updateProjectBrief(projectId: string): Promise<boolean> {
     const brief = await generateProjectBrief(projectId);
 
     const { error } = await supabase
-      .from('projects')
+      .from('quotations')
       .update({ project_brief: brief })
       .eq('id', projectId);
 

@@ -219,7 +219,7 @@ async function executeTool(name: string, input: any, sb: any, projectId: string 
 
       case 'update_project_settings': {
         if (!projectId) return JSON.stringify({ error: 'No project open.' });
-        const { error } = await sb.from('projects')
+        const { error } = await sb.from('quotations')
           .update({ [input.field]: input.new_value }).eq('id', projectId);
         if (error) return JSON.stringify({ error: error.message });
         const labels: Record<string,string> = {
@@ -335,7 +335,7 @@ Deno.serve(async (req: Request) => {
 
   const [settingsRes, recentRes, matPricesRes] = await Promise.all([
     sb.from('settings').select('key, value'),
-    sb.from('projects').select('id, name, customer, status, total_amount').order('updated_at', { ascending: false }).limit(5),
+    sb.from('quotations').select('id, project_id, name, customer, status, total_amount').order('updated_at', { ascending: false }).limit(5),
     sb.from('price_list').select('id, unit_price_mxn').or('id.like.f4953b9f%,id.like.d0eb99a2%,id.like.6d877ed9%,id.like.e3e9c098%'),
   ]);
 
@@ -358,13 +358,13 @@ Deno.serve(async (req: Request) => {
   let liveData = `Exchange rate: ${fx} MXN/USD | Waste box: x${wBox} | Waste doors: x${wDoor} | Labor base: $${lBase} | Labor drawers: $${lDraw}`;
   if (recentRes.data?.length) {
     liveData += '\nRecent projects: ' + recentRes.data.map((p: any) =>
-      `${p.name} [id:${p.id}] (${p.status}) $${Number(p.total_amount).toLocaleString()} MXN`
+      `${p.name} [id:${p.project_id}] (${p.status}) $${Number(p.total_amount).toLocaleString()} MXN`
     ).join(' | ');
   }
 
   let proj: any = null;
   if (projectId) {
-    const { data: projData } = await sb.from('projects')
+    const { data: projData } = await sb.from('quotations')
       .select('name, status, total_amount, profit_multiplier, tax_percentage, tariff_multiplier, install_delivery, install_delivery_usd, install_delivery_per_box_usd, referral_currency_rate')
       .eq('id', projectId).single();
     proj = projData;

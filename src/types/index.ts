@@ -8,9 +8,15 @@ export type PriceListItem = Database['public']['Tables']['price_list']['Row'];
 export type PriceListInsert = Database['public']['Tables']['price_list']['Insert'];
 export type PriceListUpdate = Database['public']['Tables']['price_list']['Update'];
 
+// New parent entity (projects_hub → projects)
 export type Project = Database['public']['Tables']['projects']['Row'];
 export type ProjectInsert = Database['public']['Tables']['projects']['Insert'];
 export type ProjectUpdate = Database['public']['Tables']['projects']['Update'];
+
+// What was previously "projects" is now "quotations" (pricing versions)
+export type Quotation = Database['public']['Tables']['quotations']['Row'];
+export type QuotationInsert = Database['public']['Tables']['quotations']['Insert'];
+export type QuotationUpdate = Database['public']['Tables']['quotations']['Update'];
 
 export type ProjectArea = Database['public']['Tables']['project_areas']['Row'];
 export type ProjectAreaInsert = Database['public']['Tables']['project_areas']['Insert'];
@@ -156,13 +162,25 @@ export interface CabinetCostBreakdown {
 
 export type ProjectType = 'Custom' | 'Bids' | 'Prefab' | 'Stores';
 
-export type ProjectStatus = 'Pending' | 'Estimating' | 'Sent' | 'Lost' | 'Awarded' | 'Disqualified' | 'Cancelled';
+export type QuotationStatus = 'Pending' | 'Estimating' | 'Sent' | 'Lost' | 'Awarded' | 'Disqualified' | 'Cancelled';
+/** @deprecated Use QuotationStatus */
+export type ProjectStatus = QuotationStatus;
 
-export interface ProjectWithDetails extends Project {
+export interface ProjectWithQuotations extends Project {
+  quotations?: Quotation[];
+  latestQuotation?: Quotation;
+  quotationCount?: number;
+}
+
+export interface QuotationWithDetails extends Quotation {
+  project?: Project;
   areas?: (ProjectArea & {
     cabinets?: AreaCabinet[];
   })[];
 }
+
+/** @deprecated Use QuotationWithDetails */
+export type ProjectWithDetails = QuotationWithDetails;
 
 export interface CabinetTemplate {
   id: string;

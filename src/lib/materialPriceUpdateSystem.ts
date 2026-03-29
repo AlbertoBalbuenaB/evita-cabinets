@@ -41,7 +41,7 @@ export interface MaterialUpdateAnalysis {
 export async function analyzeMaterialPriceChanges(projectId: string): Promise<MaterialUpdateAnalysis> {
   // Get project creation date
   const { data: project } = await supabase
-    .from('projects')
+    .from('quotations')
     .select('created_at')
     .eq('id', projectId)
     .single();

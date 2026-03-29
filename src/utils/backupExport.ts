@@ -31,7 +31,7 @@ async function fetchAllProjectsAsExports(): Promise<{ exports: ProjectExport[]; 
   const errors: string[] = [];
 
   const { data: projects, error: projectsError } = await supabase
-    .from('projects')
+    .from('quotations')
     .select('*')
     .order('created_at', { ascending: true });
 

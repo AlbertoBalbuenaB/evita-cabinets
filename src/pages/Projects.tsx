@@ -7,7 +7,7 @@ import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
 import { formatCurrency } from '../lib/calculations';
 import { format } from 'date-fns';
-import type { Project, ProjectInsert, ProjectType, ProjectStatus } from '../types';
+import type { Quotation, QuotationInsert, ProjectType, QuotationStatus } from '../types';
 import { getProjectsWithStalePrices } from '../lib/priceUpdateSystem';
 import { ImportProjectModal } from '../components/ImportProjectModal';
 import { groupProjectsByGroupId } from '../lib/projectGrouping';
@@ -19,14 +19,14 @@ type SortBy = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc' | 'amount_desc
 export function Projects() {
   const { id: routeProjectId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Quotation[]>([]);
   const [loading, setLoading] = useState(true);
   const exchangeRate = useSettingsStore(s => s.settings.exchangeRateUsdToMxn);
   const fetchSettings = useSettingsStore(s => s.fetchSettings);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [editingProject, setEditingProject] = useState<Quotation | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Quotation | null>(null);
   const [staleProjectIds, setStaleProjectIds] = useState<string[]>([]);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,7 +65,7 @@ export function Projects() {
   async function loadProjects() {
     try {
       const { data, error } = await supabase
-        .from('projects')
+        .from('quotations')
         .select('*')
         .order('quote_date', { ascending: false });
 
@@ -195,16 +195,16 @@ export function Projects() {
     navigate(`/projects/${projectId}`);
   }
 
-  function handleEdit(project: Project) {
+  function handleEdit(project: Quotation) {
     setEditingProject(project);
     setIsModalOpen(true);
   }
 
-  async function handleDelete(project: Project) {
+  async function handleDelete(project: Quotation) {
     if (!confirm(`Delete project "${project.name}"? This will also delete all areas and cabinets.`)) return;
 
     try {
-      const { error } = await supabase.from('projects').delete().eq('id', project.id);
+      const { error } = await supabase.from('quotations').delete().eq('id', project.id);
 
       if (error) throw error;
       loadProjects();
@@ -214,7 +214,7 @@ export function Projects() {
     }
   }
 
-  async function handleDuplicate(project: Project) {
+  async function handleDuplicate(project: Quotation) {
     if (!confirm(`Duplicate project "${project.name}"?`)) return;
 
     try {
@@ -223,7 +223,7 @@ export function Projects() {
       projectData.status = 'Pending';
       projectData.group_id = project.group_id || crypto.randomUUID();
 
-      const { error } = await supabase.from('projects').insert([projectData]);
+      const { error } = await supabase.from('quotations').insert([projectData]);
 
       if (error) throw error;
       loadProjects();
@@ -233,10 +233,10 @@ export function Projects() {
     }
   }
 
-  async function handleQuickStatusChange(project: Project, newStatus: ProjectStatus) {
+  async function handleQuickStatusChange(project: Quotation, newStatus: QuotationStatus) {
     try {
       const { error } = await supabase
-        .from('projects')
+        .from('quotations')
         .update({ status: newStatus })
         .eq('id', project.id);
 
@@ -253,11 +253,11 @@ export function Projects() {
     setEditingProject(null);
   }
 
-  async function handleSaveProject(project: ProjectInsert) {
+  async function handleSaveProject(project: QuotationInsert) {
     try {
       if (editingProject) {
         const { error } = await supabase
-          .from('projects')
+          .from('quotations')
           .update(project)
           .eq('id', editingProject.id);
 
@@ -267,7 +267,7 @@ export function Projects() {
           ...project,
           group_id: crypto.randomUUID(),
         };
-        const { error } = await supabase.from('projects').insert([projectWithGroup]);
+        const { error } = await supabase.from('quotations').insert([projectWithGroup]);
 
         if (error) throw error;
       }
@@ -280,7 +280,7 @@ export function Projects() {
     }
   }
 
-  function handleViewProject(project: Project) {
+  function handleViewProject(project: Quotation) {
     navigate(`/projects/${project.id}`);
   }
 
@@ -338,7 +338,7 @@ export function Projects() {
       if (!groupId) {
         groupId = crypto.randomUUID();
         const { error: primaryError } = await supabase
-          .from('projects')
+          .from('quotations')
           .update({ group_id: groupId })
           .eq('id', primaryProject.id);
 
@@ -348,7 +348,7 @@ export function Projects() {
       const otherProjectIds = selectedProjectIds.filter(id => id !== primaryProject.id);
       if (otherProjectIds.length > 0) {
         const { error } = await supabase
-          .from('projects')
+          .from('quotations')
           .update({ group_id: groupId })
           .in('id', otherProjectIds);
 
@@ -370,7 +370,7 @@ export function Projects() {
 
     try {
       const { error } = await supabase
-        .from('projects')
+        .from('quotations')
         .update({ group_id: null })
         .eq('id', projectId);
 
@@ -736,12 +736,12 @@ export function Projects() {
 }
 
 interface ProjectCardProps {
-  project: Project;
-  onView: (project: Project) => void;
-  onEdit: (project: Project) => void;
-  onDelete: (project: Project) => void;
-  onDuplicate: (project: Project) => void;
-  onStatusChange: (project: Project, status: ProjectStatus) => void;
+  project: Quotation;
+  onView: (project: Quotation) => void;
+  onEdit: (project: Quotation) => void;
+  onDelete: (project: Quotation) => void;
+  onDuplicate: (project: Quotation) => void;
+  onStatusChange: (project: Quotation, status: ProjectStatus) => void;
   staleProjectIds: string[];
   exchangeRate: number;
   selectionMode?: boolean;
@@ -1083,7 +1083,7 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
 
 interface ProjectFormModalProps {
   project: Project | null;
-  onSave: (project: ProjectInsert) => void;
+  onSave: (project: QuotationInsert) => void;
   onClose: () => void;
 }
 

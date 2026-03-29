@@ -4,17 +4,17 @@ import { format } from 'date-fns';
 import { Button } from './Button';
 import { formatCurrency } from '../lib/calculations';
 import { getProjectVersionNumber } from '../lib/projectGrouping';
-import type { Project, ProjectStatus } from '../types';
+import type { Quotation, QuotationStatus } from '../types';
 import type { ProjectGroup } from '../lib/projectGrouping';
 
 interface ProjectGroupCardProps {
   group: ProjectGroup;
-  allProjects: Project[];
-  onView: (project: Project) => void;
-  onEdit: (project: Project) => void;
-  onDelete: (project: Project) => void;
-  onDuplicate: (project: Project) => void;
-  onStatusChange: (project: Project, status: ProjectStatus) => void;
+  allProjects: Quotation[];
+  onView: (project: Quotation) => void;
+  onEdit: (project: Quotation) => void;
+  onDelete: (project: Quotation) => void;
+  onDuplicate: (project: Quotation) => void;
+  onStatusChange: (project: Quotation, status: QuotationStatus) => void;
   onUngroup: (projectId: string) => void;
   staleProjectIds: string[];
   exchangeRate?: number;

@@ -35,6 +35,7 @@ interface DashboardStats {
 
 interface RecentProject {
   id: string;
+  project_id: string;
   name: string;
   quote_date: string;
   total_amount: number;
@@ -145,12 +146,12 @@ export function Dashboard() {
     try {
       setError(null);
       const [projectsRes, productsRes, pricesRes, recentRes] = await Promise.all([
-        supabase.from('projects').select('status, total_amount, quote_date, project_type'),
+        supabase.from('quotations').select('status, total_amount, quote_date, project_type'),
         supabase.from('products_catalog').select('id', { count: 'exact', head: true }),
         supabase.from('price_list').select('id', { count: 'exact', head: true }),
         supabase
-          .from('projects')
-          .select('id, name, quote_date, total_amount, status, project_type, updated_at')
+          .from('quotations')
+          .select('id, project_id, name, quote_date, total_amount, status, project_type, updated_at')
           .order('updated_at', { ascending: false })
           .limit(5),
       ]);
@@ -674,7 +675,7 @@ export function Dashboard() {
               return (
                 <div
                   key={project.id}
-                  onClick={() => navigate(`/projects/${project.id}`)}
+                  onClick={() => navigate(`/projects/${project.project_id}/quotations/${project.id}`)}
                   className="group p-4 rounded-xl border border-slate-200/60 hover:border-blue-400/60 hover:shadow-md cursor-pointer transition-all glass-white"
                 >
                   <div className="flex items-start justify-between mb-2">
