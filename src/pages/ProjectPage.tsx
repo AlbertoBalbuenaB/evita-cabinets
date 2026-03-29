@@ -29,6 +29,7 @@ export function ProjectPage() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [quotations, setQuotations] = useState<Quotation[]>([]);
+  const [quotationAreas, setQuotationAreas] = useState<Record<string, { name: string; subtotal: number }[]>>({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'quotations' | 'management' | 'documents' | 'logs' | 'analytics'>('overview');
 
@@ -66,6 +67,24 @@ export function ProjectPage() {
 
     setProject(proj);
     setQuotations(quots || []);
+
+    // Fetch areas for all quotations (for analytics)
+    if (quots && quots.length > 0) {
+      const quotIds = quots.map(q => q.id);
+      const { data: allAreas } = await supabase
+        .from('project_areas')
+        .select('project_id, name, subtotal')
+        .in('project_id', quotIds)
+        .order('display_order');
+
+      const areasByQuotation: Record<string, { name: string; subtotal: number }[]> = {};
+      (allAreas || []).forEach(a => {
+        if (!areasByQuotation[a.project_id]) areasByQuotation[a.project_id] = [];
+        areasByQuotation[a.project_id].push({ name: a.name, subtotal: a.subtotal });
+      });
+      setQuotationAreas(areasByQuotation);
+    }
+
     setEditForm({
       name: proj.name,
       customer: proj.customer || '',
@@ -373,7 +392,7 @@ export function ProjectPage() {
 
       {/* Analytics tab */}
       {activeTab === 'analytics' && (
-        <CrossQuotationAnalytics quotations={quotations} exchangeRate={exchangeRate} />
+        <CrossQuotationAnalytics quotations={quotations} exchangeRate={exchangeRate} quotationAreas={quotationAreas} />
       )}
 
       <ImportQuotationModal

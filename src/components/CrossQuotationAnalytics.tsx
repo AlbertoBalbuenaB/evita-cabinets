@@ -1,11 +1,17 @@
-import { useMemo } from 'react';
-import { BarChart3, DollarSign, TrendingUp, Layers, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { BarChart3, DollarSign, TrendingUp, Layers, ArrowUpRight, ArrowDownRight, ChevronDown, ChevronRight, Plus, Minus, RefreshCw } from 'lucide-react';
 import { formatCurrency } from '../lib/calculations';
 import type { Quotation } from '../types';
+
+interface AreaInfo {
+  name: string;
+  subtotal: number;
+}
 
 interface CrossQuotationAnalyticsProps {
   quotations: Quotation[];
   exchangeRate: number;
+  quotationAreas?: Record<string, AreaInfo[]>;
 }
 
 function formatDate(iso: string) {
@@ -45,7 +51,7 @@ const STATUS_COLORS: Record<string, string> = {
   Cancelled: 'bg-slate-100 text-slate-500 border-slate-200/50',
 };
 
-export function CrossQuotationAnalytics({ quotations, exchangeRate }: CrossQuotationAnalyticsProps) {
+export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAreas = {} }: CrossQuotationAnalyticsProps) {
   const fx = exchangeRate || 1;
 
   const analytics = useMemo(() => {
@@ -67,8 +73,48 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate }: CrossQuota
       return { ...q, deltaAbs, deltaPct };
     });
 
-    return { sorted, latest, min, max, avg, maxAmount, withDeltas };
-  }, [quotations, fx]);
+    // Compute area-level diffs between consecutive versions
+    const changeSummaries = sorted.slice(1).map((q, i) => {
+      const prev = sorted[i];
+      const prevAreas = quotationAreas[prev.id] || [];
+      const currAreas = quotationAreas[q.id] || [];
+      const prevMap = new Map(prevAreas.map(a => [a.name, a.subtotal]));
+      const currMap = new Map(currAreas.map(a => [a.name, a.subtotal]));
+      const allNames = new Set([...prevMap.keys(), ...currMap.keys()]);
+
+      const changes: { name: string; type: 'added' | 'removed' | 'changed' | 'unchanged'; prevAmount: number; currAmount: number; delta: number }[] = [];
+      allNames.forEach(name => {
+        const pv = prevMap.get(name);
+        const cv = currMap.get(name);
+        if (pv === undefined) changes.push({ name, type: 'added', prevAmount: 0, currAmount: cv ?? 0, delta: cv ?? 0 });
+        else if (cv === undefined) changes.push({ name, type: 'removed', prevAmount: pv, currAmount: 0, delta: -pv });
+        else if (Math.abs(pv - cv) > 0.01) changes.push({ name, type: 'changed', prevAmount: pv, currAmount: cv, delta: cv - pv });
+        else changes.push({ name, type: 'unchanged', prevAmount: pv, currAmount: cv, delta: 0 });
+      });
+
+      const significant = changes.filter(c => c.type !== 'unchanged');
+      return {
+        fromLabel: prev.version_label || `v${prev.version_number}`,
+        toLabel: q.version_label || `v${q.version_number}`,
+        fromId: prev.id,
+        toId: q.id,
+        changes: significant.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)),
+        unchangedCount: changes.filter(c => c.type === 'unchanged').length,
+      };
+    });
+
+    return { sorted, latest, min, max, avg, maxAmount, withDeltas, changeSummaries };
+  }, [quotations, fx, quotationAreas]);
+
+  const [expandedDiffs, setExpandedDiffs] = useState<Set<string>>(new Set());
+
+  function toggleDiff(key: string) {
+    setExpandedDiffs(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
 
   if (quotations.length === 0) {
     return (
@@ -174,6 +220,77 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate }: CrossQuota
           <p className="text-xs text-slate-400 mt-3 text-center">Add more quotation versions to see comparisons.</p>
         )}
       </div>
+
+      {/* Section 2.5: Change Summaries between versions */}
+      {multiVersion && analytics.changeSummaries.length > 0 && (
+        <div className="glass-white p-5">
+          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">What Changed Between Versions</h3>
+          <div className="space-y-2">
+            {analytics.changeSummaries.map((summary) => {
+              const key = `${summary.fromId}-${summary.toId}`;
+              const expanded = expandedDiffs.has(key);
+              const hasChanges = summary.changes.length > 0;
+              return (
+                <div key={key} className="border border-slate-200/50 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => hasChanges && toggleDiff(key)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${hasChanges ? 'hover:bg-slate-50' : ''}`}
+                  >
+                    {hasChanges ? (
+                      expanded ? <ChevronDown className="h-4 w-4 text-slate-400 flex-shrink-0" /> : <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 text-slate-300 flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-slate-700">{summary.fromLabel}</span>
+                      <span className="text-slate-400 mx-2">→</span>
+                      <span className="text-sm font-medium text-slate-700">{summary.toLabel}</span>
+                    </div>
+                    <div className="flex-shrink-0 text-xs text-slate-500">
+                      {hasChanges ? (
+                        <span>{summary.changes.length} area{summary.changes.length !== 1 ? 's' : ''} changed</span>
+                      ) : (
+                        <span className="text-slate-400">No area-level changes</span>
+                      )}
+                    </div>
+                  </button>
+                  {expanded && hasChanges && (
+                    <div className="px-4 pb-3 space-y-1.5">
+                      {summary.changes.map((change) => (
+                        <div key={change.name} className="flex items-center gap-2 text-sm py-1.5 px-3 rounded-lg bg-slate-50/80">
+                          {change.type === 'added' && <Plus className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />}
+                          {change.type === 'removed' && <Minus className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />}
+                          {change.type === 'changed' && (
+                            change.delta > 0
+                              ? <ArrowUpRight className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+                              : <ArrowDownRight className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                          )}
+                          <span className="flex-1 text-slate-700 truncate">{change.name}</span>
+                          <div className="flex items-center gap-2 flex-shrink-0 tabular-nums">
+                            {change.type === 'added' && <span className="text-xs text-green-600">New area: {formatCurrency(change.currAmount)}</span>}
+                            {change.type === 'removed' && <span className="text-xs text-red-600">Removed: {formatCurrency(change.prevAmount)}</span>}
+                            {change.type === 'changed' && (
+                              <span className={`text-xs ${change.delta > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                {change.delta > 0 ? '+' : ''}{formatCurrency(change.delta)}
+                                {change.prevAmount > 0 && (
+                                  <span className="text-slate-400 ml-1">({change.delta > 0 ? '+' : ''}{((change.delta / change.prevAmount) * 100).toFixed(1)}%)</span>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {summary.unchangedCount > 0 && (
+                        <p className="text-xs text-slate-400 px-3 pt-1">{summary.unchangedCount} area{summary.unchangedCount !== 1 ? 's' : ''} unchanged</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Section 3: Cost Evolution Chart */}
       <div className="glass-white p-5">
