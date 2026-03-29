@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Plus, Search, Pencil as Edit2, Trash2, Copy, ChevronsUpDown, ChevronUp, ChevronDown,
   LayoutList, LayoutGrid, ImageOff, ExternalLink, Calendar, Tag
@@ -9,7 +10,6 @@ import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
 import { AutocompleteSelect } from '../components/AutocompleteSelect';
 import { formatCurrency } from '../lib/calculations';
-import { PriceListItemDetail } from '../components/PriceListItemDetail';
 import type { PriceListItem, PriceListInsert } from '../types';
 
 type SortField = 'concept_description' | 'type' | 'unit' | 'price' | 'price_last_updated_at';
@@ -27,11 +27,23 @@ export function PriceList() {
   const [viewMode, setViewMode] = useState<ViewMode>('card');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PriceListItem | null>(null);
-  const [detailItem, setDetailItem] = useState<PriceListItem | null>(null);
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     loadPriceList();
   }, []);
+
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && items.length > 0) {
+      const item = items.find(i => i.id === editId);
+      if (item) {
+        handleEdit(item);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, items]);
 
   useEffect(() => {
     let filtered = items;
@@ -110,7 +122,7 @@ export function PriceList() {
   }
 
   function handleOpenDetail(item: PriceListItem) {
-    setDetailItem(item);
+    navigate(`/prices/${item.id}`);
   }
 
   async function handleDelete(item: PriceListItem) {
@@ -329,16 +341,6 @@ export function PriceList() {
         />
       )}
 
-      {detailItem && (
-        <PriceListItemDetail
-          item={detailItem}
-          onClose={() => setDetailItem(null)}
-          onEdit={(item) => {
-            setDetailItem(null);
-            handleEdit(item);
-          }}
-        />
-      )}
     </div>
   );
 }

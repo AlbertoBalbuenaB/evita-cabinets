@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { ProductsCatalog } from './pages/ProductsCatalog';
 import { PriceList } from './pages/PriceList';
+import { PriceListItem } from './pages/PriceListItem';
 import { Projects } from './pages/Projects';
 import { Templates } from './pages/Templates';
 import { Settings } from './pages/Settings';
@@ -51,6 +52,7 @@ function App() {
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:id" element={<Projects />} />
           <Route path="/products" element={<ProductsCatalog />} />
+          <Route path="/prices/:id" element={<PriceListItem />} />
           <Route path="/prices" element={<PriceList />} />
           <Route path="/templates" element={<Templates />} />
           <Route path="/settings" element={<Settings />} />

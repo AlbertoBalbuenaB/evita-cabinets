@@ -105,9 +105,14 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
       );
     } else {
       parts.push(
-        <span key={`${keyPrefix}lnk${idx}`} className="text-blue-600 underline">
+        <button
+          key={`${keyPrefix}lnk${idx}`}
+          type="button"
+          onClick={() => onNavigate?.(`/prices/${id}`)}
+          className="text-blue-600 hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+        >
           {label}
-        </span>
+        </button>
       );
     }
     lastIndex = linkRegex.lastIndex;
