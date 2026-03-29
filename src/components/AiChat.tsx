@@ -58,25 +58,29 @@ const SUGGESTIONS = [
 function formatBoldCode(text: string, keyPrefix: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
   const boldSegments = text.split('**');
-  boldSegments.forEach((segment, si) => {
-    if (segment === '') return;
+  for (let si = 0; si < boldSegments.length; si++) {
+    const segment = boldSegments[si];
+    if (segment.length === 0) continue;
     const isBold = si % 2 === 1;
+    // Handle backtick code within this segment
     const codeParts = segment.split(/`([^`]+)`/);
     const children: React.ReactNode[] = [];
-    codeParts.forEach((part, ci) => {
-      if (part === '') return;
+    for (let ci = 0; ci < codeParts.length; ci++) {
+      const part = codeParts[ci];
+      if (part.length === 0) continue;
       if (ci % 2 === 1) {
         children.push(<code key={`${keyPrefix}${si}c${ci}`} className="font-mono text-xs bg-slate-100 text-slate-700 px-1 py-0.5 rounded">{part}</code>);
       } else {
         children.push(part);
       }
-    });
+    }
+    if (children.length === 0) continue;
     if (isBold) {
       parts.push(<strong key={`${keyPrefix}b${si}`} className="font-semibold text-slate-900">{children}</strong>);
     } else {
       parts.push(...children);
     }
-  });
+  }
   return parts;
 }
 
@@ -121,11 +125,9 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
 
   if (lastIndex < text.length) {
     parts.push(...formatBoldCode(text.slice(lastIndex), `${keyPrefix}t${idx}-`));
-  } else if (lastIndex === 0) {
-    return formatBoldCode(text, keyPrefix);
   }
 
-  return parts;
+  return parts.length > 0 ? parts : formatBoldCode(text, keyPrefix);
 }
 
 function isTableSeparator(line: string): boolean {
