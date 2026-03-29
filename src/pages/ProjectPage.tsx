@@ -14,6 +14,7 @@ import { ScheduleSection } from '../components/ScheduleSection';
 import { TasksSection } from '../components/TasksSection';
 import { DocumentationSection } from '../components/DocumentationSection';
 import { BitacoraSection } from '../components/BitacoraSection';
+import { CrossQuotationAnalytics } from '../components/CrossQuotationAnalytics';
 import type { Project, Quotation, TeamMember } from '../types';
 
 function formatDate(iso: string) {
@@ -372,11 +373,7 @@ export function ProjectPage() {
 
       {/* Analytics tab */}
       {activeTab === 'analytics' && (
-        <div className="glass-white p-12 text-center">
-          <BarChart3 className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-slate-700 mb-2">Cross-Quotation Analytics</h3>
-          <p className="text-slate-500">Compare quotation versions, track price changes, and visualize project evolution. Coming soon.</p>
-        </div>
+        <CrossQuotationAnalytics quotations={quotations} exchangeRate={exchangeRate} />
       )}
 
       <ImportQuotationModal
