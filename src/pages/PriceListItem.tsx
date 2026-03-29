@@ -128,34 +128,34 @@ export function PriceListItem() {
       </div>
 
       {/* Hero header */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl px-5 sm:px-7 py-5 sm:py-6">
+      <div className="rounded-xl px-5 sm:px-7 py-5 sm:py-6" style={{ background: 'linear-gradient(135deg, rgba(219,234,254,0.4), rgba(224,231,255,0.3), rgba(241,245,249,0.35))', borderBottom: '1px solid rgba(148,163,184,0.2)' }}>
         <div className="flex items-start justify-between mb-3">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/15 text-white/90 border border-white/10">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-600/10 text-blue-800 border border-blue-600/15">
             <Tag className="h-3 w-3" />
             {item.type}
           </span>
           {item.is_active ? (
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-400/20 text-green-100 border border-green-300/20">Active</span>
+            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200/50">Active</span>
           ) : (
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-400/20 text-red-200 border border-red-300/20">Inactive</span>
+            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-200/50">Inactive</span>
           )}
         </div>
 
-        <h2 className="text-xl sm:text-2xl font-bold text-white leading-snug">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">
           {item.concept_description}
         </h2>
         {item.sku_code && (
-          <p className="mt-1 text-sm text-blue-200/80 font-mono">{item.sku_code}</p>
+          <p className="mt-1 text-sm text-slate-400 font-mono">{item.sku_code}</p>
         )}
 
         <div className="mt-4 flex items-end justify-between flex-wrap gap-3">
           <div>
-            <div className="text-3xl sm:text-4xl font-bold text-white tabular-nums">
+            <div className="text-3xl sm:text-4xl font-bold text-slate-900 tabular-nums">
               {formatCurrency(item.price)}
             </div>
-            <span className="text-sm text-blue-200/80">per {item.unit}</span>
+            <span className="text-sm text-slate-500">per {item.unit}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-blue-200/60">
+          <div className="flex items-center gap-1.5 text-slate-400">
             <Calendar className="h-3.5 w-3.5" />
             <span className="text-xs">Updated {formatDate(item.price_last_updated_at)}</span>
           </div>
