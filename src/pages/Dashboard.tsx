@@ -732,7 +732,7 @@ export function Dashboard() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-600">{card.label}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
+                  <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 truncate">
                     {card.value}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">{card.subtext}</p>
@@ -773,9 +773,15 @@ export function Dashboard() {
         </div>
 
         <div className="lg:col-span-2 glass-white p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
-            Monthly Projects (Last 6 Months)
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Monthly Projects (Last 6 Months)
+            </h2>
+            <div className="flex items-center gap-3 text-xs text-slate-500">
+              <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-gradient-to-r from-green-400 to-green-500" /> Won</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-gradient-to-r from-blue-300 to-blue-400" /> Other</span>
+            </div>
+          </div>
           {monthlyData.length > 0 ? (
             <div className="space-y-4">
               {monthlyData.map((data) => {
@@ -783,10 +789,13 @@ export function Dashboard() {
                 const convRate = data.totalProjects > 0
                   ? (data.wonProjects / data.totalProjects) * 100
                   : 0;
+                const wonPct = data.totalProjects > 0
+                  ? (data.wonProjects / data.totalProjects) * 100
+                  : 0;
 
                 return (
                   <div key={data.month}>
-                    <div className="flex justify-between items-center mb-2">
+                    <div className="flex justify-between items-center mb-1.5">
                       <span className="text-sm font-medium text-slate-700">
                         {data.month}
                       </span>
@@ -799,19 +808,18 @@ export function Dashboard() {
                         </span>
                       </div>
                     </div>
-                    <div className="relative h-8 bg-slate-100 rounded-lg overflow-hidden">
+                    <div className="h-7 bg-slate-100 rounded-lg overflow-hidden">
                       <div
-                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg transition-all duration-500"
-                        style={{ width: `${percentage}%` }}
-                      />
-                      <div
-                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 to-green-500 rounded-lg transition-all duration-500"
-                        style={{ width: `${(data.wonProjects / maxProjects) * 100}%` }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xs font-medium text-slate-700">
-                          {data.totalProjects} total
-                        </span>
+                        className="h-full flex rounded-lg overflow-hidden transition-all duration-500"
+                        style={{ width: `${Math.max(percentage, 2)}%` }}
+                      >
+                        {data.wonProjects > 0 && (
+                          <div
+                            className="h-full bg-gradient-to-r from-green-400 to-green-500 flex-shrink-0"
+                            style={{ width: `${wonPct}%` }}
+                          />
+                        )}
+                        <div className="h-full bg-gradient-to-r from-blue-300 to-blue-400 flex-1" />
                       </div>
                     </div>
                   </div>
