@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Plus, Search, Pencil as Edit2, Trash2, Check, X, Archive, ArchiveRestore, Library, Package, ToggleLeft, ToggleRight, Bookmark } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Plus, Search, Pencil as Edit2, Trash2, Check, X, Archive, ArchiveRestore, Library, Package, ToggleLeft, ToggleRight, Bookmark, LayoutList, LayoutGrid, Layers, Box } from 'lucide-react';
 import { ClosetCatalogForm } from '../components/ClosetCatalogForm';
 import { ProductFormModal } from '../components/ProductFormModal';
 import { supabase } from '../lib/supabase';
@@ -16,6 +17,8 @@ import type { Product, ProductInsert, ClosetCatalogItem } from '../types';
 import type { ProductUsage } from '../lib/productUsageChecker';
 
 export function ProductsCatalog() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'products' | 'closets' | 'templates'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -24,6 +27,7 @@ export function ProductsCatalog() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCollection, setSelectedCollection] = useState<string>('all');
   const [showArchived, setShowArchived] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('card');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [safeEditMode, setSafeEditMode] = useState(false);
@@ -38,6 +42,17 @@ export function ProductsCatalog() {
   useEffect(() => {
     filterProducts();
   }, [searchTerm, products, selectedCollection]);
+
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && products.length > 0) {
+      const product = products.find(p => p.id === editId);
+      if (product) {
+        handleEdit(product);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, products]);
 
   async function loadProducts() {
     try {
@@ -198,19 +213,11 @@ export function ProductsCatalog() {
 
   return (
     <div>
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Cabinets Catalog</h1>
-          <p className="mt-2 text-slate-600">
-            Manage cabinet products, closet library and reusable templates
-          </p>
-        </div>
-        {activeTab === 'products' && (
-          <Button onClick={handleAddNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Product
-          </Button>
-        )}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-slate-900">Cabinets Catalog</h1>
+        <p className="mt-2 text-slate-600">
+          Manage cabinet products, closet library and reusable templates
+        </p>
       </div>
 
       <div className="flex border-b border-slate-200 mb-6">
@@ -243,200 +250,152 @@ export function ProductsCatalog() {
 
       {activeTab === 'products' && <div>
 
-      <div className="mb-6 space-y-4">
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 relative">
-            <Library className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+      {/* Filter bar */}
+      <div className="glass-white p-4 mb-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex-1 relative w-full sm:w-auto">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by SKU or description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 w-full px-4 py-2 text-sm border border-slate-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80"
+            />
+          </div>
+          <div className="relative">
+            <Library className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
             <select
               value={selectedCollection}
               onChange={(e) => setSelectedCollection(e.target.value)}
-              className="pl-10 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="pl-9 pr-8 py-2 text-sm border border-slate-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80 appearance-none"
             >
               <option value="all">All Collections</option>
-              {collections.map((collection) => (
-                <option key={collection} value={collection}>
-                  {collection}
-                </option>
-              ))}
+              {collections.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-
-          <label className="flex items-center space-x-2 cursor-pointer px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50">
-            <input
-              type="checkbox"
-              checked={showArchived}
-              onChange={(e) => setShowArchived(e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-            />
-            <Archive className="h-4 w-4 text-slate-600" />
-            <span className="text-sm font-medium text-slate-700">Show Archived</span>
+          <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border border-slate-200/60 rounded-lg hover:bg-slate-50 text-sm">
+            <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="w-3.5 h-3.5 text-blue-600 border-slate-300 rounded" />
+            <Archive className="h-3.5 w-3.5 text-slate-500" />
+            <span className="text-slate-600">Archived</span>
           </label>
-        </div>
-
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search by SKU or description..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-xs text-slate-400 hidden sm:inline">{filteredProducts.length} items</span>
+            <div className="flex p-1 bg-slate-100 rounded-lg">
+              <button onClick={() => setViewMode('card')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'card' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid className="h-4 w-4" /></button>
+              <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><LayoutList className="h-4 w-4" /></button>
+            </div>
+            <Button size="sm" onClick={handleAddNew}><Plus className="h-4 w-4 mr-1" />Add</Button>
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  SKU
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Collection
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Box SF
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Doors SF
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Total EB (m)
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Drawers
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Labor Cost
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Boxes
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  RTA Default
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
-              {filteredProducts.length === 0 ? (
-                <tr>
-                  <td colSpan={12} className="px-6 py-8 text-center text-slate-500">
-                    No products found. {searchTerm ? 'Try a different search.' : 'Add your first product to get started.'}
-                  </td>
+      {/* Products display */}
+      {filteredProducts.length === 0 ? (
+        <div className="glass-white p-12 text-center">
+          <Package className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-500">{searchTerm ? 'No products found. Try a different search.' : 'Add your first product to get started.'}</p>
+        </div>
+      ) : viewMode === 'card' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredProducts.map((product) => (
+            <div
+              key={product.id}
+              onClick={() => navigate(`/products/${product.id}`)}
+              className="glass-white p-0 overflow-hidden cursor-pointer group hover:shadow-md hover:border-blue-200 transition-all duration-200"
+            >
+              <div className="px-4 pt-4 pb-3">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className="text-xs font-mono font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{product.sku}</span>
+                  {product.status === 'archived' ? (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Archived</span>
+                  ) : (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span>
+                  )}
+                </div>
+                <p className="text-sm font-medium text-slate-800 line-clamp-2 mb-2 min-h-[2.5rem]">{product.description}</p>
+                <span className="text-xs text-slate-400">{product.collection_name || 'Standard Catalog'}</span>
+              </div>
+              <div className="px-4 py-3 bg-slate-50/60 border-t border-slate-200/40">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-800 tabular-nums">{product.box_sf.toFixed(1)}</div>
+                    <div className="text-[10px] text-slate-400 uppercase">Box SF</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-800 tabular-nums">{product.doors_fronts_sf.toFixed(1)}</div>
+                    <div className="text-[10px] text-slate-400 uppercase">Doors SF</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-800 tabular-nums">{product.total_edgeband.toFixed(1)}</div>
+                    <div className="text-[10px] text-slate-400 uppercase">EB (m)</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/40">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    {product.has_drawers && <span className="flex items-center gap-0.5"><Layers className="h-3 w-3 text-amber-500" /> Drawers</span>}
+                    <span className="flex items-center gap-0.5"><Box className="h-3 w-3" /> {product.boxes_per_unit ?? 1} box</span>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={(e) => { e.stopPropagation(); handleEdit(product); }} className="p-1 rounded hover:bg-white text-slate-400 hover:text-blue-600"><Edit2 className="h-3.5 w-3.5" /></button>
+                    {product.status === 'active' ? (
+                      <button onClick={(e) => { e.stopPropagation(); handleArchive(product); }} className="p-1 rounded hover:bg-white text-slate-400 hover:text-amber-600"><Archive className="h-3.5 w-3.5" /></button>
+                    ) : (
+                      <button onClick={(e) => { e.stopPropagation(); handleRestore(product); }} className="p-1 rounded hover:bg-white text-slate-400 hover:text-green-600"><ArchiveRestore className="h-3.5 w-3.5" /></button>
+                    )}
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(product); }} className="p-1 rounded hover:bg-white text-slate-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="glass-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200/60">
+              <thead>
+                <tr className="bg-slate-50/60">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">SKU</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">Collection</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Box SF</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Doors SF</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Drawers</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Boxes</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
-              ) : (
-                filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                      {product.sku}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
-                      {product.description}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {product.collection_name || 'Standard Catalog'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-slate-900">
-                      {product.box_sf.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-slate-900">
-                      {product.doors_fronts_sf.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-slate-900">
-                      {product.total_edgeband.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      {product.has_drawers ? (
-                        <Check className="h-5 w-5 text-green-600 mx-auto" />
-                      ) : (
-                        <X className="h-5 w-5 text-slate-300 mx-auto" />
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                      {product.custom_labor_cost !== null && product.custom_labor_cost !== undefined ? (
-                        <span className="text-slate-900">${product.custom_labor_cost.toFixed(2)}</span>
-                      ) : (
-                        <span className="text-slate-400">Global</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-slate-900">
-                      {product.boxes_per_unit ?? 1}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      {product.default_is_rta ? (
-                        <Check className="h-5 w-5 text-green-600 mx-auto" />
-                      ) : (
-                        <span className="text-slate-300">—</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      {product.status === 'archived' ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-                          Archived
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Active
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(product)}
-                        title="Edit"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      {product.status === 'active' ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleArchive(product)}
-                          title="Archive"
-                        >
-                          <Archive className="h-4 w-4 text-amber-600" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRestore(product)}
-                          title="Restore"
-                        >
-                          <ArchiveRestore className="h-4 w-4 text-green-600" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(product)}
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredProducts.map((product) => (
+                  <tr key={product.id} onClick={() => navigate(`/products/${product.id}`)} className="hover:bg-blue-50/40 cursor-pointer transition-colors group">
+                    <td className="px-4 py-3 text-sm font-mono font-medium text-blue-700">{product.sku}</td>
+                    <td className="px-4 py-3 text-sm text-slate-700 max-w-xs truncate">{product.description}</td>
+                    <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{product.collection_name || 'Standard'}</span></td>
+                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-800">{product.box_sf.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-800">{product.doors_fronts_sf.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-center hidden lg:table-cell">{product.has_drawers ? <Check className="h-4 w-4 text-green-600 mx-auto" /> : <X className="h-4 w-4 text-slate-300 mx-auto" />}</td>
+                    <td className="px-4 py-3 text-center hidden lg:table-cell text-sm text-slate-700">{product.boxes_per_unit ?? 1}</td>
+                    <td className="px-4 py-3 text-center">{product.status === 'archived' ? <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Archived</span> : <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span>}</td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={(e) => { e.stopPropagation(); handleEdit(product); }} className="p-1.5 rounded-md hover:bg-white text-slate-400 hover:text-blue-600"><Edit2 className="h-3.5 w-3.5" /></button>
+                        {product.status === 'active' ? (
+                          <button onClick={(e) => { e.stopPropagation(); handleArchive(product); }} className="p-1.5 rounded-md hover:bg-white text-slate-400 hover:text-amber-600"><Archive className="h-3.5 w-3.5" /></button>
+                        ) : (
+                          <button onClick={(e) => { e.stopPropagation(); handleRestore(product); }} className="p-1.5 rounded-md hover:bg-white text-slate-400 hover:text-green-600"><ArchiveRestore className="h-3.5 w-3.5" /></button>
+                        )}
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(product); }} className="p-1.5 rounded-md hover:bg-white text-slate-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+                      </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {isModalOpen && !safeEditMode && (
         <ProductFormModal

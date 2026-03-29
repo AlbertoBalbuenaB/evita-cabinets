@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { ProductsCatalog } from './pages/ProductsCatalog';
+import { ProductItem } from './pages/ProductItem';
 import { PriceList } from './pages/PriceList';
 import { PriceListItem } from './pages/PriceListItem';
 import { Projects } from './pages/Projects';
@@ -51,6 +52,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:id" element={<Projects />} />
+          <Route path="/products/:id" element={<ProductItem />} />
           <Route path="/products" element={<ProductsCatalog />} />
           <Route path="/prices/:id" element={<PriceListItem />} />
           <Route path="/prices" element={<PriceList />} />
