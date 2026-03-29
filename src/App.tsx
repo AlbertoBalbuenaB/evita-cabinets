@@ -6,7 +6,9 @@ import { ProductsCatalog } from './pages/ProductsCatalog';
 import { ProductItem } from './pages/ProductItem';
 import { PriceList } from './pages/PriceList';
 import { PriceListItem } from './pages/PriceListItem';
-import { Projects } from './pages/Projects';
+import { ProjectsHub } from './pages/ProjectsHub';
+import { ProjectPage } from './pages/ProjectPage';
+import { QuotationDetailsPage } from './pages/QuotationDetailsPage';
 import { Templates } from './pages/Templates';
 import { Settings } from './pages/Settings';
 import { Login } from './pages/Login';
@@ -50,8 +52,9 @@ function App() {
       <Layout onLogout={handleLogout}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/projects/:id" element={<Projects />} />
+          <Route path="/projects" element={<ProjectsHub />} />
+          <Route path="/projects/:projectId" element={<ProjectPage />} />
+          <Route path="/projects/:projectId/quotations/:quotationId" element={<QuotationDetailsPage />} />
           <Route path="/products/:id" element={<ProductItem />} />
           <Route path="/products" element={<ProductsCatalog />} />
           <Route path="/prices/:id" element={<PriceListItem />} />
