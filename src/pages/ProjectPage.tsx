@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Pencil as Edit2, FileText, FolderOpen, Hammer, BarChart3,
   Plus, Calendar, Tag, User, MapPin, Check, Save, X, Copy, Trash2,
-  Receipt, ClipboardList, Files, ScrollText
+  Receipt, ClipboardList, Files, ScrollText, MoreVertical, TrendingUp,
+  ArrowUpDown, Upload
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
@@ -20,6 +21,17 @@ import type { Project, Quotation, TeamMember } from '../types';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatRelativeDate(iso: string): string {
+  const diff = Date.now() - new Date(iso + 'T00:00:00').getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
+  if (days < 365) return `${Math.floor(days / 30)} month${Math.floor(days / 30) > 1 ? 's' : ''} ago`;
+  return `${Math.floor(days / 365)} year${Math.floor(days / 365) > 1 ? 's' : ''} ago`;
 }
 
 export function ProjectPage() {
@@ -44,6 +56,8 @@ export function ProjectPage() {
   const [managementLoaded, setManagementLoaded] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [quotationModal, setQuotationModal] = useState<{ open: boolean; quotation?: Quotation }>({ open: false });
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!projectId) { navigate('/projects', { replace: true }); return; }
@@ -57,6 +71,13 @@ export function ProjectPage() {
         .then(({ data }) => { setTeamMembers(data || []); setManagementLoaded(true); });
     }
   }, [activeTab, managementLoaded]);
+
+  useEffect(() => {
+    if (!openMenuId) return;
+    function handleClickOutside() { setOpenMenuId(null); }
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
 
   async function loadProject() {
     setLoading(true);
@@ -206,6 +227,22 @@ export function ProjectPage() {
     Cancelled: 'bg-slate-100 text-slate-500 border-slate-200/50',
   };
 
+  const sortedQuotations = [...quotations].sort((a, b) => {
+    const dateA = new Date(a.quote_date).getTime();
+    const dateB = new Date(b.quote_date).getTime();
+    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+  });
+
+  const statusCounts: Record<string, number> = {};
+  quotations.forEach(q => {
+    if (q.status) statusCounts[q.status] = (statusCounts[q.status] || 0) + 1;
+  });
+
+  const excludedFromPipeline = new Set(['Lost', 'Discarded', 'Cancelled']);
+  const pipelineTotal = quotations
+    .filter(q => !excludedFromPipeline.has(q.status || ''))
+    .reduce((sum, q) => sum + (q.total_amount || 0), 0);
+
   return (
     <div className="space-y-5">
       {/* Breadcrumb */}
@@ -305,10 +342,34 @@ export function ProjectPage() {
       {/* Quotations tab */}
       {activeTab === 'quotations' && (
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">{quotations.length} Quotation{quotations.length !== 1 ? 's' : ''}</h3>
-            <div className="flex gap-2">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h3 className="text-lg font-semibold text-slate-900">
+                {quotations.length} Quotation{quotations.length !== 1 ? 's' : ''}
+              </h3>
+              {quotations.length > 0 && pipelineTotal > 0 && (
+                <span className="flex items-center gap-1.5 text-sm text-slate-500">
+                  <TrendingUp className="h-3.5 w-3.5 text-slate-400" />
+                  Pipeline:{' '}
+                  <span className="font-semibold text-slate-700">
+                    {formatCurrency(pipelineTotal / exchangeRate, 'USD')}
+                  </span>
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {quotations.length > 1 && (
+                <button
+                  onClick={() => setSortOrder(s => s === 'desc' ? 'asc' : 'desc')}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                  {sortOrder === 'desc' ? 'Newest first' : 'Oldest first'}
+                </button>
+              )}
               <Button size="sm" variant="secondary" onClick={() => setImportModalOpen(true)}>
+                <Upload className="h-3.5 w-3.5 mr-1" />
                 Import
               </Button>
               <Button size="sm" onClick={handleNewQuotation}>
@@ -317,65 +378,131 @@ export function ProjectPage() {
               </Button>
             </div>
           </div>
+
+          {/* Status summary pills */}
+          {quotations.length > 0 && Object.keys(statusCounts).length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {Object.entries(statusCounts).map(([status, count]) => (
+                <span
+                  key={status}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full border ${statusColors[status] || 'bg-slate-100 text-slate-600 border-slate-200/50'}`}
+                >
+                  {count} {status}
+                </span>
+              ))}
+            </div>
+          )}
+
           {quotations.length === 0 ? (
             <div className="glass-white p-12 text-center">
-              <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 mb-4">No quotations yet.</p>
-              <Button onClick={handleNewQuotation}><Plus className="h-4 w-4 mr-2" />Create First Quotation</Button>
+              <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+              <p className="text-base font-medium text-slate-700 mb-1">No quotations yet</p>
+              <p className="text-sm text-slate-400 mb-6">Start by creating your first quotation or importing an existing one.</p>
+              <div className="flex items-center justify-center gap-3">
+                <Button onClick={handleNewQuotation}>
+                  <Plus className="h-4 w-4 mr-2" />New Quotation
+                </Button>
+                <Button variant="secondary" onClick={() => setImportModalOpen(true)}>
+                  <Upload className="h-4 w-4 mr-2" />Import
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
-              {quotations.map((q) => (
-                <div
-                  key={q.id}
-                  onClick={() => navigate(`/projects/${projectId}/quotations/${q.id}`)}
-                  className="glass-white p-4 cursor-pointer hover:shadow-md hover:border-blue-200 transition-all group"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
-                        {q.version_number || '?'}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-slate-900 truncate">{q.version_label || q.name}</span>
-                          <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full border ${statusColors[q.status] || 'bg-slate-100 text-slate-600 border-slate-200/50'}`}>{q.status}</span>
+              {sortedQuotations.map((q, index) => {
+                const isLatest = index === 0;
+                const marginPct = q.profit_multiplier != null && q.profit_multiplier > 0
+                  ? Math.round(q.profit_multiplier * 100)
+                  : null;
+                const isMenuOpen = openMenuId === q.id;
+
+                return (
+                  <div
+                    key={q.id}
+                    onClick={() => navigate(`/projects/${projectId}/quotations/${q.id}`)}
+                    className={`glass-white p-4 cursor-pointer hover:shadow-md hover:border-blue-200 transition-all ${isLatest ? 'border-l-4 border-l-blue-400' : ''}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      {/* Left: version badge + info */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold ${isLatest ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
+                          {q.version_number || '?'}
                         </div>
-                        <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-400">
-                          <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDate(q.quote_date)}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium text-slate-900 truncate">{q.version_label || q.name}</span>
+                            <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full border ${statusColors[q.status || ''] || 'bg-slate-100 text-slate-600 border-slate-200/50'}`}>{q.status}</span>
+                            {isLatest && (
+                              <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200/60 font-medium">Latest</span>
+                            )}
+                            {marginPct !== null && (
+                              <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200/50">
+                                {marginPct}% margin
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-slate-400 flex-wrap">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {formatDate(q.quote_date)}
+                            </span>
+                            <span className="text-slate-300">·</span>
+                            <span>{formatRelativeDate(q.quote_date)}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-slate-900 tabular-nums">{formatCurrency(q.total_amount / exchangeRate, 'USD')}</div>
-                        <div className="text-xs text-slate-400 tabular-nums">{formatCurrency(q.total_amount)}</div>
+
+                      {/* Right: amounts + kebab menu */}
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="text-right">
+                          <div className="text-sm font-bold text-slate-900 tabular-nums">{formatCurrency((q.total_amount || 0) / exchangeRate, 'USD')}</div>
+                          <div className="text-xs text-slate-400 tabular-nums">{formatCurrency(q.total_amount || 0)}</div>
+                        </div>
+
+                        {/* Kebab menu */}
+                        <div className="relative" onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={() => setOpenMenuId(isMenuOpen ? null : q.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                            title="More options"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                          {isMenuOpen && (
+                            <div className="absolute right-0 top-9 z-50 w-44 bg-white rounded-xl shadow-lg border border-slate-200 py-1 text-sm">
+                              <button
+                                onClick={() => { setOpenMenuId(null); navigate(`/projects/${projectId}/quotations/${q.id}`); }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                              >
+                                <FileText className="h-3.5 w-3.5" />View Details
+                              </button>
+                              <button
+                                onClick={() => { setOpenMenuId(null); handleDuplicate(q); }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 transition-colors"
+                              >
+                                <Copy className="h-3.5 w-3.5" />Duplicate
+                              </button>
+                              <button
+                                onClick={() => { setOpenMenuId(null); handleEditQuotation(q); }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 transition-colors"
+                              >
+                                <Edit2 className="h-3.5 w-3.5" />Edit
+                              </button>
+                              <div className="border-t border-slate-100 my-1" />
+                              <button
+                                onClick={() => { setOpenMenuId(null); handleDeleteQuotation(q); }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDuplicate(q); }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-all"
-                        title="Duplicate"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleEditQuotation(q); }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 opacity-0 group-hover:opacity-100 transition-all"
-                        title="Edit"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteQuotation(q); }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
