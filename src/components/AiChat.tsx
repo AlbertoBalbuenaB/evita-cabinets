@@ -308,6 +308,7 @@ export function AiChat() {
   const [history, setHistory] = useState<ChatSession[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const currentSessionIdRef = useRef<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -379,6 +380,7 @@ export function AiChat() {
         if (age < TWENTY_FOUR_HOURS && Array.isArray(session.messages) && session.messages.length > 0) {
           setMessages(session.messages as Message[]);
           setCurrentSessionId(session.id);
+          currentSessionIdRef.current = session.id;
         }
       }
     })();
@@ -392,17 +394,20 @@ export function AiChat() {
       ? firstUser.content.slice(0, 60) + (firstUser.content.length > 60 ? '...' : '')
       : 'Conversation';
 
-    if (currentSessionId) {
+    if (currentSessionIdRef.current) {
       await supabase.from('ai_chat_sessions')
         .update({ messages: msgs, title })
-        .eq('id', currentSessionId);
+        .eq('id', currentSessionIdRef.current);
     } else {
       const { data } = await supabase.from('ai_chat_sessions').insert({
         session_key: sessionKey,
         title,
         messages: msgs,
       }).select('id').single();
-      if (data?.id) setCurrentSessionId(data.id);
+      if (data?.id) {
+        currentSessionIdRef.current = data.id;
+        setCurrentSessionId(data.id);
+      }
     }
   }
 
@@ -472,9 +477,9 @@ export function AiChat() {
     setView('chat');
   }
 
-  function handleClose() {
+  async function handleClose() {
     if (messages.length > 0) {
-      saveSession(messages);
+      await saveSession(messages);
     }
     setIsVisible(false);
     setTimeout(() => setIsOpen(false), 250);
@@ -483,6 +488,7 @@ export function AiChat() {
   async function handleReset() {
     if (messages.length > 0) await saveSession(messages);
     setMessages([]);
+    currentSessionIdRef.current = null;
     setCurrentSessionId(null);
     try { sessionStorage.removeItem('evita-ia-messages'); } catch {}
   }
@@ -508,6 +514,7 @@ export function AiChat() {
 
   function handleLoadSession(session: ChatSession) {
     setMessages(session.messages);
+    currentSessionIdRef.current = session.id;
     setCurrentSessionId(session.id);
     setView('chat');
   }
@@ -530,6 +537,7 @@ export function AiChat() {
     setDeletingId(null);
     if (currentSessionId === id) {
       setMessages([]);
+      currentSessionIdRef.current = null;
       setCurrentSessionId(null);
       try { sessionStorage.removeItem('evita-ia-messages'); } catch {}
     }
