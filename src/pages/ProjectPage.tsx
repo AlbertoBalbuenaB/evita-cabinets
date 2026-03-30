@@ -420,7 +420,7 @@ export function ProjectPage() {
                   <div
                     key={q.id}
                     onClick={() => navigate(`/projects/${projectId}/quotations/${q.id}`)}
-                    className={`glass-white p-4 cursor-pointer hover:shadow-md hover:border-blue-200 transition-all ${isLatest ? 'border-l-4 border-l-blue-400' : ''}`}
+                    className={`glass-white p-4 cursor-pointer hover:shadow-md hover:border-blue-200 transition-all ${isLatest ? 'border-l-4 border-l-blue-400' : ''} ${isMenuOpen ? 'relative z-10' : ''}`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       {/* Left: version badge + info */}
