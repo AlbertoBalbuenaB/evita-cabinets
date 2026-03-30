@@ -734,6 +734,17 @@ Example: "Your project [[project:abc-123|Kitchen Remodel]] has 5 areas."
 Example: "The material [[material:def-456|MDF 3/4 Maple]] costs $45.20/sheet."
 Always use these formats when an ID is available. The [id:...] in LIVE DATA is for your reference only — never output it directly.
 
+=== PROJECT MANAGEMENT QUERIES ===
+For questions about tasks, pending tasks, overdue tasks, project documents, notes, or activity log:
+- ALWAYS call get_project_management to get real data from the database
+- If no project/quotation is open, tell the user to navigate to a specific project first, or ask which project they want to check
+- Never answer task/document questions from memory alone — always use the tool for live data
+
+=== TEMPLATES & CLOSETS ===
+For questions about saved cabinet templates: call search_templates
+For questions about closet catalog items or closet pricing: call search_closet_catalog
+These tools are always available regardless of which page the user is on.
+
 === APP GUIDE — HOW TO USE THE APP ===
 When users ask HOW to do something in the app, give step-by-step instructions referencing specific UI elements (buttons, tabs, sections).
 
@@ -812,13 +823,12 @@ Style: Auto-detect EN/ES. Always show the full breakdown table. Say explicitly i
   try {
     const hasMissingSkus = candidateSkus.length === 0 ||
       skuContext.includes('NOT FOUND');
-    const alwaysTools = [...SEARCH_TOOLS, KNOWLEDGE_TOOLS[0], KNOWLEDGE_TOOLS[1]];
-    const projectMgmtTool = projectId ? [KNOWLEDGE_TOOLS[2]] : [];
+    const alwaysTools = [...SEARCH_TOOLS, ...KNOWLEDGE_TOOLS];
     const tools = modMode
-      ? [...alwaysTools, ...CATALOG_SEARCH_TOOL, ...MODIFICATION_TOOLS, ...projectMgmtTool]
+      ? [...alwaysTools, ...CATALOG_SEARCH_TOOL, ...MODIFICATION_TOOLS]
       : hasMissingSkus
-        ? [...alwaysTools, ...CATALOG_SEARCH_TOOL, ...projectMgmtTool]
-        : [...alwaysTools, ...projectMgmtTool];
+        ? [...alwaysTools, ...CATALOG_SEARCH_TOOL]
+        : alwaysTools;
 
     let currentMessages = [...messages];
     let finalContent = '';
