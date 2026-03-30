@@ -71,6 +71,42 @@ const CATALOG_SEARCH_TOOL = [
   }
 ];
 
+const KNOWLEDGE_TOOLS = [
+  {
+    name: 'search_templates',
+    description: 'Search saved cabinet templates by name, category, or SKU. Use when user asks about available templates or wants to find a specific template.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search term e.g. "kitchen", "Premium", "102"' },
+        category: { type: 'string', description: 'Optional category filter e.g. "Kitchen", "Closet", "General"' }
+      },
+      required: ['query']
+    }
+  },
+  {
+    name: 'search_closet_catalog',
+    description: 'Search the closet catalog for prefab closet items with pricing. Use when user asks about closet products, closet pricing, or closet options.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search term e.g. "double hang", "shelf", "COS1812"' },
+        evita_line: { type: 'string', description: 'Optional filter: "Evita Plus" or "Evita Premium"' }
+      },
+      required: ['query']
+    }
+  },
+  {
+    name: 'get_project_management',
+    description: 'Get project management data: tasks, documents, and activity log for the currently open project. Use when user asks about tasks, documents, or project notes.',
+    input_schema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  },
+];
+
 const MODIFICATION_TOOLS = [
   {
     name: 'get_area_cabinets',
@@ -310,6 +346,57 @@ async function executeTool(name: string, input: any, sb: any, projectId: string 
           updated: d?.updated ?? 0,
           new_project_total: d?.new_project_total ?? 0,
           message: `Updated ${d?.updated ?? 0} cabinet lines. New project total: $${Number(d?.new_project_total ?? 0).toLocaleString('en-US', { maximumFractionDigits: 2 })} MXN. Refresh to see changes.`
+        });
+      }
+
+      case 'search_templates': {
+        let q = sb.from('cabinet_templates')
+          .select('id, name, category, product_sku, product_description, box_material_name, doors_material_name, hardware, usage_count, last_used_at')
+          .ilike('name', `%${input.query}%`)
+          .limit(10);
+        if (input.category) q = q.eq('category', input.category);
+        const { data, error } = await q;
+        if (error) return JSON.stringify({ error: error.message });
+        if (!data?.length) {
+          const { data: d2 } = await sb.from('cabinet_templates')
+            .select('id, name, category, product_sku, product_description, box_material_name, doors_material_name, hardware, usage_count, last_used_at')
+            .ilike('product_sku', `%${input.query}%`)
+            .limit(10);
+          return JSON.stringify({ count: d2?.length ?? 0, results: d2 ?? [] });
+        }
+        return JSON.stringify({ count: data.length, results: data });
+      }
+
+      case 'search_closet_catalog': {
+        let q = sb.from('closet_catalog')
+          .select('id, cabinet_code, description, evita_line, height_in, width_in, depth_in, price_with_backs_usd, price_without_backs_usd, has_backs_option, boxes_count')
+          .eq('is_active', true)
+          .limit(10);
+        if (input.evita_line) q = q.eq('evita_line', input.evita_line);
+        const { data, error } = await q.or(`description.ilike.%${input.query}%,cabinet_code.ilike.%${input.query}%`);
+        if (error) return JSON.stringify({ error: error.message });
+        return JSON.stringify({ count: data?.length ?? 0, results: data ?? [] });
+      }
+
+      case 'get_project_management': {
+        if (!projectId) return JSON.stringify({ error: 'No project open.' });
+        const { data: q } = await sb.from('quotations').select('project_id').eq('id', projectId).single();
+        const pid = q?.project_id ?? projectId;
+        const [tasksRes, docsRes, logsRes] = await Promise.all([
+          sb.from('project_tasks').select('id, title, details, due_date, status, assignee_id').eq('project_id', pid).order('display_order').limit(20),
+          sb.from('project_documents').select('id, label, url').eq('project_id', pid).order('display_order').limit(20),
+          sb.from('project_logs').select('id, comment, created_at').eq('project_id', pid).order('created_at', { ascending: false }).limit(10),
+        ]);
+        let teamMap: Record<string,string> = {};
+        const assigneeIds = [...new Set((tasksRes.data ?? []).map((t:any) => t.assignee_id).filter(Boolean))];
+        if (assigneeIds.length) {
+          const { data: members } = await sb.from('team_members').select('id, name').in('id', assigneeIds);
+          members?.forEach((m:any) => { teamMap[m.id] = m.name; });
+        }
+        return JSON.stringify({
+          tasks: (tasksRes.data ?? []).map((t:any) => ({ ...t, assignee_name: teamMap[t.assignee_id] ?? null })),
+          documents: docsRes.data ?? [],
+          recent_logs: logsRes.data ?? [],
         });
       }
 
@@ -647,6 +734,75 @@ Example: "Your project [[project:abc-123|Kitchen Remodel]] has 5 areas."
 Example: "The material [[material:def-456|MDF 3/4 Maple]] costs $45.20/sheet."
 Always use these formats when an ID is available. The [id:...] in LIVE DATA is for your reference only — never output it directly.
 
+=== APP GUIDE — HOW TO USE THE APP ===
+When users ask HOW to do something in the app, give step-by-step instructions referencing specific UI elements (buttons, tabs, sections).
+
+DASHBOARD (/)
+- Shows: project counts by status, pipeline value, won value, conversion rate
+- Monthly trends (last 6 months), project type breakdown with win rates
+- Top quoted cabinet SKUs, most used box/door materials and hardware
+- Auto-refreshes every 30 seconds and on tab focus
+
+PROJECTS HUB (/projects)
+- Lists all projects with status, customer, total amount
+- Click "+ New Project" button (top right) to create a project — enter name, customer, address, project type
+- Click any project row to open it and see its quotations
+- Status workflow: Pending → Estimating → Sent → Awarded | Lost | Cancelled | Disqualified
+
+PROJECT PAGE (/projects/:id)
+- Shows project info (name, customer, address) and all quotation versions
+- Create new quotation version with "+ New Quotation" button
+- Click a quotation card to open Quotation Details
+
+QUOTATION DETAILS (/projects/:id/quotations/:qid)
+- 5 tabs: Info, Pricing, Analytics, History, Management
+- INFO TAB: Edit customer info, project brief, financial settings (profit %, tax %, tariff %, install cost, referral rate)
+- PRICING TAB (main workspace):
+  * Add areas: Click "+ Add Area" → name it (Kitchen, Master Closet, etc.)
+  * Add cabinets: Click "+ Add Cabinet" in an area → search by SKU or browse catalog
+  * Configure each cabinet: select box material, door material, edgebands from dropdowns
+  * Hardware: Click hardware section on a cabinet → add hinges, slides, pulls
+  * Accessories: Add items like sink trays, lazy susans
+  * Closet items: In closet areas, add prefab closet catalog items
+  * Templates: Click "Apply Template" to quickly configure a cabinet from saved template
+  * Totals auto-calculate at area level and quotation level
+- ANALYTICS TAB: Cost breakdown charts, area comparison, material distribution
+- HISTORY TAB: Version comparison — see what changed between quotation versions
+- MANAGEMENT TAB: Documents, tasks, activity log, schedule/Gantt
+
+PRODUCTS CATALOG (/products)
+- Browse all cabinet SKU codes with dimensions, square footage, edgeband specs
+- Search by SKU code or description using the search bar at top
+- Click any product to see full details
+
+PRICE LIST (/prices)
+- All materials, hardware, accessories with current prices
+- Types: Melamine, Edgeband, Hinges, Slides, Special Hardware, Laminate, Accessories
+- Search and filter by type using the tabs at top
+- Click any item to see details including notes and product URL
+- Prices stored in MXN, converted to USD using the exchange rate in Settings
+
+TEMPLATES (/templates)
+- Saved cabinet configurations for quick reuse across projects
+- To save a template: In Pricing tab, fully configure a cabinet → click "Save as Template" → give it a name
+- To apply a template: In Pricing tab, click "Apply Template" button on any cabinet row → select template
+- Templates store: SKU, materials, edgebands, hardware, accessories, back panel config
+
+SETTINGS (/settings)
+- Labor costs: cost per cabinet with/without drawers (MXN)
+- Waste percentages: box waste % and doors waste %
+- Exchange rate: USD to MXN conversion rate
+- Tax configuration: tax percentage for quotations
+- Team members: Add/edit team members (name, role, email) for task assignment
+
+COMMON WORKFLOWS:
+1. Create a quotation from scratch:
+   Projects → + New Project → fill info → + New Quotation → Pricing tab → + Add Area → + Add Cabinet → configure materials → review totals
+2. Change materials across an area:
+   Open quotation → Pricing tab → select area → use bulk material change (or ask me to do it!)
+3. Compare quotation versions:
+   Open project → click two quotation cards → Analytics or History tab shows differences
+
 === LIVE DATA ===
 ${liveData}${skuContext}
 
@@ -656,11 +812,13 @@ Style: Auto-detect EN/ES. Always show the full breakdown table. Say explicitly i
   try {
     const hasMissingSkus = candidateSkus.length === 0 ||
       skuContext.includes('NOT FOUND');
+    const alwaysTools = [...SEARCH_TOOLS, KNOWLEDGE_TOOLS[0], KNOWLEDGE_TOOLS[1]];
+    const projectMgmtTool = projectId ? [KNOWLEDGE_TOOLS[2]] : [];
     const tools = modMode
-      ? [...SEARCH_TOOLS, ...CATALOG_SEARCH_TOOL, ...MODIFICATION_TOOLS]
+      ? [...alwaysTools, ...CATALOG_SEARCH_TOOL, ...MODIFICATION_TOOLS, ...projectMgmtTool]
       : hasMissingSkus
-        ? [...SEARCH_TOOLS, ...CATALOG_SEARCH_TOOL]
-        : SEARCH_TOOLS;
+        ? [...alwaysTools, ...CATALOG_SEARCH_TOOL, ...projectMgmtTool]
+        : [...alwaysTools, ...projectMgmtTool];
 
     let currentMessages = [...messages];
     let finalContent = '';

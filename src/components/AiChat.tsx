@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Send, Sparkles, ChevronRight, RotateCcw, Loader2, History, ArrowLeft, MessageSquare } from 'lucide-react';
+import { X, Send, Sparkles, ChevronRight, RotateCcw, Loader2, History, ArrowLeft, MessageSquare, Pencil, Trash2, Search, Plus, Check } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAiChatContext } from '../stores/aiChatContext';
@@ -254,9 +254,19 @@ function formatMessage(text: string, onNavigate?: (path: string) => void): React
   return result;
 }
 
-function formatDate(iso: string): string {
+function formatRelativeDate(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  const now = Date.now();
+  const diff = now - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 const EVITA_IA_PASSWORD = import.meta.env.VITE_EVITA_IA_PASSWORD || 'EvitaCabinets';
@@ -298,6 +308,10 @@ export function AiChat() {
   const [history, setHistory] = useState<ChatSession[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [historySearch, setHistorySearch] = useState('');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -335,6 +349,14 @@ export function AiChat() {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, loading, view]);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape' && isOpen) handleClose();
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!unlocked) return;
@@ -478,13 +500,53 @@ export function AiChat() {
 
   async function handleShowHistory() {
     setView('history');
+    setHistorySearch('');
+    setEditingId(null);
+    setDeletingId(null);
     await loadHistory();
   }
 
   function handleLoadSession(session: ChatSession) {
     setMessages(session.messages);
+    setCurrentSessionId(session.id);
     setView('chat');
   }
+
+  async function handleRenameSession(id: string, newTitle: string) {
+    const trimmed = newTitle.trim();
+    if (!trimmed) { setEditingId(null); return; }
+    const sessionKey = getOrCreateSessionKey();
+    setHistory(prev => prev.map(s => s.id === id ? { ...s, title: trimmed } : s));
+    setEditingId(null);
+    await supabase.from('ai_chat_sessions')
+      .update({ title: trimmed })
+      .eq('id', id)
+      .eq('session_key', sessionKey);
+  }
+
+  async function handleDeleteSession(id: string) {
+    const sessionKey = getOrCreateSessionKey();
+    setHistory(prev => prev.filter(s => s.id !== id));
+    setDeletingId(null);
+    if (currentSessionId === id) {
+      setMessages([]);
+      setCurrentSessionId(null);
+      try { sessionStorage.removeItem('evita-ia-messages'); } catch {}
+    }
+    await supabase.from('ai_chat_sessions')
+      .delete()
+      .eq('id', id)
+      .eq('session_key', sessionKey);
+  }
+
+  function handleNewConversation() {
+    handleReset();
+    setView('chat');
+  }
+
+  const filteredHistory = historySearch
+    ? history.filter(s => s.title.toLowerCase().includes(historySearch.toLowerCase()))
+    : history;
 
   return (
     <>
@@ -639,48 +701,176 @@ export function AiChat() {
           {/* History View */}
           {unlocked && view === 'history' && (
             <div
-              className="flex-1 overflow-y-auto px-4 py-4"
+              className="flex-1 overflow-y-auto flex flex-col"
               style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,0,0,0.1) transparent' }}
             >
-              {historyLoading ? (
-                <div className="flex items-center justify-center py-16">
-                  <Loader2 size={20} className="text-blue-500 animate-spin" />
-                </div>
-              ) : history.length === 0 ? (
-                <div className="text-center py-16">
-                  <MessageSquare size={32} className="mx-auto mb-3 text-slate-300" />
-                  <p className="text-sm text-slate-500">No saved conversations yet</p>
-                  <p className="text-xs mt-1 text-slate-400">
-                    Start a chat and use the reset button to save it
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {history.map(session => (
-                    <button
-                      key={session.id}
-                      onClick={() => handleLoadSession(session)}
-                      className="w-full text-left px-4 py-3 rounded-xl transition-all hover:bg-blue-50 hover:border-blue-200"
-                      style={{
-                        background: 'rgba(255,255,255,0.6)',
-                        border: '1px solid rgba(0,0,0,0.07)',
-                      }}
-                    >
-                      <p className="text-sm font-medium truncate text-slate-800">
-                        {session.title}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-slate-400">
-                          {formatDate(session.created_at)}
-                        </span>
-                        <span className="text-xs text-slate-300">
-                          · {session.messages.length} messages
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* History toolbar */}
+              <div className="flex-shrink-0 px-4 pt-3 pb-2 space-y-2">
+                <button
+                  onClick={handleNewConversation}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-blue-600 transition-all hover:bg-blue-50"
+                  style={{ border: '1px dashed rgba(59,130,246,0.3)' }}
+                >
+                  <Plus size={14} />
+                  New Conversation
+                </button>
+                {history.length > 3 && (
+                  <div
+                    className="flex items-center gap-2 rounded-xl px-3 py-2"
+                    style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(0,0,0,0.07)' }}
+                  >
+                    <Search size={13} className="text-slate-400 flex-shrink-0" />
+                    <input
+                      type="text"
+                      value={historySearch}
+                      onChange={e => setHistorySearch(e.target.value)}
+                      placeholder="Search conversations..."
+                      className="flex-1 bg-transparent text-sm focus:outline-none text-slate-700 placeholder-slate-400"
+                    />
+                    {historySearch && (
+                      <button onClick={() => setHistorySearch('')} className="text-slate-400 hover:text-slate-600">
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* History list */}
+              <div className="flex-1 overflow-y-auto px-4 pb-4">
+                {historyLoading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 size={20} className="text-blue-500 animate-spin" />
+                  </div>
+                ) : history.length === 0 ? (
+                  <div className="text-center py-12">
+                    <MessageSquare size={32} className="mx-auto mb-3 text-slate-300" />
+                    <p className="text-sm font-medium text-slate-500">No conversations yet</p>
+                    <p className="text-xs mt-1 text-slate-400">
+                      Your conversations will appear here
+                    </p>
+                  </div>
+                ) : filteredHistory.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Search size={24} className="mx-auto mb-3 text-slate-300" />
+                    <p className="text-sm text-slate-500">No results for "{historySearch}"</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredHistory.map((session, idx) => {
+                      const isActive = session.id === currentSessionId;
+                      const isDeleting = deletingId === session.id;
+                      const isEditing = editingId === session.id;
+
+                      if (isDeleting) {
+                        return (
+                          <div
+                            key={session.id}
+                            className="px-4 py-3 rounded-xl space-y-2"
+                            style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}
+                          >
+                            <p className="text-xs text-red-600 font-medium">Delete this conversation?</p>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setDeletingId(null)}
+                                className="flex-1 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-white/80 transition-colors"
+                                style={{ border: '1px solid rgba(0,0,0,0.1)' }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSession(session.id)}
+                                className="flex-1 py-1.5 rounded-lg text-xs font-medium text-white transition-colors"
+                                style={{ background: '#ef4444' }}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={session.id}
+                          className="group relative rounded-xl transition-all hover:bg-blue-50/70"
+                          style={{
+                            background: isActive ? 'rgba(59,130,246,0.06)' : 'rgba(255,255,255,0.6)',
+                            border: isActive ? '1px solid rgba(59,130,246,0.2)' : '1px solid rgba(0,0,0,0.07)',
+                            borderLeft: isActive ? '3px solid #3b82f6' : undefined,
+                            animation: `fadeSlideIn 200ms ease ${idx * 30}ms both`,
+                          }}
+                        >
+                          <button
+                            onClick={() => handleLoadSession(session)}
+                            className="w-full text-left px-4 py-3 pr-16"
+                          >
+                            {isEditing ? (
+                              <input
+                                autoFocus
+                                value={editingTitle}
+                                onChange={e => setEditingTitle(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') handleRenameSession(session.id, editingTitle);
+                                  if (e.key === 'Escape') setEditingId(null);
+                                  e.stopPropagation();
+                                }}
+                                onBlur={() => handleRenameSession(session.id, editingTitle)}
+                                onClick={e => e.stopPropagation()}
+                                className="w-full text-sm font-medium text-slate-800 bg-white rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                style={{ border: '1px solid rgba(59,130,246,0.3)' }}
+                              />
+                            ) : (
+                              <p className="text-sm font-medium truncate text-slate-800">
+                                {session.title}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs text-slate-400">
+                                {formatRelativeDate(session.created_at)}
+                              </span>
+                              <span
+                                className="text-xs px-1.5 py-0.5 rounded-full"
+                                style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.4)' }}
+                              >
+                                {session.messages.length} msg
+                              </span>
+                            </div>
+                          </button>
+
+                          {/* Action buttons */}
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {isEditing ? (
+                              <button
+                                onClick={e => { e.stopPropagation(); handleRenameSession(session.id, editingTitle); }}
+                                className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 transition-colors"
+                                title="Save"
+                              >
+                                <Check size={13} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={e => { e.stopPropagation(); setEditingId(session.id); setEditingTitle(session.title); }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                title="Rename"
+                              >
+                                <Pencil size={13} />
+                              </button>
+                            )}
+                            <button
+                              onClick={e => { e.stopPropagation(); setDeletingId(session.id); }}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -905,6 +1095,10 @@ export function AiChat() {
         @keyframes pulse {
           0%, 100% { opacity: 0.3; transform: scale(0.85); }
           50% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes fadeSlideIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </>
