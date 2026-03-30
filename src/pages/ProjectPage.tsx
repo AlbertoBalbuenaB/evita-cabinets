@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Pencil as Edit2, FileText, FolderOpen, Hammer, BarChart3,
-  Plus, Calendar, Tag, User, MapPin, Check, Save, X, Copy,
+  Plus, Calendar, Tag, User, MapPin, Check, Save, X, Copy, Trash2,
   Receipt, ClipboardList, Files, ScrollText
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
 import { ImportQuotationModal } from '../components/ImportQuotationModal';
+import { QuotationFormModal } from '../components/QuotationFormModal';
 import { formatCurrency } from '../lib/calculations';
 import { useSettingsStore } from '../lib/settingsStore';
 import { ScheduleSection } from '../components/ScheduleSection';
@@ -42,6 +43,7 @@ export function ProjectPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [managementLoaded, setManagementLoaded] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [quotationModal, setQuotationModal] = useState<{ open: boolean; quotation?: Quotation }>({ open: false });
 
   useEffect(() => {
     if (!projectId) { navigate('/projects', { replace: true }); return; }
@@ -114,26 +116,19 @@ export function ProjectPage() {
     setSaving(false);
   }
 
-  async function handleNewQuotation() {
-    if (!projectId || !project) return;
-    const nextVersion = quotations.length + 1;
-    const label = prompt('Quotation label (e.g., "Plus", "Premium", "v2"):', `v${nextVersion}`);
-    if (!label?.trim()) return;
+  function handleNewQuotation() {
+    setQuotationModal({ open: true });
+  }
 
-    const { data, error } = await supabase.from('quotations').insert({
-      project_id: projectId,
-      name: `${project.name} - ${label.trim()}`,
-      version_label: label.trim(),
-      version_number: nextVersion,
-      status: 'Estimating',
-      quote_date: new Date().toISOString().split('T')[0],
-      project_type: project.project_type || 'Custom',
-      customer: project.customer,
-      address: project.address,
-    }).select('id').single();
+  function handleEditQuotation(q: Quotation) {
+    setQuotationModal({ open: true, quotation: q });
+  }
 
-    if (error) { alert('Failed to create quotation'); console.error(error); return; }
-    if (data) navigate(`/projects/${projectId}/quotations/${data.id}`);
+  async function handleDeleteQuotation(q: Quotation) {
+    if (!confirm(`Delete quotation "${q.version_label || q.name}"? This will also delete all areas and cabinets.`)) return;
+    const { error } = await supabase.from('quotations').delete().eq('id', q.id);
+    if (error) { alert('Failed to delete quotation'); console.error(error); return; }
+    loadProject();
   }
 
   async function handleDuplicate(quotation: Quotation) {
@@ -363,6 +358,20 @@ export function ProjectPage() {
                       >
                         <Copy className="h-4 w-4" />
                       </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleEditQuotation(q); }}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 opacity-0 group-hover:opacity-100 transition-all"
+                        title="Edit"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteQuotation(q); }}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -402,6 +411,23 @@ export function ProjectPage() {
         onSuccess={(quotationId) => {
           setImportModalOpen(false);
           navigate(`/projects/${project.id}/quotations/${quotationId}`);
+        }}
+      />
+
+      <QuotationFormModal
+        isOpen={quotationModal.open}
+        onClose={() => setQuotationModal({ open: false })}
+        projectId={projectId!}
+        project={project}
+        nextVersion={quotations.length + 1}
+        quotation={quotationModal.quotation}
+        onSuccess={(id) => {
+          setQuotationModal({ open: false });
+          if (!quotationModal.quotation) {
+            navigate(`/projects/${projectId}/quotations/${id}`);
+          } else {
+            loadProject();
+          }
         }}
       />
     </div>
