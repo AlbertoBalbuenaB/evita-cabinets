@@ -74,6 +74,15 @@ export interface ClosetCatalogItem {
   updated_at?: string;
 }
 
+export interface AreaSection {
+  id: string;
+  area_id: string;
+  name: string;
+  display_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface AreaClosetItem {
   id: string;
   area_id: string;

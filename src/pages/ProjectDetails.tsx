@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History, SeparatorHorizontal } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { fetchAllProducts } from '../lib/fetchAllProducts';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
 import { formatCurrency } from '../lib/calculations';
-import type { Quotation, Project, ProjectArea, AreaCabinet, ProjectAreaInsert, Product, AreaItem, AreaCountertop, AreaClosetItem, PriceListItem } from '../types';
+import type { Quotation, Project, ProjectArea, AreaCabinet, ProjectAreaInsert, Product, AreaItem, AreaCountertop, AreaClosetItem, AreaSection, PriceListItem } from '../types';
 import { CabinetForm } from '../components/CabinetForm';
 import { ItemForm } from '../components/ItemForm';
 import { CountertopForm } from '../components/CountertopForm';
@@ -37,6 +37,7 @@ import { FloatingActionBar } from '../components/FloatingActionBar';
 import { ProductFormModal } from '../components/ProductFormModal';
 import type { ProductInsert } from '../types';
 import { exportQuotationToJSON } from '../utils/projectExportImport';
+import { SectionDivider } from '../components/SectionDivider';
 
 import { useAiChatContext } from '../stores/aiChatContext';
 
@@ -49,7 +50,7 @@ interface ProjectDetailsProps {
 export function ProjectDetails({ project: initialProject, parentProject, onBack }: ProjectDetailsProps) {
   const setActiveProjectTab = useAiChatContext(s => s.setActiveProjectTab);
   const [project, setProject] = useState<Quotation>(initialProject);
-  const [areas, setAreas] = useState<(ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[] })[]>([]);
+  const [areas, setAreas] = useState<(ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[]; sections: AreaSection[] })[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAreaModalOpen, setIsAreaModalOpen] = useState(false);
@@ -100,6 +101,8 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   const [savingAreasOrder, setSavingAreasOrder] = useState(false);
   const [draggedCabinet, setDraggedCabinet] = useState<{ areaId: string; index: number } | null>(null);
   const [cabinetDropTarget, setCabinetDropTarget] = useState<{ areaId: string; index: number; position: 'before' | 'after' } | null>(null);
+  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
+  const [sectionDropTargetId, setSectionDropTargetId] = useState<string | null>(null);
   const DEFAULT_TARIFF_INFO = 'Grand Total includes design services, delivery costs, installation and tax.';
   const DEFAULT_PRICE_VALIDITY = '*Price is valid for 15 days.\n*Preliminary quote, based off of our best interpretation of the provided plans. Pricing is subject to change once final layout and finishes have been approved.\n*A Design Retainer is required prior to commencing drawings. The design retainer will be credited back to the purchase of cabinets.';
   const [disclaimerTariffInfo, setDisclaimerTariffInfo] = useState(project.disclaimer_tariff_info || DEFAULT_TARIFF_INFO);
@@ -197,19 +200,21 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
       const areaIds = (areasData || []).map((a) => a.id);
 
-      const [allCabinetsResult, allItemsResult, allCountertopsResult, allClosetItemsResult] = areaIds.length > 0
+      const [allCabinetsResult, allItemsResult, allCountertopsResult, allClosetItemsResult, allSectionsResult] = areaIds.length > 0
         ? await Promise.all([
             supabase.from('area_cabinets').select('*').in('area_id', areaIds).order('display_order').order('created_at'),
             supabase.from('area_items').select('*').in('area_id', areaIds).order('created_at'),
             supabase.from('area_countertops').select('*').in('area_id', areaIds).order('created_at'),
             supabase.from('area_closet_items').select('*, catalog_item:closet_catalog(*)').in('area_id', areaIds).order('created_at'),
+            supabase.from('area_sections').select('*').in('area_id', areaIds).order('display_order'),
           ])
-        : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }];
+        : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
 
       const allCabinets: AreaCabinet[] = allCabinetsResult.data || [];
       const allItems: AreaItem[] = allItemsResult.data || [];
       const allCountertops: AreaCountertop[] = allCountertopsResult.data || [];
       const allClosetItems: AreaClosetItem[] = (allClosetItemsResult.data || []) as AreaClosetItem[];
+      const allSections: AreaSection[] = (allSectionsResult.data || []) as AreaSection[];
 
       const areasWithCabinetsAndItems = (areasData || []).map((area) => {
         const result = {
@@ -218,6 +223,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           items: allItems.filter((i) => i.area_id === area.id),
           countertops: allCountertops.filter((ct) => ct.area_id === area.id),
           closetItems: allClosetItems.filter((ci) => ci.area_id === area.id),
+          sections: allSections.filter((s) => s.area_id === area.id),
         };
         console.log('[loadAreas] area sample:', { id: area.id, name: area.name, cabinetCount: result.cabinets.length, itemCount: result.items.length, countertopCount: result.countertops.length, closetCount: result.closetItems.length, firstCabinet: result.cabinets[0] ?? null });
         return result;
@@ -233,7 +239,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   }
 
   async function updateProjectTotal(
-    areasData: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[] })[],
+    areasData: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[]; sections: AreaSection[] })[],
     opts?: {
       profitMultiplier?: number;
       tariffMultiplier?: number;
@@ -332,7 +338,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     }
   }
 
-  async function handleDuplicateArea(area: ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[] }) {
+  async function handleDuplicateArea(area: ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[]; sections: AreaSection[] }) {
     if (!confirm(`Duplicate area "${area.name}" with all its cabinets and items?`)) return;
 
     try {
@@ -386,6 +392,15 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         if (closetError) throw closetError;
       }
 
+      if (area.sections.length > 0) {
+        const sectionsToInsert = area.sections.map(({ id, created_at, updated_at, ...rest }) => ({
+          ...rest,
+          area_id: newArea.id,
+        }));
+        const { error: sectionsError } = await supabase.from('area_sections').insert(sectionsToInsert);
+        if (sectionsError) throw sectionsError;
+      }
+
       await loadAreas();
     } catch (error) {
       console.error('Error duplicating area:', error);
@@ -405,6 +420,96 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     } catch (error) {
       console.error('Error deleting area:', error);
       alert('Failed to delete area');
+    }
+  }
+
+  async function handleAddSection(areaId: string) {
+    const area = areas.find(a => a.id === areaId);
+    if (!area) return;
+    const maxCabinetOrder = area.cabinets.length > 0 ? Math.max(...area.cabinets.map(c => c.display_order ?? 0)) : -1;
+    const maxSectionOrder = area.sections.length > 0 ? Math.max(...area.sections.map(s => s.display_order)) : -1;
+    const newOrder = Math.max(maxCabinetOrder, maxSectionOrder) + 1;
+    try {
+      const { error } = await supabase.from('area_sections').insert([{ area_id: areaId, name: 'New Section', display_order: newOrder }]);
+      if (error) throw error;
+      await loadAreas();
+    } catch (error) {
+      console.error('Error adding section:', error);
+    }
+  }
+
+  async function handleRenameSection(section: AreaSection, newName: string) {
+    if (!newName.trim()) return;
+    try {
+      const { error } = await supabase.from('area_sections').update({ name: newName.trim() }).eq('id', section.id);
+      if (error) throw error;
+      setAreas(prev => prev.map(a =>
+        a.id === section.area_id
+          ? { ...a, sections: a.sections.map(s => s.id === section.id ? { ...s, name: newName.trim() } : s) }
+          : a
+      ));
+    } catch (error) {
+      console.error('Error renaming section:', error);
+    }
+  }
+
+  async function handleDeleteSection(section: AreaSection) {
+    try {
+      const { error } = await supabase.from('area_sections').delete().eq('id', section.id);
+      if (error) throw error;
+      setAreas(prev => prev.map(a =>
+        a.id === section.area_id
+          ? { ...a, sections: a.sections.filter(s => s.id !== section.id) }
+          : a
+      ));
+    } catch (error) {
+      console.error('Error deleting section:', error);
+    }
+  }
+
+  function handleSectionDragStart(e: React.DragEvent<HTMLDivElement>, sectionId: string) {
+    setDraggedSectionId(sectionId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.currentTarget.style.opacity = '0.5';
+  }
+
+  function handleSectionDragEnd(e: React.DragEvent<HTMLDivElement>) {
+    setDraggedSectionId(null);
+    setSectionDropTargetId(null);
+    e.currentTarget.style.opacity = '1';
+  }
+
+  function handleSectionDragOver(e: React.DragEvent<HTMLDivElement>, targetSectionId: string) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedSectionId && draggedSectionId !== targetSectionId) {
+      setSectionDropTargetId(targetSectionId);
+    }
+  }
+
+  async function handleSectionDrop(e: React.DragEvent<HTMLDivElement>, areaId: string, targetSectionId: string) {
+    e.preventDefault();
+    setSectionDropTargetId(null);
+    if (!draggedSectionId || draggedSectionId === targetSectionId) {
+      setDraggedSectionId(null);
+      return;
+    }
+    const area = areas.find(a => a.id === areaId);
+    if (!area) { setDraggedSectionId(null); return; }
+
+    const sections = [...area.sections];
+    const fromIdx = sections.findIndex(s => s.id === draggedSectionId);
+    const toIdx = sections.findIndex(s => s.id === targetSectionId);
+    if (fromIdx === -1 || toIdx === -1) { setDraggedSectionId(null); return; }
+
+    const [moved] = sections.splice(fromIdx, 1);
+    sections.splice(toIdx, 0, moved);
+
+    setAreas(prev => prev.map(a => a.id === areaId ? { ...a, sections: sections.map((s, i) => ({ ...s, display_order: area.cabinets.length + i })) } : a));
+    setDraggedSectionId(null);
+
+    for (let i = 0; i < sections.length; i++) {
+      await supabase.from('area_sections').update({ display_order: area.cabinets.length + i }).eq('id', sections[i].id);
     }
   }
 
@@ -735,6 +840,16 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
     setAreas(newAreas);
     setHasAreasOrderChanged(true);
+  }
+
+  type MergedAreaItem =
+    | { type: 'cabinet'; data: AreaCabinet; index: number; display_order: number }
+    | { type: 'section'; data: AreaSection; display_order: number };
+
+  function getMergedItems(area: { cabinets: AreaCabinet[]; sections: AreaSection[] }): MergedAreaItem[] {
+    const cabinets: MergedAreaItem[] = area.cabinets.map((c, i) => ({ type: 'cabinet', data: c, index: i, display_order: c.display_order ?? i }));
+    const sections: MergedAreaItem[] = area.sections.map(s => ({ type: 'section', data: s, display_order: s.display_order }));
+    return [...cabinets, ...sections].sort((a, b) => a.display_order - b.display_order);
   }
 
   function handleCabinetDragStart(e: React.DragEvent<HTMLDivElement>, areaId: string, index: number) {
@@ -1925,6 +2040,10 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                     <ListPlus className="h-4 w-4 mr-2" />
                     Add Item
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleAddSection(area.id)} className="w-full sm:w-auto border-purple-300 hover:bg-purple-50 text-purple-700">
+                    <SeparatorHorizontal className="h-4 w-4 mr-2" />
+                    Add Section
+                  </Button>
                   {/* TEMP_DISABLED: Remove this comment block to re-enable the Add Closet button
                   <Button size="sm" variant="outline" onClick={() => { setSelectedAreaForCloset(area.id); setEditingClosetItem(null); }} className="w-full sm:w-auto border-teal-300 hover:bg-teal-50">
                     <Package className="h-4 w-4 mr-2" />
@@ -1933,7 +2052,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                   */}
                 </div>
 
-                {area.cabinets.length === 0 && area.items.length === 0 && area.countertops.length === 0 && (area.closetItems || []).length === 0 ? (
+                {area.cabinets.length === 0 && area.items.length === 0 && area.countertops.length === 0 && (area.closetItems || []).length === 0 && (area.sections || []).length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-slate-600 mb-3">No cabinets, countertops, items, or closets in this area</p>
                   </div>
@@ -1950,8 +2069,30 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                         {areaMaterialsVisible[area.id] && (
                           <AreaMaterialBreakdown areaId={area.id} />
                         )}
+                      </>
+                    )}
 
-                        {area.cabinets.map((cabinet, cabinetIndex) => {
+                    {(area.cabinets.length > 0 || area.sections.length > 0) && (
+                      <div className="space-y-2">
+                        {getMergedItems(area).map((item) => {
+                          if (item.type === 'section') {
+                            return (
+                              <SectionDivider
+                                key={item.data.id}
+                                section={item.data}
+                                onRename={(name) => handleRenameSection(item.data, name)}
+                                onDelete={() => handleDeleteSection(item.data)}
+                                draggable={area.sections.length > 1}
+                                onDragStart={(e) => handleSectionDragStart(e, item.data.id)}
+                                onDragEnd={handleSectionDragEnd}
+                                onDragOver={(e) => handleSectionDragOver(e, item.data.id)}
+                                onDrop={(e) => handleSectionDrop(e, area.id, item.data.id)}
+                                isDropTarget={sectionDropTargetId === item.data.id}
+                              />
+                            );
+                          }
+                          const cabinet = item.data;
+                          const cabinetIndex = item.index;
                           const product = products.find(p => p.sku === cabinet.product_sku);
                           const otherAreas = areas.filter(a => a.id !== area.id).map(a => ({ id: a.id, name: a.name }));
                           const isDropBefore = cabinetDropTarget?.areaId === area.id && cabinetDropTarget?.index === cabinetIndex && cabinetDropTarget?.position === 'before';
@@ -1999,7 +2140,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                             </div>
                           );
                         })}
-                      </>
+                      </div>
                     )}
 
                     {area.countertops.length > 0 && (
