@@ -147,7 +147,7 @@ const MODIFICATION_TOOLS = [
     }
   },
   {
-    name: 'update_project_settings',
+    name: 'update_quotation_settings',
     description: 'Update quotation-level settings: profit, tax, tariff, install cost. Confirm before calling.',
     input_schema: {
       type: 'object',
@@ -253,7 +253,7 @@ async function executeTool(name: string, input: any, sb: any, projectId: string 
         return JSON.stringify({ success: true, message: `${input.cabinet_sku} quantity updated to ${input.new_quantity}. Refresh to see totals.` });
       }
 
-      case 'update_project_settings': {
+      case 'update_quotation_settings': {
         if (!projectId) return JSON.stringify({ error: 'No project open.' });
         const { error } = await sb.from('quotations')
           .update({ [input.field]: input.new_value }).eq('id', projectId);
