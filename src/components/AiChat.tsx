@@ -85,7 +85,7 @@ function formatBoldCode(text: string, keyPrefix: string): React.ReactNode[] {
 }
 
 function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: string) => void): React.ReactNode[] {
-  const linkRegex = /\[\[(project|material):([^|]+)\|([^\]]+)\]\]/g;
+  const linkRegex = /\[\[(project|material|quotation):([^|]+)\|([^\]]+)\]\]/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -102,6 +102,19 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/projects/${id}`)}
+          className="text-blue-600 hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+        >
+          {label}
+        </button>
+      );
+    } else if (kind === 'quotation') {
+      // id format: "PROJECT_ID/QUOTATION_ID"
+      const [projectPart, quotationPart] = id.split('/');
+      parts.push(
+        <button
+          key={`${keyPrefix}lnk${idx}`}
+          type="button"
+          onClick={() => onNavigate?.(`/projects/${projectPart}/quotations/${quotationPart}`)}
           className="text-blue-600 hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
