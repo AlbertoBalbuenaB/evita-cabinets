@@ -747,7 +747,7 @@ export function Dashboard() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <div className="glass-white p-6">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Project Status</h2>
           <div className="space-y-3">
@@ -888,7 +888,7 @@ export function Dashboard() {
             Quotation Trends & Analytics
           </h2>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {topCabinets.length > 0 && (
               <div className="glass-white p-6">
                 <div className="flex items-center mb-4">

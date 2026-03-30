@@ -118,7 +118,7 @@ export function ProjectGroupListItem({
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-sm text-slate-600">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
             {primaryProject.customer && (
               <div className="flex items-center">
                 <User className="h-3.5 w-3.5 mr-1 text-slate-400" />
@@ -141,7 +141,7 @@ export function ProjectGroupListItem({
         <div className="flex items-center gap-4">
           <div className="text-right mr-2">
             <div className="text-xs text-slate-500 mb-1">Total Value</div>
-            <div className="text-xl font-bold text-slate-900">
+            <div className="text-base sm:text-xl font-bold text-slate-900">
               {formatCurrency(primaryProject.total_amount)}
             </div>
           </div>

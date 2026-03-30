@@ -169,8 +169,8 @@ export function DocumentationSection({ projectId }: Props) {
       ) : (
         <div className="space-y-2 mb-4">
           {documents.map((doc) => (
-            <div key={doc.id} className="flex items-center gap-2 group">
-              <span className="text-sm font-medium text-slate-700 w-44 flex-shrink-0 truncate">
+            <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center gap-2 group">
+              <span className="text-sm font-medium text-slate-700 w-full sm:w-44 sm:flex-shrink-0 truncate">
                 {doc.label}
               </span>
               <input
@@ -205,8 +205,8 @@ export function DocumentationSection({ projectId }: Props) {
       )}
 
       <div className="pt-3 border-t border-slate-200">
-        <div className="flex items-end gap-2">
-          <div className="w-44">
+        <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+          <div className="w-full sm:w-44">
             <label className="block text-xs text-slate-600 mb-1">Label</label>
             <input
               type="text"

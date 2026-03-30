@@ -671,7 +671,7 @@ export function AiChat() {
 
           {/* Password Gate */}
           {!unlocked && (
-            <div className="flex-1 flex flex-col items-center justify-center px-8 gap-5">
+            <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 gap-5">
               <div
                 className="w-14 h-14 rounded-2xl flex items-center justify-center"
                 style={{

@@ -472,7 +472,7 @@ export function Settings() {
           </Button>
         </div>
 
-        <div className="mt-5 grid grid-cols-3 gap-4">
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Projects</p>
             <p className="text-sm text-slate-700">Exported as individual <code className="bg-slate-200 px-1 rounded text-xs">.evita.json</code> files, ready to re-import via the Projects page.</p>

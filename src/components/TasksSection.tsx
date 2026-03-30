@@ -277,14 +277,14 @@ export function TasksSection({ projectId, teamMembers }: Props) {
                     className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   />
                 </div>
-                <div className="flex items-end gap-3">
-                  <div>
+                <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                  <div className="w-full sm:w-auto">
                     <label className="block text-xs text-slate-600 mb-1">Due Date</label>
                     <input
                       type="date"
                       value={editState.dueDate}
                       onChange={(e) => setEditState({ ...editState, dueDate: e.target.value })}
-                      className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="block w-full sm:w-auto px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div className="flex-1">
@@ -300,12 +300,12 @@ export function TasksSection({ projectId, teamMembers }: Props) {
                       ))}
                     </select>
                   </div>
-                  <div>
+                  <div className="w-full sm:w-auto">
                     <label className="block text-xs text-slate-600 mb-1">Status</label>
                     <select
                       value={editState.status}
                       onChange={(e) => setEditState({ ...editState, status: e.target.value as TaskStatus })}
-                      className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="block w-full sm:w-auto px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     >
                       <option value="pending">Pending</option>
                       <option value="in_progress">In Progress</option>
@@ -404,14 +404,14 @@ export function TasksSection({ projectId, teamMembers }: Props) {
               className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
-          <div className="flex items-end gap-3">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+            <div className="w-full sm:w-auto">
               <label className="block text-xs text-slate-600 mb-1">Due Date</label>
               <input
                 type="date"
                 value={newDueDate}
                 onChange={(e) => setNewDueDate(e.target.value)}
-                className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full sm:w-auto px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div className="flex-1">

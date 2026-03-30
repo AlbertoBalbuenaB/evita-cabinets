@@ -15,6 +15,14 @@
 }
 
 @layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
   .app-bg {
     background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 30%, #faf5ff 60%, #f0f9ff 100%);
     min-height: 100vh;

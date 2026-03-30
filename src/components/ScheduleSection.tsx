@@ -163,8 +163,8 @@ export function ScheduleSection({ projectId }: Props) {
             const barWidth = (duration / maxDuration) * 100;
 
             return (
-              <div key={activity.id} className="flex items-center gap-3 group">
-                <div className="w-40 flex-shrink-0">
+              <div key={activity.id} className="flex flex-wrap sm:flex-nowrap items-center gap-2 group">
+                <div className="w-full sm:w-40 sm:flex-shrink-0">
                   {editingId === activity.id ? (
                     <input
                       ref={editRef}
@@ -194,15 +194,15 @@ export function ScheduleSection({ projectId }: Props) {
                   type="date"
                   value={activity.start_date}
                   onChange={(e) => updateActivityDate(activity.id, 'start_date', e.target.value)}
-                  className="text-xs px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full sm:w-auto text-xs px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                   type="date"
                   value={activity.end_date}
                   onChange={(e) => updateActivityDate(activity.id, 'end_date', e.target.value)}
-                  className="text-xs px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full sm:w-auto text-xs px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <div className="flex-1 bg-slate-200 rounded h-2">
+                <div className="hidden sm:block flex-1 bg-slate-200 rounded h-2">
                   <div
                     className="bg-blue-400 h-2 rounded"
                     style={{ width: `${barWidth}%` }}
@@ -221,7 +221,7 @@ export function ScheduleSection({ projectId }: Props) {
       )}
 
       <div className="pt-3 border-t border-slate-200">
-        <div className="flex items-end gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-end gap-2">
           <div className="flex-1">
             <label className="block text-xs text-slate-600 mb-1">Activity</label>
             <input
@@ -233,22 +233,22 @@ export function ScheduleSection({ projectId }: Props) {
               onKeyDown={(e) => { if (e.key === 'Enter') addActivity(); }}
             />
           </div>
-          <div>
+          <div className="w-full sm:w-auto">
             <label className="block text-xs text-slate-600 mb-1">Start</label>
             <input
               type="date"
               value={newStart}
               onChange={(e) => setNewStart(e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="block w-full sm:w-auto px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div>
+          <div className="w-full sm:w-auto">
             <label className="block text-xs text-slate-600 mb-1">End</label>
             <input
               type="date"
               value={newEnd}
               onChange={(e) => setNewEnd(e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="block w-full sm:w-auto px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <Button onClick={addActivity} disabled={!newName.trim() || !newStart || !newEnd} size="sm">

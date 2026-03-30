@@ -171,7 +171,7 @@ export function ProjectGroupCard({
       </div>
 
       <div className="p-5 cursor-pointer" onClick={() => onView(primaryProject)}>
-        <div className="flex justify-between items-start mb-3 pr-8">
+        <div className="flex justify-between items-start mb-3 pr-6 sm:pr-8">
           <div className="flex items-start gap-2 flex-1 min-w-0">
             <div className="flex-1 min-w-0">
               <h3 className="text-base font-semibold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">

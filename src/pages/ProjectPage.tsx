@@ -223,7 +223,7 @@ export function ProjectPage() {
       </div>
 
       {/* Tab navigation */}
-      <div className="flex border-b border-slate-200 gap-1">
+      <div className="flex border-b border-slate-200 gap-1 overflow-x-auto scrollbar-none">
         {tabs.map(tab => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -243,7 +243,7 @@ export function ProjectPage() {
 
       {/* Overview tab */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Project Info</h3>
