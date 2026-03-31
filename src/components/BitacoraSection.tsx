@@ -4,10 +4,10 @@ import {
   ScrollText, Trash2, Pencil, X, Check, Bold, Italic, Underline as UnderlineIcon,
   List, ListOrdered, CheckCircle2, AlertTriangle, Star, Lightbulb,
   ArrowRightCircle, Filter, Clock, Folder, FileText, Package, DollarSign,
-  Heading1, Heading2, Heading3, Type, Link2, Link2Off
+  Heading1, Heading2, Heading3, Type, Link2, Link2Off, User, ChevronDown
 } from 'lucide-react';
 import { useEditor, EditorContent, ReactRenderer } from '@tiptap/react';
-import { generateHTML } from '@tiptap/core';
+import { generateHTML, mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import UnderlineExt from '@tiptap/extension-underline';
 import { Color } from '@tiptap/extension-color';
@@ -21,7 +21,9 @@ import type { Instance as TippyInstance } from 'tippy.js';
 import { supabase } from '../lib/supabase';
 import { Button } from './Button';
 import { format } from 'date-fns';
-import type { ProjectLog } from '../types';
+import type { ProjectLog, TeamMember } from '../types';
+
+const AUTHOR_STORAGE_KEY = 'bitacora_author';
 
 // ---------------------------------------------------------------------------
 // Log type system
@@ -280,13 +282,23 @@ function buildMentionExtension(getItems: (() => MentionItem[]) | null) {
   });
 }
 
-// Separate extension config used only inside generateHTML (no suggestion needed)
-const MENTION_VIEW_EXTENSION = Mention.configure({
-  renderHTML({ node }) {
-    const id = node.attrs.id as string;
-    const label = node.attrs.label as string;
+// View-only mention extension used inside generateHTML.
+// Must use .extend() to actually override the node's renderHTML —
+// Mention.configure() only sets options and does NOT override the render method.
+const MENTION_VIEW_EXTENSION = Mention.extend({
+  renderHTML({ node, HTMLAttributes }) {
+    const id = (node.attrs.id as string) ?? '';
+    const label = (node.attrs.label as string) ?? node.attrs.id ?? '';
     const url = mentionToUrl(id);
-    return ['a', { href: url, class: 'mention-link', 'data-mention-id': id }, `@${label}`];
+    return [
+      'a',
+      mergeAttributes(HTMLAttributes, {
+        href: url,
+        class: 'mention-link',
+        'data-mention-id': id,
+      }),
+      `@${label}`,
+    ];
   },
 });
 
@@ -575,6 +587,18 @@ function LogEntry({ log, onEdit, onDelete }: LogEntryProps) {
         dangerouslySetInnerHTML={{ __html: htmlContent }}
         onClick={handleClick}
       />
+
+      {/* Author footer */}
+      {log.author_name && (
+        <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+            <span className="text-[9px] font-bold text-indigo-600 uppercase leading-none">
+              {log.author_name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
+            </span>
+          </div>
+          <span className="text-xs text-slate-500">{log.author_name}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -585,16 +609,21 @@ function LogEntry({ log, onEdit, onDelete }: LogEntryProps) {
 
 interface EntryFormProps {
   getMentionItems: () => MentionItem[];  // getter so it always reads fresh data from a ref
+  teamMembers: TeamMember[];
   initialContent?: string;
   initialType?: LogType;
+  initialAuthorId?: string | null;
+  initialAuthorName?: string | null;
   saving: boolean;
-  onSave: (content: string, logType: LogType) => void;
+  onSave: (content: string, logType: LogType, authorId: string | null, authorName: string | null) => void;
   onCancel?: () => void;
   isEdit?: boolean;
 }
 
-function EntryForm({ getMentionItems, initialContent, initialType = 'note', saving, onSave, onCancel, isEdit }: EntryFormProps) {
+function EntryForm({ getMentionItems, teamMembers, initialContent, initialType = 'note', initialAuthorId, initialAuthorName, saving, onSave, onCancel, isEdit }: EntryFormProps) {
   const [logType, setLogType] = useState<LogType>(initialType);
+  const [authorId, setAuthorId] = useState<string | null>(initialAuthorId ?? null);
+  const [authorName, setAuthorName] = useState<string | null>(initialAuthorName ?? null);
 
   const startContent = initialContent && isRichContent(initialContent)
     ? JSON.parse(initialContent)
@@ -618,13 +647,20 @@ function EntryForm({ getMentionItems, initialContent, initialType = 'note', savi
     content: startContent,
   });
 
+  function handleSelectAuthor(memberId: string, memberName: string) {
+    setAuthorId(memberId);
+    setAuthorName(memberName);
+    // Persist selection for next time
+    try { localStorage.setItem(AUTHOR_STORAGE_KEY, JSON.stringify({ id: memberId, name: memberName })); } catch { /* noop */ }
+  }
+
   function handleSave() {
     if (!editor) return;
     const json = editor.getJSON();
     // Check if there's actual text content
     const text = editor.getText().trim();
     if (!text) return;
-    onSave(JSON.stringify(json), logType);
+    onSave(JSON.stringify(json), logType, authorId, authorName);
     if (!isEdit) {
       editor.commands.clearContent();
       setLogType('note');
@@ -672,10 +708,38 @@ function EntryForm({ getMentionItems, initialContent, initialType = 'note', savi
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-400">Ctrl+Enter para guardar · @ para referenciar</p>
-        <div className="flex items-center gap-2">
+      {/* Author + Actions row */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        {/* Author selector */}
+        <div className="flex items-center gap-2 min-w-0">
+          <User className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+          {teamMembers.length > 0 ? (
+            <div className="relative">
+              <select
+                value={authorId ?? ''}
+                onChange={(e) => {
+                  const selected = teamMembers.find((m) => m.id === e.target.value);
+                  if (selected) handleSelectAuthor(selected.id, selected.name);
+                  else { setAuthorId(null); setAuthorName(null); try { localStorage.removeItem(AUTHOR_STORAGE_KEY); } catch { /* noop */ } }
+                }}
+                className="appearance-none pl-2.5 pr-7 py-1 text-xs border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+                <option value="">— Sin autor —</option>
+                {teamMembers.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}{m.role ? ` · ${m.role}` : ''}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+            </div>
+          ) : (
+            <span className="text-xs text-slate-400 italic">Sin equipo configurado</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <p className="text-xs text-slate-400 hidden sm:block">Ctrl+Enter para guardar · @ para mencionar</p>
           {onCancel && (
             <Button size="sm" variant="ghost" onClick={onCancel}>
               <X className="h-3.5 w-3.5 mr-1" />
@@ -709,19 +773,29 @@ export function BitacoraSection({ projectId }: Props) {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<LogType | 'all'>('all');
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   // Mention data is stored only in a ref so the editor's getter closure always reads fresh items
   const mentionItemsRef = useRef<MentionItem[]>([]);
   const getMentionItems = useRef(() => mentionItemsRef.current).current;
 
-  // Load mention candidates once
+  // Restore last used author from localStorage
+  const savedAuthor = (() => {
+    try { return JSON.parse(localStorage.getItem(AUTHOR_STORAGE_KEY) ?? 'null') as { id: string; name: string } | null; }
+    catch { return null; }
+  })();
+
+  // Load mention candidates + team members once
   useEffect(() => {
     async function loadMentions() {
-      const [{ data: projects }, { data: quotations }, { data: cabinets }, { data: priceItems }] = await Promise.all([
+      const [{ data: projects }, { data: quotations }, { data: cabinets }, { data: priceItems }, { data: members }] = await Promise.all([
         supabase.from('projects').select('id, name, customer').order('name'),
         supabase.from('quotations').select('id, name, project_id, version_number, version_label').order('name'),
         supabase.from('products_catalog').select('sku, description').order('description'),
         supabase.from('price_list').select('id, concept_description').eq('is_active', true).order('concept_description'),
+        supabase.from('team_members').select('*').eq('is_active', true).order('display_order'),
       ]);
+
+      setTeamMembers(members || []);
 
       const items: MentionItem[] = [
         ...(projects || []).map((p) => ({
@@ -775,7 +849,7 @@ export function BitacoraSection({ projectId }: Props) {
     }
   }
 
-  async function addLog(content: string, logType: LogType) {
+  async function addLog(content: string, logType: LogType, authorId: string | null, authorName: string | null) {
     if (saving) return;
     setSaving(true);
 
@@ -784,6 +858,8 @@ export function BitacoraSection({ projectId }: Props) {
       project_id: projectId,
       comment: content,
       log_type: logType,
+      author_id: authorId,
+      author_name: authorName,
       created_at: new Date().toISOString(),
       updated_at: null,
     };
@@ -795,6 +871,8 @@ export function BitacoraSection({ projectId }: Props) {
         project_id: projectId,
         comment: content,
         log_type: logType,
+        author_id: authorId,
+        author_name: authorName,
       });
       if (error) throw error;
       loadLogs();
@@ -806,17 +884,17 @@ export function BitacoraSection({ projectId }: Props) {
     }
   }
 
-  async function saveEdit(logId: string, content: string, logType: LogType) {
+  async function saveEdit(logId: string, content: string, logType: LogType, authorId: string | null, authorName: string | null) {
     const prev = [...logs];
     setLogs((l) =>
-      l.map((x) => x.id === logId ? { ...x, comment: content, log_type: logType, updated_at: new Date().toISOString() } : x)
+      l.map((x) => x.id === logId ? { ...x, comment: content, log_type: logType, author_id: authorId, author_name: authorName, updated_at: new Date().toISOString() } : x)
     );
     setEditingId(null);
 
     try {
       const { error } = await supabase
         .from('project_logs')
-        .update({ comment: content, log_type: logType, updated_at: new Date().toISOString() })
+        .update({ comment: content, log_type: logType, author_id: authorId, author_name: authorName, updated_at: new Date().toISOString() })
         .eq('id', logId);
       if (error) throw error;
     } catch (err) {
@@ -866,6 +944,9 @@ export function BitacoraSection({ projectId }: Props) {
       <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50">
         <EntryForm
           getMentionItems={getMentionItems}
+          teamMembers={teamMembers}
+          initialAuthorId={savedAuthor?.id ?? null}
+          initialAuthorName={savedAuthor?.name ?? null}
           saving={saving}
           onSave={addLog}
         />
@@ -920,10 +1001,13 @@ export function BitacoraSection({ projectId }: Props) {
                 <p className="text-xs text-slate-400 mb-3">Editando entrada</p>
                 <EntryForm
                   getMentionItems={getMentionItems}
+                  teamMembers={teamMembers}
                   initialContent={log.comment}
                   initialType={(log.log_type as LogType) || 'note'}
+                  initialAuthorId={log.author_id ?? null}
+                  initialAuthorName={log.author_name ?? null}
                   saving={saving}
-                  onSave={(content, type) => saveEdit(log.id, content, type)}
+                  onSave={(content, type, aId, aName) => saveEdit(log.id, content, type, aId, aName)}
                   onCancel={() => setEditingId(null)}
                   isEdit
                 />

@@ -143,6 +143,73 @@ a.bitacora-link:hover {
   cursor: default;
 }
 
+/* View-mode rendered HTML (dangerouslySetInnerHTML) — mirrors ProseMirror styles */
+.bitacora-content h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0.75rem 0 0.25rem;
+  line-height: 1.3;
+}
+
+.bitacora-content h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0.65rem 0 0.2rem;
+  line-height: 1.35;
+}
+
+.bitacora-content h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0.5rem 0 0.15rem;
+  line-height: 1.4;
+}
+
+.bitacora-content h1:first-child,
+.bitacora-content h2:first-child,
+.bitacora-content h3:first-child {
+  margin-top: 0;
+}
+
+.bitacora-content ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0.25rem 0;
+}
+
+.bitacora-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin: 0.25rem 0;
+}
+
+.bitacora-content li {
+  margin: 0.1rem 0;
+}
+
+.bitacora-content li p {
+  margin: 0;
+}
+
+.bitacora-content strong { font-weight: 700; }
+.bitacora-content em     { font-style: italic; }
+.bitacora-content u      { text-decoration: underline; }
+
+.bitacora-content a {
+  color: #3b82f6;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.bitacora-content a:hover {
+  color: #1d4ed8;
+}
+
 @media print {
   .no-print {
     display: none !important;

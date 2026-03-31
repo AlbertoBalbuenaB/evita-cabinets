@@ -982,6 +982,8 @@ export type Database = {
       }
       project_logs: {
         Row: {
+          author_id: string | null
+          author_name: string | null
           comment: string
           created_at: string | null
           id: string
@@ -990,6 +992,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          author_id?: string | null
+          author_name?: string | null
           comment: string
           created_at?: string | null
           id?: string
@@ -998,6 +1002,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          author_id?: string | null
+          author_name?: string | null
           comment?: string
           created_at?: string | null
           id?: string

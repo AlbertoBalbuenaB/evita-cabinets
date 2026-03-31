@@ -1,0 +1,3 @@
+ALTER TABLE project_logs
+  ADD COLUMN IF NOT EXISTS author_id   UUID REFERENCES team_members(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS author_name TEXT;
