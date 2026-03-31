@@ -178,12 +178,7 @@ export function exportOptimizerPDF(
     doc.line(startX - 1, startY, dimX - 2, startY);
     doc.line(startX - 1, startY + boardH, dimX - 2, startY + boardH);
     doc.line(dimX, startY, dimX, startY + boardH);
-    doc.save();
-    // @ts-expect-error jsPDF internal
-    doc.internal.write(`q`);
     doc.text(fmtDim(board.alto, unit), dimX - 3, startY + boardH / 2, { align: 'center', angle: 90 });
-    // @ts-expect-error jsPDF internal
-    doc.internal.write(`Q`);
   });
 
   // ── Cut list ──────────────────────────────────────────────
