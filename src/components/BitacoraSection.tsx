@@ -696,7 +696,7 @@ function EntryForm({ getMentionItems, teamMembers, initialContent, initialType =
       </div>
 
       {/* Editor */}
-      <div className="border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+      <div className="border border-slate-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
         <Toolbar editor={editor} />
         <div
           className="px-3 py-2 min-h-[80px] text-sm"
