@@ -1,17 +1,15 @@
-import { useState } from 'react';
-import { ChevronDown, Layers, Settings, LayoutList, X, ArrowLeftRight, Pencil } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronDown, Layers, Settings, LayoutList, X, Pencil, MoreHorizontal } from 'lucide-react';
 import { useOptimizerStore } from '../../hooks/useOptimizerStore';
 import { toMM, fromMM, unitLabel } from '../../lib/optimizer/units';
+import { Pieza } from '../../lib/optimizer/types';
+import { supabase } from '../../lib/supabase';
 
-// ── Shared styles ────────────────────────────────────────────
-const cellInput = "w-full bg-transparent text-xs px-1.5 py-1 border border-transparent focus:border-blue-400 focus:bg-white rounded outline-none text-center tabular-nums";
 const sectionHeaderCls = "flex items-center gap-2 px-3 py-2 bg-slate-100 border-b border-slate-200 cursor-pointer select-none hover:bg-slate-200/60 transition-colors";
+const cellInput = "w-full bg-transparent text-xs px-1.5 py-1 border border-transparent focus:border-blue-400 focus:bg-white rounded outline-none text-center tabular-nums";
 
 function SectionHeader({ icon: Icon, title, open, onToggle }: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  open: boolean;
-  onToggle: () => void;
+  icon: React.ComponentType<{ className?: string }>; title: string; open: boolean; onToggle: () => void;
 }) {
   return (
     <div className={sectionHeaderCls} onClick={onToggle}>
@@ -22,7 +20,54 @@ function SectionHeader({ icon: Icon, title, open, onToggle }: {
   );
 }
 
-const MATERIALS = ['Melamina', 'MDF', 'Triplay', 'Aglomerado', 'MDP', 'OSB'];
+// ── Edge banding popover ────────────────────────────────────
+function EdgeBandPopover({ piece, onUpdate }: { piece: Pieza; onUpdate: (cb: Pieza['cubrecanto']) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const cb = piece.cubrecanto;
+  const count = [cb.sup, cb.inf, cb.izq, cb.der].filter(Boolean).length;
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const toggle = (side: keyof Pieza['cubrecanto']) => {
+    onUpdate({ ...cb, [side]: !cb[side] });
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <button onClick={() => setOpen(v => !v)} title="Cubrecanto"
+        className={`text-xs px-1 py-0.5 rounded ${count > 0 ? 'bg-amber-100 text-amber-700 font-semibold' : 'text-slate-400 hover:bg-slate-100'}`}>
+        {count > 0 ? count : '—'}
+      </button>
+      {open && (
+        <div className="absolute z-50 top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-2 w-28">
+          <div className="text-xs font-semibold text-slate-600 mb-1.5">Cubrecanto</div>
+          {([['sup', 'Superior'], ['inf', 'Inferior'], ['izq', 'Izquierdo'], ['der', 'Derecho']] as const).map(([k, label]) => (
+            <label key={k} className="flex items-center gap-2 py-0.5 cursor-pointer">
+              <input type="checkbox" checked={cb[k]} onChange={() => toggle(k)}
+                className="w-3 h-3 rounded border-slate-300 text-amber-600" />
+              <span className="text-xs text-slate-600">{label}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Price list sheet material type ──────────────────────────
+interface SheetMaterial {
+  id: string;
+  concept_description: string;
+  price: number;
+  dimensions: string | null;
+  material: string | null;
+}
 
 export function OptimizerSidebar() {
   const store = useOptimizerStore();
@@ -33,12 +78,23 @@ export function OptimizerSidebar() {
   const [optionsOpen, setOptionsOpen] = useState(true);
   const [remnantsOpen, setRemnantsOpen] = useState(false);
 
+  // ── Price list sheet materials ────────────────────────────
+  const [sheetMaterials, setSheetMaterials] = useState<SheetMaterial[]>([]);
+  useEffect(() => {
+    supabase.from('price_list').select('id, concept_description, price, dimensions, material')
+      .eq('unit', 'Sheet').eq('is_active', true)
+      .then(({ data }) => { if (data) setSheetMaterials(data); });
+  }, []);
+
+  // Derive material names from stock sheets for panel material dropdown
+  const stockMaterials = Array.from(new Set(store.stocks.map(s => s.nombre))).filter(Boolean);
+
   // ── Inline add row state — Panels ─────────────────────────
   const [pAncho, setPAncho] = useState('');
   const [pAlto, setPAlto] = useState('');
   const [pCant, setPCant] = useState('1');
   const [pNombre, setPNombre] = useState('');
-  const [pMat, setPMat] = useState('Melamina');
+  const [pMat, setPMat] = useState('');
   const [pGrosor, setPGrosor] = useState('18');
   const [pVeta, setPVeta] = useState(false);
 
@@ -47,19 +103,17 @@ export function OptimizerSidebar() {
   const [sAlto, setSAlto] = useState('1220');
   const [sNombre, setSNombre] = useState('');
   const [sCosto, setSCosto] = useState('450');
-  const [sSierra, setSSierra] = useState('3.2');
-
-  const uL = unitLabel(unit);
+  const [selectedSheetId, setSelectedSheetId] = useState('');
 
   const addPiece = () => {
     const ancho = toMM(parseFloat(pAncho) || 0, unit);
     const alto = toMM(parseFloat(pAlto) || 0, unit);
     if (!ancho || !alto) return;
+    const material = pMat || (store.stocks[0]?.nombre ?? 'Melamina');
     store.addPiece({
-      nombre: pNombre, material: pMat,
+      nombre: pNombre, material,
       grosor: toMM(parseFloat(pGrosor) || 18, unit),
-      ancho, alto,
-      cantidad: parseInt(pCant) || 1,
+      ancho, alto, cantidad: parseInt(pCant) || 1,
       vetaHorizontal: pVeta,
       cubrecanto: { sup: false, inf: false, izq: false, der: false },
     });
@@ -74,9 +128,24 @@ export function OptimizerSidebar() {
       nombre: sNombre || `${sAncho}×${sAlto}`,
       ancho, alto,
       costo: parseFloat(sCosto) || 0,
-      sierra: parseFloat(sSierra) || 3.2,
+      sierra: store.globalSierra,
     });
     setSNombre('');
+  };
+
+  const handleSelectSheet = (sheetId: string) => {
+    setSelectedSheetId(sheetId);
+    const mat = sheetMaterials.find(m => m.id === sheetId);
+    if (!mat) return;
+    // Try to parse dimensions like "4ft x 8ft" or "2440x1220"
+    const dims = mat.dimensions || '';
+    const numMatch = dims.match(/(\d+\.?\d*)\s*[x×]\s*(\d+\.?\d*)/i);
+    if (numMatch) {
+      setSAncho(numMatch[1]);
+      setSAlto(numMatch[2]);
+    }
+    setSCosto(String(mat.price || 0));
+    setSNombre(mat.concept_description);
   };
 
   const handlePieceKey = (e: React.KeyboardEvent) => { if (e.key === 'Enter') addPiece(); };
@@ -91,53 +160,56 @@ export function OptimizerSidebar() {
   return (
     <div className="flex-1 overflow-y-auto bg-white">
 
-      {/* ═══ PANELS (Pieces) ════════════════════════════════ */}
+      {/* ═══ PANELS ═════════════════════════════════════════ */}
       <SectionHeader icon={LayoutList} title="Panels" open={panelsOpen} onToggle={() => setPanelsOpen(v => !v)} />
       {panelsOpen && (
         <div>
-          {/* Material / grain row */}
+          {/* Material / grain bar */}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border-b border-slate-100">
             <select value={pMat} onChange={e => setPMat(e.target.value)}
-              className="text-xs border border-slate-200 rounded px-1.5 py-0.5 bg-white text-slate-700 flex-1">
-              {MATERIALS.map(m => <option key={m}>{m}</option>)}
+              className="text-xs border border-slate-200 rounded px-1.5 py-0.5 bg-white text-slate-700 flex-1 truncate">
+              <option value="">Material...</option>
+              {stockMaterials.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
             <input value={pGrosor} onChange={e => setPGrosor(e.target.value)} placeholder="18"
               className="text-xs border border-slate-200 rounded px-1.5 py-0.5 bg-white text-center w-12"
-              title={`Grosor (${uL})`} />
-            <label className="flex items-center gap-1 cursor-pointer shrink-0" title="Veta fija">
+              title={`Grosor (${unitLabel(unit)})`} />
+            <label className="flex items-center gap-1 cursor-pointer shrink-0" title="Veta fija (no rotar)">
               <input type="checkbox" checked={pVeta} onChange={e => setPVeta(e.target.checked)}
                 className="w-3 h-3 rounded border-slate-300 text-blue-600" />
-              <ArrowLeftRight className="h-3 w-3 text-slate-400" />
+              <span className="text-xs text-slate-500">Veta</span>
             </label>
           </div>
 
-          {/* Table */}
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="py-1.5 px-2 text-left font-semibold text-slate-500 w-[30%]">Ancho</th>
-                <th className="py-1.5 px-1 text-left font-semibold text-slate-500 w-[30%]">Alto</th>
-                <th className="py-1.5 px-1 text-center font-semibold text-slate-500 w-[15%]">Cant.</th>
+                <th className="py-1.5 px-2 text-left font-semibold text-slate-500">Ancho</th>
+                <th className="py-1.5 px-1 text-left font-semibold text-slate-500">Alto</th>
+                <th className="py-1.5 px-1 text-center font-semibold text-slate-500 w-10">Cant.</th>
+                <th className="py-1.5 px-1 text-center font-semibold text-slate-500 w-7">V</th>
+                <th className="py-1.5 px-1 text-center font-semibold text-slate-500 w-7">EB</th>
                 <th className="py-1.5 px-1 text-left font-semibold text-slate-500">Nombre</th>
-                <th className="py-1.5 w-6"></th>
+                <th className="py-1.5 w-5"></th>
               </tr>
             </thead>
             <tbody>
-              {/* Existing pieces */}
-              {store.pieces.map((p, idx) => (
+              {store.pieces.map((p) => (
                 <tr key={p.id} className="border-b border-slate-50 hover:bg-blue-50/40 group">
-                  <td className="px-2 py-0.5">
-                    <span className="text-xs tabular-nums text-slate-700">{parseFloat(fromMM(p.ancho, unit).toFixed(3))}</span>
-                  </td>
-                  <td className="px-1 py-0.5">
-                    <span className="text-xs tabular-nums text-slate-700">{parseFloat(fromMM(p.alto, unit).toFixed(3))}</span>
+                  <td className="px-2 py-0.5 text-xs tabular-nums text-slate-700">{parseFloat(fromMM(p.ancho, unit).toFixed(3))}</td>
+                  <td className="px-1 py-0.5 text-xs tabular-nums text-slate-700">{parseFloat(fromMM(p.alto, unit).toFixed(3))}</td>
+                  <td className="px-1 py-0.5 text-center text-xs font-semibold tabular-nums text-slate-700">{p.cantidad}</td>
+                  <td className="px-1 py-0.5 text-center">
+                    <button onClick={() => store.updatePiece(p.id, { vetaHorizontal: !p.vetaHorizontal })}
+                      title={p.vetaHorizontal ? 'Veta fija' : 'Veta libre'}
+                      className={`text-xs px-1 py-0.5 rounded ${p.vetaHorizontal ? 'bg-amber-100 text-amber-700' : 'text-slate-300 hover:bg-slate-100'}`}>
+                      {p.vetaHorizontal ? '|||' : '~'}
+                    </button>
                   </td>
                   <td className="px-1 py-0.5 text-center">
-                    <span className="text-xs font-semibold tabular-nums text-slate-700">{p.cantidad}</span>
+                    <EdgeBandPopover piece={p} onUpdate={(cb) => store.updatePiece(p.id, { cubrecanto: cb })} />
                   </td>
-                  <td className="px-1 py-0.5 truncate max-w-20">
-                    <span className="text-xs text-slate-500">{p.nombre || '—'}</span>
-                  </td>
+                  <td className="px-1 py-0.5 truncate max-w-16 text-xs text-slate-500">{p.nombre || '—'}</td>
                   <td className="px-0.5 py-0.5">
                     <button onClick={() => store.removePiece(p.id)}
                       className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-0.5">
@@ -146,7 +218,6 @@ export function OptimizerSidebar() {
                   </td>
                 </tr>
               ))}
-
               {/* Add row */}
               <tr className="bg-green-50/40 border-t border-slate-200">
                 <td className="px-1 py-0.5">
@@ -161,6 +232,7 @@ export function OptimizerSidebar() {
                   <input value={pCant} onChange={e => setPCant(e.target.value)} onKeyDown={handlePieceKey}
                     className={cellInput} />
                 </td>
+                <td colSpan={2}></td>
                 <td className="px-0.5 py-0.5">
                   <input value={pNombre} onChange={e => setPNombre(e.target.value)} onKeyDown={handlePieceKey}
                     placeholder="Nombre" className={cellInput + ' text-left'} />
@@ -175,14 +247,29 @@ export function OptimizerSidebar() {
             </tbody>
           </table>
 
-          {/* Summary */}
-          <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50 border-t border-slate-200 text-xs text-slate-500">
-            <span>{store.pieces.length} panel{store.pieces.length !== 1 ? 'es' : ''}</span>
-            <span>{(store.pieces.reduce((s, p) => s + p.ancho * p.alto * p.cantidad, 0) / 1e6).toFixed(2)} m²</span>
-            {store.pieces.length > 0 && (
-              <button onClick={() => store.clearPieces()} className="text-red-400 hover:text-red-600 text-xs">Limpiar</button>
-            )}
-          </div>
+          {/* Summary with edgeband total */}
+          {(() => {
+            let totalEB = 0;
+            store.pieces.forEach(p => {
+              const cb = p.cubrecanto;
+              const addCm = 30; // +3cm = 30mm per side
+              if (cb.sup) totalEB += (p.ancho + addCm) * p.cantidad;
+              if (cb.inf) totalEB += (p.ancho + addCm) * p.cantidad;
+              if (cb.izq) totalEB += (p.alto + addCm) * p.cantidad;
+              if (cb.der) totalEB += (p.alto + addCm) * p.cantidad;
+            });
+            const ebMeters = totalEB / 1000;
+            return (
+              <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex-wrap gap-1">
+                <span>{store.pieces.length} panel{store.pieces.length !== 1 ? 'es' : ''}</span>
+                <span>{(store.pieces.reduce((s, p) => s + p.ancho * p.alto * p.cantidad, 0) / 1e6).toFixed(2)} m²</span>
+                {ebMeters > 0 && <span className="text-amber-600">EB: {ebMeters.toFixed(2)}m</span>}
+                {store.pieces.length > 0 && (
+                  <button onClick={() => store.clearPieces()} className="text-red-400 hover:text-red-600 text-xs">Limpiar</button>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -190,6 +277,21 @@ export function OptimizerSidebar() {
       <SectionHeader icon={Layers} title="Stock sheets" open={stocksOpen} onToggle={() => setStocksOpen(v => !v)} />
       {stocksOpen && (
         <div>
+          {/* Material selector from pricelist */}
+          {sheetMaterials.length > 0 && (
+            <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-100">
+              <select value={selectedSheetId} onChange={e => handleSelectSheet(e.target.value)}
+                className="w-full text-xs border border-slate-200 rounded px-1.5 py-1 bg-white text-slate-700">
+                <option value="">Seleccionar material del Price List...</option>
+                {sheetMaterials.map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.concept_description} — ${m.price} {m.dimensions ? `(${m.dimensions})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
@@ -197,7 +299,7 @@ export function OptimizerSidebar() {
                 <th className="py-1.5 px-1 text-left font-semibold text-slate-500">Alto</th>
                 <th className="py-1.5 px-1 text-center font-semibold text-slate-500">$</th>
                 <th className="py-1.5 px-1 text-left font-semibold text-slate-500">Nombre</th>
-                <th className="py-1.5 w-6"></th>
+                <th className="py-1.5 w-5"></th>
               </tr>
             </thead>
             <tbody>
@@ -215,7 +317,6 @@ export function OptimizerSidebar() {
                   </td>
                 </tr>
               ))}
-              {/* Add row */}
               <tr className="bg-green-50/40 border-t border-slate-200">
                 <td className="px-1 py-0.5">
                   <input value={sAncho} onChange={e => setSAncho(e.target.value)} onKeyDown={handleStockKey}
@@ -235,7 +336,7 @@ export function OptimizerSidebar() {
                 </td>
                 <td className="px-0.5 py-0.5">
                   <button onClick={addStock} title="Agregar"
-                    className="text-green-600 hover:text-green-700 disabled:text-slate-300 p-0.5">
+                    className="text-green-600 hover:text-green-700 p-0.5">
                     <Pencil className="h-3 w-3" />
                   </button>
                 </td>
@@ -278,10 +379,12 @@ export function OptimizerSidebar() {
           <div className="flex gap-1.5">
             <select value={remMat} onChange={e => setRemMat(e.target.value)}
               className="text-xs border border-slate-200 rounded px-1 py-0.5 flex-1">
-              {MATERIALS.map(m => <option key={m}>{m}</option>)}
+              {stockMaterials.length > 0
+                ? stockMaterials.map(m => <option key={m}>{m}</option>)
+                : <option>Melamina</option>}
             </select>
             <input value={remGrosor} onChange={e => setRemGrosor(e.target.value)} placeholder="18"
-              className="w-12 text-xs text-center border border-slate-200 rounded px-1 py-0.5" title="Grosor" />
+              className="w-12 text-xs text-center border border-slate-200 rounded px-1 py-0.5" />
           </div>
           <div className="flex gap-1.5">
             <input value={remAncho} onChange={e => setRemAncho(e.target.value)} placeholder="Ancho"
@@ -290,7 +393,7 @@ export function OptimizerSidebar() {
               className="flex-1 text-xs border border-slate-200 rounded px-1.5 py-0.5" />
             <button onClick={() => {
               store.addRemnant({
-                material: remMat,
+                material: remMat || 'Melamina',
                 grosor: toMM(parseFloat(remGrosor) || 18, unit),
                 ancho: toMM(parseFloat(remAncho) || 0, unit),
                 alto: toMM(parseFloat(remAlto) || 0, unit),

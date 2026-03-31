@@ -107,6 +107,17 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
         <StatRow label="Total cuts"       value={String(totalCuts)} />
         <StatRow label="Total cut length" value={fmtDim(totalCutLen, unit)} />
         <StatRow label="Kerf thickness"   value={`${globalSierra}mm`} />
+        <StatRow label="Edgeband" value={(() => {
+          let total = 0;
+          result.boards.forEach(b => b.placed.forEach(p => {
+            const cb = p.piece.cubrecanto;
+            if (cb.sup) total += (p.piece.ancho + 30) * 1;
+            if (cb.inf) total += (p.piece.ancho + 30) * 1;
+            if (cb.izq) total += (p.piece.alto + 30) * 1;
+            if (cb.der) total += (p.piece.alto + 30) * 1;
+          }));
+          return `${(total / 1000).toFixed(2)} m`;
+        })()} />
         <StatRow label="Strategy"         value={result.strategy} />
         <StatRow label="Cost"             value={`$${result.totalCost.toFixed(2)}`} />
         <StatRow label="Time"             value={`${result.timeMs.toFixed(0)}ms`} />

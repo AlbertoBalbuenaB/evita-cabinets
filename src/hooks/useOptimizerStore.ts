@@ -19,6 +19,7 @@ interface OptimizerState {
   selectedBoardIndex: number | null;
   setUnit: (u: UnitSystem) => void;
   addPiece: (p: Omit<Pieza, 'id'>) => void;
+  updatePiece: (id: string, patch: Partial<Pieza>) => void;
   removePiece: (id: string) => void;
   clearPieces: () => void;
   setPieces: (pieces: Pieza[]) => void; // Option C extension point — ProjectOptimizerPage will call this
@@ -65,6 +66,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
   selectedBoardIndex: null,
 
   addPiece: (p) => set((state) => ({ pieces: [...state.pieces, { ...p, id: crypto.randomUUID() }] })),
+  updatePiece: (id, patch) => set((state) => ({ pieces: state.pieces.map((p) => p.id === id ? { ...p, ...patch } : p) })),
   removePiece: (id) => set((state) => ({ pieces: state.pieces.filter((p) => p.id !== id) })),
   clearPieces: () => set({ pieces: [] }),
   setPieces: (pieces) => set({ pieces }), // Option C hook
