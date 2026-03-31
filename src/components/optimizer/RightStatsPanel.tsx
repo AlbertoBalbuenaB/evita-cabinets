@@ -23,7 +23,7 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
   // ── Empty state ───────────────────────────────────────────
   if (!result) {
     return (
-      <div className="w-72 shrink-0 border-l border-slate-200 bg-white flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center bg-white">
         <p className="text-xs text-slate-400 text-center px-4 leading-relaxed">
           Ejecuta la optimización<br />para ver estadísticas
         </p>
@@ -90,7 +90,7 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
 
   // ── Render ────────────────────────────────────────────────
   return (
-    <div className="w-72 shrink-0 border-l border-slate-200 bg-white flex flex-col overflow-y-auto overflow-x-hidden text-sm">
+    <div className="flex-1 bg-white flex flex-col overflow-y-auto overflow-x-hidden text-sm">
 
       <Section title="Global statistics" open={globalOpen} onToggle={() => setGlobalOpen((v) => !v)}>
         <StatRow label="Used stock sheets" value={stockStr} />
@@ -107,6 +107,17 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
         <StatRow label="Total cuts"       value={String(totalCuts)} />
         <StatRow label="Total cut length" value={fmtDim(totalCutLen, unit)} />
         <StatRow label="Kerf thickness"   value={`${globalSierra}mm`} />
+        <StatRow label="Edgeband" value={(() => {
+          let total = 0;
+          result.boards.forEach(b => b.placed.forEach(p => {
+            const cb = p.piece.cubrecanto;
+            if (cb.sup > 0) total += (p.piece.ancho + 30);
+            if (cb.inf > 0) total += (p.piece.ancho + 30);
+            if (cb.izq > 0) total += (p.piece.alto + 30);
+            if (cb.der > 0) total += (p.piece.alto + 30);
+          }));
+          return `${(total / 1000).toFixed(2)} m`;
+        })()} />
         <StatRow label="Strategy"         value={result.strategy} />
         <StatRow label="Cost"             value={`$${result.totalCost.toFixed(2)}`} />
         <StatRow label="Time"             value={`${result.timeMs.toFixed(0)}ms`} />

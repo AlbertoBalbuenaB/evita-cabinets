@@ -595,21 +595,21 @@ export interface CADRenderOptions {
   offsetX: number;
   offsetY: number;
   showLabels: boolean;
-  showRulers: boolean;
+  showDimensions: boolean;
   showKerf: boolean;
   showOffcuts: boolean;
+  showGrain: boolean;
+  showEdgeBand: boolean;
+  hoverPieceIdx: number | null;
   unit: UnitSystem;
 }
-
-/** Ruler thickness in CSS px (both horizontal and vertical) */
-export const RULER_SIZE = 24;
 
 export function renderBoardCAD(
   canvas: HTMLCanvasElement,
   board: BoardResult,
   opts: CADRenderOptions,
 ): void {
-  const { zoom, offsetX, offsetY, showLabels, showRulers, showKerf, showOffcuts, unit } = opts;
+  const { zoom, offsetX, offsetY, showLabels, showDimensions, showKerf, showOffcuts, showGrain, showEdgeBand, hoverPieceIdx, unit } = opts;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
@@ -617,7 +617,6 @@ export function renderBoardCAD(
   const cssW = canvas.clientWidth || canvas.offsetWidth || 800;
   const cssH = canvas.clientHeight || canvas.offsetHeight || 600;
 
-  // Resize backing store only when necessary (avoid flicker)
   const targetW = Math.round(cssW * dpr);
   const targetH = Math.round(cssH * dpr);
   if (canvas.width !== targetW || canvas.height !== targetH) {
@@ -627,22 +626,19 @@ export function renderBoardCAD(
   ctx.resetTransform();
   ctx.scale(dpr, dpr);
 
-  const rS = showRulers ? RULER_SIZE : 0;
   const bw = board.ancho;
   const bh = board.alto;
 
-  // ── Background ────────────────────────────────────────────
   ctx.fillStyle = '#f1f5f9';
   ctx.fillRect(0, 0, cssW, cssH);
 
-  // ── Clip to board viewport (exclude ruler strips) ─────────
   ctx.save();
   ctx.beginPath();
-  ctx.rect(rS, rS, Math.max(0, cssW - rS), Math.max(0, cssH - rS));
+  ctx.rect(0, 0, cssW, cssH);
   ctx.clip();
 
-  const ox = rS + offsetX;
-  const oy = rS + offsetY;
+  const ox = offsetX;
+  const oy = offsetY;
   const scaledW = bw * zoom;
   const scaledH = bh * zoom;
 
@@ -655,55 +651,107 @@ export function renderBoardCAD(
   ctx.fillRect(ox, oy, scaledW, scaledH);
   ctx.restore();
 
-  // Board fill
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(ox, oy, scaledW, scaledH);
 
-  // Board border
   ctx.strokeStyle = '#334155';
   ctx.lineWidth = 2;
   ctx.strokeRect(ox, oy, scaledW, scaledH);
 
-  // ── Trim margin visualization ─────────────────────────────
+  // ── Board grain (always horizontal — along the length) ────
+  if (showGrain) {
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 0.5;
+    const grainStep = Math.max(4, 6 * zoom);
+    for (let gy = grainStep; gy < scaledH; gy += grainStep) {
+      ctx.beginPath();
+      ctx.moveTo(ox + 2, oy + gy);
+      ctx.lineTo(ox + scaledW - 2, oy + gy);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ── Trim margin ───────────────────────────────────────────
   if (board.trim > 0) {
     const t = board.trim;
     ctx.fillStyle = 'rgba(100,116,139,0.09)';
-    ctx.fillRect(ox,                         oy,                          scaledW,        t * zoom);
-    ctx.fillRect(ox,                         oy + (bh - t) * zoom,        scaledW,        t * zoom);
-    ctx.fillRect(ox,                         oy + t * zoom,               t * zoom,       (bh - 2*t) * zoom);
-    ctx.fillRect(ox + (bw - t) * zoom,       oy + t * zoom,               t * zoom,       (bh - 2*t) * zoom);
+    ctx.fillRect(ox, oy, scaledW, t * zoom);
+    ctx.fillRect(ox, oy + (bh - t) * zoom, scaledW, t * zoom);
+    ctx.fillRect(ox, oy + t * zoom, t * zoom, (bh - 2*t) * zoom);
+    ctx.fillRect(ox + (bw - t) * zoom, oy + t * zoom, t * zoom, (bh - 2*t) * zoom);
     ctx.strokeStyle = 'rgba(100,116,139,0.40)';
     ctx.lineWidth = 1;
     ctx.setLineDash([5, 4]);
-    ctx.strokeRect(
-      ox + t * zoom,
-      oy + t * zoom,
-      (bw - 2 * t) * zoom,
-      (bh - 2 * t) * zoom,
-    );
+    ctx.strokeRect(ox + t * zoom, oy + t * zoom, (bw - 2*t) * zoom, (bh - 2*t) * zoom);
     ctx.setLineDash([]);
   }
 
   // ── Pieces ────────────────────────────────────────────────
-  board.placed.forEach((p) => {
+  board.placed.forEach((p, placedIdx) => {
     const color = PIECE_COLORS[p.idx % PIECE_COLORS.length];
     const px = ox + p.x * zoom;
     const py = oy + p.y * zoom;
     const pw = p.w * zoom;
     const ph = p.h * zoom;
 
-    // Light fill
     ctx.globalAlpha = 0.18;
     ctx.fillStyle = color;
     ctx.fillRect(px, py, pw, ph);
     ctx.globalAlpha = 1;
 
-    // Border
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.5;
     ctx.strokeRect(px + 0.75, py + 0.75, pw - 1.5, ph - 1.5);
 
-    // Labels (only if piece is large enough on screen)
+    // ── Grain direction on piece ────────────────────────────
+    if (showGrain && p.piece.vetaHorizontal) {
+      ctx.save();
+      ctx.globalAlpha = 0.12;
+      ctx.strokeStyle = '#92400e';
+      ctx.lineWidth = 0.7;
+      if (p.rotated) {
+        const step = Math.max(3, 5 * zoom);
+        for (let dx = step; dx < pw; dx += step) {
+          ctx.beginPath(); ctx.moveTo(px + dx, py + 2); ctx.lineTo(px + dx, py + ph - 2); ctx.stroke();
+        }
+      } else {
+        const step = Math.max(3, 5 * zoom);
+        for (let dy = step; dy < ph; dy += step) {
+          ctx.beginPath(); ctx.moveTo(px + 2, py + dy); ctx.lineTo(px + pw - 2, py + dy); ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+
+    // ── Edge banding indicators (3 types, drawn inside piece) ─
+    if (showEdgeBand) {
+      const cb = p.piece.cubrecanto;
+      const edges = p.rotated
+        ? { top: cb.izq, bottom: cb.der, left: cb.sup, right: cb.inf }
+        : { top: cb.sup, bottom: cb.inf, left: cb.izq, right: cb.der };
+      const inset = 4; // px inset from piece edge
+      const drawEB = (type: number, x1: number, y1: number, x2: number, y2: number) => {
+        if (!type) return;
+        ctx.save();
+        ctx.lineWidth = 2.5;
+        // Type 1 = solid black, Type 2 = dashed, Type 3 = dotted
+        if (type === 1)      { ctx.strokeStyle = '#1e293b'; ctx.setLineDash([]); }
+        else if (type === 2) { ctx.strokeStyle = '#1e293b'; ctx.setLineDash([6, 3]); }
+        else                 { ctx.strokeStyle = '#1e293b'; ctx.setLineDash([2, 2]); }
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      };
+      drawEB(edges.top,    px + inset, py + inset,      px + pw - inset, py + inset);
+      drawEB(edges.bottom, px + inset, py + ph - inset,  px + pw - inset, py + ph - inset);
+      drawEB(edges.left,   px + inset, py + inset,      px + inset,      py + ph - inset);
+      drawEB(edges.right,  px + pw - inset, py + inset, px + pw - inset, py + ph - inset);
+    }
+
+    // Labels
     if (showLabels && pw > 28 && ph > 16) {
       const fontSize = Math.min(13, Math.max(8, Math.min(pw / 5.5, ph / 3)));
       ctx.fillStyle = '#1e293b';
@@ -711,33 +759,66 @@ export function renderBoardCAD(
       ctx.textBaseline = 'middle';
       const cx = px + pw / 2;
       const cy = py + ph / 2;
-
       const dimLabel = `${_fmtU(p.piece.ancho, unit)}×${_fmtU(p.piece.alto, unit)}`;
       ctx.font = `${fontSize}px system-ui, sans-serif`;
       const hasName = p.piece.nombre && ph > 30;
       ctx.fillText(dimLabel, cx, cy - (hasName ? fontSize * 0.65 : 0));
-
       if (hasName) {
         ctx.fillStyle = '#64748b';
         ctx.font = `${fontSize * 0.85}px system-ui, sans-serif`;
         ctx.fillText(p.piece.nombre, cx, cy + fontSize * 0.65);
       }
     }
+
+    // ── Hover per-piece dimension annotations ───────────────
+    if (hoverPieceIdx === placedIdx) {
+      ctx.save();
+      const dc = '#1d4ed8';
+      const bg = 'rgba(255,255,255,0.85)';
+      ctx.strokeStyle = dc; ctx.fillStyle = dc;
+      ctx.lineWidth = 1; ctx.setLineDash([]); ctx.font = 'bold 9px system-ui, sans-serif';
+      const al = 4;
+
+      // Width (top)
+      const wY = py - 10;
+      ctx.beginPath(); ctx.moveTo(px, py - 2); ctx.lineTo(px, wY - 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw, py - 2); ctx.lineTo(px + pw, wY - 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, wY); ctx.lineTo(px + pw, wY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, wY); ctx.lineTo(px + al, wY - 2); ctx.lineTo(px + al, wY + 2); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(px + pw, wY); ctx.lineTo(px + pw - al, wY - 2); ctx.lineTo(px + pw - al, wY + 2); ctx.closePath(); ctx.fill();
+      const wL = _fmtU(p.piece.ancho, unit);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      const wm = ctx.measureText(wL);
+      ctx.fillStyle = bg; ctx.fillRect((2*px + pw) / 2 - wm.width / 2 - 3, wY - 13, wm.width + 6, 12);
+      ctx.fillStyle = dc; ctx.fillText(wL, (2*px + pw) / 2, wY - 2);
+
+      // Height (right)
+      const hX = px + pw + 10;
+      ctx.beginPath(); ctx.moveTo(px + pw + 2, py); ctx.lineTo(hX + 2, py); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw + 2, py + ph); ctx.lineTo(hX + 2, py + ph); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(hX, py); ctx.lineTo(hX, py + ph); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(hX, py); ctx.lineTo(hX - 2, py + al); ctx.lineTo(hX + 2, py + al); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(hX, py + ph); ctx.lineTo(hX - 2, py + ph - al); ctx.lineTo(hX + 2, py + ph - al); ctx.closePath(); ctx.fill();
+      const hL = _fmtU(p.piece.alto, unit);
+      ctx.save();
+      ctx.translate(hX + 5, (2*py + ph) / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      const hm = ctx.measureText(hL);
+      ctx.fillStyle = bg; ctx.fillRect(-hm.width / 2 - 3, -12, hm.width + 6, 12);
+      ctx.fillStyle = dc; ctx.fillText(hL, 0, 0);
+      ctx.restore();
+
+      ctx.restore();
+    }
   });
 
   // ── Offcuts ───────────────────────────────────────────────
   if (showOffcuts) {
     ctx.strokeStyle = 'rgba(34,197,94,0.65)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([5, 4]);
+    ctx.lineWidth = 1; ctx.setLineDash([5, 4]);
     board.offcuts.forEach((r) => {
-      const margin = 1;
-      ctx.strokeRect(
-        ox + r.x * zoom + margin,
-        oy + r.y * zoom + margin,
-        r.w * zoom - margin * 2,
-        r.h * zoom - margin * 2,
-      );
+      ctx.strokeRect(ox + r.x * zoom + 1, oy + r.y * zoom + 1, r.w * zoom - 2, r.h * zoom - 2);
     });
     ctx.setLineDash([]);
   }
@@ -751,94 +832,50 @@ export function renderBoardCAD(
     cuts.forEach((cut) => {
       if (cut.isTrim) return;
       ctx.beginPath();
-      if (cut.type === 'H') {
-        ctx.moveTo(ox, oy + cut.pos * zoom);
-        ctx.lineTo(ox + scaledW, oy + cut.pos * zoom);
-      } else {
-        ctx.moveTo(ox + cut.pos * zoom, oy);
-        ctx.lineTo(ox + cut.pos * zoom, oy + scaledH);
-      }
+      if (cut.type === 'H') { ctx.moveTo(ox, oy + cut.pos * zoom); ctx.lineTo(ox + scaledW, oy + cut.pos * zoom); }
+      else { ctx.moveTo(ox + cut.pos * zoom, oy); ctx.lineTo(ox + cut.pos * zoom, oy + scaledH); }
       ctx.stroke();
     });
   }
 
   ctx.restore(); // end clip
 
-  // ── Rulers ────────────────────────────────────────────────
-  if (showRulers) {
-    // Pick a grid step such that step * zoom >= 25px
-    const stepsTable = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
-    let gridStep = 100;
-    for (const s of stepsTable) {
-      if (s * zoom >= 25) { gridStep = s; break; }
-    }
-    const majorEvery = 5;
-
-    // Ruler backgrounds
-    ctx.fillStyle = '#e2e8f0';
-    ctx.fillRect(0, 0, cssW, rS);
-    ctx.fillRect(0, 0, rS, cssH);
-
-    ctx.strokeStyle = '#94a3b8';
-    ctx.fillStyle = '#64748b';
-    ctx.font = '9px system-ui, sans-serif';
-
-    // Horizontal ruler (top)
-    const xStart = Math.floor(-offsetX / zoom / gridStep) * gridStep;
-    const xEnd = xStart + Math.ceil((cssW - rS) / zoom / gridStep + 2) * gridStep;
-    for (let x = xStart; x <= xEnd; x += gridStep) {
-      const px = rS + x * zoom + offsetX;
-      if (px < rS - 1 || px > cssW + 1) continue;
-      const isMajor = (Math.round(x / gridStep) % majorEvery) === 0;
-      const tickH = isMajor ? 10 : 5;
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(px, rS - tickH);
-      ctx.lineTo(px, rS);
-      ctx.stroke();
-      if (isMajor && px > rS + 8) {
-        const lbl = unit === 'in' ? (x / 25.4).toFixed(x >= 254 ? 1 : 2) : String(x);
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(lbl, px, 2);
-      }
-    }
-
-    // Vertical ruler (left)
-    const yStart = Math.floor(-offsetY / zoom / gridStep) * gridStep;
-    const yEnd = yStart + Math.ceil((cssH - rS) / zoom / gridStep + 2) * gridStep;
-    for (let y = yStart; y <= yEnd; y += gridStep) {
-      const py = rS + y * zoom + offsetY;
-      if (py < rS - 1 || py > cssH + 1) continue;
-      const isMajor = (Math.round(y / gridStep) % majorEvery) === 0;
-      const tickW = isMajor ? 10 : 5;
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(rS - tickW, py);
-      ctx.lineTo(rS, py);
-      ctx.stroke();
-      if (isMajor && py > rS + 8) {
-        const lbl = unit === 'in' ? (y / 25.4).toFixed(y >= 254 ? 1 : 2) : String(y);
-        ctx.save();
-        ctx.translate(rS - 2, py);
-        ctx.rotate(-Math.PI / 2);
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(lbl, 0, 0);
-        ctx.restore();
-      }
-    }
-
-    // Corner box
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillRect(0, 0, rS, rS);
-
-    // Ruler border lines
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(rS, 0); ctx.lineTo(rS, cssH);
-    ctx.moveTo(0, rS); ctx.lineTo(cssW, rS);
-    ctx.stroke();
+  // ── Board dimension annotations (cotas) ───────────────────
+  if (showDimensions) {
+    const dimOff = 18; const al = 6;
+    const bL = ox, bR = ox + scaledW, bT = oy, bB = oy + scaledH;
+    ctx.strokeStyle = '#475569'; ctx.fillStyle = '#334155';
+    ctx.lineWidth = 1; ctx.setLineDash([]); ctx.font = 'bold 10px system-ui, sans-serif';
+    // Horizontal (bottom)
+    const hY = bB + dimOff;
+    ctx.beginPath(); ctx.moveTo(bL, bB + 4); ctx.lineTo(bL, hY + 4); ctx.moveTo(bR, bB + 4); ctx.lineTo(bR, hY + 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bL, hY); ctx.lineTo(bR, hY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bL, hY); ctx.lineTo(bL + al, hY - 3); ctx.lineTo(bL + al, hY + 3); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(bR, hY); ctx.lineTo(bR - al, hY - 3); ctx.lineTo(bR - al, hY + 3); ctx.closePath(); ctx.fill();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(_fmtU(board.ancho, unit), (bL + bR) / 2, hY + 3);
+    // Vertical (left)
+    const vX = bL - dimOff;
+    ctx.beginPath(); ctx.moveTo(bL - 4, bT); ctx.lineTo(vX - 4, bT); ctx.moveTo(bL - 4, bB); ctx.lineTo(vX - 4, bB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(vX, bT); ctx.lineTo(vX, bB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(vX, bT); ctx.lineTo(vX - 3, bT + al); ctx.lineTo(vX + 3, bT + al); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(vX, bB); ctx.lineTo(vX - 3, bB - al); ctx.lineTo(vX + 3, bB - al); ctx.closePath(); ctx.fill();
+    ctx.save(); ctx.translate(vX - 5, (bT + bB) / 2); ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText(_fmtU(board.alto, unit), 0, 0); ctx.restore();
   }
+}
+
+/** Find which placed piece index the mouse is hovering over */
+export function hitTestPiece(
+  board: BoardResult, zoom: number, offsetX: number, offsetY: number,
+  mouseX: number, mouseY: number,
+): number | null {
+  for (let i = board.placed.length - 1; i >= 0; i--) {
+    const p = board.placed[i];
+    const px = offsetX + p.x * zoom;
+    const py = offsetY + p.y * zoom;
+    if (mouseX >= px && mouseX <= px + p.w * zoom && mouseY >= py && mouseY <= py + p.h * zoom) return i;
+  }
+  return null;
 }

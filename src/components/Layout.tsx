@@ -1,6 +1,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
+  BarChart3,
   LayoutDashboard,
   FolderOpen,
   Package,
@@ -10,7 +11,6 @@ import {
   Menu,
   X,
   Search,
-  Scissors,
 } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
 
@@ -40,11 +40,11 @@ export function Layout({ children, onLogout }: LayoutProps) {
   }, []);
 
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/', label: 'Dashboard', icon: BarChart3 },
     { path: '/projects', label: 'Projects', icon: FolderOpen },
     { path: '/products', label: 'Cabinets', icon: Package },
     { path: '/prices', label: 'Price List', icon: DollarSign },
-    { path: '/optimizer', label: 'Optimizer', icon: Scissors },
+    { path: '/optimizer', label: 'Optimizer', icon: LayoutDashboard },
   ];
 
   function isActive(path: string) {
