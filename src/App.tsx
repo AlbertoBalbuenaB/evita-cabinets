@@ -13,6 +13,7 @@ import { Templates } from './pages/Templates';
 import { Settings } from './pages/Settings';
 import { Login } from './pages/Login';
 import { AiChat } from './components/AiChat';
+import { OptimizerPage } from './pages/OptimizerPage';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -61,6 +62,7 @@ function App() {
           <Route path="/prices" element={<PriceList />} />
           <Route path="/templates" element={<Templates />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/optimizer" element={<OptimizerPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>

@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   Search,
+  Scissors,
 } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
 
@@ -43,6 +44,7 @@ export function Layout({ children, onLogout }: LayoutProps) {
     { path: '/projects', label: 'Projects', icon: FolderOpen },
     { path: '/products', label: 'Cabinets', icon: Package },
     { path: '/prices', label: 'Price List', icon: DollarSign },
+    { path: '/optimizer', label: 'Optimizer', icon: Scissors },
   ];
 
   function isActive(path: string) {
@@ -196,7 +198,7 @@ export function Layout({ children, onLogout }: LayoutProps) {
         )}
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main className={pathname.startsWith('/optimizer') ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'}>
         {children}
       </main>
 
