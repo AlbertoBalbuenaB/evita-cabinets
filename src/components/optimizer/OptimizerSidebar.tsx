@@ -95,6 +95,14 @@ export function OptimizerSidebar() {
           <div><label className={labelCls}>Sierra global (mm)</label><input type="number" step="0.1" className={inputCls} value={store.globalSierra} onChange={e => store.setGlobalSierra(+e.target.value)} /></div>
           <div><label className={labelCls}>Mín. retazo (mm)</label><input type="number" className={inputCls} value={store.minOffcut} onChange={e => store.setMinOffcut(+e.target.value)} /></div>
         </div>
+        <div className="mt-2">
+          <label className={labelCls}>
+            Trim de bordes (mm)
+            <span className="ml-1 text-slate-400 font-normal text-xs" title="Franja descartada en cada orilla de la hoja">ⓘ</span>
+          </label>
+          <input type="number" min={0} max={50} step={1} value={store.boardTrim} onChange={e => store.setBoardTrim(Math.max(0, parseFloat(e.target.value) || 0))} className={inputCls} placeholder="5" />
+          <p className="text-xs text-slate-400 mt-1">Siempre en mm · por defecto 5mm</p>
+        </div>
       </div>
 
       {/* Retazos */}

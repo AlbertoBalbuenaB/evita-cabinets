@@ -77,6 +77,7 @@ export interface BoardResult {
   areaUsed: number;    // m²
   areaWaste: number;   // m²
   usage: number;       // 0-100
+  trim: number;        // trim de bordes aplicado (mm)
 }
 
 export interface OptimizationResult {
@@ -94,6 +95,7 @@ export interface CutStep {
   type: 'H' | 'V';
   pos: number;
   desc: string;
+  isTrim?: boolean;
 }
 
 export type OptimizerTab = 'boards' | 'cutlist' | 'summary';

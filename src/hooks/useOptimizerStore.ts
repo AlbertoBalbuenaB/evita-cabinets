@@ -9,6 +9,7 @@ interface OptimizerState {
   remnants: Remnant[];
   globalSierra: number;
   minOffcut: number;
+  boardTrim: number;
   projectName: string;
   clientName: string;
   result: OptimizationResult | null;
@@ -31,6 +32,7 @@ interface OptimizerState {
   setClientName: (name: string) => void;
   setGlobalSierra: (v: number) => void;
   setMinOffcut: (v: number) => void;
+  setBoardTrim: (v: number) => void;
   runOptimize: () => Promise<void>;
   exportPDF: () => void;
   saveProject: () => void;
@@ -53,6 +55,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
   remnants: [],
   globalSierra: 3.2,
   minOffcut: 200,
+  boardTrim: 5,
   projectName: '',
   clientName: '',
   unit: 'mm' as UnitSystem,
@@ -78,6 +81,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
   setClientName: (name) => set({ clientName: name }),
   setGlobalSierra: (v) => set({ globalSierra: v }),
   setMinOffcut: (v) => set({ minOffcut: v }),
+  setBoardTrim: (v) => set({ boardTrim: v }),
 
   runOptimize: async () => {
     const state = get();
@@ -85,8 +89,8 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
     set({ isOptimizing: true });
     await new Promise((r) => setTimeout(r, 100)); // allow spinner to render
     try {
-      const result = runOptimization(state.pieces, state.stocks, state.remnants, state.globalSierra, state.minOffcut);
-      set({ result, isOptimizing: false });
+      const result = runOptimization(state.pieces, state.stocks, state.remnants, state.globalSierra, state.minOffcut, state.boardTrim);
+      set({ result, isOptimizing: false, selectedBoardIndex: 0 });
     } catch (error) {
       console.error('Optimization error:', error);
       set({ isOptimizing: false });
@@ -102,7 +106,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
 
   saveProject: () => {
     const state = get();
-    const data = { version: '1.0', projectName: state.projectName, clientName: state.clientName, pieces: state.pieces, stocks: state.stocks, remnants: state.remnants, globalSierra: state.globalSierra, minOffcut: state.minOffcut };
+    const data = { version: '1.0', projectName: state.projectName, clientName: state.clientName, pieces: state.pieces, stocks: state.stocks, remnants: state.remnants, globalSierra: state.globalSierra, minOffcut: state.minOffcut, boardTrim: state.boardTrim };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -114,9 +118,9 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
   loadProject: (json) => {
     try {
       const data = JSON.parse(json);
-      set({ projectName: data.projectName || '', clientName: data.clientName || '', pieces: data.pieces || [], stocks: data.stocks || [DEFAULT_STOCK], remnants: data.remnants || [], globalSierra: data.globalSierra || 3.2, minOffcut: data.minOffcut || 200 });
+      set({ projectName: data.projectName || '', clientName: data.clientName || '', pieces: data.pieces || [], stocks: data.stocks || [DEFAULT_STOCK], remnants: data.remnants || [], globalSierra: data.globalSierra || 3.2, minOffcut: data.minOffcut || 200, boardTrim: data.boardTrim ?? 5 });
     } catch (error) { alert('Error cargando proyecto: ' + String(error)); }
   },
 
-  reset: () => set({ pieces: [], stocks: [DEFAULT_STOCK], remnants: [], globalSierra: 3.2, minOffcut: 200, projectName: '', clientName: '', result: null, isOptimizing: false, activeTab: 'boards', selectedBoardIndex: null }),
+  reset: () => set({ pieces: [], stocks: [DEFAULT_STOCK], remnants: [], globalSierra: 3.2, minOffcut: 200, boardTrim: 5, projectName: '', clientName: '', result: null, isOptimizing: false, activeTab: 'boards', selectedBoardIndex: null }),
 }));

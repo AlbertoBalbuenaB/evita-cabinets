@@ -36,7 +36,7 @@ class FreeRect {
 // ─────────────────────────────────────────────────────────────
 class Board {
   ancho: number; alto: number; sierra: number;
-  material: string; grosor: number;
+  material: string; grosor: number; trim: number;
   stockInfo: { nombre: string; costo: number; isRemnant: boolean };
   placed: PlacedPiece[];
   freeRects: FreeRect[];
@@ -45,16 +45,23 @@ class Board {
   constructor(
     ancho: number, alto: number, sierra: number,
     material: string, grosor: number,
-    stockInfo: { nombre: string; costo: number; isRemnant: boolean }
+    stockInfo: { nombre: string; costo: number; isRemnant: boolean },
+    trim = 0,
   ) {
     this.ancho = ancho; this.alto = alto; this.sierra = sierra;
     this.material = material; this.grosor = grosor; this.stockInfo = stockInfo;
+    this.trim = trim;
     this.placed = [];
-    this.freeRects = [new FreeRect(0, 0, ancho, alto)];
+    const t = trim;
+    this.freeRects = [new FreeRect(t, t, ancho - 2 * t, alto - 2 * t)];
     this.offcuts = [];
   }
 
-  get areaTotal(): number { return (this.ancho * this.alto) / 1e6; }
+  get areaTotal(): number {
+    const usableW = this.ancho - 2 * this.trim;
+    const usableH = this.alto - 2 * this.trim;
+    return (usableW * usableH) / 1e6;
+  }
   get areaUsed(): number  { return this.placed.reduce((s, p) => s + (p.w * p.h) / 1e6, 0); }
   get areaWaste(): number { return this.areaTotal - this.areaUsed; }
   get usage(): number     { return this.areaTotal ? (this.areaUsed / this.areaTotal) * 100 : 0; }
@@ -66,6 +73,7 @@ class Board {
       placed: this.placed, offcuts: this.offcuts,
       areaTotal: this.areaTotal, areaUsed: this.areaUsed,
       areaWaste: this.areaWaste, usage: this.usage,
+      trim: this.trim,
     };
   }
 
@@ -146,15 +154,17 @@ class Optimizer {
   private remnants: (Remnant & { _used?: boolean })[];
   private sierra: number;
   private minOff: number;
+  private trim: number;
   bestStrategy = '';
   iters = 0;
   time = 0;
 
-  constructor(stocks: StockSize[], remnants: Remnant[], sierra: number, minOff = MIN_OFFCUT_DEFAULT) {
+  constructor(stocks: StockSize[], remnants: Remnant[], sierra: number, minOff = MIN_OFFCUT_DEFAULT, trim = 0) {
     this.stocks = stocks;
     this.remnants = remnants.map(r => ({ ...r, _used: false }));
     this.sierra = sierra;
     this.minOff = minOff;
+    this.trim = trim;
   }
 
   run(pieces: Pieza[]): Board[] {
@@ -294,7 +304,7 @@ class Optimizer {
         const sierra = st.sierra || this.sierra;
         const nb = new Board(st.ancho, st.alto, sierra, mat, grs, {
           nombre: st.nombre, costo: st.costo, isRemnant: !!st.isRemnant,
-        });
+        }, this.trim);
         const fn = p.ancho <= st.ancho && p.alto <= st.alto;
         const fr = !p.vetaHorizontal && p.alto <= st.ancho && p.ancho <= st.alto;
         if (fn && nb.place(p, p.ancho, p.alto, false, p._idx, heuristic)) { boards.push(nb); if (st.isRemnant) st._used = true; placed = true; break; }
@@ -347,7 +357,7 @@ class Optimizer {
         const others = boards.filter((_, i) => i !== wi);
         for (const h of HEURISTICS) {
           const copies = others.map(ob => {
-            const nb = new Board(ob.ancho, ob.alto, ob.sierra, ob.material, ob.grosor, ob.stockInfo);
+            const nb = new Board(ob.ancho, ob.alto, ob.sierra, ob.material, ob.grosor, ob.stockInfo, this.trim);
             for (const p of ob.placed) nb.place(p.piece, p.w, p.h, p.rotated, p.idx, h);
             return nb;
           });
@@ -375,13 +385,13 @@ class Optimizer {
           for (const pp of [...src.placed]) {
             for (let ti = si + 1; ti < boards.length; ti++) {
               const tgt = boards[ti];
-              const nt = new Board(tgt.ancho, tgt.alto, tgt.sierra, tgt.material, tgt.grosor, tgt.stockInfo);
+              const nt = new Board(tgt.ancho, tgt.alto, tgt.sierra, tgt.material, tgt.grosor, tgt.stockInfo, this.trim);
               for (const p of tgt.placed) nt.place(p.piece, p.w, p.h, p.rotated, p.idx, 'baf');
               const fits =
                 nt.place(pp.piece, pp.w, pp.h, pp.rotated, pp.idx, 'baf') ||
                 (!pp.piece.vetaHorizontal && nt.place(pp.piece, pp.h, pp.w, !pp.rotated, pp.idx, 'baf'));
               if (fits) {
-                const ns = new Board(src.ancho, src.alto, src.sierra, src.material, src.grosor, src.stockInfo);
+                const ns = new Board(src.ancho, src.alto, src.sierra, src.material, src.grosor, src.stockInfo, this.trim);
                 let srcOk = true;
                 for (const p of src.placed) {
                   if (p === pp) continue;
@@ -411,8 +421,9 @@ export function runOptimization(
   remnants: Remnant[],
   globalSierra = 3.2,
   minOffcut = 200,
+  boardTrim = 0,
 ): OptimizationResult {
-  const opt = new Optimizer(stocks, remnants, globalSierra, minOffcut);
+  const opt = new Optimizer(stocks, remnants, globalSierra, minOffcut, boardTrim);
   const boards = opt.run(pieces);
   const boardResults = boards.map(b => b.toResult());
 
@@ -437,16 +448,27 @@ export function runOptimization(
 // GUILLOTINE CUT SEQUENCE
 // ─────────────────────────────────────────────────────────────
 export function generateCutSequence(board: BoardResult, unit: UnitSystem = 'mm'): CutStep[] {
+  const cuts: CutStep[] = [];
+  let cutN = 1;
+
+  // ── Trim cuts (edge trimming) ──
+  if (board.trim > 0) {
+    const t = board.trim;
+    cuts.push({ n: cutN++, type: 'H', pos: t,              desc: `y=${_fmtU(t, unit)} — orillado superior`,            isTrim: true });
+    cuts.push({ n: cutN++, type: 'H', pos: board.alto - t, desc: `y=${_fmtU(board.alto - t, unit)} — orillado inferior`, isTrim: true });
+    cuts.push({ n: cutN++, type: 'V', pos: t,              desc: `x=${_fmtU(t, unit)} — orillado izquierdo`,            isTrim: true });
+    cuts.push({ n: cutN++, type: 'V', pos: board.ancho - t, desc: `x=${_fmtU(board.ancho - t, unit)} — orillado derecho`, isTrim: true });
+  }
+
+  // ── Piece cuts ──
   const pcs = [...board.placed].sort((a, b) => a.y - b.y || a.x - b.x);
-  if (!pcs.length) return [];
+  if (!pcs.length) return cuts;
 
   const ySet = new Set([0, board.alto]);
   pcs.forEach(p => { ySet.add(p.y); ySet.add(p.y + p.h); });
   const ys = [...ySet].sort((a, b) => a - b);
   const validH = ys.filter(y => y > 0 && y < board.alto && !pcs.some(p => p.y < y && p.y + p.h > y));
 
-  const cuts: CutStep[] = [];
-  let cutN = 1;
   const boundaries = [0, ...validH, board.alto];
 
   for (let i = 0; i < boundaries.length - 1; i++) {
@@ -492,6 +514,21 @@ export function renderBoardThumbnail(
   const gs = 100 * scale;
   for (let gx = gs; gx < bw; gx += gs) { ctx.beginPath(); ctx.moveTo(ox + gx, oy); ctx.lineTo(ox + gx, oy + bh); ctx.stroke(); }
   for (let gy = gs; gy < bh; gy += gs) { ctx.beginPath(); ctx.moveTo(ox, oy + gy); ctx.lineTo(ox + bw, oy + gy); ctx.stroke(); }
+
+  // Trim margin visualization
+  if (board.trim > 0) {
+    const t = board.trim;
+    ctx.fillStyle = 'rgba(100,116,139,0.10)';
+    ctx.fillRect(ox, oy, bw, t * scale);
+    ctx.fillRect(ox, oy + (board.alto - t) * scale, bw, t * scale);
+    ctx.fillRect(ox, oy + t * scale, t * scale, (board.alto - 2 * t) * scale);
+    ctx.fillRect(ox + (board.ancho - t) * scale, oy + t * scale, t * scale, (board.alto - 2 * t) * scale);
+    ctx.strokeStyle = 'rgba(100,116,139,0.35)';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([3, 2]);
+    ctx.strokeRect(ox + t * scale, oy + t * scale, (board.ancho - 2*t) * scale, (board.alto - 2*t) * scale);
+    ctx.setLineDash([]);
+  }
 
   board.placed.forEach((p) => {
     const x = ox + p.x * scale, y = oy + p.y * scale, w = p.w * scale, h = p.h * scale;
@@ -547,4 +584,261 @@ function _roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numb
   ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
   ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
   ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r); ctx.closePath();
+}
+
+// ─────────────────────────────────────────────────────────────
+// CAD VIEWER RENDER — full interactive board renderer
+// ─────────────────────────────────────────────────────────────
+
+export interface CADRenderOptions {
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
+  showLabels: boolean;
+  showRulers: boolean;
+  showKerf: boolean;
+  showOffcuts: boolean;
+  unit: UnitSystem;
+}
+
+/** Ruler thickness in CSS px (both horizontal and vertical) */
+export const RULER_SIZE = 24;
+
+export function renderBoardCAD(
+  canvas: HTMLCanvasElement,
+  board: BoardResult,
+  opts: CADRenderOptions,
+): void {
+  const { zoom, offsetX, offsetY, showLabels, showRulers, showKerf, showOffcuts, unit } = opts;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || canvas.offsetWidth || 800;
+  const cssH = canvas.clientHeight || canvas.offsetHeight || 600;
+
+  // Resize backing store only when necessary (avoid flicker)
+  const targetW = Math.round(cssW * dpr);
+  const targetH = Math.round(cssH * dpr);
+  if (canvas.width !== targetW || canvas.height !== targetH) {
+    canvas.width = targetW;
+    canvas.height = targetH;
+  }
+  ctx.resetTransform();
+  ctx.scale(dpr, dpr);
+
+  const rS = showRulers ? RULER_SIZE : 0;
+  const bw = board.ancho;
+  const bh = board.alto;
+
+  // ── Background ────────────────────────────────────────────
+  ctx.fillStyle = '#f1f5f9';
+  ctx.fillRect(0, 0, cssW, cssH);
+
+  // ── Clip to board viewport (exclude ruler strips) ─────────
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(rS, rS, Math.max(0, cssW - rS), Math.max(0, cssH - rS));
+  ctx.clip();
+
+  const ox = rS + offsetX;
+  const oy = rS + offsetY;
+  const scaledW = bw * zoom;
+  const scaledH = bh * zoom;
+
+  // Board shadow
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.18)';
+  ctx.shadowBlur = 14;
+  ctx.shadowOffsetY = 4;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(ox, oy, scaledW, scaledH);
+  ctx.restore();
+
+  // Board fill
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(ox, oy, scaledW, scaledH);
+
+  // Board border
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(ox, oy, scaledW, scaledH);
+
+  // ── Trim margin visualization ─────────────────────────────
+  if (board.trim > 0) {
+    const t = board.trim;
+    ctx.fillStyle = 'rgba(100,116,139,0.09)';
+    ctx.fillRect(ox,                         oy,                          scaledW,        t * zoom);
+    ctx.fillRect(ox,                         oy + (bh - t) * zoom,        scaledW,        t * zoom);
+    ctx.fillRect(ox,                         oy + t * zoom,               t * zoom,       (bh - 2*t) * zoom);
+    ctx.fillRect(ox + (bw - t) * zoom,       oy + t * zoom,               t * zoom,       (bh - 2*t) * zoom);
+    ctx.strokeStyle = 'rgba(100,116,139,0.40)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 4]);
+    ctx.strokeRect(
+      ox + t * zoom,
+      oy + t * zoom,
+      (bw - 2 * t) * zoom,
+      (bh - 2 * t) * zoom,
+    );
+    ctx.setLineDash([]);
+  }
+
+  // ── Pieces ────────────────────────────────────────────────
+  board.placed.forEach((p) => {
+    const color = PIECE_COLORS[p.idx % PIECE_COLORS.length];
+    const px = ox + p.x * zoom;
+    const py = oy + p.y * zoom;
+    const pw = p.w * zoom;
+    const ph = p.h * zoom;
+
+    // Light fill
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = color;
+    ctx.fillRect(px, py, pw, ph);
+    ctx.globalAlpha = 1;
+
+    // Border
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(px + 0.75, py + 0.75, pw - 1.5, ph - 1.5);
+
+    // Labels (only if piece is large enough on screen)
+    if (showLabels && pw > 28 && ph > 16) {
+      const fontSize = Math.min(13, Math.max(8, Math.min(pw / 5.5, ph / 3)));
+      ctx.fillStyle = '#1e293b';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const cx = px + pw / 2;
+      const cy = py + ph / 2;
+
+      const dimLabel = `${_fmtU(p.piece.ancho, unit)}×${_fmtU(p.piece.alto, unit)}`;
+      ctx.font = `${fontSize}px system-ui, sans-serif`;
+      const hasName = p.piece.nombre && ph > 30;
+      ctx.fillText(dimLabel, cx, cy - (hasName ? fontSize * 0.65 : 0));
+
+      if (hasName) {
+        ctx.fillStyle = '#64748b';
+        ctx.font = `${fontSize * 0.85}px system-ui, sans-serif`;
+        ctx.fillText(p.piece.nombre, cx, cy + fontSize * 0.65);
+      }
+    }
+  });
+
+  // ── Offcuts ───────────────────────────────────────────────
+  if (showOffcuts) {
+    ctx.strokeStyle = 'rgba(34,197,94,0.65)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 4]);
+    board.offcuts.forEach((r) => {
+      const margin = 1;
+      ctx.strokeRect(
+        ox + r.x * zoom + margin,
+        oy + r.y * zoom + margin,
+        r.w * zoom - margin * 2,
+        r.h * zoom - margin * 2,
+      );
+    });
+    ctx.setLineDash([]);
+  }
+
+  // ── Kerf lines ────────────────────────────────────────────
+  if (showKerf) {
+    const cuts = generateCutSequence(board, unit);
+    ctx.strokeStyle = 'rgba(239,68,68,0.65)';
+    ctx.lineWidth = Math.max(1, board.sierra * zoom);
+    ctx.setLineDash([]);
+    cuts.forEach((cut) => {
+      if (cut.isTrim) return;
+      ctx.beginPath();
+      if (cut.type === 'H') {
+        ctx.moveTo(ox, oy + cut.pos * zoom);
+        ctx.lineTo(ox + scaledW, oy + cut.pos * zoom);
+      } else {
+        ctx.moveTo(ox + cut.pos * zoom, oy);
+        ctx.lineTo(ox + cut.pos * zoom, oy + scaledH);
+      }
+      ctx.stroke();
+    });
+  }
+
+  ctx.restore(); // end clip
+
+  // ── Rulers ────────────────────────────────────────────────
+  if (showRulers) {
+    // Pick a grid step such that step * zoom >= 25px
+    const stepsTable = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
+    let gridStep = 100;
+    for (const s of stepsTable) {
+      if (s * zoom >= 25) { gridStep = s; break; }
+    }
+    const majorEvery = 5;
+
+    // Ruler backgrounds
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(0, 0, cssW, rS);
+    ctx.fillRect(0, 0, rS, cssH);
+
+    ctx.strokeStyle = '#94a3b8';
+    ctx.fillStyle = '#64748b';
+    ctx.font = '9px system-ui, sans-serif';
+
+    // Horizontal ruler (top)
+    const xStart = Math.floor(-offsetX / zoom / gridStep) * gridStep;
+    const xEnd = xStart + Math.ceil((cssW - rS) / zoom / gridStep + 2) * gridStep;
+    for (let x = xStart; x <= xEnd; x += gridStep) {
+      const px = rS + x * zoom + offsetX;
+      if (px < rS - 1 || px > cssW + 1) continue;
+      const isMajor = (Math.round(x / gridStep) % majorEvery) === 0;
+      const tickH = isMajor ? 10 : 5;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(px, rS - tickH);
+      ctx.lineTo(px, rS);
+      ctx.stroke();
+      if (isMajor && px > rS + 8) {
+        const lbl = unit === 'in' ? (x / 25.4).toFixed(x >= 254 ? 1 : 2) : String(x);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(lbl, px, 2);
+      }
+    }
+
+    // Vertical ruler (left)
+    const yStart = Math.floor(-offsetY / zoom / gridStep) * gridStep;
+    const yEnd = yStart + Math.ceil((cssH - rS) / zoom / gridStep + 2) * gridStep;
+    for (let y = yStart; y <= yEnd; y += gridStep) {
+      const py = rS + y * zoom + offsetY;
+      if (py < rS - 1 || py > cssH + 1) continue;
+      const isMajor = (Math.round(y / gridStep) % majorEvery) === 0;
+      const tickW = isMajor ? 10 : 5;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(rS - tickW, py);
+      ctx.lineTo(rS, py);
+      ctx.stroke();
+      if (isMajor && py > rS + 8) {
+        const lbl = unit === 'in' ? (y / 25.4).toFixed(y >= 254 ? 1 : 2) : String(y);
+        ctx.save();
+        ctx.translate(rS - 2, py);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(lbl, 0, 0);
+        ctx.restore();
+      }
+    }
+
+    // Corner box
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(0, 0, rS, rS);
+
+    // Ruler border lines
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(rS, 0); ctx.lineTo(rS, cssH);
+    ctx.moveTo(0, rS); ctx.lineTo(cssW, rS);
+    ctx.stroke();
+  }
 }
