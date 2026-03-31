@@ -118,7 +118,7 @@ export function CADViewer({ board, unit }: Props) {
       <div className="flex-1 flex items-center justify-center bg-slate-100">
         <div className="text-center select-none">
           <div className="text-5xl mb-3">⬜</div>
-          <p className="text-slate-400 text-sm">Ejecuta la optimización y selecciona un tablero</p>
+          <p className="text-slate-400 text-sm">Run optimization and select a sheet</p>
         </div>
       </div>
     );

@@ -25,7 +25,7 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
     return (
       <div className="flex-1 flex items-center justify-center bg-white">
         <p className="text-xs text-slate-400 text-center px-4 leading-relaxed">
-          Ejecuta la optimización<br />para ver estadísticas
+          Run optimization<br />to view statistics
         </p>
       </div>
     );
@@ -203,7 +203,7 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
               {cuts.length === 0 && (
                 <tr>
                   <td colSpan={4} className="py-4 text-center text-slate-400 px-4">
-                    Sin cortes registrados
+                    No cuts recorded
                   </td>
                 </tr>
               )}

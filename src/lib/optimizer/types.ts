@@ -21,6 +21,8 @@ export interface Pieza {
     izq: number;
     der: number;
   };
+  /** Project area grouping (e.g. "Kitchen", "Closet") */
+  area?: string;
   // internal index assigned before optimization
   _idx?: number;
 }
@@ -32,6 +34,10 @@ export interface StockSize {
   alto: number;     // mm
   costo: number;
   sierra: number;   // kerf mm
+  /** Price list item ID for material tracking */
+  materialId?: string;
+  /** Max available sheets (0 or undefined = unlimited) */
+  qty?: number;
 }
 
 export interface Remnant {
