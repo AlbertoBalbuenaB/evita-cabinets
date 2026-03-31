@@ -14,7 +14,7 @@ import { groupProjectsByGroupId } from '../lib/projectGrouping';
 import { ProjectGroupCard } from '../components/ProjectGroupCard';
 import { useSettingsStore } from '../lib/settingsStore';
 
-type SortBy = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc' | 'amount_desc' | 'amount_asc';
+type SortBy = 'modified_desc' | 'modified_asc' | 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc' | 'amount_desc' | 'amount_asc';
 
 export function Projects() {
   const { id: routeProjectId } = useParams<{ id: string }>();
@@ -35,7 +35,7 @@ export function Projects() {
   const [customerFilter, setCustomerFilter] = useState<string>('all');
   const [monthFilter, setMonthFilter] = useState<string>('all');
   const [yearFilter, setYearFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<SortBy>('date_desc');
+  const [sortBy, setSortBy] = useState<SortBy>('modified_desc');
   const [showFilters, setShowFilters] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
@@ -140,8 +140,31 @@ export function Projects() {
   }, [projects, searchQuery, statusFilter, typeFilter, customerFilter, monthFilter, yearFilter, sortBy]);
 
   const projectGroups = useMemo(() => {
-    return groupProjectsByGroupId(filteredAndSortedProjects);
-  }, [filteredAndSortedProjects]);
+    const groups = groupProjectsByGroupId(filteredAndSortedProjects);
+    groups.sort((a, b) => {
+      switch (sortBy) {
+        case 'modified_desc':
+          return new Date(b.latestUpdatedAt).getTime() - new Date(a.latestUpdatedAt).getTime();
+        case 'modified_asc':
+          return new Date(a.latestUpdatedAt).getTime() - new Date(b.latestUpdatedAt).getTime();
+        case 'date_desc':
+          return new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime();
+        case 'date_asc':
+          return new Date(a.latestDate).getTime() - new Date(b.latestDate).getTime();
+        case 'name_asc':
+          return a.primaryProject.name.localeCompare(b.primaryProject.name);
+        case 'name_desc':
+          return b.primaryProject.name.localeCompare(a.primaryProject.name);
+        case 'amount_desc':
+          return b.primaryProject.total_amount - a.primaryProject.total_amount;
+        case 'amount_asc':
+          return a.primaryProject.total_amount - b.primaryProject.total_amount;
+        default:
+          return 0;
+      }
+    });
+    return groups;
+  }, [filteredAndSortedProjects, sortBy]);
 
   const stats = useMemo(() => {
     const total = projects.length;
@@ -297,7 +320,7 @@ export function Projects() {
     setCustomerFilter('all');
     setMonthFilter('all');
     setYearFilter('all');
-    setSortBy('date_desc');
+    setSortBy('modified_desc');
   }
 
   function toggleSelectionMode() {
@@ -612,6 +635,8 @@ export function Projects() {
                   onChange={(e) => setSortBy(e.target.value as SortBy)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 >
+                  <option value="modified_desc">Recent Activity (Newest)</option>
+                  <option value="modified_asc">Recent Activity (Oldest)</option>
                   <option value="date_desc">Date (Newest)</option>
                   <option value="date_asc">Date (Oldest)</option>
                   <option value="name_asc">Name (A-Z)</option>
