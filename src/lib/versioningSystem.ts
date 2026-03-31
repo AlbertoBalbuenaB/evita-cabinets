@@ -120,33 +120,38 @@ export async function recalculateAllCabinetPrices(
 
   const { data: areas } = await areasQuery;
 
+  // Single pass: fetch all cabinets per area and count total
   let processedCount = 0;
   let totalCabinets = 0;
-
-  for (const area of areas || []) {
-    const { data: cabinets } = await supabase
-      .from('area_cabinets')
-      .select('id')
-      .eq('area_id', area.id);
-    totalCabinets += (cabinets || []).length;
-  }
+  const areaCabinetsMap = new Map<string, any[]>();
 
   for (const area of areas || []) {
     const { data: cabinets } = await supabase
       .from('area_cabinets')
       .select('*')
       .eq('area_id', area.id);
+    const cabinetList = cabinets || [];
+    areaCabinetsMap.set(area.id, cabinetList);
+    totalCabinets += cabinetList.length;
+  }
 
+  // Build products map for O(1) lookups instead of .find() per cabinet
+  const productsMap = new Map(products.map(p => [p.sku, p]));
+  const priceListMap = new Map(priceList.map(p => [p.id, p]));
+
+  for (const area of areas || []) {
+    const cabinets = areaCabinetsMap.get(area.id) || [];
     const previousAreaTotal = area.subtotal || 0;
     let newAreaTotal = 0;
+    const updateBatch: Promise<any>[] = [];
 
-    for (const cabinet of cabinets || []) {
+    for (const cabinet of cabinets) {
       processedCount++;
       if (onProgress) {
         onProgress(`Recalculating cabinet ${processedCount} of ${totalCabinets}`, processedCount, totalCabinets);
       }
 
-      const product = products.find(p => p.sku === cabinet.product_sku);
+      const product = productsMap.get(cabinet.product_sku);
       if (!product) {
         errors.push(`Product ${cabinet.product_sku} not found for cabinet ${cabinet.id}`);
         continue;
@@ -155,12 +160,12 @@ export async function recalculateAllCabinetPrices(
       try {
         const costs = await recalculateCabinetCosts(cabinet, product, priceList, settingsData);
 
-        const boxMaterial = cabinet.box_material_id ? priceList.find(p => p.id === cabinet.box_material_id) : null;
-        const boxEdgeband = cabinet.box_edgeband_id ? priceList.find(p => p.id === cabinet.box_edgeband_id) : null;
-        const boxInteriorFinish = cabinet.box_interior_finish_id ? priceList.find(p => p.id === cabinet.box_interior_finish_id) : null;
-        const doorsMaterial = cabinet.doors_material_id ? priceList.find(p => p.id === cabinet.doors_material_id) : null;
-        const doorsEdgeband = cabinet.doors_edgeband_id ? priceList.find(p => p.id === cabinet.doors_edgeband_id) : null;
-        const doorsInteriorFinish = cabinet.doors_interior_finish_id ? priceList.find(p => p.id === cabinet.doors_interior_finish_id) : null;
+        const boxMaterial = cabinet.box_material_id ? priceListMap.get(cabinet.box_material_id) : null;
+        const boxEdgeband = cabinet.box_edgeband_id ? priceListMap.get(cabinet.box_edgeband_id) : null;
+        const boxInteriorFinish = cabinet.box_interior_finish_id ? priceListMap.get(cabinet.box_interior_finish_id) : null;
+        const doorsMaterial = cabinet.doors_material_id ? priceListMap.get(cabinet.doors_material_id) : null;
+        const doorsEdgeband = cabinet.doors_edgeband_id ? priceListMap.get(cabinet.doors_edgeband_id) : null;
+        const doorsInteriorFinish = cabinet.doors_interior_finish_id ? priceListMap.get(cabinet.doors_interior_finish_id) : null;
 
         const updateData: any = {
           box_material_cost: costs.boxMaterialCost,
@@ -183,20 +188,34 @@ export async function recalculateAllCabinetPrices(
           original_doors_interior_finish_price: doorsInteriorFinish?.price || null,
         };
 
-        const { error } = await supabase
-          .from('area_cabinets')
-          .update(updateData)
-          .eq('id', cabinet.id);
+        updateBatch.push(
+          supabase
+            .from('area_cabinets')
+            .update(updateData)
+            .eq('id', cabinet.id)
+            .then(({ error }) => {
+              if (error) {
+                errors.push(`Failed to update cabinet ${cabinet.id}: ${error.message}`);
+              } else {
+                updated++;
+                newAreaTotal += costs.subtotal;
+              }
+            })
+        );
 
-        if (error) {
-          errors.push(`Failed to update cabinet ${cabinet.id}: ${error.message}`);
-        } else {
-          updated++;
-          newAreaTotal += costs.subtotal;
+        // Flush batch every 10 updates
+        if (updateBatch.length >= 10) {
+          await Promise.all(updateBatch);
+          updateBatch.length = 0;
         }
       } catch (error: any) {
         errors.push(`Error processing cabinet ${cabinet.id}: ${error.message}`);
       }
+    }
+
+    // Flush remaining updates
+    if (updateBatch.length > 0) {
+      await Promise.all(updateBatch);
     }
 
     const { data: areaClosetItems } = await supabase
