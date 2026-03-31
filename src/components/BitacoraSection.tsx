@@ -70,13 +70,17 @@ const MENTION_TYPE_CONFIG = {
   price_item: { groupLabel: 'Price List',  Icon: DollarSign,iconColor: 'text-green-600',  iconBg: 'bg-green-100'  },
 } as const;
 
+function isUuid(s: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+}
+
 function mentionToUrl(id: string): string {
   const parts = id.split(':');
   const type = parts[0];
   if (type === 'project')     return `/projects/${parts[1]}`;
-  if (type === 'quotation')   return `/projects/${parts[1]}`;   // parts[1]=projectId
-  if (type === 'cabinet')     return `/price-list`;
-  if (type === 'price_item')  return `/price-list`;
+  if (type === 'quotation')   return `/projects/${parts[1]}/quotations/${parts[2]}`;
+  if (type === 'cabinet')     return isUuid(parts[1]) ? `/products/${parts[1]}` : '/products';
+  if (type === 'price_item')  return `/prices/${parts[1]}`;
   return '#';
 }
 
@@ -790,7 +794,7 @@ export function BitacoraSection({ projectId }: Props) {
       const [{ data: projects }, { data: quotations }, { data: cabinets }, { data: priceItems }, { data: members }] = await Promise.all([
         supabase.from('projects').select('id, name, customer').order('name'),
         supabase.from('quotations').select('id, name, project_id, version_number, version_label').order('name'),
-        supabase.from('products_catalog').select('sku, description').order('description'),
+        supabase.from('products_catalog').select('id, sku, description').order('description'),
         supabase.from('price_list').select('id, concept_description').eq('is_active', true).order('concept_description'),
         supabase.from('team_members').select('*').eq('is_active', true).order('display_order'),
       ]);
@@ -811,7 +815,7 @@ export function BitacoraSection({ projectId }: Props) {
           subtitle: q.version_label || (q.version_number ? `v${q.version_number}` : undefined),
         })),
         ...(cabinets || []).map((c) => ({
-          id: `cabinet:${c.sku}`,
+          id: `cabinet:${c.id}`,
           label: c.description,
           type: 'cabinet' as const,
           subtitle: c.sku,
