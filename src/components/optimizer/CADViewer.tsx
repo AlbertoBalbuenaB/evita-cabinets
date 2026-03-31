@@ -1,7 +1,7 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { BoardResult, UnitSystem } from '../../lib/optimizer/types';
 import { renderBoardCAD, hitTestPiece } from '../../lib/optimizer/engine';
-import { ZoomIn, ZoomOut, Maximize2, Ruler, Tag, Layers, Scissors, Wheat } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, Ruler, Tag, Layers, Scissors, Wheat, PanelTop } from 'lucide-react';
 
 const MIN_ZOOM = 0.015;
 const MAX_ZOOM = 30;
@@ -24,6 +24,7 @@ export function CADViewer({ board, unit }: Props) {
   const [showKerf, setShowKerf]       = useState(false);
   const [showOffcuts, setShowOffcuts] = useState(true);
   const [showGrain, setShowGrain]     = useState(true);
+  const [showEdgeBand, setShowEdgeBand] = useState(true);
   const [hoverIdx, setHoverIdx]       = useState<number | null>(null);
 
   const fitToView = useCallback(() => {
@@ -48,10 +49,10 @@ export function CADViewer({ board, unit }: Props) {
     if (!canvas || !board) return;
     renderBoardCAD(canvas, board, {
       zoom, offsetX: offset.x, offsetY: offset.y,
-      showLabels, showDimensions, showKerf, showOffcuts, showGrain,
+      showLabels, showDimensions, showKerf, showOffcuts, showGrain, showEdgeBand,
       hoverPieceIdx: hoverIdx, unit,
     });
-  }, [board, zoom, offset, showLabels, showDimensions, showKerf, showOffcuts, showGrain, hoverIdx, unit]);
+  }, [board, zoom, offset, showLabels, showDimensions, showKerf, showOffcuts, showGrain, showEdgeBand, hoverIdx, unit]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -137,6 +138,8 @@ export function CADViewer({ board, unit }: Props) {
         <ToolBtn icon={Tag}      active={showLabels}     onClick={() => setShowLabels(v => !v)}     title="Mostrar etiquetas" />
         <ToolBtn icon={Wheat}    active={showGrain}      onClick={() => setShowGrain(v => !v)}      title="Mostrar veta"
           activeColor="text-amber-600 bg-amber-50" />
+        <ToolBtn icon={PanelTop} active={showEdgeBand}  onClick={() => setShowEdgeBand(v => !v)}  title="Mostrar cubrecanto"
+          activeColor="text-slate-800 bg-slate-100" />
         <ToolBtn icon={Layers}   active={showOffcuts}    onClick={() => setShowOffcuts(v => !v)}    title="Mostrar retazos"
           activeColor="text-green-600 bg-green-50" />
         <ToolBtn icon={Scissors} active={showKerf}       onClick={() => setShowKerf(v => !v)}       title="Mostrar sierra"

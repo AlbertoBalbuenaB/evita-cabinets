@@ -104,7 +104,7 @@ export function exportOptimizerPDF(
     board.placed.forEach((piece) => {
       if (cutListY > pageH - 10) { doc.addPage(); cutListY = 20; }
       doc.setTextColor(30, 41, 59); doc.setFont('Helvetica', 'normal');
-      const edgeBands = [piece.piece.cubrecanto.sup?'S':'', piece.piece.cubrecanto.inf?'I':'', piece.piece.cubrecanto.izq?'L':'', piece.piece.cubrecanto.der?'R':''].filter(Boolean).join('/');
+      const edgeBands = [piece.piece.cubrecanto.sup?'S':'', piece.piece.cubrecanto.inf?'I':'', piece.piece.cubrecanto.izq?'L':'', piece.piece.cubrecanto.der?'R':''].filter(v => v).join('/');
       [
         [`${board.placed.indexOf(piece) + 1}`, 'center'],
         [piece.piece.nombre || 'Pieza', 'left'],

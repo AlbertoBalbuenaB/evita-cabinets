@@ -14,11 +14,12 @@ export interface Pieza {
   alto: number;     // mm
   cantidad: number;
   vetaHorizontal: boolean;
+  /** Edge banding per side: 0=none, 1=type A, 2=type B, 3=type C */
   cubrecanto: {
-    sup: boolean;
-    inf: boolean;
-    izq: boolean;
-    der: boolean;
+    sup: number;
+    inf: number;
+    izq: number;
+    der: number;
   };
   // internal index assigned before optimization
   _idx?: number;

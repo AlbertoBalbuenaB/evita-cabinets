@@ -599,6 +599,7 @@ export interface CADRenderOptions {
   showKerf: boolean;
   showOffcuts: boolean;
   showGrain: boolean;
+  showEdgeBand: boolean;
   hoverPieceIdx: number | null;
   unit: UnitSystem;
 }
@@ -608,7 +609,7 @@ export function renderBoardCAD(
   board: BoardResult,
   opts: CADRenderOptions,
 ): void {
-  const { zoom, offsetX, offsetY, showLabels, showDimensions, showKerf, showOffcuts, showGrain, hoverPieceIdx, unit } = opts;
+  const { zoom, offsetX, offsetY, showLabels, showDimensions, showKerf, showOffcuts, showGrain, showEdgeBand, hoverPieceIdx, unit } = opts;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
@@ -725,21 +726,29 @@ export function renderBoardCAD(
       ctx.restore();
     }
 
-    // ── Edge banding indicators ─────────────────────────────
-    const cb = p.piece.cubrecanto;
-    if (cb.sup || cb.inf || cb.izq || cb.der) {
-      ctx.save();
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 2.5;
-      ctx.setLineDash([]);
+    // ── Edge banding indicators (3 types, drawn inside piece) ─
+    if (showEdgeBand) {
+      const cb = p.piece.cubrecanto;
       const edges = p.rotated
         ? { top: cb.izq, bottom: cb.der, left: cb.sup, right: cb.inf }
         : { top: cb.sup, bottom: cb.inf, left: cb.izq, right: cb.der };
-      if (edges.top)    { ctx.beginPath(); ctx.moveTo(px, py + 1);      ctx.lineTo(px + pw, py + 1);      ctx.stroke(); }
-      if (edges.bottom) { ctx.beginPath(); ctx.moveTo(px, py + ph - 1); ctx.lineTo(px + pw, py + ph - 1); ctx.stroke(); }
-      if (edges.left)   { ctx.beginPath(); ctx.moveTo(px + 1, py);      ctx.lineTo(px + 1, py + ph);      ctx.stroke(); }
-      if (edges.right)  { ctx.beginPath(); ctx.moveTo(px + pw - 1, py); ctx.lineTo(px + pw - 1, py + ph); ctx.stroke(); }
-      ctx.restore();
+      const inset = 4; // px inset from piece edge
+      const drawEB = (type: number, x1: number, y1: number, x2: number, y2: number) => {
+        if (!type) return;
+        ctx.save();
+        ctx.lineWidth = 2.5;
+        // Type 1 = solid black, Type 2 = dashed, Type 3 = dotted
+        if (type === 1)      { ctx.strokeStyle = '#1e293b'; ctx.setLineDash([]); }
+        else if (type === 2) { ctx.strokeStyle = '#1e293b'; ctx.setLineDash([6, 3]); }
+        else                 { ctx.strokeStyle = '#1e293b'; ctx.setLineDash([2, 2]); }
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      };
+      drawEB(edges.top,    px + inset, py + inset,      px + pw - inset, py + inset);
+      drawEB(edges.bottom, px + inset, py + ph - inset,  px + pw - inset, py + ph - inset);
+      drawEB(edges.left,   px + inset, py + inset,      px + inset,      py + ph - inset);
+      drawEB(edges.right,  px + pw - inset, py + inset, px + pw - inset, py + ph - inset);
     }
 
     // Labels

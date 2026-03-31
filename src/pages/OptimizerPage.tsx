@@ -42,7 +42,7 @@ export function OptimizerPage() {
         alto:      toMM(altoRaw,   unit),
         cantidad:  parseInt(cols[headers.indexOf('cantidad')] || '1') || 1,
         vetaHorizontal: /^(si|sí|yes|true|1)$/i.test(cols[headers.indexOf('veta')] || ''),
-        cubrecanto: { sup: false, inf: false, izq: false, der: false },
+        cubrecanto: { sup: 0, inf: 0, izq: 0, der: 0 },
       });
       count++;
     }

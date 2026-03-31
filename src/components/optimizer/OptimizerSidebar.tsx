@@ -20,12 +20,19 @@ function SectionHeader({ icon: Icon, title, open, onToggle }: {
   );
 }
 
-// ── Edge banding popover ────────────────────────────────────
+// ── Edge banding type labels & styles ────────────────────────
+const EB_TYPES = [
+  { value: 0, label: '—', cls: 'bg-slate-100 text-slate-400' },
+  { value: 1, label: 'A', cls: 'bg-slate-800 text-white' },       // solid
+  { value: 2, label: 'B', cls: 'bg-slate-600 text-white' },       // dashed
+  { value: 3, label: 'C', cls: 'bg-slate-400 text-white' },       // dotted
+];
+
 function EdgeBandPopover({ piece, onUpdate }: { piece: Pieza; onUpdate: (cb: Pieza['cubrecanto']) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const cb = piece.cubrecanto;
-  const count = [cb.sup, cb.inf, cb.izq, cb.der].filter(Boolean).length;
+  const count = [cb.sup, cb.inf, cb.izq, cb.der].filter(v => v > 0).length;
 
   useEffect(() => {
     if (!open) return;
@@ -34,26 +41,44 @@ function EdgeBandPopover({ piece, onUpdate }: { piece: Pieza; onUpdate: (cb: Pie
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  const toggle = (side: keyof Pieza['cubrecanto']) => {
-    onUpdate({ ...cb, [side]: !cb[side] });
+  const cycle = (side: keyof Pieza['cubrecanto']) => {
+    onUpdate({ ...cb, [side]: (cb[side] + 1) % 4 });
   };
+
+  const sides: [keyof Pieza['cubrecanto'], string][] = [
+    ['sup', 'Sup'], ['inf', 'Inf'], ['izq', 'Izq'], ['der', 'Der'],
+  ];
 
   return (
     <div ref={ref} className="relative">
       <button onClick={() => setOpen(v => !v)} title="Cubrecanto"
-        className={`text-xs px-1 py-0.5 rounded ${count > 0 ? 'bg-amber-100 text-amber-700 font-semibold' : 'text-slate-400 hover:bg-slate-100'}`}>
+        className={`text-xs px-1 py-0.5 rounded ${count > 0 ? 'bg-slate-700 text-white font-semibold' : 'text-slate-400 hover:bg-slate-100'}`}>
         {count > 0 ? count : '—'}
       </button>
       {open && (
-        <div className="absolute z-50 top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-2 w-28">
-          <div className="text-xs font-semibold text-slate-600 mb-1.5">Cubrecanto</div>
-          {([['sup', 'Superior'], ['inf', 'Inferior'], ['izq', 'Izquierdo'], ['der', 'Derecho']] as const).map(([k, label]) => (
-            <label key={k} className="flex items-center gap-2 py-0.5 cursor-pointer">
-              <input type="checkbox" checked={cb[k]} onChange={() => toggle(k)}
-                className="w-3 h-3 rounded border-slate-300 text-amber-600" />
-              <span className="text-xs text-slate-600">{label}</span>
-            </label>
-          ))}
+        <div className="absolute z-50 top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-2.5 w-40">
+          <div className="text-xs font-semibold text-slate-600 mb-2">Cubrecanto</div>
+          <div className="text-[10px] text-slate-400 mb-2 flex gap-2">
+            <span>A=━━</span><span>B=╌╌</span><span>C=····</span>
+          </div>
+          {sides.map(([k, label]) => {
+            const val = cb[k];
+            const t = EB_TYPES[val] || EB_TYPES[0];
+            return (
+              <div key={k} className="flex items-center justify-between py-1">
+                <span className="text-xs text-slate-600 w-8">{label}</span>
+                <div className="flex gap-1">
+                  {EB_TYPES.map(et => (
+                    <button key={et.value} onClick={() => onUpdate({ ...cb, [k]: et.value })}
+                      className={`w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center transition-all
+                        ${val === et.value ? et.cls + ' ring-1 ring-blue-400' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
+                      {et.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -115,7 +140,7 @@ export function OptimizerSidebar() {
       grosor: toMM(parseFloat(pGrosor) || 18, unit),
       ancho, alto, cantidad: parseInt(pCant) || 1,
       vetaHorizontal: pVeta,
-      cubrecanto: { sup: false, inf: false, izq: false, der: false },
+      cubrecanto: { sup: 0, inf: 0, izq: 0, der: 0 },
     });
     setPAncho(''); setPAlto(''); setPCant('1'); setPNombre('');
   };
@@ -253,10 +278,10 @@ export function OptimizerSidebar() {
             store.pieces.forEach(p => {
               const cb = p.cubrecanto;
               const addCm = 30; // +3cm = 30mm per side
-              if (cb.sup) totalEB += (p.ancho + addCm) * p.cantidad;
-              if (cb.inf) totalEB += (p.ancho + addCm) * p.cantidad;
-              if (cb.izq) totalEB += (p.alto + addCm) * p.cantidad;
-              if (cb.der) totalEB += (p.alto + addCm) * p.cantidad;
+              if (cb.sup > 0) totalEB += (p.ancho + addCm) * p.cantidad;
+              if (cb.inf > 0) totalEB += (p.ancho + addCm) * p.cantidad;
+              if (cb.izq > 0) totalEB += (p.alto + addCm) * p.cantidad;
+              if (cb.der > 0) totalEB += (p.alto + addCm) * p.cantidad;
             });
             const ebMeters = totalEB / 1000;
             return (

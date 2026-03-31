@@ -111,10 +111,10 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
           let total = 0;
           result.boards.forEach(b => b.placed.forEach(p => {
             const cb = p.piece.cubrecanto;
-            if (cb.sup) total += (p.piece.ancho + 30) * 1;
-            if (cb.inf) total += (p.piece.ancho + 30) * 1;
-            if (cb.izq) total += (p.piece.alto + 30) * 1;
-            if (cb.der) total += (p.piece.alto + 30) * 1;
+            if (cb.sup > 0) total += (p.piece.ancho + 30);
+            if (cb.inf > 0) total += (p.piece.ancho + 30);
+            if (cb.izq > 0) total += (p.piece.alto + 30);
+            if (cb.der > 0) total += (p.piece.alto + 30);
           }));
           return `${(total / 1000).toFixed(2)} m`;
         })()} />
