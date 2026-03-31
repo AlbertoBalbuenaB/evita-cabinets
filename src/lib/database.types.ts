@@ -985,19 +985,25 @@ export type Database = {
           comment: string
           created_at: string | null
           id: string
+          log_type: string
           project_id: string | null
+          updated_at: string | null
         }
         Insert: {
           comment: string
           created_at?: string | null
           id?: string
+          log_type?: string
           project_id?: string | null
+          updated_at?: string | null
         }
         Update: {
           comment?: string
           created_at?: string | null
           id?: string
+          log_type?: string
           project_id?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
