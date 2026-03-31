@@ -3,12 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import {
   ScrollText, Trash2, Pencil, X, Check, Bold, Italic, Underline as UnderlineIcon,
   List, ListOrdered, CheckCircle2, AlertTriangle, Star, Lightbulb,
-  ArrowRightCircle, Filter, Clock, Folder, FileText, Package, DollarSign
+  ArrowRightCircle, Filter, Clock, Folder, FileText, Package, DollarSign,
+  Heading1, Heading2, Heading3, Type, Link2, Link2Off
 } from 'lucide-react';
 import { useEditor, EditorContent, ReactRenderer } from '@tiptap/react';
 import { generateHTML } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import UnderlineExt from '@tiptap/extension-underline';
+import { Color } from '@tiptap/extension-color';
+import { TextStyle } from '@tiptap/extension-text-style';
+import LinkExt from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import Mention from '@tiptap/extension-mention';
 import type { SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
@@ -295,7 +299,14 @@ function renderContent(comment: string): string {
       .replace(/\n/g, '<br>');
   }
   try {
-    return generateHTML(JSON.parse(comment), [StarterKit, UnderlineExt, MENTION_VIEW_EXTENSION]);
+    return generateHTML(JSON.parse(comment), [
+      StarterKit,
+      UnderlineExt,
+      TextStyle,
+      Color,
+      LinkExt.configure({ openOnClick: false }),
+      MENTION_VIEW_EXTENSION,
+    ]);
   } catch {
     return `<p>${comment}</p>`;
   }
@@ -305,42 +316,180 @@ function renderContent(comment: string): string {
 // Toolbar
 // ---------------------------------------------------------------------------
 
+const TEXT_COLORS = [
+  { label: 'Predeterminado', value: null,      display: '#64748b' },
+  { label: 'Rojo',           value: '#ef4444', display: '#ef4444' },
+  { label: 'Naranja',        value: '#f97316', display: '#f97316' },
+  { label: 'Ámbar',          value: '#f59e0b', display: '#f59e0b' },
+  { label: 'Verde',          value: '#22c55e', display: '#22c55e' },
+  { label: 'Azul',           value: '#3b82f6', display: '#3b82f6' },
+  { label: 'Índigo',         value: '#6366f1', display: '#6366f1' },
+  { label: 'Violeta',        value: '#8b5cf6', display: '#8b5cf6' },
+  { label: 'Rosa',           value: '#ec4899', display: '#ec4899' },
+  { label: 'Gris',           value: '#475569', display: '#475569' },
+];
+
 interface ToolbarProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   editor: any;
 }
 
 function Toolbar({ editor }: ToolbarProps) {
+  const [colorOpen, setColorOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+
   if (!editor) return null;
 
-  const btn = (
-    active: boolean,
-    onClick: () => void,
-    Icon: React.ElementType,
-    title: string
-  ) => (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className={`p-1.5 rounded transition-colors ${
-        active
-          ? 'bg-slate-200 text-slate-900'
-          : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-      }`}
-    >
-      <Icon className="h-3.5 w-3.5" />
-    </button>
-  );
+  const currentColor: string | undefined = editor.getAttributes('textStyle').color;
+
+  // Use onMouseDown + preventDefault on all toolbar buttons so the editor never loses focus
+  function tbBtn(active: boolean, onMouseDown: () => void, Icon: React.ElementType, title: string) {
+    return (
+      <button
+        type="button"
+        title={title}
+        onMouseDown={(e) => { e.preventDefault(); onMouseDown(); }}
+        className={`p-1.5 rounded transition-colors ${
+          active ? 'bg-slate-200 text-slate-900' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+        }`}
+      >
+        <Icon className="h-3.5 w-3.5" />
+      </button>
+    );
+  }
+
+  function applyColor(value: string | null) {
+    if (value === null) editor.chain().focus().unsetColor().run();
+    else editor.chain().focus().setColor(value).run();
+    setColorOpen(false);
+  }
+
+  function openLink() {
+    const existing = editor.getAttributes('link').href as string | undefined;
+    setLinkUrl(existing ?? '');
+    setLinkOpen(true);
+    setColorOpen(false);
+  }
+
+  function applyLink() {
+    const url = linkUrl.trim();
+    if (!url) {
+      editor.chain().focus().unsetLink().run();
+    } else {
+      const href = url.startsWith('http') ? url : `https://${url}`;
+      editor.chain().focus().setLink({ href, target: '_blank', rel: 'noopener noreferrer' }).run();
+    }
+    setLinkOpen(false);
+    setLinkUrl('');
+  }
+
+  const sep = <div className="w-px h-4 bg-slate-200 mx-0.5 flex-shrink-0" />;
 
   return (
-    <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-slate-200 bg-slate-50 rounded-t-lg">
-      {btn(editor.isActive('bold'),      () => editor.chain().focus().toggleBold().run(),          Bold,         'Negrita (Ctrl+B)')}
-      {btn(editor.isActive('italic'),    () => editor.chain().focus().toggleItalic().run(),        Italic,       'Cursiva (Ctrl+I)')}
-      {btn(editor.isActive('underline'), () => editor.chain().focus().toggleUnderline().run(),     UnderlineIcon,'Subrayado (Ctrl+U)')}
-      <div className="w-px h-4 bg-slate-300 mx-1" />
-      {btn(editor.isActive('bulletList'),  () => editor.chain().focus().toggleBulletList().run(),  List,         'Lista con viñetas')}
-      {btn(editor.isActive('orderedList'), () => editor.chain().focus().toggleOrderedList().run(), ListOrdered,  'Lista numerada')}
+    <div className="flex items-center flex-wrap gap-0.5 px-2 py-1.5 border-b border-slate-200 bg-slate-50 rounded-t-lg relative">
+
+      {/* Headings */}
+      {tbBtn(editor.isActive('heading', { level: 1 }), () => editor.chain().focus().toggleHeading({ level: 1 }).run(), Heading1, 'Título 1')}
+      {tbBtn(editor.isActive('heading', { level: 2 }), () => editor.chain().focus().toggleHeading({ level: 2 }).run(), Heading2, 'Título 2')}
+      {tbBtn(editor.isActive('heading', { level: 3 }), () => editor.chain().focus().toggleHeading({ level: 3 }).run(), Heading3, 'Título 3')}
+      {sep}
+
+      {/* Inline styles */}
+      {tbBtn(editor.isActive('bold'),      () => editor.chain().focus().toggleBold().run(),      Bold,          'Negrita (Ctrl+B)')}
+      {tbBtn(editor.isActive('italic'),    () => editor.chain().focus().toggleItalic().run(),    Italic,        'Cursiva (Ctrl+I)')}
+      {tbBtn(editor.isActive('underline'), () => editor.chain().focus().toggleUnderline().run(), UnderlineIcon, 'Subrayado (Ctrl+U)')}
+      {sep}
+
+      {/* Lists */}
+      {tbBtn(editor.isActive('bulletList'),  () => editor.chain().focus().toggleBulletList().run(),  List,        'Lista con viñetas')}
+      {tbBtn(editor.isActive('orderedList'), () => editor.chain().focus().toggleOrderedList().run(), ListOrdered, 'Lista numerada')}
+      {sep}
+
+      {/* Color picker */}
+      <div className="relative">
+        <button
+          type="button"
+          title="Color de texto"
+          onMouseDown={(e) => { e.preventDefault(); setColorOpen((o) => !o); setLinkOpen(false); }}
+          className={`p-1.5 rounded transition-colors flex flex-col items-center gap-0 ${
+            currentColor ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+          }`}
+        >
+          <Type className="h-3 w-3" />
+          <div
+            className="w-3 h-0.5 rounded-sm"
+            style={{ backgroundColor: currentColor ?? '#64748b' }}
+          />
+        </button>
+        {colorOpen && (
+          <>
+            {/* Click-away backdrop */}
+            <div className="fixed inset-0 z-40" onMouseDown={() => setColorOpen(false)} />
+            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-3 min-w-[140px]">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Color de texto</p>
+              <div className="grid grid-cols-5 gap-1.5">
+                {TEXT_COLORS.map((c) => (
+                  <button
+                    key={c.label}
+                    type="button"
+                    title={c.label}
+                    onMouseDown={(e) => { e.preventDefault(); applyColor(c.value); }}
+                    className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${
+                      (c.value === null && !currentColor) || currentColor === c.value
+                        ? 'border-slate-500 scale-110'
+                        : 'border-transparent hover:border-slate-300'
+                    }`}
+                    style={{ backgroundColor: c.display }}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Link */}
+      <div className="relative">
+        {tbBtn(editor.isActive('link'), openLink, Link2, 'Insertar enlace')}
+        {linkOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onMouseDown={() => setLinkOpen(false)} />
+            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-72">
+              <p className="text-xs font-semibold text-slate-700 mb-2">Insertar enlace</p>
+              <input
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); applyLink(); }
+                  if (e.key === 'Escape') setLinkOpen(false);
+                }}
+                placeholder="https://..."
+                autoFocus
+                className="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+              />
+              <div className="flex gap-1.5">
+                <Button size="sm" onClick={applyLink}>Aplicar</Button>
+                {editor.isActive('link') && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => { editor.chain().focus().unsetLink().run(); setLinkOpen(false); }}
+                  >
+                    <Link2Off className="h-3.5 w-3.5 mr-1" />
+                    Quitar
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" onClick={() => setLinkOpen(false)}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
     </div>
   );
 }
@@ -457,6 +606,12 @@ function EntryForm({ getMentionItems, initialContent, initialType = 'note', savi
     extensions: [
       StarterKit,
       UnderlineExt,
+      TextStyle,
+      Color,
+      LinkExt.configure({
+        openOnClick: false,
+        HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer', class: 'bitacora-link' },
+      }),
       Placeholder.configure({ placeholder: 'Agrega una observación, cambio, decisión… Usa @ para referenciar proyectos, cotizaciones o productos.' }),
       buildMentionExtension(getMentionItems),
     ],

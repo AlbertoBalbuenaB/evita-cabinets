@@ -91,6 +91,52 @@ a.mention-link:hover {
   text-decoration: underline;
 }
 
+/* Headings */
+.ProseMirror h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0.75rem 0 0.25rem;
+  line-height: 1.3;
+}
+
+.ProseMirror h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0.65rem 0 0.2rem;
+  line-height: 1.35;
+}
+
+.ProseMirror h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0.5rem 0 0.15rem;
+  line-height: 1.4;
+}
+
+.ProseMirror h1:first-child,
+.ProseMirror h2:first-child,
+.ProseMirror h3:first-child {
+  margin-top: 0;
+}
+
+/* Links in editor and view mode */
+.ProseMirror a,
+a.bitacora-link {
+  color: #3b82f6;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.ProseMirror a:hover,
+a.bitacora-link:hover {
+  color: #1d4ed8;
+}
+
 /* Read-only bitacora content */
 .bitacora-content .ProseMirror {
   min-height: unset;
