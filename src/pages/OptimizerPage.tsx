@@ -150,9 +150,9 @@ export function OptimizerPage() {
         <span className="text-xs text-slate-400">v1.3</span>
         <div className="w-px h-4 bg-slate-200 mx-0.5" />
         <input value={store.projectName} onChange={(e) => store.setProjectName(e.target.value)}
-          placeholder="Proyecto" className="px-2 py-1 text-sm border border-slate-200 rounded focus:ring-2 focus:ring-blue-500 w-28" />
+          placeholder="Project" className="px-2 py-1 text-sm border border-slate-200 rounded focus:ring-2 focus:ring-blue-500 w-28" />
         <input value={store.clientName} onChange={(e) => store.setClientName(e.target.value)}
-          placeholder="Cliente" className="px-2 py-1 text-sm border border-slate-200 rounded focus:ring-2 focus:ring-blue-500 w-28" />
+          placeholder="Client" className="px-2 py-1 text-sm border border-slate-200 rounded focus:ring-2 focus:ring-blue-500 w-28" />
         <div className="flex-1" />
 
         <input ref={csvRef}  type="file" accept=".csv"       onChange={handleCSV}  className="hidden" />
@@ -199,8 +199,8 @@ export function OptimizerPage() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
           <div className="bg-white rounded-xl p-6 flex flex-col items-center gap-3 shadow-xl">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <p className="font-semibold text-slate-900">Optimizando...</p>
-            <p className="text-xs text-slate-400">GRASP Multi-Estrategia en progreso</p>
+            <p className="font-semibold text-slate-900">Optimizing...</p>
+            <p className="text-xs text-slate-400">GRASP Multi-Strategy in progress</p>
           </div>
         </div>
       )}

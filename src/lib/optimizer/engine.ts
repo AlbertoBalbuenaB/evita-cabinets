@@ -251,15 +251,16 @@ class Optimizer {
   private _getStocksFor(mat: string, grs: number): {
     nombre: string; ancho: number; alto: number; costo: number; sierra: number;
     isRemnant: boolean; remnantId?: string; _used?: boolean;
+    stockId?: string; qty?: number;
   }[] {
     const rems = this.remnants
       .filter(r => r.material === mat && r.grosor === grs && !r._used)
       .map(r => ({
-        nombre: `Retazo ${r.ancho}×${r.alto}`,
+        nombre: `Remnant ${r.ancho}×${r.alto}`,
         ancho: r.ancho, alto: r.alto, costo: 0, sierra: this.sierra,
         isRemnant: true, remnantId: r.id, _used: r._used,
       }));
-    const stk = this.stocks.map(s => ({ ...s, isRemnant: false }));
+    const stk = this.stocks.map(s => ({ ...s, isRemnant: false, stockId: s.id }));
     return [...rems, ...stk.sort((a, b) => a.costo - b.costo)];
   }
 
@@ -267,6 +268,9 @@ class Optimizer {
     const boards: Board[] = [];
     const availStocks = this._getStocksFor(mat, grs);
     if (!availStocks.length) return [];
+
+    // Track usage count per stockId for qty limits
+    const usageCount: Record<string, number> = {};
 
     for (const p of pcs) {
       const fitsN = (s: { ancho: number; alto: number }) => p.ancho <= s.ancho && p.alto <= s.alto;
@@ -301,14 +305,26 @@ class Optimizer {
       let placed = false;
       for (const st of availStocks) {
         if (st.isRemnant && st._used) continue;
+        // Check qty limit (0 = unlimited)
+        if (st.stockId && st.qty && st.qty > 0) {
+          if ((usageCount[st.stockId] || 0) >= st.qty) continue;
+        }
         const sierra = st.sierra || this.sierra;
         const nb = new Board(st.ancho, st.alto, sierra, mat, grs, {
           nombre: st.nombre, costo: st.costo, isRemnant: !!st.isRemnant,
         }, this.trim);
         const fn = p.ancho <= st.ancho && p.alto <= st.alto;
         const fr = !p.vetaHorizontal && p.alto <= st.ancho && p.ancho <= st.alto;
-        if (fn && nb.place(p, p.ancho, p.alto, false, p._idx, heuristic)) { boards.push(nb); if (st.isRemnant) st._used = true; placed = true; break; }
-        if (fr && nb.place(p, p.alto, p.ancho, true,  p._idx, heuristic)) { boards.push(nb); if (st.isRemnant) st._used = true; placed = true; break; }
+        if (fn && nb.place(p, p.ancho, p.alto, false, p._idx, heuristic)) {
+          boards.push(nb); if (st.isRemnant) st._used = true;
+          if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
+          placed = true; break;
+        }
+        if (fr && nb.place(p, p.alto, p.ancho, true,  p._idx, heuristic)) {
+          boards.push(nb); if (st.isRemnant) st._used = true;
+          if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
+          placed = true; break;
+        }
       }
       if (!placed) {
         console.warn(`Piece ${p.nombre || p.ancho + 'x' + p.alto} does not fit any stock size`);
