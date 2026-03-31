@@ -8,7 +8,6 @@ import {
   calculateInteriorFinishCost,
   calculateDoorProfileCost,
 } from './calculations';
-import { recalculateAreaSheetMaterialCosts } from './sheetMaterials';
 import type { AreaCabinet, PriceListItem, Product } from '../types';
 
 export type MaterialChangeType =
@@ -304,7 +303,8 @@ export async function previewBulkMaterialChange(
 }
 
 export async function executeBulkMaterialChange(
-  params: BulkMaterialChangeParams
+  params: BulkMaterialChangeParams,
+  previewData?: BulkChangePreview
 ): Promise<{ success: boolean; updatedCount: number; error?: string }> {
   const {
     projectId,
@@ -317,7 +317,7 @@ export async function executeBulkMaterialChange(
   } = params;
 
   try {
-    const preview = await previewBulkMaterialChange(params);
+    const preview = previewData || await previewBulkMaterialChange(params);
 
     if (preview.totalCabinets === 0) {
       return {
@@ -328,29 +328,29 @@ export async function executeBulkMaterialChange(
     }
 
     const tableName = versionId ? 'version_area_cabinets' : 'area_cabinets';
-    const [{ data: oldMaterial }, { data: newMaterial }] = await Promise.all([
+
+    // Batch fetch: get all affected cabinets and material info in parallel
+    const cabinetIds = preview.affectedCabinets.map(c => c.id);
+    const [{ data: oldMaterial }, { data: newMaterial }, { data: fullCabinets }] = await Promise.all([
       supabase.from('price_list').select('concept_description').eq('id', oldMaterialId).single(),
       supabase.from('price_list').select('concept_description, price').eq('id', newMaterialId).single(),
+      supabase.from(tableName).select('*').in('id', cabinetIds),
     ]);
 
+    const cabinetMap = new Map((fullCabinets || []).map((c: any) => [c.id, c]));
     let updatePromises: Promise<any>[] = [];
 
     for (const cabinet of preview.affectedCabinets) {
       const updates: any = {};
+      const currentCabinet = cabinetMap.get(cabinet.id);
 
       switch (changeType) {
         case 'box_material':
           updates.box_material_id = newMaterialId;
           updates.box_material_cost = cabinet.newCost;
           updates.original_box_material_price = newMaterial?.price || null;
-          if (updateMatchingInteriorFinish) {
-            const { data: currentCabinet } = await supabase
-              .from(tableName)
-              .select('box_interior_finish_id')
-              .eq('id', cabinet.id)
-              .single();
-
-            if (currentCabinet?.box_interior_finish_id === oldMaterialId) {
+          if (updateMatchingInteriorFinish && currentCabinet) {
+            if (currentCabinet.box_interior_finish_id === oldMaterialId) {
               updates.box_interior_finish_id = newMaterialId;
               updates.original_box_interior_finish_price = newMaterial?.price || null;
             }
@@ -365,14 +365,8 @@ export async function executeBulkMaterialChange(
           updates.doors_material_id = newMaterialId;
           updates.doors_material_cost = cabinet.newCost;
           updates.original_doors_material_price = newMaterial?.price || null;
-          if (updateMatchingInteriorFinish) {
-            const { data: currentCabinet } = await supabase
-              .from(tableName)
-              .select('doors_interior_finish_id')
-              .eq('id', cabinet.id)
-              .single();
-
-            if (currentCabinet?.doors_interior_finish_id === oldMaterialId) {
+          if (updateMatchingInteriorFinish && currentCabinet) {
+            if (currentCabinet.doors_interior_finish_id === oldMaterialId) {
               updates.doors_interior_finish_id = newMaterialId;
               updates.original_doors_interior_finish_price = newMaterial?.price || null;
             }
@@ -399,12 +393,6 @@ export async function executeBulkMaterialChange(
           break;
       }
 
-      const { data: currentCabinet } = await supabase
-        .from(tableName)
-        .select('*')
-        .eq('id', cabinet.id)
-        .single();
-
       if (currentCabinet) {
         const newSubtotal =
           (changeType === 'box_material' ? updates.box_material_cost : currentCabinet.box_material_cost || 0) +
@@ -428,13 +416,6 @@ export async function executeBulkMaterialChange(
     }
 
     await Promise.all(updatePromises);
-
-    if (!versionId && (changeType === 'box_material' || changeType === 'doors_material' || changeType === 'box_interior_finish' || changeType === 'doors_interior_finish')) {
-      const affectedAreaIds = Array.from(new Set(preview.affectedCabinets.map(c => c.areaId)));
-      for (const areaId of affectedAreaIds) {
-        await recalculateAreaSheetMaterialCosts(areaId);
-      }
-    }
 
     await supabase.from('material_change_log').insert({
       project_id: projectId,

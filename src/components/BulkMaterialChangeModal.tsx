@@ -274,6 +274,7 @@ export function BulkMaterialChangeModal({
   }
 
   async function handleExecute() {
+    if (executing) return;
     const activePreview = isHardwareMode ? hardwarePreview : preview;
     if (!activePreview) return;
 
@@ -349,7 +350,7 @@ export function BulkMaterialChangeModal({
 
         setTimeout(() => {
           onSuccess();
-          handleClose();
+          resetAndClose();
         }, 4000);
         return;
       }
@@ -362,7 +363,7 @@ export function BulkMaterialChangeModal({
         oldMaterialId,
         newMaterialId,
         updateMatchingInteriorFinish,
-      });
+      }, preview || undefined);
 
       if (!result.success) {
         setValidationError(result.error || 'Failed to update cabinets');
@@ -456,7 +457,7 @@ export function BulkMaterialChangeModal({
 
       setTimeout(() => {
         onSuccess();
-        handleClose();
+        resetAndClose();
       }, 4000);
     } catch (error: any) {
       console.error('Error executing change:', error);
@@ -465,8 +466,8 @@ export function BulkMaterialChangeModal({
     }
   }
 
-  function handleClose() {
-    if (executing) return;
+  function resetAllState() {
+    setExecuting(false);
     setStep('setup');
     setScope(preselectedAreaId ? 'area' : 'project');
     setSelectedAreaIds(preselectedAreaId ? [preselectedAreaId] : []);
@@ -484,6 +485,17 @@ export function BulkMaterialChangeModal({
     setHardwareInUse([]);
     setHardwareOperationType('replace');
     setHardwarePreview(null);
+    setRecalculateProgress({ current: 0, total: 0, message: '' });
+  }
+
+  function handleClose() {
+    if (executing) return;
+    resetAllState();
+    onClose();
+  }
+
+  function resetAndClose() {
+    resetAllState();
     onClose();
   }
 
@@ -923,7 +935,7 @@ export function BulkMaterialChangeModal({
                 <Button variant="secondary" onClick={handleClose}>
                   Cancel
                 </Button>
-                <Button onClick={handleExecute}>
+                <Button onClick={handleExecute} disabled={executing}>
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Apply Changes
                 </Button>
