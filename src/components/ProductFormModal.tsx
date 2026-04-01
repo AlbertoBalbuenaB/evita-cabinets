@@ -555,7 +555,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                   onClick={handleGenerateDespiece}
                   className="py-2 px-4 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg transition-colors"
                 >
-                  🪚 Generate Despiece
+                  🪚 Generate Cut List
                 </button>
               </div>
             </div>
@@ -666,17 +666,17 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
           </p>
         </div>
 
-        {/* ── Despiece / Cut List ─────────────────────────────────────── */}
+        {/* ── Cut List ────────────────────────────────────────────────── */}
         <div className="border-t border-slate-200 pt-4">
           <button
             type="button"
             onClick={() => setDespieceOpen((o) => !o)}
             className="flex items-center gap-2 w-full text-left text-sm font-semibold text-amber-700 hover:text-amber-800 transition-colors"
           >
-            <span>🪚 Despiece / Cut List</span>
+            <span>🪚 Cut List</span>
             {cutPieces.length > 0 && (
               <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                {cutPieces.length} piezas
+                {cutPieces.length} {cutPieces.length === 1 ? 'piece' : 'pieces'}
               </span>
             )}
             <svg
@@ -691,17 +691,17 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
             <div className="mt-3 space-y-2">
               {cutPieces.length === 0 ? (
                 <p className="text-xs text-slate-500 text-center py-4 bg-slate-50 rounded-lg border border-slate-200">
-                  No hay piezas. Usa "🪚 Generate Despiece" en el calculador de dimensiones o agrega piezas manualmente.
+                  No pieces yet. Use "🪚 Generate Cut List" in the dimensions calculator above, or add pieces manually.
                 </p>
               ) : (
                 <div className="overflow-x-auto rounded-lg border border-slate-200">
                   <table className="w-full text-xs">
                     <thead className="bg-slate-100 text-slate-600">
                       <tr>
-                        <th className="text-left px-2 py-1.5 font-medium">Pieza</th>
-                        <th className="text-center px-2 py-1.5 font-medium">Ancho (mm)</th>
-                        <th className="text-center px-2 py-1.5 font-medium">Alto (mm)</th>
-                        <th className="text-center px-2 py-1.5 font-medium">Cant</th>
+                        <th className="text-left px-2 py-1.5 font-medium">Part</th>
+                        <th className="text-center px-2 py-1.5 font-medium">Width (mm)</th>
+                        <th className="text-center px-2 py-1.5 font-medium">Height (mm)</th>
+                        <th className="text-center px-2 py-1.5 font-medium">Qty</th>
                         <th className="text-center px-2 py-1.5 font-medium">Material</th>
                         <th className="px-1 py-1.5"></th>
                       </tr>
@@ -761,8 +761,8 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                                                                'bg-slate-100 text-slate-700'
                               }`}
                             >
-                              <option value="cuerpo">Cuerpo</option>
-                              <option value="frente">Frente</option>
+                              <option value="cuerpo">Box Construction</option>
+                              <option value="frente">Doors &amp; Fronts</option>
                               <option value="custom">Custom</option>
                             </select>
                           </td>
@@ -771,7 +771,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                               type="button"
                               onClick={() => setCutPieces((prev) => prev.filter((p) => p.id !== piece.id))}
                               className="text-red-400 hover:text-red-600 transition-colors"
-                              title="Eliminar pieza"
+                              title="Remove piece"
                             >
                               ✕
                             </button>
@@ -792,7 +792,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 }
                 className="w-full py-1.5 px-3 border border-dashed border-slate-300 hover:border-slate-400 text-slate-500 hover:text-slate-700 text-xs rounded-lg transition-colors"
               >
-                + Agregar Pieza
+                + Add Piece
               </button>
             </div>
           )}
