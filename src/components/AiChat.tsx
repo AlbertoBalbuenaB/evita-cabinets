@@ -3,6 +3,7 @@ import { X, Send, Sparkles, ChevronRight, RotateCcw, Loader2, History, ArrowLeft
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAiChatContext } from '../stores/aiChatContext';
+import { useAuth } from '../lib/auth';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -17,16 +18,6 @@ interface ChatSession {
 }
 
 type PanelView = 'chat' | 'history';
-
-function getOrCreateSessionKey(): string {
-  const key = 'evita_ia_session_key';
-  let val = localStorage.getItem(key);
-  if (!val) {
-    val = crypto.randomUUID();
-    localStorage.setItem(key, val);
-  }
-  return val;
-}
 
 function resolvePageKey(
   currentPage: string,
@@ -298,6 +289,7 @@ function derivePageContext(pathname: string): { currentPage: string; projectId: 
 }
 
 export function AiChat() {
+  const { user } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { currentPage, projectId } = derivePageContext(pathname);
@@ -373,16 +365,15 @@ export function AiChat() {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!unlocked) return;
+    if (!unlocked || !user) return;
     const saved = sessionStorage.getItem('evita-ia-messages');
     if (saved) return;
 
     (async () => {
-      const sessionKey = getOrCreateSessionKey();
       const { data } = await supabase
         .from('ai_chat_sessions')
         .select('id, created_at, messages')
-        .eq('session_key', sessionKey)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -397,11 +388,10 @@ export function AiChat() {
         }
       }
     })();
-  }, [unlocked]);
+  }, [unlocked, user]);
 
   async function saveSession(msgs: Message[]) {
-    if (msgs.length === 0) return;
-    const sessionKey = getOrCreateSessionKey();
+    if (msgs.length === 0 || !user) return;
     const firstUser = msgs.find(m => m.role === 'user');
     const title = firstUser
       ? firstUser.content.slice(0, 60) + (firstUser.content.length > 60 ? '...' : '')
@@ -413,7 +403,7 @@ export function AiChat() {
         .eq('id', currentSessionIdRef.current);
     } else {
       const { data } = await supabase.from('ai_chat_sessions').insert({
-        session_key: sessionKey,
+        user_id: user.id,
         title,
         messages: msgs,
       }).select('id').single();
@@ -425,12 +415,12 @@ export function AiChat() {
   }
 
   async function loadHistory() {
+    if (!user) return;
     setHistoryLoading(true);
-    const sessionKey = getOrCreateSessionKey();
     const { data } = await supabase
       .from('ai_chat_sessions')
       .select('id, created_at, title, messages')
-      .eq('session_key', sessionKey)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50);
     setHistory((data as ChatSession[]) ?? []);
@@ -534,18 +524,17 @@ export function AiChat() {
 
   async function handleRenameSession(id: string, newTitle: string) {
     const trimmed = newTitle.trim();
-    if (!trimmed) { setEditingId(null); return; }
-    const sessionKey = getOrCreateSessionKey();
+    if (!trimmed || !user) { setEditingId(null); return; }
     setHistory(prev => prev.map(s => s.id === id ? { ...s, title: trimmed } : s));
     setEditingId(null);
     await supabase.from('ai_chat_sessions')
       .update({ title: trimmed })
       .eq('id', id)
-      .eq('session_key', sessionKey);
+      .eq('user_id', user.id);
   }
 
   async function handleDeleteSession(id: string) {
-    const sessionKey = getOrCreateSessionKey();
+    if (!user) return;
     setHistory(prev => prev.filter(s => s.id !== id));
     setDeletingId(null);
     if (currentSessionId === id) {
@@ -557,7 +546,7 @@ export function AiChat() {
     await supabase.from('ai_chat_sessions')
       .delete()
       .eq('id', id)
-      .eq('session_key', sessionKey);
+      .eq('user_id', user.id);
   }
 
   function handleNewConversation() {

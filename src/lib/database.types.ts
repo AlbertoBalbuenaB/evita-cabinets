@@ -21,6 +21,7 @@ export type Database = {
           messages: Json
           session_key: string
           title: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -28,6 +29,7 @@ export type Database = {
           messages?: Json
           session_key?: string
           title?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -35,6 +37,7 @@ export type Database = {
           messages?: Json
           session_key?: string
           title?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1271,8 +1274,11 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string | null
+          created_by_member_id: string | null
           customer: string | null
           id: string
+          last_modified_at: string | null
+          last_modified_by_member_id: string | null
           name: string
           project_brief: string | null
           project_details: string | null
@@ -1283,8 +1289,11 @@ export type Database = {
         Insert: {
           address?: string | null
           created_at?: string | null
+          created_by_member_id?: string | null
           customer?: string | null
           id?: string
+          last_modified_at?: string | null
+          last_modified_by_member_id?: string | null
           name: string
           project_brief?: string | null
           project_details?: string | null
@@ -1295,8 +1304,11 @@ export type Database = {
         Update: {
           address?: string | null
           created_at?: string | null
+          created_by_member_id?: string | null
           customer?: string | null
           id?: string
+          last_modified_at?: string | null
+          last_modified_by_member_id?: string | null
           name?: string
           project_brief?: string | null
           project_details?: string | null
@@ -1481,6 +1493,7 @@ export type Database = {
       }
       team_members: {
         Row: {
+          auth_user_id: string | null
           created_at: string | null
           display_order: number
           email: string | null
@@ -1490,6 +1503,7 @@ export type Database = {
           role: string | null
         }
         Insert: {
+          auth_user_id?: string | null
           created_at?: string | null
           display_order?: number
           email?: string | null
@@ -1499,6 +1513,7 @@ export type Database = {
           role?: string | null
         }
         Update: {
+          auth_user_id?: string | null
           created_at?: string | null
           display_order?: number
           email?: string | null
