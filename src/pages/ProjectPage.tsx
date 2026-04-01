@@ -226,10 +226,24 @@ export function ProjectPage() {
     Cancelled: 'bg-slate-100 text-slate-500 border-slate-200/50',
   };
 
+  const latestQuotation = quotations.length > 0
+    ? quotations.reduce((latest, q) => {
+        const qDate = new Date(q.quote_date).getTime();
+        const latestDate = new Date(latest.quote_date).getTime();
+        if (qDate !== latestDate) return qDate > latestDate ? q : latest;
+        const qUpd = new Date(q.updated_at ?? q.created_at ?? 0).getTime();
+        const latestUpd = new Date(latest.updated_at ?? latest.created_at ?? 0).getTime();
+        return qUpd > latestUpd ? q : latest;
+      })
+    : null;
+
   const sortedQuotations = [...quotations].sort((a, b) => {
     const dateA = new Date(a.quote_date).getTime();
     const dateB = new Date(b.quote_date).getTime();
-    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    if (dateA !== dateB) return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    const updA = new Date(a.updated_at ?? a.created_at ?? 0).getTime();
+    const updB = new Date(b.updated_at ?? b.created_at ?? 0).getTime();
+    return sortOrder === 'desc' ? updB - updA : updA - updB;
   });
 
   const statusCounts: Record<string, number> = {};
@@ -408,8 +422,8 @@ export function ProjectPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {sortedQuotations.map((q, index) => {
-                const isLatest = index === 0;
+              {sortedQuotations.map((q) => {
+                const isLatest = q.id === latestQuotation?.id;
                 const marginPct = q.profit_multiplier != null && q.profit_multiplier > 0
                   ? Math.round(q.profit_multiplier * 100)
                   : null;
