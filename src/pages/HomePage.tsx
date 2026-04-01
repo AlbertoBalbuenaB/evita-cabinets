@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   CheckSquare, Clock, ChevronDown, ChevronRight, CheckCircle2,
   ScrollText, ArrowRightCircle, Lightbulb, AlertTriangle, Star,
   Activity, ExternalLink, Filter, X, TrendingUp, FolderOpen, ArrowRight,
-  Users, Calendar, Ban, GitMerge,
+  Users, Calendar, Ban, GitMerge, Search,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
@@ -238,6 +238,9 @@ export function HomePage() {
   const [taskFilters, setTaskFilters] = useState<TaskFilterState>({ priority: '', assigneeId: '', projectId: '' });
   const [doneExpanded, setDoneExpanded] = useState(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+  const [feedSearch, setFeedSearch] = useState('');
+  const [feedDropdownOpen, setFeedDropdownOpen] = useState(false);
+  const feedSearchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -359,6 +362,7 @@ export function HomePage() {
   const sevenDaysOut = new Date(today); sevenDaysOut.setDate(sevenDaysOut.getDate() + 7);
 
   const inProgressAll = tasks.filter(t => t.status === 'in_progress').length;
+  const inReviewAll   = tasks.filter(t => t.status === 'in_review').length;
   const pendingAll    = tasks.filter(t => t.status === 'pending').length;
   const doneAll       = tasks.filter(t => t.status === 'done' || t.status === 'cancelled').length;
   const overdueAll    = tasks.filter(t => t.due_date && new Date(t.due_date) < today && t.status !== 'done' && t.status !== 'cancelled').length;
@@ -370,6 +374,7 @@ export function HomePage() {
   const overdueTasks  = applyFilters(tasks.filter(t => t.due_date && new Date(t.due_date) < today && isActive(t)));
   const blockedTasks  = applyFilters(tasks.filter(t => t.status === 'blocked'));
   const workingOnIt   = applyFilters(tasks.filter(t => t.status === 'in_progress'));
+  const inReviewTasks = applyFilters(tasks.filter(t => t.status === 'in_review'));
   const upcomingTasks = applyFilters(
     tasks.filter(t => t.due_date && new Date(t.due_date) >= today && new Date(t.due_date) <= sevenDaysOut && isActive(t))
   ).sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
@@ -408,6 +413,22 @@ export function HomePage() {
     logsByProject.get(log.project_id)!.push(log);
   }
   const logProjectOrder = [...logsByProject.keys()];
+
+  // Feed search
+  const allFeedProjectNames = useMemo(
+    () => logProjectOrder.map(id => logsByProject.get(id)![0].project_name),
+    [logs]
+  );
+  const feedSuggestions = useMemo(() => {
+    if (!feedSearch.trim()) return [];
+    const q = feedSearch.toLowerCase();
+    return allFeedProjectNames.filter(n => n.toLowerCase().includes(q));
+  }, [feedSearch, allFeedProjectNames]);
+  const filteredLogProjectOrder = useMemo(() => {
+    if (!feedSearch.trim()) return logProjectOrder;
+    const q = feedSearch.toLowerCase();
+    return logProjectOrder.filter(id => logsByProject.get(id)![0].project_name.toLowerCase().includes(q));
+  }, [feedSearch, logProjectOrder]);
 
   // ── Loading skeleton ──────────────────────────────────────────────────────
 
@@ -448,6 +469,13 @@ export function HomePage() {
                 <span className="text-sm font-bold text-blue-800 tabular-nums">{inProgressAll}</span>
                 <span className="text-xs text-blue-600 font-medium hidden sm:inline">In Progress</span>
               </div>
+              {inReviewAll > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/60 border border-purple-200/60 shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0" />
+                  <span className="text-sm font-bold text-purple-800 tabular-nums">{inReviewAll}</span>
+                  <span className="text-xs text-purple-600 font-medium hidden sm:inline">In Review</span>
+                </div>
+              )}
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/60 border border-amber-200/60 shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
                 <span className="text-sm font-bold text-amber-800 tabular-nums">{pendingAll}</span>
@@ -485,7 +513,7 @@ export function HomePage() {
               <div className="p-1 rounded-md bg-slate-100">
                 <GitMerge className="h-3.5 w-3.5 text-slate-500" />
               </div>
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Pipeline</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Projects Pipeline</span>
             </div>
             <div className="w-px h-4 bg-slate-200 hidden sm:block" />
             <div className="flex items-center gap-2 flex-wrap">
@@ -683,6 +711,15 @@ export function HomePage() {
                   onNavigate={task => navigate(`/projects/${task.project_id}`)}
                   onStatusChange={handleStatusChange}
                 />
+                {inReviewTasks.length > 0 && (
+                  <TaskSubsection
+                    variant="purple"
+                    title="In Review"
+                    tasks={inReviewTasks}
+                    onNavigate={task => navigate(`/projects/${task.project_id}`)}
+                    onStatusChange={handleStatusChange}
+                  />
+                )}
                 {upcomingTasks.length > 0 && (
                   <TaskSubsection
                     variant="purple"
@@ -802,14 +839,50 @@ export function HomePage() {
         <div className="glass-white overflow-hidden p-0">
           {/* Header */}
           <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100/80">
-            <div className="p-1.5 rounded-lg bg-violet-100">
+            <div className="p-1.5 rounded-lg bg-violet-100 flex-shrink-0">
               <Activity className="h-4 w-4 text-violet-600" />
             </div>
-            <h2 className="text-base font-semibold text-slate-900">Feed</h2>
+            <h2 className="text-base font-semibold text-slate-900 flex-shrink-0">Feed</h2>
             {logs.length > 0 && (
-              <span className="text-xs font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full flex-shrink-0">
                 {logs.length}
               </span>
+            )}
+            {/* Search */}
+            {logs.length > 0 && (
+              <div ref={feedSearchRef} className="relative ml-auto w-full max-w-[200px]">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={feedSearch}
+                  onChange={e => { setFeedSearch(e.target.value); setFeedDropdownOpen(true); }}
+                  onFocus={() => setFeedDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setFeedDropdownOpen(false), 150)}
+                  placeholder="Search project…"
+                  className="w-full pl-7 pr-7 py-1.5 text-xs border border-slate-200/70 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/50 bg-white/70 placeholder-slate-400 text-slate-700"
+                />
+                {feedSearch && (
+                  <button
+                    onMouseDown={e => { e.preventDefault(); setFeedSearch(''); setFeedDropdownOpen(false); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+                {feedDropdownOpen && feedSuggestions.length > 0 && (
+                  <div className="absolute top-full mt-1 left-0 right-0 z-20 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
+                    {feedSuggestions.map(name => (
+                      <button
+                        key={name}
+                        onMouseDown={e => { e.preventDefault(); setFeedSearch(name); setFeedDropdownOpen(false); }}
+                        className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-violet-50 hover:text-violet-700 transition-colors truncate"
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -818,9 +891,14 @@ export function HomePage() {
               <Activity className="h-10 w-10 mx-auto mb-3 opacity-20" />
               <p className="text-sm font-medium">No log entries yet</p>
             </div>
+          ) : filteredLogProjectOrder.length === 0 ? (
+            <div className="py-10 text-center text-slate-400">
+              <Search className="h-8 w-8 mx-auto mb-2 opacity-20" />
+              <p className="text-sm font-medium">No projects match &ldquo;{feedSearch}&rdquo;</p>
+            </div>
           ) : (
             <div className="divide-y divide-slate-100/80">
-              {logProjectOrder.map(projectId => {
+              {filteredLogProjectOrder.map(projectId => {
                 const allEntries = logsByProject.get(projectId)!;
                 const entries = allEntries.slice(0, 3);
                 const extra = allEntries.length - 3;
