@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { HomePage } from './pages/HomePage';
@@ -15,29 +14,12 @@ import { Settings } from './pages/Settings';
 import { Login } from './pages/Login';
 import { AiChat } from './components/AiChat';
 import { OptimizerPage } from './pages/OptimizerPage';
+import { useAuth } from './lib/auth';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const navigate = useNavigate();
+  const { session, loading, signOut } = useAuth();
 
-  useEffect(() => {
-    const authStatus = localStorage.getItem('isAuthenticated');
-    setIsAuthenticated(authStatus === 'true');
-    setIsCheckingAuth(false);
-  }, []);
-
-  function handleLogin() {
-    setIsAuthenticated(true);
-  }
-
-  function handleLogout() {
-    localStorage.removeItem('isAuthenticated');
-    setIsAuthenticated(false);
-    navigate('/');
-  }
-
-  if (isCheckingAuth) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-slate-600">Loading...</div>
@@ -45,13 +27,13 @@ function App() {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} />;
+  if (!session) {
+    return <Login />;
   }
 
   return (
     <>
-      <Layout onLogout={handleLogout}>
+      <Layout onLogout={signOut}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/dashboard" element={<Dashboard />} />
