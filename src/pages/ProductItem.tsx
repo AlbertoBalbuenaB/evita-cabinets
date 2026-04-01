@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Pencil as Edit2, Tag, Package, Ruler, Box, Layers,
-  Check, X, Clock, BarChart3, Warehouse
+  Check, X, Clock, BarChart3, Warehouse, Scissors
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { Product } from '../types';
+import type { Product, CutPiece } from '../types';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -154,6 +154,14 @@ export function ProductItem() {
               <Ruler className="h-4 w-4 text-slate-400" />
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Material Specifications</h3>
             </div>
+            {(product.width_in != null || product.height_in != null || product.depth_in != null) && (
+              <div className="flex items-center justify-between py-2 border-b border-slate-200/40">
+                <span className="text-sm text-slate-500">Nominal Dimensions (W × H × D)</span>
+                <span className="text-sm font-medium text-slate-800 tabular-nums font-mono">
+                  {product.width_in ?? '—'}" × {product.height_in ?? '—'}" × {product.depth_in ?? '—'}"
+                </span>
+              </div>
+            )}
             <Spec label="Box Square Feet" value={product.box_sf} unit="sf" />
             <Spec label="Doors / Fronts SF" value={product.doors_fronts_sf} unit="sf" />
             <Spec label="Box Edgeband" value={product.box_edgeband} unit="m" />
@@ -243,6 +251,57 @@ export function ProductItem() {
           </div>
         </div>
       </div>
+
+      {/* Cut List */}
+      {Array.isArray(product.cut_pieces) && (product.cut_pieces as unknown as CutPiece[]).length > 0 && (() => {
+        const pieces = product.cut_pieces as unknown as CutPiece[];
+        return (
+          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Scissors className="h-4 w-4 text-slate-400" />
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Cut List</h3>
+              </div>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                {pieces.length} {pieces.length === 1 ? 'piece' : 'pieces'}
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="text-left pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Part</th>
+                    <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Width (mm)</th>
+                    <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Height (mm)</th>
+                    <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Qty</th>
+                    <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Material</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {pieces.map((piece) => (
+                    <tr key={piece.id} className="hover:bg-slate-100/50 transition-colors">
+                      <td className="py-2 text-slate-800 font-medium">{piece.nombre}</td>
+                      <td className="py-2 text-center text-slate-700 tabular-nums">{piece.ancho}</td>
+                      <td className="py-2 text-center text-slate-700 tabular-nums">{piece.alto}</td>
+                      <td className="py-2 text-center text-slate-700 tabular-nums font-semibold">{piece.cantidad}</td>
+                      <td className="py-2 text-center">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          piece.material === 'cuerpo' ? 'bg-blue-100 text-blue-800' :
+                          piece.material === 'frente' ? 'bg-amber-100 text-amber-800' :
+                                                        'bg-slate-100 text-slate-700'
+                        }`}>
+                          {piece.material === 'cuerpo' ? 'Box Construction' :
+                           piece.material === 'frente' ? 'Doors & Fronts' : 'Custom'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
