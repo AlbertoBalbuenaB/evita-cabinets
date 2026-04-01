@@ -154,6 +154,94 @@ export type ProjectLog = Database['public']['Tables']['project_logs']['Row'];
 export type ProjectLogInsert = Database['public']['Tables']['project_logs']['Insert'];
 export type ProjectLogReply = Database['public']['Tables']['project_log_replies']['Row'];
 
+// ── Enhanced Task Management ────────────────────────────────────────────────
+
+export type TaskStatus = 'pending' | 'in_progress' | 'in_review' | 'blocked' | 'done' | 'cancelled';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskView = 'list' | 'kanban' | 'calendar';
+
+export interface TaskTag {
+  id: string;
+  project_id: string;
+  label: string;
+  color: string;
+  created_at: string | null;
+}
+
+export interface TaskCommentReply {
+  id: string;
+  comment_id: string;
+  author_id: string | null;
+  author_name?: string;
+  body: string;
+  created_at: string;
+}
+
+export interface TaskComment {
+  id: string;
+  task_id: string;
+  author_id: string | null;
+  author_name?: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+  replies?: TaskCommentReply[];
+}
+
+export interface TaskDeliverable {
+  id: string;
+  task_id: string;
+  label: string;
+  url: string;
+  display_order: number;
+  created_at: string | null;
+}
+
+export interface EnhancedTask {
+  id: string;
+  project_id: string;
+  title: string;
+  description: string | null;
+  details: string | null;
+  due_date: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  parent_task_id: string | null;
+  display_order: number;
+  created_at: string | null;
+  updated_at: string | null;
+  // Joined data (populated client-side)
+  assignees: TeamMember[];
+  tags: TaskTag[];
+  subtasks: EnhancedTask[];
+  comments: TaskComment[];
+  deliverables: TaskDeliverable[];
+}
+
+export const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; dot: string; border: string }> = {
+  pending:     { label: 'Pending',     color: 'bg-slate-100 text-slate-600',   dot: 'bg-slate-400',   border: 'border-slate-300' },
+  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-700',     dot: 'bg-blue-500',    border: 'border-blue-400' },
+  in_review:   { label: 'In Review',   color: 'bg-purple-100 text-purple-700', dot: 'bg-purple-500',  border: 'border-purple-400' },
+  blocked:     { label: 'Blocked',     color: 'bg-red-100 text-red-700',       dot: 'bg-red-500',     border: 'border-red-400' },
+  done:        { label: 'Done',        color: 'bg-green-100 text-green-700',   dot: 'bg-green-500',   border: 'border-green-400' },
+  cancelled:   { label: 'Cancelled',   color: 'bg-slate-100 text-slate-400',   dot: 'bg-slate-300',   border: 'border-slate-200' },
+};
+
+export const TASK_PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; bg: string; border: string }> = {
+  low:    { label: 'Low',    color: 'text-slate-500', bg: 'bg-slate-100',  border: 'border-l-slate-300' },
+  medium: { label: 'Medium', color: 'text-blue-600',  bg: 'bg-blue-50',   border: 'border-l-blue-400' },
+  high:   { label: 'High',   color: 'text-amber-600', bg: 'bg-amber-50',  border: 'border-l-amber-400' },
+  urgent: { label: 'Urgent', color: 'text-red-600',   bg: 'bg-red-50',    border: 'border-l-red-500' },
+};
+
+export const TASK_STATUS_ORDER: Record<TaskStatus, number> = {
+  blocked: 0, in_progress: 1, in_review: 2, pending: 3, done: 4, cancelled: 5,
+};
+
+export const TASK_PRIORITY_ORDER: Record<TaskPriority, number> = {
+  urgent: 0, high: 1, medium: 2, low: 3,
+};
+
 export interface HardwareItem {
   hardware_id: string;
   quantity_per_cabinet: number;

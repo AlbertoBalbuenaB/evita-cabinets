@@ -12,8 +12,7 @@ import { ImportQuotationModal } from '../components/ImportQuotationModal';
 import { QuotationFormModal } from '../components/QuotationFormModal';
 import { formatCurrency } from '../lib/calculations';
 import { useSettingsStore } from '../lib/settingsStore';
-import { ScheduleSection } from '../components/ScheduleSection';
-import { TasksSection } from '../components/TasksSection';
+import { TasksSection } from '../components/tasks/TasksSection';
 import { DocumentationSection } from '../components/DocumentationSection';
 import { BitacoraSection } from '../components/BitacoraSection';
 import { CrossQuotationAnalytics } from '../components/CrossQuotationAnalytics';
@@ -508,12 +507,9 @@ export function ProjectPage() {
         </div>
       )}
 
-      {/* Management tab — Schedule + Tasks only */}
+      {/* Management tab — Tasks */}
       {activeTab === 'management' && (
-        <div className="space-y-6">
-          <ScheduleSection projectId={project.id} />
-          <TasksSection projectId={project.id} teamMembers={teamMembers} />
-        </div>
+        <TasksSection projectId={project.id} teamMembers={teamMembers} />
       )}
 
       {/* Documents tab */}
