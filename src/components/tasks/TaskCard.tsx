@@ -13,6 +13,14 @@ interface Props {
 
 const STATUS_ORDER_CYCLE: TaskStatus[] = ['pending', 'in_progress', 'in_review', 'blocked', 'done', 'cancelled'];
 
+const AVATAR_COLORS = [
+  'bg-violet-100 text-violet-700',
+  'bg-blue-100 text-blue-700',
+  'bg-amber-100 text-amber-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-rose-100 text-rose-700',
+];
+
 function getInitials(name: string) {
   return name
     .split(' ')
@@ -45,15 +53,6 @@ export function TaskCard({ task, selected, onSelect, onStatusChange, compact }: 
     const next = STATUS_ORDER_CYCLE[(idx + 1) % STATUS_ORDER_CYCLE.length];
     onStatusChange(task.id, next);
   }
-
-  // Avatar colors by index
-  const AVATAR_COLORS = [
-    'bg-violet-100 text-violet-700',
-    'bg-blue-100 text-blue-700',
-    'bg-amber-100 text-amber-700',
-    'bg-emerald-100 text-emerald-700',
-    'bg-rose-100 text-rose-700',
-  ];
 
   return (
     <div

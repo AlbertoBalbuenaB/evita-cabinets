@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  X, Trash2, Plus, ChevronDown, ExternalLink,
+  X, Trash2, Plus,
   CheckSquare, Flag, Clock, Users, Tag, Paperclip, MessageSquare,
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -23,6 +23,7 @@ interface Props {
   onUpdate: (task: EnhancedTask) => void;
   onDelete: (id: string) => void;
   onReload: () => void;
+  onTagCreated?: (tag: TaskTag) => void;
 }
 
 const STATUS_OPTIONS = Object.entries(TASK_STATUS_CONFIG) as [TaskStatus, typeof TASK_STATUS_CONFIG[TaskStatus]][];
@@ -33,7 +34,7 @@ const PRESET_COLORS = [
   '#8b5cf6','#06b6d4','#84cc16','#f97316','#ec4899',
 ];
 
-export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, onUpdate, onDelete, onReload }: Props) {
+export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, onUpdate, onDelete, onReload, onTagCreated }: Props) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || task.details || '');
   const [status, setStatus] = useState<TaskStatus>(task.status);
@@ -52,15 +53,9 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
   const [dirty, setDirty] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [allTags, setAllTags] = useState<TaskTag[]>(tags);
+  const [freshMembers, setFreshMembers] = useState<TeamMember[]>(teamMembers);
 
-  // Load detail data on mount
-  useEffect(() => {
-    loadComments();
-    loadDeliverables();
-    loadSubtasks();
-  }, [task.id]);
-
-  // Sync when task prop changes (new task selected)
+  // Sync state and reload detail data whenever the selected task changes
   useEffect(() => {
     setTitle(task.title);
     setDescription(task.description || task.details || '');
@@ -71,12 +66,22 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
     setTagIds(task.tags.map((t) => t.id));
     setSubtasks(task.subtasks);
     setDirty(false);
-    loadComments();
-    loadDeliverables();
-    loadSubtasks();
+
+    async function init() {
+      // Fetch team members fresh to avoid race condition with parent prop
+      const { data: membersData } = await supabase
+        .from('team_members')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+      const members = membersData || teamMembers;
+      setFreshMembers(members);
+      await Promise.all([loadComments(members), loadDeliverables(), loadSubtasks()]);
+    }
+    init();
   }, [task.id]);
 
-  async function loadComments() {
+  async function loadComments(members?: TeamMember[]) {
     const { data } = await supabase
       .from('task_comments')
       .select('*')
@@ -90,7 +95,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
       .select('*')
       .in('comment_id', commentIds.length ? commentIds : ['none'])
       .order('created_at');
-    const membersMap = new Map(teamMembers.map((m) => [m.id, m]));
+    const membersMap = new Map((members ?? freshMembers).map((m) => [m.id, m]));
     const enriched: TaskComment[] = data.map((c) => ({
       ...c,
       author_name: c.author_id ? membersMap.get(c.author_id)?.name : undefined,
@@ -174,7 +179,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
       due_date: dueDate || null,
       status,
       priority,
-      assignees: teamMembers.filter((m) => assigneeIds.includes(m.id)),
+      assignees: freshMembers.filter((m) => assigneeIds.includes(m.id)),
       tags: allTags.filter((t) => tagIds.includes(t.id)),
     };
     onUpdate(updatedTask);
@@ -231,6 +236,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
       setNewTagLabel('');
       setShowNewTag(false);
       markDirty();
+      onTagCreated?.(data);
     }
   }
 

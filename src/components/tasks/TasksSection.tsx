@@ -279,6 +279,7 @@ export function TasksSection({ projectId, teamMembers }: Props) {
           onUpdate={handleTaskUpdate}
           onDelete={handleTaskDelete}
           onReload={loadTasks}
+          onTagCreated={(tag) => setTags((prev) => [...prev, tag])}
         />
       )}
 

@@ -62,7 +62,7 @@ export function TaskFormModal({
     }
 
     setSaving(false);
-    onCreated();
+    if (data) onCreated();
   }
 
   function toggleAssignee(id: string) {
