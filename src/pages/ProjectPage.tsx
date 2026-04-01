@@ -192,6 +192,30 @@ export function ProjectPage() {
             }));
             await supabase.from('area_items').insert(newItems);
           }
+
+          const { data: srcCountertops } = await supabase.from('area_countertops').select('*').eq('area_id', areaId);
+          if (srcCountertops?.length) {
+            const newCountertops = srcCountertops.map(({ id: ctId, created_at: ctc, updated_at: ctu, ...ctData }) => ({
+              ...ctData, area_id: newArea.id,
+            }));
+            await supabase.from('area_countertops').insert(newCountertops);
+          }
+
+          const { data: srcClosetItems } = await supabase.from('area_closet_items').select('*').eq('area_id', areaId);
+          if (srcClosetItems?.length) {
+            const newClosetItems = srcClosetItems.map(({ id: clId, created_at: clc, updated_at: clu, catalog_item: _ci, ...clData }) => ({
+              ...clData, area_id: newArea.id,
+            }));
+            await supabase.from('area_closet_items').insert(newClosetItems);
+          }
+
+          const { data: srcSections } = await supabase.from('area_sections').select('*').eq('area_id', areaId);
+          if (srcSections?.length) {
+            const newSections = srcSections.map(({ id: sId, created_at: sc, updated_at: su, ...sectionData }) => ({
+              ...sectionData, area_id: newArea.id,
+            }));
+            await supabase.from('area_sections').insert(newSections);
+          }
         }
       }
 
