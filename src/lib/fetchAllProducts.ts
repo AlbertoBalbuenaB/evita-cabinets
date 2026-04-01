@@ -12,11 +12,10 @@ export async function fetchAllProducts(options?: {
   while (true) {
     let query = supabase
       .from('products_catalog')
-      .select('*')
-      .eq('is_active', true);
+      .select('*');
 
     if (onlyActive) {
-      query = query.eq('status', 'active');
+      query = query.eq('is_active', true).eq('status', 'active');
     }
 
     const { data, error } = await query

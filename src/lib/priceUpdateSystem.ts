@@ -111,7 +111,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
             oldCost: cabinet.box_material_cost,
             newCost: costs.boxMaterialCost,
             difference: costs.boxMaterialCost - cabinet.box_material_cost,
-            percentageChange: ((costs.boxMaterialCost - cabinet.box_material_cost) / cabinet.box_material_cost) * 100,
+            percentageChange: cabinet.box_material_cost > 0 ? ((costs.boxMaterialCost - cabinet.box_material_cost) / cabinet.box_material_cost) * 100 : 0,
           });
           affectedMaterialsSet.add(material.id);
         }
@@ -127,7 +127,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
             oldCost: cabinet.box_edgeband_cost,
             newCost: costs.boxEdgebandCost,
             difference: costs.boxEdgebandCost - cabinet.box_edgeband_cost,
-            percentageChange: ((costs.boxEdgebandCost - cabinet.box_edgeband_cost) / cabinet.box_edgeband_cost) * 100,
+            percentageChange: cabinet.box_edgeband_cost > 0 ? ((costs.boxEdgebandCost - cabinet.box_edgeband_cost) / cabinet.box_edgeband_cost) * 100 : 0,
           });
           affectedMaterialsSet.add(material.id);
         }
@@ -143,7 +143,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
             oldCost: cabinet.box_interior_finish_cost,
             newCost: costs.boxInteriorFinishCost,
             difference: costs.boxInteriorFinishCost - cabinet.box_interior_finish_cost,
-            percentageChange: ((costs.boxInteriorFinishCost - cabinet.box_interior_finish_cost) / cabinet.box_interior_finish_cost) * 100,
+            percentageChange: cabinet.box_interior_finish_cost > 0 ? ((costs.boxInteriorFinishCost - cabinet.box_interior_finish_cost) / cabinet.box_interior_finish_cost) * 100 : 0,
           });
           affectedMaterialsSet.add(material.id);
         }
@@ -159,7 +159,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
             oldCost: cabinet.doors_material_cost,
             newCost: costs.doorsMaterialCost,
             difference: costs.doorsMaterialCost - cabinet.doors_material_cost,
-            percentageChange: ((costs.doorsMaterialCost - cabinet.doors_material_cost) / cabinet.doors_material_cost) * 100,
+            percentageChange: cabinet.doors_material_cost > 0 ? ((costs.doorsMaterialCost - cabinet.doors_material_cost) / cabinet.doors_material_cost) * 100 : 0,
           });
           affectedMaterialsSet.add(material.id);
         }
@@ -175,7 +175,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
             oldCost: cabinet.doors_edgeband_cost,
             newCost: costs.doorsEdgebandCost,
             difference: costs.doorsEdgebandCost - cabinet.doors_edgeband_cost,
-            percentageChange: ((costs.doorsEdgebandCost - cabinet.doors_edgeband_cost) / cabinet.doors_edgeband_cost) * 100,
+            percentageChange: cabinet.doors_edgeband_cost > 0 ? ((costs.doorsEdgebandCost - cabinet.doors_edgeband_cost) / cabinet.doors_edgeband_cost) * 100 : 0,
           });
           affectedMaterialsSet.add(material.id);
         }
@@ -191,7 +191,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
             oldCost: cabinet.doors_interior_finish_cost,
             newCost: costs.doorsInteriorFinishCost,
             difference: costs.doorsInteriorFinishCost - cabinet.doors_interior_finish_cost,
-            percentageChange: ((costs.doorsInteriorFinishCost - cabinet.doors_interior_finish_cost) / cabinet.doors_interior_finish_cost) * 100,
+            percentageChange: cabinet.doors_interior_finish_cost > 0 ? ((costs.doorsInteriorFinishCost - cabinet.doors_interior_finish_cost) / cabinet.doors_interior_finish_cost) * 100 : 0,
           });
           affectedMaterialsSet.add(material.id);
         }
@@ -207,7 +207,7 @@ export async function analyzeProjectPriceChanges(projectId: string): Promise<Pro
             oldCost: cabinet.hardware_cost,
             newCost: costs.hardwareCost,
             difference: costs.hardwareCost - cabinet.hardware_cost,
-            percentageChange: ((costs.hardwareCost - cabinet.hardware_cost) / cabinet.hardware_cost) * 100,
+            percentageChange: cabinet.hardware_cost > 0 ? ((costs.hardwareCost - cabinet.hardware_cost) / cabinet.hardware_cost) * 100 : 0,
           });
         }
       }

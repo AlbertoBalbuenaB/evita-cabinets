@@ -533,9 +533,20 @@ export async function recalculateAreaSheetMaterialCosts(areaId: string): Promise
       return false;
     }
 
+    const { data: countertops, error: countertopsError } = await supabase
+      .from('area_countertops')
+      .select('subtotal')
+      .eq('area_id', areaId);
+
+    if (countertopsError) {
+      console.error('Error loading countertops for area subtotal:', countertopsError);
+      return false;
+    }
+
     const areaSubtotal =
       cabinets.reduce((sum, c) => sum + c.subtotal, 0) +
-      (items || []).reduce((sum, i) => sum + i.subtotal, 0);
+      (items || []).reduce((sum, i) => sum + i.subtotal, 0) +
+      (countertops || []).reduce((sum, ct) => sum + ct.subtotal, 0);
 
     const { error: areaUpdateError } = await supabase
       .from('project_areas')

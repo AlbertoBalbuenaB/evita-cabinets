@@ -155,7 +155,8 @@ export function ProjectPage() {
     if (!projectId || !project) return;
     if (!confirm(`Duplicate "${quotation.version_label || quotation.name}"?`)) return;
 
-    const nextVersion = quotations.length + 1;
+    const maxVersion = quotations.reduce((max, q) => Math.max(max, q.version_number ?? 0), 0);
+    const nextVersion = maxVersion + 1;
     const { id, created_at, updated_at, ...qData } = quotation;
     const { data, error } = await supabase.from('quotations').insert({
       ...qData,

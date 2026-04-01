@@ -26,13 +26,19 @@ export function groupProjectsByGroupId(quotations: Quotation[]): ProjectGroup[] 
   const groups: ProjectGroup[] = [];
 
   groupsMap.forEach((quotationsInGroup, groupId) => {
-    const sortedQuotations = quotationsInGroup.sort((a, b) =>
+    const primaryQuotation = quotationsInGroup.reduce((best, q) => {
+      if (q.quote_date !== best.quote_date) return q.quote_date > best.quote_date ? q : best;
+      const qUpd = new Date(q.updated_at ?? q.created_at ?? 0).getTime();
+      const bestUpd = new Date(best.updated_at ?? best.created_at ?? 0).getTime();
+      return qUpd > bestUpd ? q : best;
+    });
+    const sortedQuotations = [...quotationsInGroup].sort((a, b) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
-    const primaryQuotation = sortedQuotations[0];
     const totalValue = quotationsInGroup.reduce((sum, q) => sum + q.total_amount, 0);
-    const latestDate = sortedQuotations[0].created_at;
+    const latestDate = quotationsInGroup.reduce((latest, q) =>
+      q.quote_date > latest ? q.quote_date : latest, '');
     const latestUpdatedAt = quotationsInGroup.reduce((latest, q) => {
       const t = q.updated_at ?? q.created_at;
       return t > latest ? t : latest;
