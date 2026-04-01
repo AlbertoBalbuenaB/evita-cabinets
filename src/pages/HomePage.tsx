@@ -27,7 +27,7 @@ interface CrossProjectLog {
   created_at: string;
 }
 
-type DoneFilterState = {
+type TaskFilterState = {
   priority: TaskPriority | '';
   assigneeId: string;
   projectId: string;
@@ -132,7 +132,7 @@ export function HomePage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [logs, setLogs] = useState<CrossProjectLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [doneFilters, setDoneFilters] = useState<DoneFilterState>({ priority: '', assigneeId: '', projectId: '' });
+  const [taskFilters, setTaskFilters] = useState<TaskFilterState>({ priority: '', assigneeId: '', projectId: '' });
   const [doneExpanded, setDoneExpanded] = useState(false);
 
   useEffect(() => {
@@ -244,23 +244,27 @@ export function HomePage() {
 
   // ── Derived data ──────────────────────────────────────────────────────────
 
-  const workingOnIt = tasks.filter(t => t.status === 'in_progress');
-  const toDo = tasks.filter(t => t.status === 'pending');
+  function applyTaskFilters(list: CrossProjectTask[]): CrossProjectTask[] {
+    return list.filter(t => {
+      if (taskFilters.priority && t.priority !== taskFilters.priority) return false;
+      if (taskFilters.assigneeId && !t.assignees.some(a => a.id === taskFilters.assigneeId)) return false;
+      if (taskFilters.projectId && t.project_id !== taskFilters.projectId) return false;
+      return true;
+    });
+  }
+
+  const workingOnIt = applyTaskFilters(tasks.filter(t => t.status === 'in_progress'));
+  const toDo = applyTaskFilters(tasks.filter(t => t.status === 'pending'));
   const doneTasks = tasks.filter(t => t.status === 'done' || t.status === 'cancelled');
+  const filteredDone = applyTaskFilters(doneTasks);
 
-  const filteredDone = doneTasks.filter(t => {
-    if (doneFilters.priority && t.priority !== doneFilters.priority) return false;
-    if (doneFilters.assigneeId && !t.assignees.some(a => a.id === doneFilters.assigneeId)) return false;
-    if (doneFilters.projectId && t.project_id !== doneFilters.projectId) return false;
-    return true;
-  });
-
-  const doneProjects = [
-    ...new Map(doneTasks.map(t => [t.project_id, { id: t.project_id, name: t.project_name }])).values(),
+  // All unique projects across all tasks (for the project filter dropdown)
+  const allProjects = [
+    ...new Map(tasks.map(t => [t.project_id, { id: t.project_id, name: t.project_name }])).values(),
   ];
 
-  function hasActiveDoneFilters() {
-    return doneFilters.priority || doneFilters.assigneeId || doneFilters.projectId;
+  function hasActiveTaskFilters() {
+    return taskFilters.priority || taskFilters.assigneeId || taskFilters.projectId;
   }
 
   // Group logs by project, preserving order (most recent log drives project order)
@@ -303,6 +307,58 @@ export function HomePage() {
           )}
         </div>
 
+        {/* Global task filters */}
+        {tasks.length > 0 && (
+          <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2 flex-wrap">
+            <Filter className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+
+            <select
+              value={taskFilters.priority}
+              onChange={e => setTaskFilters(prev => ({ ...prev, priority: e.target.value as TaskPriority | '' }))}
+              className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">All priorities</option>
+              {(Object.entries(TASK_PRIORITY_CONFIG) as [TaskPriority, typeof TASK_PRIORITY_CONFIG[TaskPriority]][]).map(([val, cfg]) => (
+                <option key={val} value={val}>{cfg.label}</option>
+              ))}
+            </select>
+
+            <select
+              value={taskFilters.assigneeId}
+              onChange={e => setTaskFilters(prev => ({ ...prev, assigneeId: e.target.value }))}
+              className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">All assignees</option>
+              {teamMembers.filter(m => m.is_active).map(m => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+
+            {allProjects.length > 1 && (
+              <select
+                value={taskFilters.projectId}
+                onChange={e => setTaskFilters(prev => ({ ...prev, projectId: e.target.value }))}
+                className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All projects</option>
+                {allProjects.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            )}
+
+            {hasActiveTaskFilters() && (
+              <button
+                onClick={() => setTaskFilters({ priority: '', assigneeId: '', projectId: '' })}
+                className="flex items-center gap-1 px-2 py-1 text-xs text-slate-400 hover:text-slate-700 transition-colors"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+
         {tasks.length === 0 ? (
           <div className="py-12 text-center text-slate-400">
             <CheckSquare className="h-10 w-10 mx-auto mb-3 opacity-30" />
@@ -332,78 +388,25 @@ export function HomePage() {
 
             {/* Done */}
             <div className="px-5 py-4">
-              <div className="flex items-center justify-between mb-3">
-                <button
-                  onClick={() => setDoneExpanded(prev => !prev)}
-                  className="flex items-center gap-2 text-left"
-                >
-                  {doneExpanded
-                    ? <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-                    : <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-                  }
-                  <span className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Done</span>
-                  <span className="text-xs font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                    {hasActiveDoneFilters()
-                      ? `${filteredDone.length} / ${doneTasks.length}`
-                      : doneTasks.length}
-                  </span>
-                </button>
-              </div>
+              <button
+                onClick={() => setDoneExpanded(prev => !prev)}
+                className="flex items-center gap-2 w-full text-left mb-3"
+              >
+                {doneExpanded
+                  ? <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                  : <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+                }
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Done</span>
+                <span className="text-xs font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                  {hasActiveTaskFilters()
+                    ? `${filteredDone.length} / ${doneTasks.length}`
+                    : doneTasks.length}
+                </span>
+              </button>
 
               {doneExpanded && (
-                <div className="space-y-3 pl-5">
-                  {/* Filters */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Filter className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-
-                    <select
-                      value={doneFilters.priority}
-                      onChange={e => setDoneFilters(prev => ({ ...prev, priority: e.target.value as TaskPriority | '' }))}
-                      className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">All priorities</option>
-                      {(Object.entries(TASK_PRIORITY_CONFIG) as [TaskPriority, typeof TASK_PRIORITY_CONFIG[TaskPriority]][]).map(([val, cfg]) => (
-                        <option key={val} value={val}>{cfg.label}</option>
-                      ))}
-                    </select>
-
-                    <select
-                      value={doneFilters.assigneeId}
-                      onChange={e => setDoneFilters(prev => ({ ...prev, assigneeId: e.target.value }))}
-                      className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">All assignees</option>
-                      {teamMembers.filter(m => m.is_active).map(m => (
-                        <option key={m.id} value={m.id}>{m.name}</option>
-                      ))}
-                    </select>
-
-                    {doneProjects.length > 1 && (
-                      <select
-                        value={doneFilters.projectId}
-                        onChange={e => setDoneFilters(prev => ({ ...prev, projectId: e.target.value }))}
-                        className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="">All projects</option>
-                        {doneProjects.map(p => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                      </select>
-                    )}
-
-                    {hasActiveDoneFilters() && (
-                      <button
-                        onClick={() => setDoneFilters({ priority: '', assigneeId: '', projectId: '' })}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-slate-400 hover:text-slate-700 transition-colors"
-                      >
-                        <X className="h-3 w-3" />
-                        Clear
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Done task list */}
+                <div className="pl-5">
                   {filteredDone.length === 0 ? (
                     <p className="text-sm text-slate-400 text-center py-4">No completed tasks match the current filters.</p>
                   ) : (
