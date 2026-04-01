@@ -683,13 +683,6 @@ export function HomePage() {
                   onNavigate={task => navigate(`/projects/${task.project_id}`)}
                   onStatusChange={handleStatusChange}
                 />
-                <TaskSubsection
-                  variant="amber"
-                  title="To-do"
-                  tasks={toDo}
-                  onNavigate={task => navigate(`/projects/${task.project_id}`)}
-                  onStatusChange={handleStatusChange}
-                />
                 {upcomingTasks.length > 0 && (
                   <TaskSubsection
                     variant="purple"
@@ -699,6 +692,13 @@ export function HomePage() {
                     onStatusChange={handleStatusChange}
                   />
                 )}
+                <TaskSubsection
+                  variant="amber"
+                  title="To-do"
+                  tasks={toDo}
+                  onNavigate={task => navigate(`/projects/${task.project_id}`)}
+                  onStatusChange={handleStatusChange}
+                />
 
                 {/* Done — collapsible */}
                 <div className="rounded-xl border bg-emerald-50/50 border-emerald-100/80 overflow-hidden">
