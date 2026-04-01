@@ -3,7 +3,8 @@ import { Modal } from './Modal';
 import { Button } from './Button';
 import { Input } from './Input';
 import { CollectionSelector } from './CollectionSelector';
-import type { Product, ProductInsert } from '../types';
+import type { Product, ProductInsert, CutPiece } from '../types';
+import { calculateDespiece } from '../lib/despieceCalculator';
 
 interface ProductFormModalProps {
   product: Product | null;
@@ -37,11 +38,13 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
   );
 
   const [calcOpen, setCalcOpen] = useState(false);
-  const [calcH, setCalcH] = useState<number | ''>('');
-  const [calcW, setCalcW] = useState<number | ''>('');
-  const [calcD, setCalcD] = useState<number | ''>('');
+  const [calcH, setCalcH] = useState<number | ''>(product?.height_in ?? '');
+  const [calcW, setCalcW] = useState<number | ''>(product?.width_in ?? '');
+  const [calcD, setCalcD] = useState<number | ''>(product?.depth_in ?? '');
   const [calcCostados, setCalcCostados] = useState<number>(2);
   const [calcShelves, setCalcShelves] = useState<number>(0);
+  const [calcCabinetType, setCalcCabinetType] = useState<'base' | 'wall' | 'tall'>('base');
+  const [calcBodyThickness, setCalcBodyThickness] = useState<number>(18);
   const [calcHasDoors, setCalcHasDoors] = useState(false);
   const [calcDoors, setCalcDoors] = useState<number>(1);
   const [calcDoorSectionH, setCalcDoorSectionH] = useState<number>(0);
@@ -50,6 +53,10 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
   const [calcDrawerSectionH, setCalcDrawerSectionH] = useState<number>(0);
   const [calcError, setCalcError] = useState<string>('');
   const [flashFields, setFlashFields] = useState<Set<string>>(new Set());
+  const [despieceOpen, setDespieceOpen] = useState(false);
+  const [cutPieces, setCutPieces] = useState<CutPiece[]>(
+    Array.isArray(product?.cut_pieces) ? (product.cut_pieces as unknown as CutPiece[]) : []
+  );
 
   function syncCalcHasDrawers(val: boolean) {
     setCalcHasDrawers(val);
@@ -216,12 +223,49 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
     ['box_sf', 'box_edgeband', 'box_edgeband_color', 'doors_fronts_sf', 'doors_fronts_edgeband', 'total_edgeband'].forEach(flashField);
   }
 
+  function handleGenerateDespiece() {
+    const H = calcH === '' ? 0 : calcH;
+    const W = calcW === '' ? 0 : calcW;
+    const D = calcD === '' ? 0 : calcD;
+    if (H === 0 || W === 0 || D === 0) {
+      setCalcError('Height, Width and Depth are required to generate the despiece.');
+      return;
+    }
+    if (cutPieces.length > 0) {
+      if (!window.confirm('This will replace the current despiece. Continue?')) return;
+    }
+    const pieces = calculateDespiece({
+      heightIn: H,
+      widthIn: W,
+      depthIn: D,
+      cabinetType: calcCabinetType,
+      bodyThickness: calcBodyThickness,
+      shelves: calcShelves,
+      hasDoors: calcHasDoors,
+      numDoors: calcDoors,
+      doorSectionHeightIn: calcDoorSectionH,
+      hasDrawers: calcHasDrawers,
+      numDrawers: calcDrawers,
+      drawerSectionHeightIn: calcDrawerSectionH,
+    });
+    setCutPieces(pieces);
+    setDespieceOpen(true);
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const customLaborCost = customLaborCostInput.trim() === ''
       ? null
       : parseFloat(customLaborCostInput);
-    onSave({ ...formData, custom_labor_cost: customLaborCost });
+    onSave({
+      ...formData,
+      custom_labor_cost: customLaborCost,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cut_pieces: cutPieces.length > 0 ? (cutPieces as any) : null,
+      height_in: calcH === '' ? null : calcH,
+      width_in:  calcW === '' ? null : calcW,
+      depth_in:  calcD === '' ? null : calcD,
+    });
   }
 
   return (
@@ -397,6 +441,31 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Cabinet Type</label>
+                  <select
+                    value={calcCabinetType}
+                    onChange={(e) => setCalcCabinetType(e.target.value as 'base' | 'wall' | 'tall')}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  >
+                    <option value="base">Base (Armadores, sin Techo)</option>
+                    <option value="wall">Wall / Aéreo (con Techo)</option>
+                    <option value="tall">Tall / Torre (con Techo)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Body Thickness (mm)</label>
+                  <input
+                    type="number" min="1" step="1"
+                    value={calcBodyThickness}
+                    onChange={(e) => setCalcBodyThickness(parseInt(e.target.value) || 18)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">Panel thickness for despiece calc (typically 18mm)</p>
+                </div>
+              </div>
+
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
                   <input
@@ -473,13 +542,22 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{calcError}</p>
               )}
 
-              <button
-                type="button"
-                onClick={handleCalculate}
-                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
-              >
-                ⚡ Calculate &amp; Fill Fields
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={handleCalculate}
+                  className="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                >
+                  ⚡ Calculate &amp; Fill Fields
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGenerateDespiece}
+                  className="py-2 px-4 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                >
+                  🪚 Generate Despiece
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -586,6 +664,138 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
           <p className="mt-1 text-xs text-slate-500">
             This is the total edgeband used for cost calculations
           </p>
+        </div>
+
+        {/* ── Despiece / Cut List ─────────────────────────────────────── */}
+        <div className="border-t border-slate-200 pt-4">
+          <button
+            type="button"
+            onClick={() => setDespieceOpen((o) => !o)}
+            className="flex items-center gap-2 w-full text-left text-sm font-semibold text-amber-700 hover:text-amber-800 transition-colors"
+          >
+            <span>🪚 Despiece / Cut List</span>
+            {cutPieces.length > 0 && (
+              <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                {cutPieces.length} piezas
+              </span>
+            )}
+            <svg
+              className={`ml-auto w-4 h-4 transition-transform duration-200 ${despieceOpen ? 'rotate-180' : ''}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {despieceOpen && (
+            <div className="mt-3 space-y-2">
+              {cutPieces.length === 0 ? (
+                <p className="text-xs text-slate-500 text-center py-4 bg-slate-50 rounded-lg border border-slate-200">
+                  No hay piezas. Usa "🪚 Generate Despiece" en el calculador de dimensiones o agrega piezas manualmente.
+                </p>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border border-slate-200">
+                  <table className="w-full text-xs">
+                    <thead className="bg-slate-100 text-slate-600">
+                      <tr>
+                        <th className="text-left px-2 py-1.5 font-medium">Pieza</th>
+                        <th className="text-center px-2 py-1.5 font-medium">Ancho (mm)</th>
+                        <th className="text-center px-2 py-1.5 font-medium">Alto (mm)</th>
+                        <th className="text-center px-2 py-1.5 font-medium">Cant</th>
+                        <th className="text-center px-2 py-1.5 font-medium">Material</th>
+                        <th className="px-1 py-1.5"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {cutPieces.map((piece) => (
+                        <tr key={piece.id} className="hover:bg-slate-50">
+                          <td className="px-1 py-1">
+                            <input
+                              type="text"
+                              value={piece.nombre}
+                              onChange={(e) => setCutPieces((prev) =>
+                                prev.map((p) => p.id === piece.id ? { ...p, nombre: e.target.value } : p)
+                              )}
+                              className="w-full px-2 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 text-xs"
+                            />
+                          </td>
+                          <td className="px-1 py-1">
+                            <input
+                              type="number" min="0" step="1"
+                              value={piece.ancho}
+                              onChange={(e) => setCutPieces((prev) =>
+                                prev.map((p) => p.id === piece.id ? { ...p, ancho: parseInt(e.target.value) || 0 } : p)
+                              )}
+                              className="w-20 px-2 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 text-xs text-center"
+                            />
+                          </td>
+                          <td className="px-1 py-1">
+                            <input
+                              type="number" min="0" step="1"
+                              value={piece.alto}
+                              onChange={(e) => setCutPieces((prev) =>
+                                prev.map((p) => p.id === piece.id ? { ...p, alto: parseInt(e.target.value) || 0 } : p)
+                              )}
+                              className="w-20 px-2 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 text-xs text-center"
+                            />
+                          </td>
+                          <td className="px-1 py-1">
+                            <input
+                              type="number" min="1" step="1"
+                              value={piece.cantidad}
+                              onChange={(e) => setCutPieces((prev) =>
+                                prev.map((p) => p.id === piece.id ? { ...p, cantidad: parseInt(e.target.value) || 1 } : p)
+                              )}
+                              className="w-12 px-2 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 text-xs text-center"
+                            />
+                          </td>
+                          <td className="px-1 py-1 text-center">
+                            <select
+                              value={piece.material}
+                              onChange={(e) => setCutPieces((prev) =>
+                                prev.map((p) => p.id === piece.id ? { ...p, material: e.target.value as CutPiece['material'] } : p)
+                              )}
+                              className={`px-1.5 py-0.5 rounded text-xs font-medium border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 ${
+                                piece.material === 'cuerpo'  ? 'bg-blue-100 text-blue-800' :
+                                piece.material === 'frente'  ? 'bg-amber-100 text-amber-800' :
+                                                               'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              <option value="cuerpo">Cuerpo</option>
+                              <option value="frente">Frente</option>
+                              <option value="custom">Custom</option>
+                            </select>
+                          </td>
+                          <td className="px-1 py-1 text-center">
+                            <button
+                              type="button"
+                              onClick={() => setCutPieces((prev) => prev.filter((p) => p.id !== piece.id))}
+                              className="text-red-400 hover:text-red-600 transition-colors"
+                              title="Eliminar pieza"
+                            >
+                              ✕
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() =>
+                  setCutPieces((prev) => [
+                    ...prev,
+                    { id: crypto.randomUUID(), nombre: '', ancho: 0, alto: 0, cantidad: 1, material: 'custom' },
+                  ])
+                }
+                className="w-full py-1.5 px-3 border border-dashed border-slate-300 hover:border-slate-400 text-slate-500 hover:text-slate-700 text-xs rounded-lg transition-colors"
+              >
+                + Agregar Pieza
+              </button>
+            </div>
+          )}
         </div>
 
         {safeEditMode && (

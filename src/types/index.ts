@@ -1,5 +1,14 @@
 import type { Database } from '../lib/database.types';
 
+export interface CutPiece {
+  id: string;
+  nombre: string;
+  ancho: number;    // mm
+  alto: number;     // mm
+  cantidad: number;
+  material: 'cuerpo' | 'frente' | 'custom';
+}
+
 export type Product = Database['public']['Tables']['products_catalog']['Row'];
 export type ProductInsert = Database['public']['Tables']['products_catalog']['Insert'];
 export type ProductUpdate = Database['public']['Tables']['products_catalog']['Update'];

@@ -799,12 +799,15 @@ export type Database = {
           boxes_per_unit: number
           collection_name: string | null
           created_at: string | null
+          cut_pieces: Json | null
           custom_labor_cost: number | null
           default_is_rta: boolean
+          depth_in: number | null
           description: string
           doors_fronts_edgeband: number | null
           doors_fronts_sf: number
           has_drawers: boolean | null
+          height_in: number | null
           id: string
           is_active: boolean | null
           original_box_sf: number | null
@@ -814,6 +817,7 @@ export type Database = {
           total_edgeband: number
           updated_at: string | null
           waste_applied: boolean | null
+          width_in: number | null
         }
         Insert: {
           box_edgeband?: number | null
@@ -822,12 +826,15 @@ export type Database = {
           boxes_per_unit?: number
           collection_name?: string | null
           created_at?: string | null
+          cut_pieces?: Json | null
           custom_labor_cost?: number | null
           default_is_rta?: boolean
+          depth_in?: number | null
           description: string
           doors_fronts_edgeband?: number | null
           doors_fronts_sf?: number
           has_drawers?: boolean | null
+          height_in?: number | null
           id?: string
           is_active?: boolean | null
           original_box_sf?: number | null
@@ -837,6 +844,7 @@ export type Database = {
           total_edgeband?: number
           updated_at?: string | null
           waste_applied?: boolean | null
+          width_in?: number | null
         }
         Update: {
           box_edgeband?: number | null
@@ -845,12 +853,15 @@ export type Database = {
           boxes_per_unit?: number
           collection_name?: string | null
           created_at?: string | null
+          cut_pieces?: Json | null
           custom_labor_cost?: number | null
           default_is_rta?: boolean
+          depth_in?: number | null
           description?: string
           doors_fronts_edgeband?: number | null
           doors_fronts_sf?: number
           has_drawers?: boolean | null
+          height_in?: number | null
           id?: string
           is_active?: boolean | null
           original_box_sf?: number | null
@@ -860,6 +871,7 @@ export type Database = {
           total_edgeband?: number
           updated_at?: string | null
           waste_applied?: boolean | null
+          width_in?: number | null
         }
         Relationships: []
       }
