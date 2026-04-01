@@ -39,6 +39,7 @@ export async function calculateAreaSheetMaterials(
 ): Promise<{
   sheetUsages: SheetMaterialUsage[];
   cabinetCosts: CabinetSheetMaterialCost[];
+  cabinets: AreaCabinet[];
 }> {
   const { data: cabinets, error: cabinetsError } = await supabase
     .from('area_cabinets')
@@ -47,7 +48,7 @@ export async function calculateAreaSheetMaterials(
 
   if (cabinetsError || !cabinets) {
     console.error('Error loading cabinets:', cabinetsError);
-    return { sheetUsages: [], cabinetCosts: [] };
+    return { sheetUsages: [], cabinetCosts: [], cabinets: [] };
   }
 
   const { data: products, error: productsError } = await supabase
@@ -463,25 +464,17 @@ export async function calculateAreaSheetMaterials(
 
   const cabinetCosts = Array.from(cabinetCostsMap.values());
 
-  return { sheetUsages, cabinetCosts };
+  return { sheetUsages, cabinetCosts, cabinets };
 }
 
 export async function recalculateAreaSheetMaterialCosts(areaId: string): Promise<boolean> {
   try {
-    const { sheetUsages, cabinetCosts } = await calculateAreaSheetMaterials(areaId);
+    const { sheetUsages, cabinetCosts, cabinets } = await calculateAreaSheetMaterials(areaId);
 
-    for (const cost of cabinetCosts) {
-      const { data: cabinet, error: fetchError } = await supabase
-        .from('area_cabinets')
-        .select('*')
-        .eq('id', cost.cabinetId)
-        .single();
-
-      if (fetchError || !cabinet) {
-        console.error('Error fetching cabinet:', fetchError);
-        continue;
-      }
-
+    const cabinetsMap = new Map(cabinets.map(c => [c.id, c]));
+    const updateResults = await Promise.all(cabinetCosts.map(cost => {
+      const cabinet = cabinetsMap.get(cost.cabinetId);
+      if (!cabinet) return Promise.resolve({ error: null });
       const newSubtotal =
         cost.boxMaterialCost +
         cabinet.box_edgeband_cost +
@@ -494,8 +487,7 @@ export async function recalculateAreaSheetMaterialCosts(areaId: string): Promise
         cabinet.accessories_cost +
         cabinet.labor_cost +
         (cabinet.door_profile_cost || 0);
-
-      const { error: updateError } = await supabase
+      return supabase
         .from('area_cabinets')
         .update({
           box_material_cost: cost.boxMaterialCost,
@@ -506,45 +498,38 @@ export async function recalculateAreaSheetMaterialCosts(areaId: string): Promise
           subtotal: newSubtotal,
         })
         .eq('id', cost.cabinetId);
+    }));
 
-      if (updateError) {
-        console.error('Error updating cabinet costs:', updateError);
-        return false;
-      }
-    }
-
-    const { data: cabinets, error: cabinetsError } = await supabase
-      .from('area_cabinets')
-      .select('subtotal')
-      .eq('area_id', areaId);
-
-    if (cabinetsError || !cabinets) {
-      console.error('Error loading cabinets for area subtotal:', cabinetsError);
+    if (updateResults.some(r => r.error)) {
+      console.error('Error updating cabinet costs');
       return false;
     }
 
-    const { data: items, error: itemsError } = await supabase
-      .from('area_items')
-      .select('subtotal')
-      .eq('area_id', areaId);
+    const [
+      { data: updatedCabinets, error: cabinetsError },
+      { data: items, error: itemsError },
+      { data: countertops, error: countertopsError },
+    ] = await Promise.all([
+      supabase.from('area_cabinets').select('subtotal').eq('area_id', areaId),
+      supabase.from('area_items').select('subtotal').eq('area_id', areaId),
+      supabase.from('area_countertops').select('subtotal').eq('area_id', areaId),
+    ]);
 
+    if (cabinetsError || !updatedCabinets) {
+      console.error('Error loading cabinets for area subtotal:', cabinetsError);
+      return false;
+    }
     if (itemsError) {
       console.error('Error loading items for area subtotal:', itemsError);
       return false;
     }
-
-    const { data: countertops, error: countertopsError } = await supabase
-      .from('area_countertops')
-      .select('subtotal')
-      .eq('area_id', areaId);
-
     if (countertopsError) {
       console.error('Error loading countertops for area subtotal:', countertopsError);
       return false;
     }
 
     const areaSubtotal =
-      cabinets.reduce((sum, c) => sum + c.subtotal, 0) +
+      updatedCabinets.reduce((sum, c) => sum + c.subtotal, 0) +
       (items || []).reduce((sum, i) => sum + i.subtotal, 0) +
       (countertops || []).reduce((sum, ct) => sum + ct.subtotal, 0);
 

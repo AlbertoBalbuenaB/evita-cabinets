@@ -514,10 +514,16 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
       if (error) throw error;
 
-      await recalculateAreaSheetMaterialCosts(sourceAreaId);
-      await recalculateAreaEdgebandCosts(sourceAreaId);
-      await recalculateAreaSheetMaterialCosts(targetAreaId);
-      await recalculateAreaEdgebandCosts(targetAreaId);
+      await Promise.all([
+        (async () => {
+          await recalculateAreaSheetMaterialCosts(sourceAreaId);
+          await recalculateAreaEdgebandCosts(sourceAreaId);
+        })(),
+        (async () => {
+          await recalculateAreaSheetMaterialCosts(targetAreaId);
+          await recalculateAreaEdgebandCosts(targetAreaId);
+        })(),
+      ]);
       await loadAreas();
     } catch (error) {
       console.error('Error moving cabinet:', error);
