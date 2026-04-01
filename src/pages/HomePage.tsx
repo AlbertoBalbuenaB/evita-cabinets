@@ -3,13 +3,16 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   CheckSquare, Clock, ChevronDown, ChevronRight, CheckCircle2,
   ScrollText, ArrowRightCircle, Lightbulb, AlertTriangle, Star,
-  Activity, ExternalLink, Filter, X, TrendingUp,
+  Activity, ExternalLink, Filter, X, TrendingUp, FolderOpen, ArrowRight,
+  Users, Calendar, Ban, GitMerge,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
 import type { EnhancedTask, TaskStatus, TaskPriority, TeamMember } from '../types';
 import { TASK_PRIORITY_CONFIG } from '../types';
 import { TaskCard } from '../components/tasks/TaskCard';
+import { formatCurrency } from '../lib/calculations';
+import { useSettingsStore } from '../lib/settingsStore';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -27,6 +30,17 @@ interface CrossProjectLog {
   created_at: string;
 }
 
+interface RecentQuote {
+  id: string;
+  project_id: string;
+  name: string;
+  quote_date: string;
+  total_amount: number;
+  status: string;
+  project_type: string;
+  updated_at: string;
+}
+
 type TaskFilterState = {
   priority: TaskPriority | '';
   assigneeId: string;
@@ -35,38 +49,32 @@ type TaskFilterState = {
 
 // ── Subsection variant config ─────────────────────────────────────────────────
 
-type SubsectionVariant = 'blue' | 'amber' | 'green';
+type SubsectionVariant = 'blue' | 'amber' | 'green' | 'red' | 'rose' | 'purple';
 
 const VARIANT = {
   blue: {
-    bg: 'bg-blue-50/50',
-    border: 'border-blue-100/80',
-    dot: 'bg-blue-500',
-    label: 'text-blue-800',
-    badge: 'bg-blue-100 text-blue-700',
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
-    emptyDot: 'text-blue-300',
+    bg: 'bg-blue-50/50',    border: 'border-blue-100/80',    dot: 'bg-blue-500',
+    label: 'text-blue-800', badge: 'bg-blue-100 text-blue-700', emptyDot: 'text-blue-300',
   },
   amber: {
-    bg: 'bg-amber-50/50',
-    border: 'border-amber-100/80',
-    dot: 'bg-amber-500',
-    label: 'text-amber-800',
-    badge: 'bg-amber-100 text-amber-700',
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-600',
-    emptyDot: 'text-amber-300',
+    bg: 'bg-amber-50/50',    border: 'border-amber-100/80',    dot: 'bg-amber-500',
+    label: 'text-amber-800', badge: 'bg-amber-100 text-amber-700', emptyDot: 'text-amber-300',
   },
   green: {
-    bg: 'bg-emerald-50/50',
-    border: 'border-emerald-100/80',
-    dot: 'bg-emerald-500',
-    label: 'text-emerald-800',
-    badge: 'bg-emerald-100 text-emerald-700',
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-600',
-    emptyDot: 'text-emerald-300',
+    bg: 'bg-emerald-50/50',    border: 'border-emerald-100/80',    dot: 'bg-emerald-500',
+    label: 'text-emerald-800', badge: 'bg-emerald-100 text-emerald-700', emptyDot: 'text-emerald-300',
+  },
+  red: {
+    bg: 'bg-red-50/60',    border: 'border-red-200/80',    dot: 'bg-red-500',
+    label: 'text-red-800', badge: 'bg-red-100 text-red-700', emptyDot: 'text-red-300',
+  },
+  rose: {
+    bg: 'bg-rose-50/50',    border: 'border-rose-200/70',    dot: 'bg-rose-500',
+    label: 'text-rose-800', badge: 'bg-rose-100 text-rose-700', emptyDot: 'text-rose-300',
+  },
+  purple: {
+    bg: 'bg-purple-50/50',    border: 'border-purple-100/80',    dot: 'bg-purple-500',
+    label: 'text-purple-800', badge: 'bg-purple-100 text-purple-700', emptyDot: 'text-purple-300',
   },
 } satisfies Record<SubsectionVariant, object>;
 
@@ -85,6 +93,25 @@ const LOG_TYPES: Record<LogType, { label: string; Icon: any; color: string; bg: 
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function getInitials(name: string) {
+  return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+}
+
+const AVATAR_COLORS = [
+  'bg-violet-100 text-violet-700', 'bg-blue-100 text-blue-700',
+  'bg-amber-100 text-amber-700',   'bg-emerald-100 text-emerald-700',
+  'bg-rose-100 text-rose-700',     'bg-cyan-100 text-cyan-700',
+];
+
+const PIPELINE_ORDER = ['Pending', 'Estimating', 'Sent', 'Awarded', 'Lost'];
+const PIPELINE_COLORS: Record<string, string> = {
+  Pending:    'bg-blue-50   text-blue-700   border-blue-200',
+  Estimating: 'bg-orange-50 text-orange-700 border-orange-200',
+  Sent:       'bg-cyan-50   text-cyan-700   border-cyan-200',
+  Awarded:    'bg-green-50  text-green-700  border-green-200',
+  Lost:       'bg-red-50    text-red-600    border-red-200',
+};
 
 function getLogText(comment: string): string {
   try {
@@ -187,23 +214,53 @@ function TaskSubsection({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+const QUOTE_STATUS_COLORS: Record<string, string> = {
+  'Awarded':    'bg-green-100 text-green-700 border-green-200',
+  'Pending':    'bg-blue-100 text-blue-700 border-blue-200',
+  'Estimating': 'bg-orange-100 text-orange-700 border-orange-200',
+  'Sent':       'bg-cyan-100 text-cyan-700 border-cyan-200',
+  'Lost':       'bg-red-100 text-red-700 border-red-200',
+  'Discarded':  'bg-slate-100 text-slate-600 border-slate-200',
+  'Cancelled':  'bg-gray-100 text-gray-600 border-gray-200',
+};
+
 export function HomePage() {
   const navigate = useNavigate();
+  const exchangeRate = useSettingsStore(s => s.settings.exchangeRateUsdToMxn);
+  const fetchSettings = useSettingsStore(s => s.fetchSettings);
   const [tasks, setTasks] = useState<CrossProjectTask[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [logs, setLogs] = useState<CrossProjectLog[]>([]);
+  const [recentQuotes, setRecentQuotes] = useState<RecentQuote[]>([]);
+  const [pipeline, setPipeline] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [taskFilters, setTaskFilters] = useState<TaskFilterState>({ priority: '', assigneeId: '', projectId: '' });
   const [doneExpanded, setDoneExpanded] = useState(false);
 
   useEffect(() => {
+    fetchSettings();
     loadAll();
   }, []);
 
   async function loadAll() {
     setLoading(true);
-    await Promise.all([loadTasks(), loadLogs()]);
+    await Promise.all([loadTasks(), loadLogs(), loadQuotesData()]);
     setLoading(false);
+  }
+
+  async function loadQuotesData() {
+    const [recentRes, pipelineRes] = await Promise.all([
+      supabase
+        .from('quotations')
+        .select('id, project_id, name, quote_date, total_amount, status, project_type, updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(5),
+      supabase.from('quotations').select('status'),
+    ]);
+    setRecentQuotes(recentRes.data || []);
+    const counts: Record<string, number> = {};
+    (pipelineRes.data || []).forEach(q => { counts[q.status] = (counts[q.status] || 0) + 1; });
+    setPipeline(counts);
   }
 
   async function loadTasks() {
@@ -296,21 +353,51 @@ export function HomePage() {
   }
 
   // Raw counts (hero stats — always unfiltered)
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const sevenDaysOut = new Date(today); sevenDaysOut.setDate(sevenDaysOut.getDate() + 7);
+
   const inProgressAll = tasks.filter(t => t.status === 'in_progress').length;
-  const pendingAll = tasks.filter(t => t.status === 'pending').length;
-  const doneAll = tasks.filter(t => t.status === 'done' || t.status === 'cancelled').length;
+  const pendingAll    = tasks.filter(t => t.status === 'pending').length;
+  const doneAll       = tasks.filter(t => t.status === 'done' || t.status === 'cancelled').length;
+  const overdueAll    = tasks.filter(t => t.due_date && new Date(t.due_date) < today && t.status !== 'done' && t.status !== 'cancelled').length;
+  const blockedAll    = tasks.filter(t => t.status === 'blocked').length;
 
   // Filtered task lists (subsections)
-  const workingOnIt = applyFilters(tasks.filter(t => t.status === 'in_progress'));
-  const toDo = applyFilters(tasks.filter(t => t.status === 'pending'));
-  const allDoneTasks = tasks.filter(t => t.status === 'done' || t.status === 'cancelled');
-  const filteredDone = applyFilters(allDoneTasks);
+  const isActive = (t: CrossProjectTask) => t.status !== 'done' && t.status !== 'cancelled';
+
+  const overdueTasks  = applyFilters(tasks.filter(t => t.due_date && new Date(t.due_date) < today && isActive(t)));
+  const blockedTasks  = applyFilters(tasks.filter(t => t.status === 'blocked'));
+  const workingOnIt   = applyFilters(tasks.filter(t => t.status === 'in_progress'));
+  const upcomingTasks = applyFilters(
+    tasks.filter(t => t.due_date && new Date(t.due_date) >= today && new Date(t.due_date) <= sevenDaysOut && isActive(t))
+  ).sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
+  const toDo          = applyFilters(tasks.filter(t => t.status === 'pending'));
+  const allDoneTasks  = tasks.filter(t => t.status === 'done' || t.status === 'cancelled');
+  const filteredDone  = applyFilters(allDoneTasks);
 
   const allProjects = [
     ...new Map(tasks.map(t => [t.project_id, { id: t.project_id, name: t.project_name }])).values(),
   ];
 
   const hasActiveFilters = taskFilters.priority || taskFilters.assigneeId || taskFilters.projectId;
+
+  // Team workload — active tasks per member
+  const workload = teamMembers
+    .filter(m => m.is_active)
+    .map((m, idx) => {
+      const mine = tasks.filter(t => isActive(t) && t.assignees.some(a => a.id === m.id));
+      return {
+        member: m, idx,
+        total:      mine.length,
+        inProgress: mine.filter(t => t.status === 'in_progress').length,
+        pending:    mine.filter(t => t.status === 'pending').length,
+        blocked:    mine.filter(t => t.status === 'blocked').length,
+      };
+    })
+    .filter(w => w.total > 0)
+    .sort((a, b) => b.total - a.total);
+
+  const maxWorkload = workload[0]?.total ?? 1;
 
   // Feed — group by project, 3 entries max per project
   const logsByProject = new Map<string, CrossProjectLog[]>();
@@ -326,9 +413,14 @@ export function HomePage() {
     return (
       <div className="space-y-5">
         <div className="glass-indigo rounded-2xl h-24 animate-pulse" />
+        <div className="glass-white rounded-2xl h-12 animate-pulse" />
+        <div className="glass-white rounded-2xl h-28 animate-pulse" />
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
-          <div className="glass-white rounded-2xl h-96 animate-pulse" />
-          <div className="glass-white rounded-2xl h-96 animate-pulse" />
+          <div className="glass-white rounded-2xl h-[500px] animate-pulse" />
+          <div className="space-y-5">
+            <div className="glass-white rounded-2xl h-48 animate-pulse" />
+            <div className="glass-white rounded-2xl h-64 animate-pulse" />
+          </div>
         </div>
       </div>
     );
@@ -348,28 +440,135 @@ export function HomePage() {
           </div>
 
           {tasks.length > 0 && (
-            <div className="flex items-center gap-2.5 flex-wrap">
-              {/* In Progress */}
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/60 border border-blue-200/60 shadow-sm">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/60 border border-blue-200/60 shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
                 <span className="text-sm font-bold text-blue-800 tabular-nums">{inProgressAll}</span>
-                <span className="text-xs text-blue-600 font-medium">In Progress</span>
+                <span className="text-xs text-blue-600 font-medium hidden sm:inline">In Progress</span>
               </div>
-              {/* To-do */}
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/60 border border-amber-200/60 shadow-sm">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/60 border border-amber-200/60 shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
                 <span className="text-sm font-bold text-amber-800 tabular-nums">{pendingAll}</span>
-                <span className="text-xs text-amber-600 font-medium">To-do</span>
+                <span className="text-xs text-amber-600 font-medium hidden sm:inline">To-do</span>
               </div>
-              {/* Done */}
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/60 border border-emerald-200/60 shadow-sm">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/60 border border-emerald-200/60 shadow-sm">
                 <TrendingUp className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
                 <span className="text-sm font-bold text-emerald-800 tabular-nums">{doneAll}</span>
-                <span className="text-xs text-emerald-600 font-medium">Done</span>
+                <span className="text-xs text-emerald-600 font-medium hidden sm:inline">Done</span>
               </div>
+              {overdueAll > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50/80 border border-red-300/70 shadow-sm">
+                  <AlertTriangle className="h-3.5 w-3.5 text-red-600 flex-shrink-0" />
+                  <span className="text-sm font-bold text-red-800 tabular-nums">{overdueAll}</span>
+                  <span className="text-xs text-red-600 font-medium hidden sm:inline">Overdue</span>
+                </div>
+              )}
+              {blockedAll > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50/80 border border-rose-300/70 shadow-sm">
+                  <Ban className="h-3.5 w-3.5 text-rose-600 flex-shrink-0" />
+                  <span className="text-sm font-bold text-rose-800 tabular-nums">{blockedAll}</span>
+                  <span className="text-xs text-rose-600 font-medium hidden sm:inline">Blocked</span>
+                </div>
+              )}
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── Project Pipeline ──────────────────────────────────────────────── */}
+      {Object.keys(pipeline).length > 0 && (
+        <div className="glass-white px-5 py-3.5">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <div className="p-1 rounded-md bg-slate-100">
+                <GitMerge className="h-3.5 w-3.5 text-slate-500" />
+              </div>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Pipeline</span>
+            </div>
+            <div className="w-px h-4 bg-slate-200 hidden sm:block" />
+            <div className="flex items-center gap-2 flex-wrap">
+              {PIPELINE_ORDER.map(status => {
+                const count = pipeline[status];
+                if (!count) return null;
+                return (
+                  <div key={status} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium ${PIPELINE_COLORS[status]}`}>
+                    <span className="font-bold tabular-nums">{count}</span>
+                    <span className="opacity-80">{status}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <Link to="/projects" className="ml-auto flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors flex-shrink-0">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* ── Recent Quotes ─────────────────────────────────────────────────── */}
+      <div className="glass-white overflow-hidden p-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100/80">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-indigo-100">
+              <FolderOpen className="h-4 w-4 text-indigo-600" />
+            </div>
+            <h2 className="text-base font-semibold text-slate-900">Recent Quotes</h2>
+            {recentQuotes.length > 0 && (
+              <span className="text-xs font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                {recentQuotes.length}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => navigate('/projects')}
+            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+          >
+            View all
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        {recentQuotes.length === 0 ? (
+          <div className="py-10 text-center text-slate-400">
+            <FolderOpen className="h-8 w-8 mx-auto mb-2 opacity-20" />
+            <p className="text-sm font-medium">No quotes yet</p>
+          </div>
+        ) : (
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+            {recentQuotes.map(q => (
+              <div
+                key={q.id}
+                onClick={() => navigate(`/projects/${q.project_id}/quotations/${q.id}`)}
+                className="group p-4 rounded-xl border border-slate-200/60 hover:border-blue-400/60 hover:shadow-md cursor-pointer transition-all bg-white/60 backdrop-blur-sm"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-slate-900 truncate flex-1 mr-2 leading-snug">
+                    {q.name}
+                  </h3>
+                  <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 transition-colors flex-shrink-0 mt-0.5" />
+                </div>
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${QUOTE_STATUS_COLORS[q.status] ?? 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+                    {q.status}
+                  </span>
+                  {q.project_type && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                      {q.project_type}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-slate-400">
+                    {new Date(q.quote_date).toLocaleDateString()}
+                  </span>
+                  <span className="text-sm font-bold text-slate-900">
+                    {formatCurrency(q.total_amount / (exchangeRate || 1), 'USD')}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Main grid ─────────────────────────────────────────────────────── */}
@@ -449,6 +648,24 @@ export function HomePage() {
 
               {/* Subsections */}
               <div className="p-4 space-y-3">
+                {overdueTasks.length > 0 && (
+                  <TaskSubsection
+                    variant="red"
+                    title="Overdue"
+                    tasks={overdueTasks}
+                    onNavigate={task => navigate(`/projects/${task.project_id}`)}
+                    onStatusChange={handleStatusChange}
+                  />
+                )}
+                {blockedTasks.length > 0 && (
+                  <TaskSubsection
+                    variant="rose"
+                    title="Blocked"
+                    tasks={blockedTasks}
+                    onNavigate={task => navigate(`/projects/${task.project_id}`)}
+                    onStatusChange={handleStatusChange}
+                  />
+                )}
                 <TaskSubsection
                   variant="blue"
                   title="Working on it"
@@ -463,6 +680,15 @@ export function HomePage() {
                   onNavigate={task => navigate(`/projects/${task.project_id}`)}
                   onStatusChange={handleStatusChange}
                 />
+                {upcomingTasks.length > 0 && (
+                  <TaskSubsection
+                    variant="purple"
+                    title="Due in 7 days"
+                    tasks={upcomingTasks}
+                    onNavigate={task => navigate(`/projects/${task.project_id}`)}
+                    onStatusChange={handleStatusChange}
+                  />
+                )}
 
                 {/* Done — collapsible */}
                 <div className="rounded-xl border bg-emerald-50/50 border-emerald-100/80 overflow-hidden">
@@ -516,7 +742,53 @@ export function HomePage() {
           )}
         </div>
 
-        {/* ── Feed column ───────────────────────────────────────────────── */}
+        {/* ── Right column ──────────────────────────────────────────────── */}
+        <div className="flex flex-col gap-5">
+
+        {/* Team Workload */}
+        <div className="glass-white overflow-hidden p-0">
+          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100/80">
+            <div className="p-1.5 rounded-lg bg-teal-100">
+              <Users className="h-4 w-4 text-teal-600" />
+            </div>
+            <h2 className="text-base font-semibold text-slate-900">Team Workload</h2>
+          </div>
+          {workload.length === 0 ? (
+            <div className="py-10 text-center text-slate-400">
+              <Users className="h-8 w-8 mx-auto mb-2 opacity-20" />
+              <p className="text-sm font-medium">No active tasks assigned</p>
+            </div>
+          ) : (
+            <div className="p-4 space-y-3">
+              {workload.map(({ member, idx, total, inProgress, pending, blocked: bk }) => (
+                <div key={member.id} className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${AVATAR_COLORS[idx % AVATAR_COLORS.length]}`}>
+                    {getInitials(member.name)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-medium text-slate-700 truncate">{member.name.split(' ')[0]}</span>
+                      <span className="text-xs font-bold text-slate-500 tabular-nums ml-2 flex-shrink-0">{total}</span>
+                    </div>
+                    {/* Stacked mini bar */}
+                    <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden flex">
+                      <div className="bg-blue-500 transition-all" style={{ width: `${(inProgress / maxWorkload) * 100}%` }} />
+                      <div className="bg-amber-400 transition-all" style={{ width: `${(pending / maxWorkload) * 100}%` }} />
+                      {bk > 0 && <div className="bg-rose-500 transition-all" style={{ width: `${(bk / maxWorkload) * 100}%` }} />}
+                    </div>
+                    <div className="flex items-center gap-3 mt-1">
+                      {inProgress > 0 && <span className="text-[10px] text-blue-600 font-medium">{inProgress} in progress</span>}
+                      {pending > 0   && <span className="text-[10px] text-amber-600 font-medium">{pending} pending</span>}
+                      {bk > 0        && <span className="text-[10px] text-rose-600 font-medium">{bk} blocked</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Feed */}
         <div className="glass-white overflow-hidden p-0">
           {/* Header */}
           <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100/80">
@@ -610,6 +882,8 @@ export function HomePage() {
             </div>
           )}
         </div>
+
+        </div>{/* end right column */}
       </div>
     </div>
   );

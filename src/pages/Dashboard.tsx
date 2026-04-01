@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  FolderOpen,
   DollarSign,
   Package,
   TrendingUp,
@@ -11,7 +10,6 @@ import {
   XCircle,
   BarChart3,
   Tag,
-  ArrowRight,
   RefreshCw,
   AlertTriangle
 } from 'lucide-react';
@@ -31,17 +29,6 @@ interface DashboardStats {
   wonValue: number;
   totalProducts: number;
   totalPriceItems: number;
-}
-
-interface RecentProject {
-  id: string;
-  project_id: string;
-  name: string;
-  quote_date: string;
-  total_amount: number;
-  status: string;
-  project_type: string;
-  updated_at: string;
 }
 
 interface ProjectTypeStats {
@@ -99,7 +86,6 @@ export function Dashboard() {
   });
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [projectTypeStats, setProjectTypeStats] = useState<ProjectTypeStats[]>([]);
-  const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
   const [topCabinets, setTopCabinets] = useState<TopCabinet[]>([]);
   const [doorMaterialTrends, setDoorMaterialTrends] = useState<MaterialTrend[]>([]);
   const [boxMaterialTrends, setBoxMaterialTrends] = useState<MaterialTrend[]>([]);
@@ -145,15 +131,10 @@ export function Dashboard() {
   async function loadStats() {
     try {
       setError(null);
-      const [projectsRes, productsRes, pricesRes, recentRes] = await Promise.all([
+      const [projectsRes, productsRes, pricesRes] = await Promise.all([
         supabase.from('quotations').select('status, total_amount, quote_date, project_type'),
         supabase.from('products_catalog').select('id', { count: 'exact', head: true }),
         supabase.from('price_list').select('id', { count: 'exact', head: true }),
-        supabase
-          .from('quotations')
-          .select('id, project_id, name, quote_date, total_amount, status, project_type, updated_at')
-          .order('updated_at', { ascending: false })
-          .limit(5),
       ]);
 
       const projects = projectsRes.data || [];
@@ -250,7 +231,6 @@ export function Dashboard() {
 
       setProjectTypeStats(Array.from(typeStatsMap.values()).filter(stat => stat.totalProjects > 0));
 
-      setRecentProjects(recentRes.data || []);
       setLastRefreshTime(new Date());
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -645,82 +625,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="mb-6 glass-white p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <FolderOpen className="h-5 w-5 text-blue-600 mr-2" />
-            <h2 className="text-lg font-semibold text-slate-900">Recent Quotes</h2>
-          </div>
-          <button
-            onClick={() => navigate('/projects')}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center"
-          >
-            View all
-            <ArrowRight className="h-4 w-4 ml-1" />
-          </button>
-        </div>
-        {recentProjects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {recentProjects.map((project) => {
-              const statusColors: Record<string, string> = {
-                'Awarded': 'bg-green-100 text-green-700 border-green-200',
-                'Pending': 'bg-blue-100 text-blue-700 border-blue-200',
-                'Estimating': 'bg-orange-100 text-orange-700 border-orange-200',
-                'Sent': 'bg-cyan-100 text-cyan-700 border-cyan-200',
-                'Lost': 'bg-red-100 text-red-700 border-red-200',
-                'Discarded': 'bg-slate-100 text-slate-600 border-slate-200',
-                'Cancelled': 'bg-gray-100 text-gray-600 border-gray-200',
-              };
-
-              return (
-                <div
-                  key={project.id}
-                  onClick={() => navigate(`/projects/${project.project_id}/quotations/${project.id}`)}
-                  className="group p-4 rounded-xl border border-slate-200/60 hover:border-blue-400/60 hover:shadow-md cursor-pointer transition-all glass-white"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-sm font-semibold text-slate-900 truncate flex-1 mr-2">
-                      {project.name}
-                    </h3>
-                    <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-blue-600 transition-colors flex-shrink-0" />
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium capitalize border ${
-                        statusColors[project.status] || 'bg-slate-100 text-slate-700 border-slate-200'
-                      }`}
-                    >
-                      {project.status}
-                    </span>
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                      {project.project_type}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-500">
-                      {new Date(project.quote_date).toLocaleDateString()}
-                    </span>
-                    <span className="text-sm font-bold text-slate-900">
-                      {formatCurrency(project.total_amount / exchangeRate, 'USD')}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-12 text-slate-500">
-            <FolderOpen className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-            <p className="text-sm">No quotes yet</p>
-            <button
-              onClick={() => navigate('/projects')}
-              className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Create your first quote
-            </button>
-          </div>
-        )}
-      </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {statCards.map((card) => {
