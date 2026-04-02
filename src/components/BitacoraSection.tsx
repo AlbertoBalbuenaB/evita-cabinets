@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useCurrentMember } from '../lib/useCurrentMember';
 import {
   ScrollText, Trash2, Pencil, X, Check, Bold, Italic, Underline as UnderlineIcon,
-  List, ListOrdered, CheckCircle2, AlertTriangle, Star, Lightbulb,
-  ArrowRightCircle, Filter, Clock, Folder, FileText, Package, DollarSign,
+  List, ListOrdered, AlertTriangle, RefreshCw, CheckCircle, XCircle, Trophy, Radio,
+  Filter, Clock, Folder, FileText, Package, DollarSign,
   Heading1, Heading2, Heading3, Type, Link2, Link2Off, User,
   CornerDownRight, MessageSquare
 } from 'lucide-react';
@@ -30,7 +30,7 @@ import type { ProjectLog, ProjectLogReply, TeamMember } from '../types';
 // Log type system
 // ---------------------------------------------------------------------------
 
-type LogType = 'note' | 'change_request' | 'approved_change' | 'decision' | 'error' | 'achievement';
+type LogType = 'note' | 'change' | 'decision' | 'risk' | 'issue' | 'milestone' | 'update';
 
 interface LogTypeConfig {
   label: string;
@@ -43,15 +43,16 @@ interface LogTypeConfig {
 }
 
 const LOG_TYPES: Record<LogType, LogTypeConfig> = {
-  note:            { label: 'Note',            Icon: ScrollText,       color: 'text-slate-600',   bg: 'bg-slate-50',    border: 'border-slate-300',  badgeBg: 'bg-slate-100' },
-  change_request:  { label: 'Change Request',  Icon: ArrowRightCircle, color: 'text-blue-600',    bg: 'bg-blue-50',     border: 'border-blue-400',   badgeBg: 'bg-blue-100'  },
-  approved_change: { label: 'Approved Change', Icon: CheckCircle2,     color: 'text-green-600',   bg: 'bg-green-50',    border: 'border-green-400',  badgeBg: 'bg-green-100' },
-  decision:        { label: 'Decision',        Icon: Lightbulb,        color: 'text-amber-600',   bg: 'bg-amber-50',    border: 'border-amber-400',  badgeBg: 'bg-amber-100' },
-  error:           { label: 'Error',           Icon: AlertTriangle,    color: 'text-red-600',     bg: 'bg-red-50',      border: 'border-red-400',    badgeBg: 'bg-red-100'   },
-  achievement:     { label: 'Achievement',     Icon: Star,             color: 'text-emerald-600', bg: 'bg-emerald-50',  border: 'border-emerald-400',badgeBg: 'bg-emerald-100'},
+  note:      { label: 'Note',      Icon: FileText,       color: 'text-slate-600',  bg: 'bg-slate-50',   border: 'border-slate-300',  badgeBg: 'bg-slate-100'  },
+  change:    { label: 'Change',    Icon: RefreshCw,      color: 'text-amber-600',  bg: 'bg-amber-50',   border: 'border-amber-400',  badgeBg: 'bg-amber-100'  },
+  decision:  { label: 'Decision',  Icon: CheckCircle,    color: 'text-blue-600',   bg: 'bg-blue-50',    border: 'border-blue-400',   badgeBg: 'bg-blue-100'   },
+  risk:      { label: 'Risk',      Icon: AlertTriangle,  color: 'text-orange-600', bg: 'bg-orange-50',  border: 'border-orange-400', badgeBg: 'bg-orange-100' },
+  issue:     { label: 'Issue',     Icon: XCircle,        color: 'text-red-600',    bg: 'bg-red-50',     border: 'border-red-400',    badgeBg: 'bg-red-100'    },
+  milestone: { label: 'Milestone', Icon: Trophy,         color: 'text-green-600',  bg: 'bg-green-50',   border: 'border-green-400',  badgeBg: 'bg-green-100'  },
+  update:    { label: 'Update',    Icon: Radio,          color: 'text-purple-600', bg: 'bg-purple-50',  border: 'border-purple-400', badgeBg: 'bg-purple-100' },
 };
 
-const LOG_TYPE_ORDER: LogType[] = ['note', 'change_request', 'approved_change', 'decision', 'error', 'achievement'];
+const LOG_TYPE_ORDER: LogType[] = ['note', 'change', 'decision', 'risk', 'issue', 'milestone', 'update'];
 
 // ---------------------------------------------------------------------------
 // Mention item types
