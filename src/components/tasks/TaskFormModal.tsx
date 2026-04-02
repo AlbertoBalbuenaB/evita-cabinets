@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../Button';
@@ -76,7 +77,7 @@ export function TaskFormModal({
 
   const activeMembers = teamMembers.filter((m) => m.is_active);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
       <div className="bg-white/85 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/70 w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
@@ -194,6 +195,7 @@ export function TaskFormModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

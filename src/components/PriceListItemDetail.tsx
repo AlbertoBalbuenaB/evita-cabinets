@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X, Pencil as Edit2, ExternalLink, Tag, Layers, Ruler,
   Grid2x2 as Grid, Hash, Clock, TrendingUp, TrendingDown, Minus, Calendar,
@@ -91,7 +92,7 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
 
   const hasSpecs = !!(item.material || item.dimensions || item.sf_per_sheet != null || item.sku_code);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 md:flex md:items-center md:justify-center md:p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
@@ -334,6 +335,7 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

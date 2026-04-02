@@ -1,4 +1,5 @@
 import { ReactNode, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from './Button';
 
@@ -32,7 +33,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     xl: 'max-w-6xl',
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-2 sm:p-4">
         <div
@@ -59,6 +60,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
