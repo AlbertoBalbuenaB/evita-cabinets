@@ -179,12 +179,15 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
     // Notify newly assigned users
     const newAssignees = assigneeIds.filter((id) => !initialAssigneeIds.current.includes(id));
     if (newAssignees.length) {
+      const statusLabel = TASK_STATUS_CONFIG[status]?.label || status;
+      const priorityLabel = TASK_PRIORITY_CONFIG[priority]?.label || priority;
       createNotifications({
         recipientIds: newAssignees,
         actorId: currentMember?.id ?? null,
         actorName: currentMember?.name ?? null,
         type: 'task_assigned',
         title: `Assigned to: ${title.trim()}`,
+        body: `${statusLabel} · ${priorityLabel}${dueDate ? ` · Due: ${new Date(dueDate).toLocaleDateString()}` : ''}`,
         projectId,
         referenceType: 'project_task',
         referenceId: task.id,

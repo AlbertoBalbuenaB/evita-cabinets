@@ -68,12 +68,14 @@ export function TaskFormModal({
     if (data) {
       // Notify assigned users
       if (assigneeIds.length) {
+        const priorityLabel = TASK_PRIORITY_CONFIG[priority]?.label || priority;
         createNotifications({
           recipientIds: assigneeIds,
           actorId: currentMemberId ?? null,
           actorName: null,
           type: 'task_assigned',
           title: `Assigned to: ${title.trim()}`,
+          body: `Pending · ${priorityLabel}${dueDate ? ` · Due: ${new Date(dueDate).toLocaleDateString()}` : ''}`,
           projectId,
           referenceType: 'project_task',
           referenceId: data.id,
