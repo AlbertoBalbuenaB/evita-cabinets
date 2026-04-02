@@ -287,12 +287,14 @@ export function TaskComments({ taskId, projectId, comments, teamMembers, onChang
       onChange([...comments, newComment]);
 
       // Notify mentioned users/departments
+      const plainBody = html.replace(/<[^>]*>/g, '').trim().slice(0, 150);
       notifyMentions({
         content: editorJson,
         actorId: authorId,
         actorName: authorName_,
         type: 'mention_task_comment',
         title: 'Mentioned you in a task comment',
+        body: plainBody || null,
         projectId,
         referenceType: 'task_comment',
         referenceId: data.id,
@@ -327,12 +329,14 @@ export function TaskComments({ taskId, projectId, comments, teamMembers, onChang
       );
       setReplyingTo(null);
 
+      const replyPlainBody = html.replace(/<[^>]*>/g, '').trim().slice(0, 150);
       notifyMentions({
         content: editorJson,
         actorId: authorId,
         actorName: authorName_,
         type: 'mention_task_comment_reply',
         title: 'Mentioned you in a task reply',
+        body: replyPlainBody || null,
         projectId,
         referenceType: 'task_comment_reply',
         referenceId: data.id,

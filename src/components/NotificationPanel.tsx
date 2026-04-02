@@ -186,9 +186,9 @@ export function NotificationPanel({ open, onClose }: Props) {
                       <div className="flex items-start gap-2">
                         <p className={`text-[13px] leading-snug ${isUnread ? 'font-semibold text-slate-900' : 'font-medium text-slate-600'}`}>
                           {n.actor_name ? (
-                            <><span className="text-indigo-600">{n.actor_name}</span> {getActionLabel(n.type)}</>
+                            <><span className="text-indigo-600">{n.actor_name}</span>{' '}{getActionLabel(n.type)}</>
                           ) : (
-                            n.title
+                            getActionLabel(n.type)
                           )}
                         </p>
                         {isUnread && (
@@ -196,22 +196,22 @@ export function NotificationPanel({ open, onClose }: Props) {
                         )}
                       </div>
 
-                      {/* Title detail (task name or log preview) */}
-                      {n.title && n.actor_name && (
-                        <p className={`text-xs mt-0.5 leading-snug ${isUnread ? 'text-slate-700' : 'text-slate-500'}`}>
+                      {/* Title (task name, log title, etc.) */}
+                      {n.title && (
+                        <p className={`text-xs mt-0.5 leading-snug font-medium truncate ${isUnread ? 'text-slate-800' : 'text-slate-500'}`}>
                           {n.title}
                         </p>
                       )}
 
-                      {/* Body preview */}
+                      {/* Body detail (status/priority for tasks, content preview for logs) */}
                       {n.body && (
-                        <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">{n.body}</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">{n.body}</p>
                       )}
 
                       {/* Footer: project name + time */}
-                      <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         {n.project_name && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-500 bg-indigo-50/60 px-1.5 py-0.5 rounded">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-600/80 bg-indigo-50/70 px-1.5 py-0.5 rounded-md border border-indigo-100/50">
                             <FolderOpen className="h-2.5 w-2.5" />
                             {n.project_name}
                           </span>

@@ -24,7 +24,7 @@ import { supabase } from '../lib/supabase';
 import { Button } from './Button';
 import { format } from 'date-fns';
 import type { ProjectLog, ProjectLogReply, TeamMember } from '../types';
-import { notifyMentions } from '../lib/notifications';
+import { notifyMentions, extractPlainText } from '../lib/notifications';
 
 
 // ---------------------------------------------------------------------------
@@ -657,12 +657,14 @@ function LogEntry({ log, replies, teamMembers, getMentionItems, projectId, onEdi
       }).select('id').single();
 
       if (inserted) {
+        const preview = extractPlainText(content, 120);
         notifyMentions({
           content,
           actorId: authorId,
           actorName: authorName,
           type: 'mention_log_reply',
           title: 'Mentioned you in a log reply',
+          body: preview || null,
           projectId,
           referenceType: 'project_log_reply',
           referenceId: inserted.id,
@@ -1089,12 +1091,15 @@ export function BitacoraSection({ projectId }: Props) {
 
       // Notify mentioned users/departments
       if (inserted) {
+        const logLabel = LOG_TYPES[logType]?.label || logType;
+        const preview = extractPlainText(content, 120);
         notifyMentions({
           content,
           actorId: authorId,
           actorName: authorName,
           type: 'mention_log',
-          title: 'Mentioned you in a log entry',
+          title: `Mentioned you in a ${logLabel} entry`,
+          body: preview || null,
           projectId,
           referenceType: 'project_log',
           referenceId: inserted.id,

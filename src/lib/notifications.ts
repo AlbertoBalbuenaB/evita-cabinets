@@ -41,6 +41,30 @@ export function extractMentionIds(doc: unknown): MentionIds {
 }
 
 // ---------------------------------------------------------------------------
+// Extract plain text from TipTap JSON document
+// ---------------------------------------------------------------------------
+
+export function extractPlainText(doc: unknown, maxLen = 150): string {
+  const parts: string[] = [];
+
+  function traverse(node: any) {
+    if (!node) return;
+    if (node.type === 'text' && node.text) parts.push(node.text);
+    if (node.type === 'mention' && node.attrs?.label) parts.push(`@${node.attrs.label}`);
+    if (Array.isArray(node.content)) node.content.forEach(traverse);
+  }
+
+  if (typeof doc === 'string') {
+    try { traverse(JSON.parse(doc)); } catch { return doc.slice(0, maxLen); }
+  } else {
+    traverse(doc);
+  }
+
+  const text = parts.join('').trim();
+  return text.length > maxLen ? text.slice(0, maxLen) + '…' : text;
+}
+
+// ---------------------------------------------------------------------------
 // Resolve department → member IDs
 // ---------------------------------------------------------------------------
 
