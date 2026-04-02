@@ -529,6 +529,7 @@ interface ReplyEditorProps {
 }
 
 function ReplyEditor({ getMentionItems, onSubmit, onCancel, disabled }: ReplyEditorProps) {
+  const [isEmpty, setIsEmpty] = useState(true);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: false, blockquote: false, codeBlock: false }),
@@ -541,13 +542,16 @@ function ReplyEditor({ getMentionItems, onSubmit, onCancel, disabled }: ReplyEdi
         class: 'prose prose-sm max-w-none focus:outline-none min-h-[48px] px-2.5 py-2 text-xs text-slate-700',
       },
     },
+    onCreate: ({ editor: e }) => setIsEmpty(e.getText().trim() === ''),
+    onUpdate: ({ editor: e }) => setIsEmpty(e.getText().trim() === ''),
   });
 
   function handleSubmit() {
-    if (!editor || editor.isEmpty) return;
+    if (!editor || isEmpty) return;
     const json = editor.getJSON();
     onSubmit(JSON.stringify(json));
     editor.commands.clearContent();
+    setIsEmpty(true);
   }
 
   return (
@@ -562,7 +566,7 @@ function ReplyEditor({ getMentionItems, onSubmit, onCancel, disabled }: ReplyEdi
         <EditorContent editor={editor} />
       </div>
       <div className="flex items-center gap-2 flex-wrap">
-        <Button size="sm" onClick={handleSubmit} disabled={disabled || !editor || editor.isEmpty}>
+        <Button size="sm" onClick={handleSubmit} disabled={disabled || isEmpty}>
           {disabled ? 'Posting…' : 'Post Reply'}
         </Button>
         <Button size="sm" variant="ghost" onClick={onCancel}>
@@ -587,6 +591,8 @@ interface LogEntryProps {
   onEdit: () => void;
   onDelete: () => void;
   onReplyAdded: (reply: ProjectLogReply) => void;
+  onReplyUpdated: (reply: ProjectLogReply) => void;
+  onReplyDeleted: (replyId: string) => void;
 }
 
 function AuthorAvatar({ name, className = '' }: { name: string; className?: string }) {
@@ -598,7 +604,7 @@ function AuthorAvatar({ name, className = '' }: { name: string; className?: stri
   );
 }
 
-function LogEntry({ log, replies, teamMembers, getMentionItems, projectId, onEdit, onDelete, onReplyAdded }: LogEntryProps) {
+function LogEntry({ log, replies, teamMembers, getMentionItems, projectId, onEdit, onDelete, onReplyAdded, onReplyUpdated, onReplyDeleted }: LogEntryProps) {
   const navigate = useNavigate();
   const { member: currentMember } = useCurrentMember();
   const logType = (log.log_type as LogType) || 'note';
@@ -607,6 +613,7 @@ function LogEntry({ log, replies, teamMembers, getMentionItems, projectId, onEdi
 
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [postingReply, setPostingReply] = useState(false);
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
 
   const htmlContent = useMemo(() => renderContent(log.comment), [log.comment]);
 
@@ -674,6 +681,28 @@ function LogEntry({ log, replies, teamMembers, getMentionItems, projectId, onEdi
       console.error('Error posting reply:', err);
     } finally {
       setPostingReply(false);
+    }
+  }
+
+  async function handleDeleteReply(replyId: string) {
+    onReplyDeleted(replyId);
+    try {
+      await supabase.from('project_log_replies').delete().eq('id', replyId);
+    } catch (err) {
+      console.error('Error deleting reply:', err);
+    }
+  }
+
+  async function handleEditReply(replyId: string, newContent: string) {
+    setEditingReplyId(null);
+    const updated = replies.find((r) => r.id === replyId);
+    if (updated) {
+      onReplyUpdated({ ...updated, comment: newContent });
+    }
+    try {
+      await supabase.from('project_log_replies').update({ comment: newContent }).eq('id', replyId);
+    } catch (err) {
+      console.error('Error updating reply:', err);
     }
   }
 
@@ -749,27 +778,63 @@ function LogEntry({ log, replies, teamMembers, getMentionItems, projectId, onEdi
             </div>
           )}
 
-          {replies.map((reply) => (
-            <div key={reply.id} className="flex gap-2.5 pl-1">
-              <div className="flex-shrink-0 mt-0.5">
-                {reply.author_name
-                  ? <AuthorAvatar name={reply.author_name} className="w-5 h-5" />
-                  : <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center"><User className="h-2.5 w-2.5 text-slate-400" /></div>
-                }
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="text-xs font-medium text-slate-700">{reply.author_name ?? 'Anonymous'}</span>
-                  <span className="text-[10px] text-slate-400">{formatShortTimestamp(reply.created_at)}</span>
+          {replies.map((reply) => {
+            const isOwnReply = currentMember && reply.author_id === currentMember.id;
+            const isEditing = editingReplyId === reply.id;
+
+            if (isEditing) {
+              return (
+                <div key={reply.id} className="pl-1 pt-1">
+                  <p className="text-[10px] text-slate-400 mb-1">Editing reply</p>
+                  <ReplyEditor
+                    getMentionItems={getMentionItems}
+                    onSubmit={(content) => handleEditReply(reply.id, content)}
+                    onCancel={() => setEditingReplyId(null)}
+                  />
                 </div>
-                {isRichContent(reply.comment) ? (
-                  <div className="text-xs text-slate-600 mt-0.5 prose prose-sm max-w-none [&_.mention-link]:text-purple-600 [&_.mention-link]:no-underline" dangerouslySetInnerHTML={{ __html: renderContent(reply.comment) }} />
-                ) : (
-                  <p className="text-xs text-slate-600 mt-0.5 whitespace-pre-wrap">{reply.comment}</p>
-                )}
+              );
+            }
+
+            return (
+              <div key={reply.id} className="flex gap-2.5 pl-1 group/reply">
+                <div className="flex-shrink-0 mt-0.5">
+                  {reply.author_name
+                    ? <AuthorAvatar name={reply.author_name} className="w-5 h-5" />
+                    : <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center"><User className="h-2.5 w-2.5 text-slate-400" /></div>
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-medium text-slate-700">{reply.author_name ?? 'Anonymous'}</span>
+                    <span className="text-[10px] text-slate-400">{formatShortTimestamp(reply.created_at)}</span>
+                    {isOwnReply && (
+                      <span className="flex items-center gap-1 opacity-0 group-hover/reply:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => setEditingReplyId(reply.id)}
+                          className="text-slate-400 hover:text-blue-600 p-0.5 rounded"
+                          title="Edit reply"
+                        >
+                          <Pencil className="h-2.5 w-2.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteReply(reply.id)}
+                          className="text-slate-400 hover:text-red-500 p-0.5 rounded"
+                          title="Delete reply"
+                        >
+                          <Trash2 className="h-2.5 w-2.5" />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                  {isRichContent(reply.comment) ? (
+                    <div className="text-xs text-slate-600 mt-0.5 prose prose-sm max-w-none [&_.mention-link]:text-purple-600 [&_.mention-link]:no-underline" dangerouslySetInnerHTML={{ __html: renderContent(reply.comment) }} />
+                  ) : (
+                    <p className="text-xs text-slate-600 mt-0.5 whitespace-pre-wrap">{reply.comment}</p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {showReplyForm && (
             <div className="flex gap-2.5 pl-1 pt-1">
@@ -1151,6 +1216,20 @@ export function BitacoraSection({ projectId }: Props) {
     }));
   }
 
+  function handleReplyUpdated(logId: string, reply: ProjectLogReply) {
+    setRepliesByLog((prev) => ({
+      ...prev,
+      [logId]: (prev[logId] ?? []).map((r) => r.id === reply.id ? reply : r),
+    }));
+  }
+
+  function handleReplyDeleted(logId: string, replyId: string) {
+    setRepliesByLog((prev) => ({
+      ...prev,
+      [logId]: (prev[logId] ?? []).filter((r) => r.id !== replyId),
+    }));
+  }
+
   const filteredLogs = filterType === 'all' ? logs : logs.filter((l) => (l.log_type || 'note') === filterType);
 
   if (loading) {
@@ -1255,6 +1334,8 @@ export function BitacoraSection({ projectId }: Props) {
                 onEdit={() => setEditingId(log.id)}
                 onDelete={() => deleteLog(log.id)}
                 onReplyAdded={(reply) => handleReplyAdded(log.id, reply)}
+                onReplyUpdated={(reply) => handleReplyUpdated(log.id, reply)}
+                onReplyDeleted={(replyId) => handleReplyDeleted(log.id, replyId)}
               />
             )
           )}
