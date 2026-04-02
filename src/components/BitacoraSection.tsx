@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useCurrentMember } from '../lib/useCurrentMember';
 import {
   ScrollText, Trash2, Pencil, X, Check, Bold, Italic, Underline as UnderlineIcon,
-  List, ListOrdered, CheckCircle2, AlertTriangle, Star, Lightbulb,
-  ArrowRightCircle, Filter, Clock, Folder, FileText, Package, DollarSign,
-  Heading1, Heading2, Heading3, Type, Link2, Link2Off, User, ChevronDown,
+  List, ListOrdered, AlertTriangle, RefreshCw, CheckCircle, XCircle, Trophy, Radio,
+  Filter, Clock, Folder, FileText, Package, DollarSign, Users,
+  Heading1, Heading2, Heading3, Type, Link2, Link2Off, User,
   CornerDownRight, MessageSquare
 } from 'lucide-react';
 import { useEditor, EditorContent, ReactRenderer } from '@tiptap/react';
@@ -25,13 +25,12 @@ import { Button } from './Button';
 import { format } from 'date-fns';
 import type { ProjectLog, ProjectLogReply, TeamMember } from '../types';
 
-const AUTHOR_STORAGE_KEY = 'bitacora_author';
 
 // ---------------------------------------------------------------------------
 // Log type system
 // ---------------------------------------------------------------------------
 
-type LogType = 'note' | 'change_request' | 'approved_change' | 'decision' | 'error' | 'achievement';
+type LogType = 'note' | 'change' | 'decision' | 'risk' | 'issue' | 'milestone' | 'update';
 
 interface LogTypeConfig {
   label: string;
@@ -44,24 +43,25 @@ interface LogTypeConfig {
 }
 
 const LOG_TYPES: Record<LogType, LogTypeConfig> = {
-  note:            { label: 'Note',            Icon: ScrollText,       color: 'text-slate-600',   bg: 'bg-slate-50',    border: 'border-slate-300',  badgeBg: 'bg-slate-100' },
-  change_request:  { label: 'Change Request',  Icon: ArrowRightCircle, color: 'text-blue-600',    bg: 'bg-blue-50',     border: 'border-blue-400',   badgeBg: 'bg-blue-100'  },
-  approved_change: { label: 'Approved Change', Icon: CheckCircle2,     color: 'text-green-600',   bg: 'bg-green-50',    border: 'border-green-400',  badgeBg: 'bg-green-100' },
-  decision:        { label: 'Decision',        Icon: Lightbulb,        color: 'text-amber-600',   bg: 'bg-amber-50',    border: 'border-amber-400',  badgeBg: 'bg-amber-100' },
-  error:           { label: 'Error',           Icon: AlertTriangle,    color: 'text-red-600',     bg: 'bg-red-50',      border: 'border-red-400',    badgeBg: 'bg-red-100'   },
-  achievement:     { label: 'Achievement',     Icon: Star,             color: 'text-emerald-600', bg: 'bg-emerald-50',  border: 'border-emerald-400',badgeBg: 'bg-emerald-100'},
+  note:      { label: 'Note',      Icon: FileText,       color: 'text-slate-600',  bg: 'bg-slate-50',   border: 'border-slate-300',  badgeBg: 'bg-slate-100'  },
+  change:    { label: 'Change',    Icon: RefreshCw,      color: 'text-amber-600',  bg: 'bg-amber-50',   border: 'border-amber-400',  badgeBg: 'bg-amber-100'  },
+  decision:  { label: 'Decision',  Icon: CheckCircle,    color: 'text-blue-600',   bg: 'bg-blue-50',    border: 'border-blue-400',   badgeBg: 'bg-blue-100'   },
+  risk:      { label: 'Risk',      Icon: AlertTriangle,  color: 'text-orange-600', bg: 'bg-orange-50',  border: 'border-orange-400', badgeBg: 'bg-orange-100' },
+  issue:     { label: 'Issue',     Icon: XCircle,        color: 'text-red-600',    bg: 'bg-red-50',     border: 'border-red-400',    badgeBg: 'bg-red-100'    },
+  milestone: { label: 'Milestone', Icon: Trophy,         color: 'text-green-600',  bg: 'bg-green-50',   border: 'border-green-400',  badgeBg: 'bg-green-100'  },
+  update:    { label: 'Update',    Icon: Radio,          color: 'text-purple-600', bg: 'bg-purple-50',  border: 'border-purple-400', badgeBg: 'bg-purple-100' },
 };
 
-const LOG_TYPE_ORDER: LogType[] = ['note', 'change_request', 'approved_change', 'decision', 'error', 'achievement'];
+const LOG_TYPE_ORDER: LogType[] = ['note', 'change', 'decision', 'risk', 'issue', 'milestone', 'update'];
 
 // ---------------------------------------------------------------------------
 // Mention item types
 // ---------------------------------------------------------------------------
 
 interface MentionItem {
-  id: string;   // encoded: "project:{uuid}" | "quotation:{projectId}:{id}" | "cabinet:{sku}" | "price_item:{id}"
+  id: string;
   label: string;
-  type: 'project' | 'quotation' | 'cabinet' | 'price_item';
+  type: 'project' | 'quotation' | 'cabinet' | 'price_item' | 'department' | 'team_member';
   subtitle?: string;
 }
 
@@ -69,7 +69,9 @@ const MENTION_TYPE_CONFIG = {
   project:    { groupLabel: 'Projects',   Icon: Folder,    iconColor: 'text-violet-600', iconBg: 'bg-violet-100' },
   quotation:  { groupLabel: 'Quotations', Icon: FileText,  iconColor: 'text-blue-600',   iconBg: 'bg-blue-100'   },
   cabinet:    { groupLabel: 'Cabinets',   Icon: Package,   iconColor: 'text-amber-600',  iconBg: 'bg-amber-100'  },
-  price_item: { groupLabel: 'Price List', Icon: DollarSign,iconColor: 'text-green-600',  iconBg: 'bg-green-100'  },
+  price_item:  { groupLabel: 'Price List',  Icon: DollarSign, iconColor: 'text-green-600',   iconBg: 'bg-green-100'   },
+  department:   { groupLabel: 'Departments', Icon: Users,      iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100' },
+  team_member:  { groupLabel: 'Team Members',Icon: User,       iconColor: 'text-sky-600',     iconBg: 'bg-sky-100'     },
 } as const;
 
 function isUuid(s: string): boolean {
@@ -82,7 +84,9 @@ function mentionToUrl(id: string): string {
   if (type === 'project')     return `/projects/${parts[1]}`;
   if (type === 'quotation')   return `/projects/${parts[1]}/quotations/${parts[2]}`;
   if (type === 'cabinet')     return isUuid(parts[1]) ? `/products/${parts[1]}` : '/products';
-  if (type === 'price_item')  return `/prices/${parts[1]}`;
+  if (type === 'price_item')    return `/prices/${parts[1]}`;
+  if (type === 'department')    return '#';
+  if (type === 'team_member')   return '#';
   return '#';
 }
 
@@ -513,6 +517,63 @@ function Toolbar({ editor }: ToolbarProps) {
 }
 
 // ---------------------------------------------------------------------------
+// ReplyEditor — lightweight TipTap editor for log replies with mentions
+// ---------------------------------------------------------------------------
+
+interface ReplyEditorProps {
+  getMentionItems: () => MentionItem[];
+  onSubmit: (jsonContent: string) => void;
+  onCancel: () => void;
+  disabled?: boolean;
+}
+
+function ReplyEditor({ getMentionItems, onSubmit, onCancel, disabled }: ReplyEditorProps) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({ heading: false, blockquote: false, codeBlock: false }),
+      LinkExt.configure({ openOnClick: false }),
+      Placeholder.configure({ placeholder: 'Write a reply… Use @ to mention people or teams.' }),
+      buildMentionExtension(getMentionItems),
+    ],
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm max-w-none focus:outline-none min-h-[48px] px-2.5 py-2 text-xs text-slate-700',
+      },
+    },
+  });
+
+  function handleSubmit() {
+    if (!editor || editor.isEmpty) return;
+    const json = editor.getJSON();
+    onSubmit(JSON.stringify(json));
+    editor.commands.clearContent();
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <div
+        className="border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-indigo-400 focus-within:border-indigo-400 bg-white"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSubmit(); }
+          if (e.key === 'Escape') onCancel();
+        }}
+      >
+        <EditorContent editor={editor} />
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button size="sm" onClick={handleSubmit} disabled={disabled || !editor || editor.isEmpty}>
+          {disabled ? 'Posting…' : 'Post Reply'}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onCancel}>
+          <X className="h-3.5 w-3.5" />
+        </Button>
+        <span className="text-[10px] text-slate-400">Ctrl+Enter to post · @ to mention</span>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // LogEntry — renders a single log entry (read-only) using TipTap
 // ---------------------------------------------------------------------------
 
@@ -520,6 +581,7 @@ interface LogEntryProps {
   log: ProjectLog;
   replies: ProjectLogReply[];
   teamMembers: TeamMember[];
+  getMentionItems: () => MentionItem[];
   onEdit: () => void;
   onDelete: () => void;
   onReplyAdded: (reply: ProjectLogReply) => void;
@@ -534,20 +596,14 @@ function AuthorAvatar({ name, className = '' }: { name: string; className?: stri
   );
 }
 
-function LogEntry({ log, replies, teamMembers, onEdit, onDelete, onReplyAdded }: LogEntryProps) {
+function LogEntry({ log, replies, teamMembers, getMentionItems, onEdit, onDelete, onReplyAdded }: LogEntryProps) {
   const navigate = useNavigate();
+  const { member: currentMember } = useCurrentMember();
   const logType = (log.log_type as LogType) || 'note';
   const cfg = LOG_TYPES[logType] || LOG_TYPES.note;
   const { Icon } = cfg;
 
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const [replyText, setReplyText] = useState('');
-  const [replyAuthorId, setReplyAuthorId] = useState<string | null>(() => {
-    try { const s = localStorage.getItem(AUTHOR_STORAGE_KEY); return s ? JSON.parse(s).id : null; } catch { return null; }
-  });
-  const [replyAuthorName, setReplyAuthorName] = useState<string | null>(() => {
-    try { const s = localStorage.getItem(AUTHOR_STORAGE_KEY); return s ? JSON.parse(s).name : null; } catch { return null; }
-  });
   const [postingReply, setPostingReply] = useState(false);
 
   const htmlContent = useMemo(() => renderContent(log.comment), [log.comment]);
@@ -572,41 +628,36 @@ function LogEntry({ log, replies, teamMembers, onEdit, onDelete, onReplyAdded }:
     try { return format(new Date(ts), "d MMM · h:mm a"); } catch { return ts ?? ''; }
   }
 
-  async function handlePostReply() {
-    const text = replyText.trim();
-    if (!text || postingReply) return;
+  async function handlePostReply(content: string) {
+    if (!content.trim() || postingReply) return;
     setPostingReply(true);
+
+    const authorId = currentMember?.id ?? null;
+    const authorName = currentMember?.name ?? null;
 
     const optimistic: ProjectLogReply = {
       id: crypto.randomUUID(),
       log_id: log.id,
-      comment: text,
-      author_id: replyAuthorId,
-      author_name: replyAuthorName,
+      comment: content,
+      author_id: authorId,
+      author_name: authorName,
       created_at: new Date().toISOString(),
     };
     onReplyAdded(optimistic);
-    setReplyText('');
     setShowReplyForm(false);
 
     try {
       await supabase.from('project_log_replies').insert({
         log_id: log.id,
-        comment: text,
-        author_id: replyAuthorId,
-        author_name: replyAuthorName,
+        comment: content,
+        author_id: authorId,
+        author_name: authorName,
       });
     } catch (err) {
       console.error('Error posting reply:', err);
     } finally {
       setPostingReply(false);
     }
-  }
-
-  function handleSelectReplyAuthor(memberId: string, memberName: string) {
-    setReplyAuthorId(memberId);
-    setReplyAuthorName(memberName);
-    try { localStorage.setItem(AUTHOR_STORAGE_KEY, JSON.stringify({ id: memberId, name: memberName })); } catch { /* noop */ }
   }
 
   return (
@@ -694,7 +745,11 @@ function LogEntry({ log, replies, teamMembers, onEdit, onDelete, onReplyAdded }:
                   <span className="text-xs font-medium text-slate-700">{reply.author_name ?? 'Anonymous'}</span>
                   <span className="text-[10px] text-slate-400">{formatShortTimestamp(reply.created_at)}</span>
                 </div>
-                <p className="text-xs text-slate-600 mt-0.5 whitespace-pre-wrap">{reply.comment}</p>
+                {isRichContent(reply.comment) ? (
+                  <div className="text-xs text-slate-600 mt-0.5 prose prose-sm max-w-none [&_.mention-link]:text-purple-600 [&_.mention-link]:no-underline" dangerouslySetInnerHTML={{ __html: renderContent(reply.comment) }} />
+                ) : (
+                  <p className="text-xs text-slate-600 mt-0.5 whitespace-pre-wrap">{reply.comment}</p>
+                )}
               </div>
             </div>
           ))}
@@ -702,48 +757,18 @@ function LogEntry({ log, replies, teamMembers, onEdit, onDelete, onReplyAdded }:
           {showReplyForm && (
             <div className="flex gap-2.5 pl-1 pt-1">
               <div className="flex-shrink-0 mt-0.5">
-                {replyAuthorName
-                  ? <AuthorAvatar name={replyAuthorName} className="w-5 h-5" />
+                {currentMember?.name
+                  ? <AuthorAvatar name={currentMember.name} className="w-5 h-5" />
                   : <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center"><User className="h-2.5 w-2.5 text-slate-400" /></div>
                 }
               </div>
-              <div className="flex-1 space-y-2">
-                <textarea
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handlePostReply(); if (e.key === 'Escape') setShowReplyForm(false); }}
-                  placeholder="Write a reply… (Ctrl+Enter to post)"
-                  rows={2}
-                  autoFocus
-                  className="w-full text-xs px-2.5 py-2 border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 bg-white"
+              <div className="flex-1">
+                <ReplyEditor
+                  getMentionItems={getMentionItems}
+                  onSubmit={handlePostReply}
+                  onCancel={() => setShowReplyForm(false)}
+                  disabled={postingReply}
                 />
-                <div className="flex items-center gap-2 flex-wrap">
-                  {teamMembers.length > 0 && (
-                    <div className="relative">
-                      <select
-                        value={replyAuthorId ?? ''}
-                        onChange={(e) => {
-                          const m = teamMembers.find((x) => x.id === e.target.value);
-                          if (m) handleSelectReplyAuthor(m.id, m.name);
-                          else { setReplyAuthorId(null); setReplyAuthorName(null); }
-                        }}
-                        className="appearance-none pl-2 pr-6 py-1 text-xs border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer"
-                      >
-                        <option value="">— No author —</option>
-                        {teamMembers.map((m) => (
-                          <option key={m.id} value={m.id}>{m.name}{m.role ? ` · ${m.role}` : ''}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
-                    </div>
-                  )}
-                  <Button size="sm" onClick={handlePostReply} disabled={!replyText.trim() || postingReply}>
-                    {postingReply ? 'Posting…' : 'Post Reply'}
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => { setShowReplyForm(false); setReplyText(''); }}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
               </div>
             </div>
           )}
@@ -770,7 +795,6 @@ function LogEntry({ log, replies, teamMembers, onEdit, onDelete, onReplyAdded }:
 
 interface EntryFormProps {
   getMentionItems: () => MentionItem[];  // getter so it always reads fresh data from a ref
-  teamMembers: TeamMember[];
   initialContent?: string;
   initialType?: LogType;
   initialAuthorId?: string | null;
@@ -781,10 +805,9 @@ interface EntryFormProps {
   isEdit?: boolean;
 }
 
-function EntryForm({ getMentionItems, teamMembers, initialContent, initialType = 'note', initialAuthorId, initialAuthorName, saving, onSave, onCancel, isEdit }: EntryFormProps) {
+function EntryForm({ getMentionItems, initialContent, initialType = 'note', initialAuthorId, initialAuthorName, saving, onSave, onCancel, isEdit }: EntryFormProps) {
+  const { member: currentMember } = useCurrentMember();
   const [logType, setLogType] = useState<LogType>(initialType);
-  const [authorId, setAuthorId] = useState<string | null>(initialAuthorId ?? null);
-  const [authorName, setAuthorName] = useState<string | null>(initialAuthorName ?? null);
 
   const startContent = initialContent && isRichContent(initialContent)
     ? JSON.parse(initialContent)
@@ -804,7 +827,7 @@ function EntryForm({ getMentionItems, teamMembers, initialContent, initialType =
         openOnClick: false,
         HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer', class: 'bitacora-link' },
       }),
-      Placeholder.configure({ placeholder: 'Add an observation, change, decision… Use @ to reference projects, quotations, or products.' }),
+      Placeholder.configure({ placeholder: 'Add an observation, change, decision… Use @ to mention people, teams, projects or products.' }),
       buildMentionExtension(getMentionItems),
     ],
     content: startContent,
@@ -812,12 +835,9 @@ function EntryForm({ getMentionItems, teamMembers, initialContent, initialType =
     onUpdate: ({ editor }) => setIsEmpty(editor.getText().trim() === ''),
   });
 
-  function handleSelectAuthor(memberId: string, memberName: string) {
-    setAuthorId(memberId);
-    setAuthorName(memberName);
-    // Persist selection for next time
-    try { localStorage.setItem(AUTHOR_STORAGE_KEY, JSON.stringify({ id: memberId, name: memberName })); } catch { /* noop */ }
-  }
+  // For edits, preserve the original author; for new entries, use the current logged-in user
+  const authorId = isEdit ? (initialAuthorId ?? null) : (currentMember?.id ?? null);
+  const authorName = isEdit ? (initialAuthorName ?? null) : (currentMember?.name ?? null);
 
   function handleSave() {
     if (!editor) return;
@@ -874,31 +894,18 @@ function EntryForm({ getMentionItems, teamMembers, initialContent, initialType =
 
       {/* Author + Actions row */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        {/* Author selector */}
+        {/* Current author (auto-set from session) */}
         <div className="flex items-center gap-2 min-w-0">
-          <User className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-          {teamMembers.length > 0 ? (
-            <div className="relative">
-              <select
-                value={authorId ?? ''}
-                onChange={(e) => {
-                  const selected = teamMembers.find((m) => m.id === e.target.value);
-                  if (selected) handleSelectAuthor(selected.id, selected.name);
-                  else { setAuthorId(null); setAuthorName(null); try { localStorage.removeItem(AUTHOR_STORAGE_KEY); } catch { /* noop */ } }
-                }}
-                className="appearance-none pl-2.5 pr-7 py-1 text-xs border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-              >
-                <option value="">— No author —</option>
-                {teamMembers.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}{m.role ? ` · ${m.role}` : ''}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
-            </div>
+          {authorName ? (
+            <>
+              <AuthorAvatar name={authorName} className="w-5 h-5" />
+              <span className="text-xs text-slate-600">{authorName}</span>
+            </>
           ) : (
-            <span className="text-xs text-slate-400 italic">No team configured</span>
+            <>
+              <User className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+              <span className="text-xs text-slate-400 italic">No user session</span>
+            </>
           )}
         </div>
 
@@ -932,7 +939,6 @@ interface Props {
 }
 
 export function BitacoraSection({ projectId }: Props) {
-  const { member: currentMember } = useCurrentMember();
   const [logs, setLogs] = useState<ProjectLog[]>([]);
   const [repliesByLog, setRepliesByLog] = useState<Record<string, ProjectLogReply[]>>({});
   const [loading, setLoading] = useState(true);
@@ -944,23 +950,16 @@ export function BitacoraSection({ projectId }: Props) {
   const mentionItemsRef = useRef<MentionItem[]>([]);
   const getMentionItems = useRef(() => mentionItemsRef.current).current;
 
-  // Use current authenticated member, fall back to localStorage
-  const savedAuthor = currentMember
-    ? { id: currentMember.id, name: currentMember.name }
-    : (() => {
-        try { return JSON.parse(localStorage.getItem(AUTHOR_STORAGE_KEY) ?? 'null') as { id: string; name: string } | null; }
-        catch { return null; }
-      })();
-
   // Load mention candidates + team members once
   useEffect(() => {
     async function loadMentions() {
-      const [{ data: projects }, { data: quotations }, { data: cabinets }, { data: priceItems }, { data: members }] = await Promise.all([
+      const [{ data: projects }, { data: quotations }, { data: cabinets }, { data: priceItems }, { data: members }, { data: depts }] = await Promise.all([
         supabase.from('projects').select('id, name, customer').order('name'),
         supabase.from('quotations').select('id, name, project_id, version_number, version_label').order('name'),
         supabase.from('products_catalog').select('id, sku, description').order('description'),
         supabase.from('price_list').select('id, concept_description').eq('is_active', true).order('concept_description'),
         supabase.from('team_members').select('*').eq('is_active', true).order('display_order'),
+        supabase.from('departments').select('id, name, slug').order('display_order'),
       ]);
 
       setTeamMembers(members || []);
@@ -988,6 +987,17 @@ export function BitacoraSection({ projectId }: Props) {
           id: `price_item:${i.id}`,
           label: i.concept_description,
           type: 'price_item' as const,
+        })),
+        ...(depts || []).map((d) => ({
+          id: `department:${d.id}`,
+          label: d.name,
+          type: 'department' as const,
+        })),
+        ...(members || []).map((m) => ({
+          id: `team_member:${m.id}`,
+          label: m.name,
+          type: 'team_member' as const,
+          subtitle: m.job_title || m.role || undefined,
         })),
       ];
 
@@ -1136,9 +1146,6 @@ export function BitacoraSection({ projectId }: Props) {
       <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50">
         <EntryForm
           getMentionItems={getMentionItems}
-          teamMembers={teamMembers}
-          initialAuthorId={savedAuthor?.id ?? null}
-          initialAuthorName={savedAuthor?.name ?? null}
           saving={saving}
           onSave={addLog}
         />
@@ -1193,7 +1200,6 @@ export function BitacoraSection({ projectId }: Props) {
                 <p className="text-xs text-slate-400 mb-3">Editing entry</p>
                 <EntryForm
                   getMentionItems={getMentionItems}
-                  teamMembers={teamMembers}
                   initialContent={log.comment}
                   initialType={(log.log_type as LogType) || 'note'}
                   initialAuthorId={log.author_id ?? null}
@@ -1210,6 +1216,7 @@ export function BitacoraSection({ projectId }: Props) {
                 log={log}
                 replies={repliesByLog[log.id] ?? []}
                 teamMembers={teamMembers}
+                getMentionItems={getMentionItems}
                 onEdit={() => setEditingId(log.id)}
                 onDelete={() => deleteLog(log.id)}
                 onReplyAdded={(reply) => handleReplyAdded(log.id, reply)}

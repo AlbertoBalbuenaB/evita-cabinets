@@ -14,6 +14,7 @@ import {
   Home,
 } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
+import { useCurrentMember } from '../lib/useCurrentMember';
 
 interface LayoutProps {
   children: ReactNode;
@@ -24,6 +25,8 @@ export function Layout({ children, onLogout }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { pathname } = useLocation();
+  const { member } = useCurrentMember();
+  const isAdmin = member?.role === 'admin';
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -105,17 +108,19 @@ export function Layout({ children, onLogout }: LayoutProps) {
                 <Search className="h-4 w-4" />
               </button>
 
-              <Link
-                to="/settings"
-                className={`hidden sm:inline-flex items-center justify-center p-2 rounded-lg text-sm font-medium transition-all duration-150 ${
-                  isActive('/settings')
-                    ? 'bg-blue-100 text-blue-700 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
-                }`}
-                title="Settings"
-              >
-                <SettingsIcon className="h-4 w-4" />
-              </Link>
+              {isAdmin && (
+                <Link
+                  to="/settings"
+                  className={`hidden sm:inline-flex items-center justify-center p-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                    isActive('/settings')
+                      ? 'bg-blue-100 text-blue-700 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+                  }`}
+                  title="Settings"
+                >
+                  <SettingsIcon className="h-4 w-4" />
+                </Link>
+              )}
 
               <button
                 onClick={onLogout}
@@ -176,17 +181,19 @@ export function Layout({ children, onLogout }: LayoutProps) {
                 >
                   <Search className="h-5 w-5 flex-shrink-0" />
                 </button>
-                <Link
-                  to="/settings"
-                  className={`flex items-center justify-center p-3 rounded-lg transition-all duration-150 ${
-                    isActive('/settings')
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-                  }`}
-                  title="Settings"
-                >
-                  <SettingsIcon className="h-5 w-5 flex-shrink-0" />
-                </Link>
+                {isAdmin && (
+                  <Link
+                    to="/settings"
+                    className={`flex items-center justify-center p-3 rounded-lg transition-all duration-150 ${
+                      isActive('/settings')
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                    }`}
+                    title="Settings"
+                  >
+                    <SettingsIcon className="h-5 w-5 flex-shrink-0" />
+                  </Link>
+                )}
                 <button
                   onClick={onLogout}
                   className="flex items-center justify-center p-3 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-all duration-150"

@@ -408,6 +408,41 @@ export type Database = {
           },
         ]
       }
+      area_sections: {
+        Row: {
+          area_id: string
+          created_at: string | null
+          display_order: number
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          area_id: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          area_id?: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "area_sections_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "project_areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cabinet_templates: {
         Row: {
           accessories: Json
@@ -687,6 +722,30 @@ export type Database = {
         }
         Relationships: []
       }
+      departments: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       price_change_log: {
         Row: {
           changed_at: string | null
@@ -802,8 +861,8 @@ export type Database = {
           boxes_per_unit: number
           collection_name: string | null
           created_at: string | null
-          cut_pieces: Json | null
           custom_labor_cost: number | null
+          cut_pieces: Json | null
           default_is_rta: boolean
           depth_in: number | null
           description: string
@@ -829,8 +888,8 @@ export type Database = {
           boxes_per_unit?: number
           collection_name?: string | null
           created_at?: string | null
-          cut_pieces?: Json | null
           custom_labor_cost?: number | null
+          cut_pieces?: Json | null
           default_is_rta?: boolean
           depth_in?: number | null
           description: string
@@ -856,8 +915,8 @@ export type Database = {
           boxes_per_unit?: number
           collection_name?: string | null
           created_at?: string | null
-          cut_pieces?: Json | null
           custom_labor_cost?: number | null
+          cut_pieces?: Json | null
           default_is_rta?: boolean
           depth_in?: number | null
           description?: string
@@ -995,6 +1054,48 @@ export type Database = {
           },
         ]
       }
+      project_log_replies: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          comment: string
+          created_at: string | null
+          id: string
+          log_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          comment: string
+          created_at?: string | null
+          id?: string
+          log_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          comment?: string
+          created_at?: string | null
+          id?: string
+          log_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_log_replies_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_log_replies_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "project_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_logs: {
         Row: {
           author_id: string | null
@@ -1028,45 +1129,17 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "project_logs_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "project_logs_project_id_fkey_new"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      project_log_replies: {
-        Row: {
-          author_id: string | null
-          author_name: string | null
-          comment: string
-          created_at: string | null
-          id: string
-          log_id: string
-        }
-        Insert: {
-          author_id?: string | null
-          author_name?: string | null
-          comment: string
-          created_at?: string | null
-          id?: string
-          log_id: string
-        }
-        Update: {
-          author_id?: string | null
-          author_name?: string | null
-          comment?: string
-          created_at?: string | null
-          id?: string
-          log_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_log_replies_log_id_fkey"
-            columns: ["log_id"]
-            isOneToOne: false
-            referencedRelation: "project_logs"
             referencedColumns: ["id"]
           },
         ]
@@ -1107,10 +1180,13 @@ export type Database = {
         Row: {
           assignee_id: string | null
           created_at: string | null
+          description: string | null
           details: string | null
           display_order: number
           due_date: string | null
           id: string
+          parent_task_id: string | null
+          priority: string
           project_id: string | null
           status: string
           title: string
@@ -1119,10 +1195,13 @@ export type Database = {
         Insert: {
           assignee_id?: string | null
           created_at?: string | null
+          description?: string | null
           details?: string | null
           display_order?: number
           due_date?: string | null
           id?: string
+          parent_task_id?: string | null
+          priority?: string
           project_id?: string | null
           status?: string
           title: string
@@ -1131,10 +1210,13 @@ export type Database = {
         Update: {
           assignee_id?: string | null
           created_at?: string | null
+          description?: string | null
           details?: string | null
           display_order?: number
           due_date?: string | null
           id?: string
+          parent_task_id?: string | null
+          priority?: string
           project_id?: string | null
           status?: string
           title?: string
@@ -1146,6 +1228,13 @@ export type Database = {
             columns: ["assignee_id"]
             isOneToOne: false
             referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
             referencedColumns: ["id"]
           },
           {
@@ -1316,7 +1405,22 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_created_by_member_id_fkey"
+            columns: ["created_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_last_modified_by_member_id_fkey"
+            columns: ["last_modified_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quotations: {
         Row: {
@@ -1467,6 +1571,214 @@ export type Database = {
         }
         Relationships: []
       }
+      task_assignees: {
+        Row: {
+          member_id: string
+          task_id: string
+        }
+        Insert: {
+          member_id: string
+          task_id: string
+        }
+        Update: {
+          member_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_assignees_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_assignees_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_comment_replies: {
+        Row: {
+          author_id: string | null
+          body: string
+          comment_id: string
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          comment_id: string
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          comment_id?: string
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comment_replies_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_comment_replies_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "task_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_comments: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string | null
+          id: string
+          task_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string | null
+          id?: string
+          task_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string | null
+          id?: string
+          task_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_deliverables: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          id: string
+          label: string
+          task_id: string
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          label: string
+          task_id: string
+          url?: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          label?: string
+          task_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_deliverables_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_tag_assignments: {
+        Row: {
+          tag_id: string
+          task_id: string
+        }
+        Insert: {
+          tag_id: string
+          task_id: string
+        }
+        Update: {
+          tag_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_tag_assignments_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "task_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_tag_assignments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_tags: {
+        Row: {
+          color: string
+          created_at: string | null
+          id: string
+          label: string
+          project_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          label: string
+          project_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          label?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_tags_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       taxes_by_type: {
         Row: {
           created_at: string | null
@@ -1495,34 +1807,48 @@ export type Database = {
         Row: {
           auth_user_id: string | null
           created_at: string | null
+          department_id: string | null
           display_order: number
           email: string | null
           id: string
           is_active: boolean
+          job_title: string | null
           name: string
-          role: string | null
+          role: string
         }
         Insert: {
           auth_user_id?: string | null
           created_at?: string | null
+          department_id?: string | null
           display_order?: number
           email?: string | null
           id?: string
           is_active?: boolean
+          job_title?: string | null
           name: string
-          role?: string | null
+          role?: string
         }
         Update: {
           auth_user_id?: string | null
           created_at?: string | null
+          department_id?: string | null
           display_order?: number
           email?: string | null
           id?: string
           is_active?: boolean
+          job_title?: string | null
           name?: string
-          role?: string | null
+          role?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "team_members_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       template_usage_log: {
         Row: {
@@ -1598,18 +1924,31 @@ export type Database = {
         Returns: number
       }
       create_project_snapshot: { Args: { p_project_id: string }; Returns: Json }
-      evita_hardware_bulk_update: {
-        Args: {
-          p_area_filter?: string
-          p_hardware_id: string
-          p_price: number
-          p_project_id: string
-          p_qty_rule?: string
-          p_remove_id?: string
-          p_remove_price?: number
-        }
-        Returns: Json
-      }
+      evita_hardware_bulk_update:
+        | {
+            Args: {
+              p_area_filter?: string
+              p_hardware_id: string
+              p_price: number
+              p_project_id: string
+              p_qty_rule?: string
+              p_remove_id?: string
+              p_remove_price?: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_area_filter?: string
+              p_hardware_id: string
+              p_price: number
+              p_project_id: string
+              p_qty_rule?: string
+              p_remove_id?: string
+              p_remove_price?: number
+            }
+            Returns: Json
+          }
       get_hardware_category: {
         Args: { p_hardware_id: string }
         Returns: string
@@ -1791,3 +2130,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+

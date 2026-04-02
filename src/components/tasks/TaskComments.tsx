@@ -1,5 +1,5 @@
 import { useState, forwardRef, useImperativeHandle, useEffect, useRef } from 'react';
-import { Send, Trash2, CornerDownRight, X } from 'lucide-react';
+import { Send, Trash2, CornerDownRight, X, User, Users } from 'lucide-react';
 import { useEditor, EditorContent, ReactRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -10,27 +10,34 @@ import tippy from 'tippy.js';
 import type { Instance as TippyInstance } from 'tippy.js';
 import { format } from 'date-fns';
 import { supabase } from '../../lib/supabase';
-import type { TaskComment, TaskCommentReply, TeamMember } from '../../types';
+import type { TaskComment, TaskCommentReply, TeamMember, Department } from '../../types';
 
 // ---------------------------------------------------------------------------
-// Member mention suggestion
+// Mention suggestion (team members + departments)
 // ---------------------------------------------------------------------------
 
-interface MemberItem {
+interface MentionItem {
   id: string;
   label: string;
+  group: 'member' | 'department';
+  subtitle?: string;
 }
+
+const GROUP_CONFIG = {
+  member:     { label: 'Team Members', Icon: User,  iconColor: 'text-sky-600',     iconBg: 'bg-sky-100'     },
+  department: { label: 'Departments',  Icon: Users, iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100' },
+} as const;
 
 interface SuggestionListRef {
   onKeyDown: (props: SuggestionKeyDownProps) => boolean;
 }
 
 interface SuggestionListProps {
-  items: MemberItem[];
-  command: (item: MemberItem) => void;
+  items: MentionItem[];
+  command: (item: MentionItem) => void;
 }
 
-const MemberSuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>(
+const MentionSuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>(
   ({ items, command }, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     useEffect(() => setSelectedIndex(0), [items]);
@@ -55,41 +62,84 @@ const MemberSuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>(
 
     if (!items.length) {
       return (
-        <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-3 w-56 text-center">
-          <p className="text-xs text-slate-400">No members found</p>
+        <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-3 w-60 text-center">
+          <p className="text-xs text-slate-400">No results</p>
         </div>
       );
     }
 
+    // Group by type
+    const groups: Partial<Record<MentionItem['group'], MentionItem[]>> = {};
+    for (const item of items) {
+      if (!groups[item.group]) groups[item.group] = [];
+      groups[item.group]!.push(item);
+    }
+
+    let flatIdx = 0;
+
     return (
-      <div className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden w-56">
-        {items.map((item, i) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => command(item)}
-            className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-              i === selectedIndex ? 'bg-blue-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            @{item.label}
-          </button>
-        ))}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden w-64 max-h-64 overflow-y-auto">
+        {(Object.keys(groups) as MentionItem['group'][]).map((group) => {
+          const cfg = GROUP_CONFIG[group];
+          const { Icon } = cfg;
+          return (
+            <div key={group}>
+              <div className="px-3 py-1 bg-slate-50 border-b border-slate-100 sticky top-0">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <Icon className={`h-3 w-3 ${cfg.iconColor}`} />
+                  {cfg.label}
+                </span>
+              </div>
+              {groups[group]!.map((item) => {
+                const itemIdx = flatIdx++;
+                const isSelected = itemIdx === selectedIndex;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => command(item)}
+                    className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                      isSelected ? 'bg-blue-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    @{item.label}
+                    {item.subtitle && <span className="text-xs text-slate-400 ml-1">{item.subtitle}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
     );
   }
 );
-MemberSuggestionList.displayName = 'MemberSuggestionList';
+MentionSuggestionList.displayName = 'MentionSuggestionList';
 
-function buildMentionExtension(teamMembers: TeamMember[]) {
-  const memberItems: MemberItem[] = teamMembers.map((m) => ({ id: m.id, label: m.name }));
+function buildMentionItems(teamMembers: TeamMember[], departments: Department[]): MentionItem[] {
+  return [
+    ...teamMembers.map((m) => ({
+      id: m.id,
+      label: m.name,
+      group: 'member' as const,
+      subtitle: m.job_title || undefined,
+    })),
+    ...departments.map((d) => ({
+      id: `dept:${d.id}`,
+      label: d.name,
+      group: 'department' as const,
+    })),
+  ];
+}
 
+function buildMentionExtension(allItems: MentionItem[]) {
   return Mention.configure({
     HTMLAttributes: { class: 'mention text-blue-600 font-medium' },
     suggestion: {
       items: ({ query }: { query: string }) => {
         const q = query.toLowerCase();
-        return memberItems.filter((m) => m.label.toLowerCase().includes(q)).slice(0, 8);
+        if (!q) return allItems.slice(0, 12);
+        return allItems.filter((m) => m.label.toLowerCase().includes(q) || (m.subtitle?.toLowerCase().includes(q) ?? false)).slice(0, 12);
       },
       render: () => {
         let renderer: ReactRenderer<SuggestionListRef>;
@@ -97,7 +147,7 @@ function buildMentionExtension(teamMembers: TeamMember[]) {
 
         return {
           onStart: (props: SuggestionProps) => {
-            renderer = new ReactRenderer(MemberSuggestionList, { props, editor: props.editor });
+            renderer = new ReactRenderer(MentionSuggestionList, { props, editor: props.editor });
             if (!props.clientRect) return;
             popup = tippy('body', {
               getReferenceClientRect: props.clientRect as () => DOMRect,
@@ -131,20 +181,20 @@ function buildMentionExtension(teamMembers: TeamMember[]) {
 // ---------------------------------------------------------------------------
 
 interface EditorProps {
-  teamMembers: TeamMember[];
+  mentionItems: MentionItem[];
   placeholder?: string;
   onSubmit: (html: string) => void;
   onCancel?: () => void;
   compact?: boolean;
 }
 
-function CommentEditor({ teamMembers, placeholder, onSubmit, onCancel, compact }: EditorProps) {
+function CommentEditor({ mentionItems, placeholder, onSubmit, onCancel, compact }: EditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: false, blockquote: false, codeBlock: false }),
       LinkExt.configure({ openOnClick: false }),
-      Placeholder.configure({ placeholder: placeholder ?? 'Write a comment… use @ to mention team members' }),
-      buildMentionExtension(teamMembers),
+      Placeholder.configure({ placeholder: placeholder ?? 'Write a comment… use @ to mention people or teams' }),
+      buildMentionExtension(mentionItems),
     ],
     editorProps: {
       attributes: {
@@ -193,6 +243,14 @@ export function TaskComments({ taskId, comments, teamMembers, onChange }: Props)
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [authorName, setAuthorName] = useState(() => localStorage.getItem('task_comment_author') || '');
   const [showAuthorInput, setShowAuthorInput] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
+
+  useEffect(() => {
+    supabase.from('departments').select('*').order('display_order')
+      .then(({ data }) => setDepartments(data || []));
+  }, []);
+
+  const mentionItems = buildMentionItems(teamMembers, departments);
 
   // Pick an author member id if name matches
   function getAuthorId(): string | null {
@@ -377,7 +435,7 @@ export function TaskComments({ taskId, comments, teamMembers, onChange }: Props)
           {replyingTo === comment.id && (
             <div className="ml-8">
               <CommentEditor
-                teamMembers={teamMembers}
+                mentionItems={mentionItems}
                 placeholder="Write a reply…"
                 onSubmit={(html) => addReply(comment.id, html)}
                 onCancel={() => setReplyingTo(null)}
@@ -390,7 +448,7 @@ export function TaskComments({ taskId, comments, teamMembers, onChange }: Props)
 
       {/* New comment editor */}
       <CommentEditor
-        teamMembers={teamMembers}
+        mentionItems={mentionItems}
         onSubmit={addComment}
       />
     </div>

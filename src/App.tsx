@@ -1,9 +1,10 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { HomePage } from './pages/HomePage';
 import { Login } from './pages/Login';
 import { useAuth } from './lib/auth';
+import { useCurrentMember } from './lib/useCurrentMember';
 
 // ── Lazy-loaded pages (code-split per route) ────────────────────────────────
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -18,6 +19,13 @@ const Templates = lazy(() => import('./pages/Templates').then(m => ({ default: m
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 const OptimizerPage = lazy(() => import('./pages/OptimizerPage').then(m => ({ default: m.OptimizerPage })));
 const AiChat = lazy(() => import('./components/AiChat').then(m => ({ default: m.AiChat })));
+
+function AdminRoute({ children }: { children: ReactNode }) {
+  const { member, loading } = useCurrentMember();
+  if (loading) return <PageLoader />;
+  if (member?.role !== 'admin') return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
 
 function PageLoader() {
   return (
@@ -59,7 +67,7 @@ function App() {
             <Route path="/prices/:id" element={<PriceListItem />} />
             <Route path="/prices" element={<PriceList />} />
             <Route path="/templates" element={<Templates />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
             <Route path="/optimizer" element={<OptimizerPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

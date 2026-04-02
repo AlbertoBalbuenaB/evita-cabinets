@@ -137,6 +137,23 @@ export interface CustomUnit {
 export type TeamMember = Database['public']['Tables']['team_members']['Row'];
 export type TeamMemberInsert = Database['public']['Tables']['team_members']['Insert'];
 
+export type Department = Database['public']['Tables']['departments']['Row'];
+
+export type SystemRole = 'admin' | 'ceo' | 'coo' | 'team_manager' | 'team_leader' | 'specialist' | 'collaborator' | 'assistant';
+
+export const SYSTEM_ROLE_LABELS: Record<SystemRole, string> = {
+  admin: 'Admin',
+  ceo: 'CEO',
+  coo: 'COO',
+  team_manager: 'Team Manager',
+  team_leader: 'Team Leader',
+  specialist: 'Specialist',
+  collaborator: 'Collaborator',
+  assistant: 'Assistant',
+};
+
+export const SYSTEM_ROLES = Object.keys(SYSTEM_ROLE_LABELS) as SystemRole[];
+
 export type ProjectDocument = Database['public']['Tables']['project_documents']['Row'];
 export type ProjectDocumentInsert = Database['public']['Tables']['project_documents']['Insert'];
 

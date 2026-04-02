@@ -5,7 +5,8 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { clearSettingsCache, useSettingsStore } from '../lib/settingsStore';
 import { downloadFullBackup, type BackupSummary } from '../utils/backupExport';
-import type { Setting, TaxByType, CustomType, CustomUnit, TeamMember } from '../types';
+import type { Setting, TaxByType, CustomType, CustomUnit, TeamMember, Department } from '../types';
+import { SYSTEM_ROLE_LABELS, SYSTEM_ROLES, type SystemRole } from '../types';
 import { useCurrentMember } from '../lib/useCurrentMember';
 
 export function Settings() {
@@ -23,9 +24,11 @@ export function Settings() {
   const [showDataImport, setShowDataImport] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
   const [newUnitName, setNewUnitName] = useState('');
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [newMemberName, setNewMemberName] = useState('');
-  const [newMemberRole, setNewMemberRole] = useState('');
+  const [newMemberJobTitle, setNewMemberJobTitle] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [newMemberDepartment, setNewMemberDepartment] = useState('');
   const [newTaxType, setNewTaxType] = useState('');
   const [newTaxRate, setNewTaxRate] = useState(0);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -40,6 +43,7 @@ export function Settings() {
     loadCustomUnits();
     loadTeamMembers();
     loadAllMembers();
+    loadDepartments();
   }, []);
 
   async function loadSettings() {
@@ -325,8 +329,22 @@ export function Settings() {
     loadTeamMembers();
   }
 
+  async function loadDepartments() {
+    try {
+      const { data } = await supabase.from('departments').select('*').order('display_order');
+      setDepartments(data || []);
+    } catch (error) {
+      console.error('Error loading departments:', error);
+    }
+  }
+
   async function changeMemberRole(id: string, role: string) {
     await supabase.from('team_members').update({ role }).eq('id', id);
+    loadAllMembers();
+  }
+
+  async function changeMemberDepartment(id: string, departmentId: string | null) {
+    await supabase.from('team_members').update({ department_id: departmentId }).eq('id', id);
     loadAllMembers();
   }
 
@@ -336,14 +354,16 @@ export function Settings() {
     try {
       const { error } = await supabase.from('team_members').insert({
         name: newMemberName,
-        role: newMemberRole || null,
+        job_title: newMemberJobTitle || null,
         email: newMemberEmail || null,
+        department_id: newMemberDepartment || null,
       });
       if (error) throw error;
 
       setNewMemberName('');
-      setNewMemberRole('');
+      setNewMemberJobTitle('');
       setNewMemberEmail('');
+      setNewMemberDepartment('');
       loadTeamMembers();
       setMessage({ type: 'success', text: 'Team member added successfully' });
       setTimeout(() => setMessage(null), 3000);
@@ -896,30 +916,34 @@ export function Settings() {
 
           {teamMembers.length > 0 && (
             <div className="space-y-2">
-              {teamMembers.map((member) => (
-                <div key={member.id} className="flex items-center justify-between bg-slate-50 px-4 py-3 rounded-lg">
-                  <div className="flex items-center gap-4 min-w-0">
-                    <span className="text-sm font-medium text-slate-900">{member.name}</span>
-                    {member.role && <span className="text-sm text-slate-500">{member.role}</span>}
-                    {member.email && <span className="text-sm text-slate-400">{member.email}</span>}
+              {teamMembers.map((member) => {
+                const dept = departments.find(d => d.id === member.department_id);
+                return (
+                  <div key={member.id} className="flex items-center justify-between bg-slate-50 px-4 py-3 rounded-lg">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <span className="text-sm font-medium text-slate-900">{member.name}</span>
+                      {member.job_title && <span className="text-sm text-slate-500">{member.job_title}</span>}
+                      {dept && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{dept.name}</span>}
+                      {member.email && <span className="text-sm text-slate-400">{member.email}</span>}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteTeamMember(member.id)}
+                      className="text-red-600 hover:text-red-700 flex-shrink-0"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteTeamMember(member.id)}
-                    className="text-red-600 hover:text-red-700 flex-shrink-0"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
           <div className="pt-4 border-t border-slate-200">
             <h3 className="text-sm font-medium text-slate-700 mb-3">Add Team Member</h3>
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
+            <div className="flex items-end gap-2 flex-wrap">
+              <div className="flex-1 min-w-[140px]">
                 <label className="block text-xs text-slate-600 mb-1">Name *</label>
                 <Input
                   type="text"
@@ -928,16 +952,16 @@ export function Settings() {
                   placeholder="Full name"
                 />
               </div>
-              <div className="flex-1">
-                <label className="block text-xs text-slate-600 mb-1">Role</label>
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-xs text-slate-600 mb-1">Job Title</label>
                 <Input
                   type="text"
-                  value={newMemberRole}
-                  onChange={(e) => setNewMemberRole(e.target.value)}
+                  value={newMemberJobTitle}
+                  onChange={(e) => setNewMemberJobTitle(e.target.value)}
                   placeholder="e.g., Designer, PM"
                 />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-[140px]">
                 <label className="block text-xs text-slate-600 mb-1">Email</label>
                 <Input
                   type="email"
@@ -945,6 +969,19 @@ export function Settings() {
                   onChange={(e) => setNewMemberEmail(e.target.value)}
                   placeholder="email@example.com"
                 />
+              </div>
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-xs text-slate-600 mb-1">Department</label>
+                <select
+                  value={newMemberDepartment}
+                  onChange={(e) => setNewMemberDepartment(e.target.value)}
+                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">— None —</option>
+                  {departments.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
               </div>
               <Button onClick={addTeamMember} disabled={!newMemberName.trim()}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -956,71 +993,86 @@ export function Settings() {
       </div>
 
       {/* ── Admin: User Management ──────────────────────────────────────── */}
-      {currentMember?.role === 'admin' && (
-        <div className="glass-white rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">System Users</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-2 px-3 text-slate-500 font-medium">Nombre</th>
-                  <th className="text-left py-2 px-3 text-slate-500 font-medium">Email</th>
-                  <th className="text-left py-2 px-3 text-slate-500 font-medium">Rol</th>
-                  <th className="text-center py-2 px-3 text-slate-500 font-medium">Vinculado</th>
-                  <th className="text-center py-2 px-3 text-slate-500 font-medium">Estado</th>
-                  <th className="text-right py-2 px-3 text-slate-500 font-medium">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allMembers.map(m => {
-                  const isSelf = m.id === currentMember.id;
-                  return (
-                    <tr key={m.id} className="border-b border-slate-100 last:border-0">
-                      <td className="py-2.5 px-3 font-medium text-slate-800">
+      <div className="glass-white rounded-2xl p-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">System Users</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200">
+                <th className="text-left py-2 px-3 text-slate-500 font-medium">Name</th>
+                <th className="text-left py-2 px-3 text-slate-500 font-medium">Email</th>
+                <th className="text-left py-2 px-3 text-slate-500 font-medium">Department</th>
+                <th className="text-left py-2 px-3 text-slate-500 font-medium">Role</th>
+                <th className="text-center py-2 px-3 text-slate-500 font-medium">Linked</th>
+                <th className="text-center py-2 px-3 text-slate-500 font-medium">Status</th>
+                <th className="text-right py-2 px-3 text-slate-500 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allMembers.map(m => {
+                const isSelf = currentMember ? m.id === currentMember.id : false;
+                return (
+                  <tr key={m.id} className="border-b border-slate-100 last:border-0">
+                    <td className="py-2.5 px-3 font-medium text-slate-800">
+                      <div>
                         {m.name}
                         {isSelf && <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold">You</span>}
-                      </td>
-                      <td className="py-2.5 px-3 text-slate-500">{m.email || '—'}</td>
-                      <td className="py-2.5 px-3">
-                        <select
-                          value={m.role || 'user'}
-                          onChange={e => changeMemberRole(m.id, e.target.value)}
-                          disabled={isSelf}
-                          className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 disabled:opacity-50"
-                        >
-                          <option value="user">user</option>
-                          <option value="admin">admin</option>
-                        </select>
-                      </td>
-                      <td className="py-2.5 px-3 text-center">
-                        {m.auth_user_id ? (
-                          <span className="text-green-600 font-bold">✓</span>
-                        ) : (
-                          <span className="text-slate-300">✗</span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 text-center">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${m.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                          {m.is_active ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3 text-right">
-                        <button
-                          onClick={() => toggleMemberActive(m.id, m.is_active)}
-                          disabled={isSelf}
-                          className="text-xs text-slate-500 hover:text-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                          {m.is_active ? 'Desactivar' : 'Activar'}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                      {m.job_title && <div className="text-xs text-slate-400 mt-0.5">{m.job_title}</div>}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-500">{m.email || '—'}</td>
+                    <td className="py-2.5 px-3">
+                      <select
+                        value={m.department_id || ''}
+                        onChange={e => changeMemberDepartment(m.id, e.target.value || null)}
+                        className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600"
+                      >
+                        <option value="">— None —</option>
+                        {departments.map(d => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <select
+                        value={m.role || 'collaborator'}
+                        onChange={e => changeMemberRole(m.id, e.target.value)}
+                        disabled={isSelf}
+                        className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 disabled:opacity-50"
+                      >
+                        {SYSTEM_ROLES.map(r => (
+                          <option key={r} value={r}>{SYSTEM_ROLE_LABELS[r]}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      {m.auth_user_id ? (
+                        <span className="text-green-600 font-bold">✓</span>
+                      ) : (
+                        <span className="text-slate-300">✗</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${m.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                        {m.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      <button
+                        onClick={() => toggleMemberActive(m.id, m.is_active)}
+                        disabled={isSelf}
+                        className="text-xs text-slate-500 hover:text-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {m.is_active ? 'Deactivate' : 'Activate'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving}>
