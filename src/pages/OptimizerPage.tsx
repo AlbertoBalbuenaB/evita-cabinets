@@ -46,7 +46,7 @@ export function OptimizerPage() {
       });
       count++;
     }
-    alert(`${count} piezas importadas desde CSV (unidades: ${unit})`);
+    alert(`${count} pieces imported from CSV (units: ${unit})`);
     if (csvRef.current) csvRef.current.value = '';
   };
 
@@ -68,7 +68,7 @@ export function OptimizerPage() {
       }
     }
     if (headerIdx < 0) {
-      alert('No se encontró encabezado CANTIDAD. Verifica que sea una Planilla Evita o Masisa.');
+      alert('CANTIDAD header not found. Verify the file is a valid Evita or Masisa sheet.');
       return;
     }
 
@@ -94,7 +94,7 @@ export function OptimizerPage() {
     const iTapeAD = col(['ALT DER', 'ALTURA B']);
 
     if (iAncho < 0 || iAlto < 0) {
-      alert('No se encontraron columnas ANCHO/BASE y ALTO/ALTURA.');
+      alert('WIDTH/BASE and HEIGHT columns not found.');
       return;
     }
 
@@ -123,7 +123,7 @@ export function OptimizerPage() {
       });
       count++;
     }
-    alert(`${count} piezas importadas desde Excel (hoja: ${sheetName}, unidades: ${unit})`);
+    alert(`${count} pieces imported from Excel (sheet: ${sheetName}, units: ${unit})`);
     if (xlsxRef.current) xlsxRef.current.value = '';
   };
 
@@ -166,10 +166,10 @@ export function OptimizerPage() {
           <Table className="h-3.5 w-3.5" />Excel
         </Button>
         <Button variant="secondary" size="sm" onClick={() => jsonRef.current?.click()} className="flex items-center gap-1">
-          <FolderOpen className="h-3.5 w-3.5" />Abrir
+          <FolderOpen className="h-3.5 w-3.5" />Open
         </Button>
         <Button variant="secondary" size="sm" onClick={() => store.saveProject()} className="flex items-center gap-1">
-          <Save className="h-3.5 w-3.5" />Guardar
+          <Save className="h-3.5 w-3.5" />Save
         </Button>
 
         <div className="w-px h-4 bg-slate-200 mx-0.5" />
@@ -186,7 +186,7 @@ export function OptimizerPage() {
         <Button variant="primary" size="sm" onClick={() => store.runOptimize()} disabled={store.isOptimizing}
           className="flex items-center gap-1">
           {store.isOptimizing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
-          Optimizar
+          Optimize
         </Button>
         <Button variant="secondary" size="sm" onClick={() => store.exportPDF()} disabled={!store.result}
           className="flex items-center gap-1">

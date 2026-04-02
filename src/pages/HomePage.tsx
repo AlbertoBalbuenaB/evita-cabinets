@@ -228,9 +228,9 @@ const QUOTE_STATUS_COLORS: Record<string, string> = {
 
 function getGreeting(name: string): string {
   const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return `Buenos días, ${name}`;
-  if (hour >= 12 && hour < 18) return `Buenas tardes, ${name}`;
-  return `Buenas noches, ${name}`;
+  if (hour >= 5 && hour < 12) return `Good morning, ${name}`;
+  if (hour >= 12 && hour < 18) return `Good afternoon, ${name}`;
+  return `Good evening, ${name}`;
 }
 
 export function HomePage() {
@@ -649,7 +649,7 @@ export function HomePage() {
           {visibleTasks.length === 0 ? (
             <div className="py-16 text-center text-slate-400">
               <CheckSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
-              <p className="text-sm font-medium">{myTasksOnly ? 'No tienes tareas asignadas en este momento' : 'No tasks across any project yet'}</p>
+              <p className="text-sm font-medium">{myTasksOnly ? 'You have no assigned tasks at this time' : 'No tasks across any project yet'}</p>
             </div>
           ) : (
             <>
@@ -662,13 +662,13 @@ export function HomePage() {
                       onClick={() => toggleMyTasks(true)}
                       className={`px-3 py-1 text-xs font-medium transition-colors ${myTasksOnly ? 'bg-blue-500 text-white' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                      Mis Tareas ({myTasks.length})
+                      My Tasks ({myTasks.length})
                     </button>
                     <button
                       onClick={() => toggleMyTasks(false)}
                       className={`px-3 py-1 text-xs font-medium transition-colors ${!myTasksOnly ? 'bg-blue-500 text-white' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                      Todas ({tasks.length})
+                      All ({tasks.length})
                     </button>
                   </div>
                 )}
@@ -976,7 +976,7 @@ export function HomePage() {
                                   {cfg.label}
                                 </span>
                                 {(log.author_name || true) && (
-                                  <span className="text-[10px] text-slate-500 font-medium truncate">{log.author_name || 'Usuario anterior'}</span>
+                                  <span className="text-[10px] text-slate-500 font-medium truncate">{log.author_name || 'Previous user'}</span>
                                 )}
                                 <span className="text-[10px] text-slate-400 flex items-center gap-0.5 ml-auto flex-shrink-0">
                                   <Clock className="h-2.5 w-2.5" />

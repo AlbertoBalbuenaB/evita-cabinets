@@ -127,22 +127,22 @@ export function CADViewer({ board, unit }: Props) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-100 min-w-0">
       <div className="bg-white border-b border-slate-200 px-2 py-1 flex items-center gap-0.5 shrink-0">
-        <ToolBtn icon={ZoomIn}    onClick={() => setZoom(z => Math.min(MAX_ZOOM, z * 1.25))} title="Acercar" />
-        <ToolBtn icon={ZoomOut}   onClick={() => setZoom(z => Math.max(MIN_ZOOM, z / 1.25))} title="Alejar" />
-        <ToolBtn icon={Maximize2} onClick={fitToView} title="Ajustar a pantalla" />
+        <ToolBtn icon={ZoomIn}    onClick={() => setZoom(z => Math.min(MAX_ZOOM, z * 1.25))} title="Zoom in" />
+        <ToolBtn icon={ZoomOut}   onClick={() => setZoom(z => Math.max(MIN_ZOOM, z / 1.25))} title="Zoom out" />
+        <ToolBtn icon={Maximize2} onClick={fitToView} title="Fit to screen" />
         <span className="text-xs text-slate-400 px-1.5 tabular-nums w-10 text-center select-none">
           {Math.round(zoom * 100)}%
         </span>
         <div className="w-px h-4 bg-slate-200 mx-1" />
-        <ToolBtn icon={Ruler}    active={showDimensions} onClick={() => setShowDimensions(v => !v)} title="Mostrar cotas" />
-        <ToolBtn icon={Tag}      active={showLabels}     onClick={() => setShowLabels(v => !v)}     title="Mostrar etiquetas" />
-        <ToolBtn icon={Wheat}    active={showGrain}      onClick={() => setShowGrain(v => !v)}      title="Mostrar veta"
+        <ToolBtn icon={Ruler}    active={showDimensions} onClick={() => setShowDimensions(v => !v)} title="Show dimensions" />
+        <ToolBtn icon={Tag}      active={showLabels}     onClick={() => setShowLabels(v => !v)}     title="Show labels" />
+        <ToolBtn icon={Wheat}    active={showGrain}      onClick={() => setShowGrain(v => !v)}      title="Show grain"
           activeColor="text-amber-600 bg-amber-50" />
-        <ToolBtn icon={PanelTop} active={showEdgeBand}  onClick={() => setShowEdgeBand(v => !v)}  title="Mostrar cubrecanto"
+        <ToolBtn icon={PanelTop} active={showEdgeBand}  onClick={() => setShowEdgeBand(v => !v)}  title="Show edge band"
           activeColor="text-slate-800 bg-slate-100" />
-        <ToolBtn icon={Layers}   active={showOffcuts}    onClick={() => setShowOffcuts(v => !v)}    title="Mostrar retazos"
+        <ToolBtn icon={Layers}   active={showOffcuts}    onClick={() => setShowOffcuts(v => !v)}    title="Show offcuts"
           activeColor="text-green-600 bg-green-50" />
-        <ToolBtn icon={Scissors} active={showKerf}       onClick={() => setShowKerf(v => !v)}       title="Mostrar sierra"
+        <ToolBtn icon={Scissors} active={showKerf}       onClick={() => setShowKerf(v => !v)}       title="Show kerf"
           activeColor="text-red-500 bg-red-50" />
       </div>
 

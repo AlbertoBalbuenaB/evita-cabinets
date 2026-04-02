@@ -53,7 +53,7 @@ export function ResizablePanel({
         <button
           onClick={onToggle}
           className="p-1.5 mt-2 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-          title={side === 'left' ? 'Expandir panel izquierdo' : 'Expandir panel derecho'}
+          title={side === 'left' ? 'Expand left panel' : 'Expand right panel'}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             {side === 'left'
@@ -79,7 +79,7 @@ export function ResizablePanel({
           <button
             onClick={onToggle}
             className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
-            title={side === 'left' ? 'Colapsar panel izquierdo' : 'Colapsar panel derecho'}
+            title={side === 'left' ? 'Collapse left panel' : 'Collapse right panel'}
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               {side === 'left'

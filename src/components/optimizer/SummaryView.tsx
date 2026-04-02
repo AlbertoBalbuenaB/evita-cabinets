@@ -3,7 +3,7 @@ import { OptimizationResult } from '../../lib/optimizer/types';
 interface Props { result: OptimizationResult | null; }
 
 export function SummaryView({ result }: Props) {
-  if (!result) return <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">Ejecuta una optimización para ver el resumen</div>;
+  if (!result) return <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">Run an optimization to see the summary</div>;
 
   const totalArea = result.boards.reduce((s, b) => s + b.areaTotal, 0);
   const usedArea = result.boards.reduce((s, b) => s + b.areaUsed, 0);
@@ -27,26 +27,26 @@ export function SummaryView({ result }: Props) {
     <div className="flex-1 overflow-auto p-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Resumen General</h3>
-          <Row label="Total tableros" value={`${result.boards.length}`} />
-          <Row label="Total piezas" value={`${result.totalPieces}`} />
-          <Row label="Eficiencia global" value={`${result.efficiency.toFixed(2)}%`} />
-          <Row label="Área total" value={`${totalArea.toFixed(2)} m²`} />
-          <Row label="Área utilizada" value={`${usedArea.toFixed(2)} m²`} />
-          <Row label="Desperdicio" value={`${wasteArea.toFixed(2)} m²`} />
-          <Row label="Retazos útiles" value={`${result.usefulOffcuts}`} />
-          <Row label="Costo total" value={`$${result.totalCost.toFixed(2)}`} />
-          <Row label="Tiempo" value={`${result.timeMs.toFixed(0)}ms`} />
-          <Row label="Estrategia" value={result.strategy} />
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">General Summary</h3>
+          <Row label="Total boards" value={`${result.boards.length}`} />
+          <Row label="Total pieces" value={`${result.totalPieces}`} />
+          <Row label="Global efficiency" value={`${result.efficiency.toFixed(2)}%`} />
+          <Row label="Total area" value={`${totalArea.toFixed(2)} m²`} />
+          <Row label="Used area" value={`${usedArea.toFixed(2)} m²`} />
+          <Row label="Waste" value={`${wasteArea.toFixed(2)} m²`} />
+          <Row label="Useful offcuts" value={`${result.usefulOffcuts}`} />
+          <Row label="Total cost" value={`$${result.totalCost.toFixed(2)}`} />
+          <Row label="Time" value={`${result.timeMs.toFixed(0)}ms`} />
+          <Row label="Strategy" value={result.strategy} />
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Por Material</h3>
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">By Material</h3>
           {Object.entries(groups).map(([k, g]) => (
             <div key={k} className="pb-3 mb-3 border-b border-slate-100 last:border-0 last:mb-0 last:pb-0">
               <div className="font-medium text-sm text-slate-900 mb-2">{k}</div>
-              <Row label="Tableros" value={`${g.count}`} />
-              <Row label="Piezas" value={`${g.pieces}`} />
-              <Row label="Eficiencia prom." value={`${(g.effSum / g.count).toFixed(1)}%`} />
+              <Row label="Boards" value={`${g.count}`} />
+              <Row label="Pieces" value={`${g.pieces}`} />
+              <Row label="Avg. efficiency" value={`${(g.effSum / g.count).toFixed(1)}%`} />
             </div>
           ))}
         </div>
