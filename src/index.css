@@ -309,6 +309,14 @@ a.bitacora-link:hover {
     animation: panelSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
+  }
+  .animate-slide-in-right {
+    animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
   /* ── System-wide animations ─────────────────────────────────────────── */
 
   /* Page entrance — fade in only (no transform to avoid breaking fixed modals) */

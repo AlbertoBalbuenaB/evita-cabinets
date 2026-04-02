@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   X, Trash2, Plus,
   CheckSquare, Flag, Clock, Users, Tag, Paperclip, MessageSquare,
 } from 'lucide-react';
+import { createNotifications } from '../../lib/notifications';
+import { useCurrentMember } from '../../lib/useCurrentMember';
 import { format } from 'date-fns';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../Button';
@@ -35,6 +37,8 @@ const PRESET_COLORS = [
 ];
 
 export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, onUpdate, onDelete, onReload, onTagCreated }: Props) {
+  const { member: currentMember } = useCurrentMember();
+  const initialAssigneeIds = useRef(task.assignees.map((a) => a.id));
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || task.details || '');
   const [status, setStatus] = useState<TaskStatus>(task.status);
@@ -171,6 +175,22 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
 
     setSaving(false);
     setDirty(false);
+
+    // Notify newly assigned users
+    const newAssignees = assigneeIds.filter((id) => !initialAssigneeIds.current.includes(id));
+    if (newAssignees.length) {
+      createNotifications({
+        recipientIds: newAssignees,
+        actorId: currentMember?.id ?? null,
+        actorName: currentMember?.name ?? null,
+        type: 'task_assigned',
+        title: `Assigned to: ${title.trim()}`,
+        projectId,
+        referenceType: 'project_task',
+        referenceId: task.id,
+      }).catch(console.error);
+    }
+    initialAssigneeIds.current = assigneeIds;
 
     const updatedTask: EnhancedTask = {
       ...task,
@@ -490,6 +510,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
             </label>
             <TaskComments
               taskId={task.id}
+              projectId={projectId}
               comments={comments}
               teamMembers={teamMembers}
               onChange={setComments}

@@ -746,6 +746,73 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          actor_name: string | null
+          body: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          project_id: string | null
+          recipient_id: string
+          reference_id: string | null
+          reference_type: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_name?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          project_id?: string | null
+          recipient_id: string
+          reference_id?: string | null
+          reference_type?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_name?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          project_id?: string | null
+          recipient_id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_change_log: {
         Row: {
           changed_at: string | null

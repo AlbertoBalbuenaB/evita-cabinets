@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { createNotifications } from '../../lib/notifications';
 import { Button } from '../Button';
 import type { TeamMember, TaskTag, TaskStatus, TaskPriority } from '../../types';
 import { TASK_STATUS_CONFIG, TASK_PRIORITY_CONFIG } from '../../types';
@@ -64,7 +65,22 @@ export function TaskFormModal({
     }
 
     setSaving(false);
-    if (data) onCreated();
+    if (data) {
+      // Notify assigned users
+      if (assigneeIds.length) {
+        createNotifications({
+          recipientIds: assigneeIds,
+          actorId: currentMemberId ?? null,
+          actorName: null,
+          type: 'task_assigned',
+          title: `Assigned to: ${title.trim()}`,
+          projectId,
+          referenceType: 'project_task',
+          referenceId: data.id,
+        }).catch(console.error);
+      }
+      onCreated();
+    }
   }
 
   function toggleAssignee(id: string) {

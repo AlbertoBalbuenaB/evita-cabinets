@@ -154,6 +154,9 @@ export const SYSTEM_ROLE_LABELS: Record<SystemRole, string> = {
 
 export const SYSTEM_ROLES = Object.keys(SYSTEM_ROLE_LABELS) as SystemRole[];
 
+export type AppNotification = Database['public']['Tables']['notifications']['Row'];
+export type AppNotificationInsert = Database['public']['Tables']['notifications']['Insert'];
+
 export type ProjectDocument = Database['public']['Tables']['project_documents']['Row'];
 export type ProjectDocumentInsert = Database['public']['Tables']['project_documents']['Insert'];
 

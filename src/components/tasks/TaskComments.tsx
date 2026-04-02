@@ -11,6 +11,8 @@ import type { Instance as TippyInstance } from 'tippy.js';
 import { format } from 'date-fns';
 import { supabase } from '../../lib/supabase';
 import type { TaskComment, TaskCommentReply, TeamMember, Department } from '../../types';
+import { extractMentionIds, notifyMentions } from '../../lib/notifications';
+import { useCurrentMember } from '../../lib/useCurrentMember';
 
 // ---------------------------------------------------------------------------
 // Mention suggestion (team members + departments)
@@ -183,7 +185,7 @@ function buildMentionExtension(allItems: MentionItem[]) {
 interface EditorProps {
   mentionItems: MentionItem[];
   placeholder?: string;
-  onSubmit: (html: string) => void;
+  onSubmit: (html: string, editorJson: unknown) => void;
   onCancel?: () => void;
   compact?: boolean;
 }
@@ -205,7 +207,8 @@ function CommentEditor({ mentionItems, placeholder, onSubmit, onCancel, compact 
 
   function submit() {
     if (!editor || editor.isEmpty) return;
-    onSubmit(editor.getHTML());
+    const json = editor.getJSON();
+    onSubmit(editor.getHTML(), json);
     editor.commands.clearContent();
   }
 
@@ -234,13 +237,15 @@ function CommentEditor({ mentionItems, placeholder, onSubmit, onCancel, compact 
 
 interface Props {
   taskId: string;
+  projectId: string;
   comments: TaskComment[];
   teamMembers: TeamMember[];
   onChange: (comments: TaskComment[]) => void;
 }
 
-export function TaskComments({ taskId, comments, teamMembers, onChange }: Props) {
+export function TaskComments({ taskId, projectId, comments, teamMembers, onChange }: Props) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const { member: currentMember } = useCurrentMember();
   const [authorName, setAuthorName] = useState(() => localStorage.getItem('task_comment_author') || '');
   const [showAuthorInput, setShowAuthorInput] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -258,8 +263,9 @@ export function TaskComments({ taskId, comments, teamMembers, onChange }: Props)
     return match?.id ?? null;
   }
 
-  async function addComment(html: string) {
-    const authorId = getAuthorId();
+  async function addComment(html: string, editorJson: unknown) {
+    const authorId = currentMember?.id ?? getAuthorId();
+    const authorName_ = currentMember?.name ?? authorName;
     const { data } = await supabase
       .from('task_comments')
       .insert({
@@ -279,11 +285,24 @@ export function TaskComments({ taskId, comments, teamMembers, onChange }: Props)
         replies: [],
       };
       onChange([...comments, newComment]);
+
+      // Notify mentioned users/departments
+      notifyMentions({
+        content: editorJson,
+        actorId: authorId,
+        actorName: authorName_,
+        type: 'mention_task_comment',
+        title: 'Mentioned you in a task comment',
+        projectId,
+        referenceType: 'task_comment',
+        referenceId: data.id,
+      }).catch(console.error);
     }
   }
 
-  async function addReply(commentId: string, html: string) {
-    const authorId = getAuthorId();
+  async function addReply(commentId: string, html: string, editorJson: unknown) {
+    const authorId = currentMember?.id ?? getAuthorId();
+    const authorName_ = currentMember?.name ?? authorName;
     const { data } = await supabase
       .from('task_comment_replies')
       .insert({
@@ -307,6 +326,17 @@ export function TaskComments({ taskId, comments, teamMembers, onChange }: Props)
         )
       );
       setReplyingTo(null);
+
+      notifyMentions({
+        content: editorJson,
+        actorId: authorId,
+        actorName: authorName_,
+        type: 'mention_task_comment_reply',
+        title: 'Mentioned you in a task reply',
+        projectId,
+        referenceType: 'task_comment_reply',
+        referenceId: data.id,
+      }).catch(console.error);
     }
   }
 
@@ -437,7 +467,7 @@ export function TaskComments({ taskId, comments, teamMembers, onChange }: Props)
               <CommentEditor
                 mentionItems={mentionItems}
                 placeholder="Write a reply…"
-                onSubmit={(html) => addReply(comment.id, html)}
+                onSubmit={(html, json) => addReply(comment.id, html, json)}
                 onCancel={() => setReplyingTo(null)}
                 compact
               />

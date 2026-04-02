@@ -24,6 +24,7 @@ import { supabase } from '../lib/supabase';
 import { Button } from './Button';
 import { format } from 'date-fns';
 import type { ProjectLog, ProjectLogReply, TeamMember } from '../types';
+import { notifyMentions } from '../lib/notifications';
 
 
 // ---------------------------------------------------------------------------
@@ -582,6 +583,7 @@ interface LogEntryProps {
   replies: ProjectLogReply[];
   teamMembers: TeamMember[];
   getMentionItems: () => MentionItem[];
+  projectId: string;
   onEdit: () => void;
   onDelete: () => void;
   onReplyAdded: (reply: ProjectLogReply) => void;
@@ -596,7 +598,7 @@ function AuthorAvatar({ name, className = '' }: { name: string; className?: stri
   );
 }
 
-function LogEntry({ log, replies, teamMembers, getMentionItems, onEdit, onDelete, onReplyAdded }: LogEntryProps) {
+function LogEntry({ log, replies, teamMembers, getMentionItems, projectId, onEdit, onDelete, onReplyAdded }: LogEntryProps) {
   const navigate = useNavigate();
   const { member: currentMember } = useCurrentMember();
   const logType = (log.log_type as LogType) || 'note';
@@ -647,12 +649,25 @@ function LogEntry({ log, replies, teamMembers, getMentionItems, onEdit, onDelete
     setShowReplyForm(false);
 
     try {
-      await supabase.from('project_log_replies').insert({
+      const { data: inserted } = await supabase.from('project_log_replies').insert({
         log_id: log.id,
         comment: content,
         author_id: authorId,
         author_name: authorName,
-      });
+      }).select('id').single();
+
+      if (inserted) {
+        notifyMentions({
+          content,
+          actorId: authorId,
+          actorName: authorName,
+          type: 'mention_log_reply',
+          title: 'Mentioned you in a log reply',
+          projectId,
+          referenceType: 'project_log_reply',
+          referenceId: inserted.id,
+        }).catch(console.error);
+      }
     } catch (err) {
       console.error('Error posting reply:', err);
     } finally {
@@ -1062,15 +1077,29 @@ export function BitacoraSection({ projectId }: Props) {
     setLogs((prev) => [optimistic, ...prev]);
 
     try {
-      const { error } = await supabase.from('project_logs').insert({
+      const { data: inserted, error } = await supabase.from('project_logs').insert({
         project_id: projectId,
         comment: content,
         log_type: logType,
         author_id: authorId,
         author_name: authorName,
-      });
+      }).select('id').single();
       if (error) throw error;
       loadLogs();
+
+      // Notify mentioned users/departments
+      if (inserted) {
+        notifyMentions({
+          content,
+          actorId: authorId,
+          actorName: authorName,
+          type: 'mention_log',
+          title: 'Mentioned you in a log entry',
+          projectId,
+          referenceType: 'project_log',
+          referenceId: inserted.id,
+        }).catch(console.error);
+      }
     } catch (err) {
       console.error('Error adding log:', err);
       setLogs((prev) => prev.filter((l) => l.id !== optimistic.id));
@@ -1217,6 +1246,7 @@ export function BitacoraSection({ projectId }: Props) {
                 replies={repliesByLog[log.id] ?? []}
                 teamMembers={teamMembers}
                 getMentionItems={getMentionItems}
+                projectId={projectId}
                 onEdit={() => setEditingId(log.id)}
                 onDelete={() => deleteLog(log.id)}
                 onReplyAdded={(reply) => handleReplyAdded(log.id, reply)}

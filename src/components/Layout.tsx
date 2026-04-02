@@ -8,13 +8,16 @@ import {
   DollarSign,
   Settings as SettingsIcon,
   LogOut,
+  Bell,
   Menu,
   X,
   Search,
   Home,
 } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
+import { NotificationPanel } from './NotificationPanel';
 import { useCurrentMember } from '../lib/useCurrentMember';
+import { useNotifications } from '../lib/useNotifications';
 
 interface LayoutProps {
   children: ReactNode;
@@ -24,8 +27,10 @@ interface LayoutProps {
 export function Layout({ children, onLogout }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const { pathname } = useLocation();
   const { member } = useCurrentMember();
+  const { unreadCount } = useNotifications();
   const isAdmin = member?.role === 'admin';
 
   useEffect(() => {
@@ -123,6 +128,19 @@ export function Layout({ children, onLogout }: LayoutProps) {
               )}
 
               <button
+                onClick={() => setNotifOpen((v) => !v)}
+                className="hidden sm:inline-flex items-center justify-center p-2 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all duration-150 relative"
+                title="Notifications"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 leading-none">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              <button
                 onClick={onLogout}
                 className="hidden sm:inline-flex items-center justify-center p-2 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all duration-150"
                 title="Logout"
@@ -195,6 +213,18 @@ export function Layout({ children, onLogout }: LayoutProps) {
                   </Link>
                 )}
                 <button
+                  onClick={() => { setNotifOpen(true); setMobileMenuOpen(false); }}
+                  className="flex items-center justify-center p-3 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-all duration-150 relative"
+                  title="Notifications"
+                >
+                  <Bell className="h-5 w-5 flex-shrink-0" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 leading-none">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+                <button
                   onClick={onLogout}
                   className="flex items-center justify-center p-3 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-all duration-150"
                   title="Logout"
@@ -212,6 +242,7 @@ export function Layout({ children, onLogout }: LayoutProps) {
       </main>
 
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
     </div>
   );
 }
