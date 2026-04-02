@@ -1037,7 +1037,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   ];
 
   return (
-    <div className="page-enter">
+    <div>
       <div style={{ position: 'fixed', top: '56px', left: 0, right: 0, zIndex: 40, background: 'white', borderBottom: '1px solid #e2e8f0' }}>
         <div className="max-w-7xl mx-auto flex items-center h-12 px-4 sm:px-6 lg:px-8" style={{ maxWidth: '80rem', margin: '0 auto', display: 'flex', alignItems: 'center', height: '48px', padding: '0 24px' }}>
           <button
@@ -1102,7 +1102,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         areasEmpty={areas.length === 0}
       />
 
-      <div className="mb-6 mt-6">
+      <div className="mb-6 mt-6 page-enter">
 
         <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm mb-6">
           <div className="flex justify-between items-start gap-6">
