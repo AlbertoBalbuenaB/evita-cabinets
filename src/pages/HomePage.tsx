@@ -471,10 +471,10 @@ export function HomePage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 page-enter">
 
       {/* ── Hero stat bar ─────────────────────────────────────────────────── */}
-      <div className="glass-indigo px-6 py-5">
+      <div className="glass-indigo px-6 py-5 hero-enter">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{member ? getGreeting(member.name) : 'Home'}</h1>
@@ -592,11 +592,11 @@ export function HomePage() {
           </div>
         ) : (
           <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-            {recentQuotes.map(q => (
+            {recentQuotes.map((q, idx) => (
               <div
                 key={q.id}
                 onClick={() => navigate(`/projects/${q.project_id}/quotations/${q.id}`)}
-                className="group p-4 rounded-xl border border-slate-200/60 hover:border-blue-400/60 hover:shadow-md cursor-pointer transition-all bg-white/60 backdrop-blur-sm"
+                className={`group p-4 rounded-xl border border-slate-200/60 hover:border-blue-400/60 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer transition-all bg-white/60 backdrop-blur-sm card-enter stagger-${Math.min(idx + 1, 12)}`}
               >
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="text-sm font-semibold text-slate-900 truncate flex-1 mr-2 leading-snug">

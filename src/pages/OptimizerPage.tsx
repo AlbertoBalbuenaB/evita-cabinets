@@ -196,8 +196,8 @@ export function OptimizerPage() {
 
       {/* ── Spinner overlay ───────────────────────────────── */}
       {store.isOptimizing && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl p-6 flex flex-col items-center gap-3 shadow-xl">
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center spinner-overlay-enter">
+          <div className="bg-white rounded-xl p-6 flex flex-col items-center gap-3 shadow-xl spinner-card-enter">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             <p className="font-semibold text-slate-900">Optimizing...</p>
             <p className="text-xs text-slate-400">GRASP Multi-Strategy in progress</p>

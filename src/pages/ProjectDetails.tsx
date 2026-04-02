@@ -1012,8 +1012,19 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-slate-600">Loading project details...</div>
+      <div className="space-y-5 page-enter">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 skeleton-shimmer" />
+          <div className="space-y-1.5 flex-1">
+            <div className="h-4 w-32 skeleton-shimmer" />
+            <div className="h-6 w-64 skeleton-shimmer" />
+          </div>
+        </div>
+        <div className="h-48 skeleton-shimmer" />
+        <div className="flex gap-2">
+          {[1,2,3,4].map(i => <div key={i} className="h-10 w-20 skeleton-shimmer" />)}
+        </div>
+        <div className="glass-white h-[500px] animate-pulse" />
       </div>
     );
   }
@@ -1026,7 +1037,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   ];
 
   return (
-    <div>
+    <div className="page-enter">
       <div style={{ position: 'fixed', top: '56px', left: 0, right: 0, zIndex: 40, background: 'white', borderBottom: '1px solid #e2e8f0' }}>
         <div className="max-w-7xl mx-auto flex items-center h-12 px-4 sm:px-6 lg:px-8" style={{ maxWidth: '80rem', margin: '0 auto', display: 'flex', alignItems: 'center', height: '48px', padding: '0 24px' }}>
           <button

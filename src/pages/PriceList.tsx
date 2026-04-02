@@ -225,18 +225,29 @@ export function PriceList() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-slate-500">Loading price list...</p>
+      <div className="space-y-6 page-enter">
+        <div className="flex justify-between items-start mb-6">
+          <div className="space-y-2">
+            <div className="h-8 w-40 skeleton-shimmer" />
+            <div className="h-4 w-64 skeleton-shimmer" />
+          </div>
+          <div className="h-10 w-28 skeleton-shimmer" />
+        </div>
+        <div className="flex gap-3">
+          <div className="flex-1 h-11 skeleton-shimmer" />
+          <div className="h-11 w-40 skeleton-shimmer" />
+          <div className="h-11 w-24 skeleton-shimmer" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-48 skeleton-shimmer" />)}
         </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="page-enter">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hero-enter">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Price List</h1>
           <p className="mt-1 text-slate-500 text-sm">
@@ -488,10 +499,10 @@ function ListView({ items, sortField, sortDirection, onSort, onOpenDetail, onEdi
 function CardView({ items, onOpenDetail, onEdit, onDuplicate, onDelete }: ViewProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {items.map((item) => (
+      {items.map((item, idx) => (
         <div
           key={item.id}
-          className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden cursor-pointer group hover:shadow-md hover:border-blue-200 transition-all duration-200"
+          className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden cursor-pointer group hover:shadow-lg hover:border-blue-300/60 hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
           onClick={() => onOpenDetail(item)}
         >
           <div className="relative h-40 bg-slate-50 overflow-hidden">

@@ -205,15 +205,25 @@ export function ProductsCatalog() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-slate-600">Loading products...</div>
+      <div className="space-y-6 page-enter">
+        <div className="space-y-2 mb-6">
+          <div className="h-8 w-56 skeleton-shimmer" />
+          <div className="h-4 w-80 skeleton-shimmer" />
+        </div>
+        <div className="flex border-b border-slate-200 mb-6 gap-1">
+          {[1,2,3].map(i => <div key={i} className="h-10 w-32 skeleton-shimmer" style={{ borderRadius: '8px' }} />)}
+        </div>
+        <div className="glass-white h-14 animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="glass-white h-52 animate-pulse" />)}
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-6">
+    <div className="page-enter">
+      <div className="mb-6 hero-enter">
         <h1 className="text-3xl font-bold text-slate-900">Cabinets Catalog</h1>
         <p className="mt-2 text-slate-600">
           Manage cabinet products, closet library and reusable templates
@@ -298,11 +308,11 @@ export function ProductsCatalog() {
         </div>
       ) : viewMode === 'card' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredProducts.map((product) => (
+          {filteredProducts.map((product, idx) => (
             <div
               key={product.id}
               onClick={() => navigate(`/products/${product.id}`)}
-              className="glass-white p-0 overflow-hidden cursor-pointer group hover:shadow-md hover:border-blue-200 transition-all duration-200"
+              className={`glass-white p-0 overflow-hidden cursor-pointer group hover:shadow-lg hover:border-blue-300/60 hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
             >
               <div className="px-4 pt-4 pb-3">
                 <div className="flex items-start justify-between gap-2 mb-2">
@@ -475,8 +485,11 @@ function ClosetLibraryTab() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48">
-        <div className="text-slate-500">Loading closet catalog...</div>
+      <div className="space-y-4 page-enter">
+        <div className="glass-white h-14 animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3,4,5,6].map(i => <div key={i} className="h-40 skeleton-shimmer" />)}
+        </div>
       </div>
     );
   }

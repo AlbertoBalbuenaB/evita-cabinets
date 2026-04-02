@@ -97,16 +97,25 @@ export function ProjectsHub() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <div className="h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <div className="text-slate-500 text-sm">Loading projects...</div>
+      <div className="space-y-6 page-enter">
+        <div className="flex justify-between items-start mb-6">
+          <div className="space-y-2">
+            <div className="h-8 w-48 skeleton-shimmer" />
+            <div className="h-4 w-64 skeleton-shimmer" />
+          </div>
+          <div className="h-10 w-36 skeleton-shimmer" />
+        </div>
+        <div className="glass-white h-14 animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {[1,2,3,4,5,6].map(i => <div key={i} className="glass-white h-48 animate-pulse" />)}
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-start mb-6">
+    <div className="page-enter">
+      <div className="flex justify-between items-start mb-6 hero-enter">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Projects</h1>
           <p className="mt-2 text-slate-600">Manage your millwork projects and quotations</p>
@@ -156,7 +165,7 @@ export function ProjectsHub() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((project) => {
+          {filtered.map((project, idx) => {
             const latest = project.latestQuotation;
             const statusColors: Record<string, string> = {
               Awarded: 'bg-green-50 text-green-700 border-green-200/50',
@@ -170,7 +179,7 @@ export function ProjectsHub() {
               <div
                 key={project.id}
                 onClick={() => navigate(`/projects/${project.id}`)}
-                className="glass-white p-0 overflow-hidden cursor-pointer group hover:shadow-md hover:border-blue-200 transition-all duration-200"
+                className={`glass-white p-0 overflow-hidden cursor-pointer group hover:shadow-lg hover:border-blue-300/60 hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
               >
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-2 mb-2">
