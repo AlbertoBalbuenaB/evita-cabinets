@@ -431,7 +431,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                   <p className="mt-1 text-xs text-slate-500">Standard box = 2. Add interior dividers if needed.</p>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Shelves (Entrepaños)</label>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Shelves</label>
                   <input
                     type="number" min="0"
                     value={calcShelves}

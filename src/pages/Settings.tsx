@@ -958,7 +958,7 @@ export function Settings() {
       {/* ── Admin: User Management ──────────────────────────────────────── */}
       {currentMember?.role === 'admin' && (
         <div className="glass-white rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Usuarios del Sistema</h2>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">System Users</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -978,7 +978,7 @@ export function Settings() {
                     <tr key={m.id} className="border-b border-slate-100 last:border-0">
                       <td className="py-2.5 px-3 font-medium text-slate-800">
                         {m.name}
-                        {isSelf && <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold">Tú</span>}
+                        {isSelf && <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold">You</span>}
                       </td>
                       <td className="py-2.5 px-3 text-slate-500">{m.email || '—'}</td>
                       <td className="py-2.5 px-3">

@@ -182,7 +182,7 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
                 <tr key={cut.n} className={`border-t border-slate-50 ${cut.isTrim ? 'bg-amber-50' : 'hover:bg-slate-50'}`}>
                   <td className="py-1 px-4 font-mono text-slate-400">{cut.n}</td>
                   <td className="py-1 text-slate-600 text-xs">
-                    {cut.isTrim ? '— orillado —' : `${fmtNum(board.ancho, unit)}×${fmtNum(board.alto, unit)}`}
+                    {cut.isTrim ? '— trim —' : `${fmtNum(board.ancho, unit)}×${fmtNum(board.alto, unit)}`}
                   </td>
                   <td className="py-1 text-center">
                     <span className={`inline-block px-1 py-0.5 rounded text-xs font-bold ${

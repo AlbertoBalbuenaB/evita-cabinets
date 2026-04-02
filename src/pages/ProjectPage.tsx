@@ -316,7 +316,7 @@ export function ProjectPage() {
           <h1 className="text-lg font-semibold text-slate-900 truncate">{project.name}</h1>
           {(project as Record<string, unknown>).last_modified_at && (project as Record<string, unknown>).last_modified_by_member_id && (
             <p className="text-xs text-slate-400 mt-0.5">
-              Última modificación: {(project as Record<string, unknown>).last_modified_member_name as string || 'Unknown'} · {formatRelativeDate(((project as Record<string, unknown>).last_modified_at as string).split('T')[0])}
+              Last modified: {(project as Record<string, unknown>).last_modified_member_name as string || 'Unknown'} · {formatRelativeDate(((project as Record<string, unknown>).last_modified_at as string).split('T')[0])}
             </p>
           )}
         </div>

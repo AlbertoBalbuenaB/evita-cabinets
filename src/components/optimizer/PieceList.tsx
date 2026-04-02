@@ -12,21 +12,21 @@ export function PieceList({ pieces, onRemove }: Props) {
     <div className="bg-white border-t border-slate-200 flex flex-col flex-shrink-0">
       <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-slate-700">Lista de Piezas</span>
+          <span className="text-sm font-semibold text-slate-700">Piece List</span>
           <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{pieces.length}</span>
         </div>
-        <div className="text-xs text-slate-500">Área: <span className="font-semibold">{totalArea.toFixed(2)}</span> m²</div>
+        <div className="text-xs text-slate-500">Area: <span className="font-semibold">{totalArea.toFixed(2)}</span> m²</div>
       </div>
       {pieces.length === 0 ? (
         <div className="flex items-center justify-center py-6">
-          <p className="text-xs text-slate-400">No hay piezas agregadas</p>
+          <p className="text-xs text-slate-400">No pieces added</p>
         </div>
       ) : (
         <div className="overflow-y-auto max-h-44">
           <table className="w-full text-xs">
             <thead className="sticky top-0 bg-slate-50 border-b border-slate-200">
               <tr>
-                {['#','Material',`Ancho(${unitLabel(unit)})`,`Alto(${unitLabel(unit)})`,`Esp.(${unitLabel(unit)})`,'Cant.','Veta','Nombre',''].map((h, i) => (
+                {['#','Material',`Width(${unitLabel(unit)})`,`Height(${unitLabel(unit)})`,`Thk.(${unitLabel(unit)})`,'Qty','Grain','Name',''].map((h, i) => (
                   <th key={i} className="px-2 py-1.5 text-left font-medium text-slate-500">{h}</th>
                 ))}
               </tr>
@@ -42,7 +42,7 @@ export function PieceList({ pieces, onRemove }: Props) {
                   <td className="px-2 py-1.5 text-center font-semibold text-slate-700">{p.cantidad}</td>
                   <td className="px-2 py-1.5 text-center">
                     <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${p.vetaHorizontal ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
-                      {p.vetaHorizontal ? 'Fija' : 'Libre'}
+                      {p.vetaHorizontal ? 'Fixed' : 'Free'}
                     </span>
                   </td>
                   <td className="px-2 py-1.5 text-slate-600 max-w-24 truncate">{p.nombre || '—'}</td>

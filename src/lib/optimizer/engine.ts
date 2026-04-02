@@ -470,10 +470,10 @@ export function generateCutSequence(board: BoardResult, unit: UnitSystem = 'mm')
   // ── Trim cuts (edge trimming) ──
   if (board.trim > 0) {
     const t = board.trim;
-    cuts.push({ n: cutN++, type: 'H', pos: t,              desc: `y=${_fmtU(t, unit)} — orillado superior`,            isTrim: true });
-    cuts.push({ n: cutN++, type: 'H', pos: board.alto - t, desc: `y=${_fmtU(board.alto - t, unit)} — orillado inferior`, isTrim: true });
-    cuts.push({ n: cutN++, type: 'V', pos: t,              desc: `x=${_fmtU(t, unit)} — orillado izquierdo`,            isTrim: true });
-    cuts.push({ n: cutN++, type: 'V', pos: board.ancho - t, desc: `x=${_fmtU(board.ancho - t, unit)} — orillado derecho`, isTrim: true });
+    cuts.push({ n: cutN++, type: 'H', pos: t,              desc: `y=${_fmtU(t, unit)} — top trim`,    isTrim: true });
+    cuts.push({ n: cutN++, type: 'H', pos: board.alto - t, desc: `y=${_fmtU(board.alto - t, unit)} — bottom trim`, isTrim: true });
+    cuts.push({ n: cutN++, type: 'V', pos: t,              desc: `x=${_fmtU(t, unit)} — left trim`,  isTrim: true });
+    cuts.push({ n: cutN++, type: 'V', pos: board.ancho - t, desc: `x=${_fmtU(board.ancho - t, unit)} — right trim`, isTrim: true });
   }
 
   // ── Piece cuts ──
@@ -489,13 +489,13 @@ export function generateCutSequence(board: BoardResult, unit: UnitSystem = 'mm')
 
   for (let i = 0; i < boundaries.length - 1; i++) {
     const y1 = boundaries[i], y2 = boundaries[i + 1];
-    if (i > 0) cuts.push({ n: cutN++, type: 'H', pos: y1, desc: `Corte horizontal a ${_fmtU(y1, unit)} del borde superior` });
+    if (i > 0) cuts.push({ n: cutN++, type: 'H', pos: y1, desc: `Horizontal cut at ${_fmtU(y1, unit)} from top edge` });
     const strip = pcs.filter(p => p.y >= y1 && p.y + p.h <= y2).sort((a, b) => a.x - b.x);
     const xSet = new Set<number>();
     strip.forEach(p => { xSet.add(p.x); xSet.add(p.x + p.w); });
     [...xSet].sort((a, b) => a - b).filter(x => x > 0 && x < board.ancho).forEach(x => {
       if (!strip.some(p => p.x < x && p.x + p.w > x))
-        cuts.push({ n: cutN++, type: 'V', pos: x, desc: `  Corte vertical a ${_fmtU(x, unit)} (franja ${_fmtU(y1, unit)}–${_fmtU(y2, unit)})` });
+        cuts.push({ n: cutN++, type: 'V', pos: x, desc: `  Vertical cut at ${_fmtU(x, unit)} (strip ${_fmtU(y1, unit)}–${_fmtU(y2, unit)})` });
     });
   }
   return cuts;
