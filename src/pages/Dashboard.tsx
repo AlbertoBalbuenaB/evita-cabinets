@@ -547,9 +547,25 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <div className="h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <div className="text-slate-500 text-sm">Loading dashboard...</div>
+      <div className="space-y-6 page-enter">
+        <div className="flex justify-between items-start mb-8">
+          <div className="space-y-2">
+            <div className="h-8 w-48 skeleton-shimmer" />
+            <div className="h-4 w-72 skeleton-shimmer" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-10 w-28 skeleton-shimmer" />
+            <div className="h-10 w-36 skeleton-shimmer" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1,2,3,4].map(i => <div key={i} className="glass-blue h-28 animate-pulse" style={{ borderRadius: '14px' }} />)}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="glass-white h-64 animate-pulse" />
+          <div className="lg:col-span-2 glass-white h-64 animate-pulse" />
+        </div>
+        <div className="glass-white h-72 animate-pulse" />
       </div>
     );
   }
@@ -586,8 +602,8 @@ export function Dashboard() {
   }
 
   return (
-    <div>
-      <div className="mb-8 flex justify-between items-start">
+    <div className="page-enter">
+      <div className="mb-8 flex justify-between items-start hero-enter">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
           <p className="mt-2 text-slate-600">
@@ -627,12 +643,12 @@ export function Dashboard() {
 
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-        {statCards.map((card) => {
+        {statCards.map((card, idx) => {
           const Icon = card.icon;
           return (
             <div
               key={card.label}
-              className="glass-blue p-6 overflow-hidden"
+              className={`glass-blue p-6 overflow-hidden stat-enter stagger-${idx + 1} hover:shadow-lg hover:border-blue-300/60 transition-all duration-200`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -651,8 +667,8 @@ export function Dashboard() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        <div className="glass-white p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 section-enter" style={{ animationDelay: '0.15s' }}>
+        <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Project Status</h2>
           <div className="space-y-3">
             {statusCards.map((card) => {
@@ -677,7 +693,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="lg:col-span-2 glass-white p-6">
+        <div className="lg:col-span-2 glass-white p-6 hover:shadow-lg transition-shadow duration-200">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-slate-900">
               Monthly Projects (Last 6 Months)
@@ -739,7 +755,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="glass-white p-6">
+      <div className="glass-white p-6 section-enter hover:shadow-lg transition-shadow duration-200" style={{ animationDelay: '0.25s' }}>
         <h2 className="text-lg font-semibold text-slate-900 mb-4">
           Monthly Quoted Value (Last 6 Months)
         </h2>
@@ -786,7 +802,7 @@ export function Dashboard() {
       </div>
 
       {(topCabinets.length > 0 || doorMaterialTrends.length > 0 || boxMaterialTrends.length > 0 || hardwareTrends.length > 0) && (
-        <div className="mt-6 mb-6">
+        <div className="mt-6 mb-6 section-enter" style={{ animationDelay: '0.35s' }}>
           <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center">
             <TrendingUp className="h-6 w-6 text-blue-600 mr-3" />
             Quotation Trends & Analytics
@@ -794,7 +810,7 @@ export function Dashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {topCabinets.length > 0 && (
-              <div className="glass-white p-6">
+              <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
                 <div className="flex items-center mb-4">
                   <Package className="h-5 w-5 text-blue-600 mr-2" />
                   <h3 className="text-lg font-semibold text-slate-900">Top 5 Most Quoted Cabinets</h3>
@@ -838,7 +854,7 @@ export function Dashboard() {
             )}
 
             {doorMaterialTrends.length > 0 && (
-              <div className="glass-white p-6">
+              <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
                 <div className="flex items-center mb-4">
                   <Package className="h-5 w-5 text-purple-600 mr-2" />
                   <h3 className="text-lg font-semibold text-slate-900">Popular Door Materials</h3>
@@ -877,7 +893,7 @@ export function Dashboard() {
             )}
 
             {boxMaterialTrends.length > 0 && (
-              <div className="glass-white p-6">
+              <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
                 <div className="flex items-center mb-4">
                   <Package className="h-5 w-5 text-orange-600 mr-2" />
                   <h3 className="text-lg font-semibold text-slate-900">Popular Box Materials</h3>
@@ -916,7 +932,7 @@ export function Dashboard() {
             )}
 
             {hardwareTrends.length > 0 && (
-              <div className="glass-white p-6">
+              <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
                 <div className="flex items-center mb-4">
                   <Package className="h-5 w-5 text-teal-600 mr-2" />
                   <h3 className="text-lg font-semibold text-slate-900">Most Used Hardware</h3>
@@ -925,7 +941,7 @@ export function Dashboard() {
                   {hardwareTrends.map((hardware, index) => (
                     <div
                       key={hardware.hardware_name}
-                      className="flex items-center justify-between p-3 rounded-lg bg-slate-50"
+                      className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
                     >
                       <div className="flex items-center flex-1">
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs mr-3 ${

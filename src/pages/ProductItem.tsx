@@ -58,9 +58,19 @@ export function ProductItem() {
 
   if (loading || !product) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <div className="h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <div className="text-slate-500 text-sm">Loading product...</div>
+      <div className="space-y-5 page-enter">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 skeleton-shimmer" />
+          <div className="space-y-1">
+            <div className="h-3 w-20 skeleton-shimmer" />
+            <div className="h-5 w-40 skeleton-shimmer" />
+          </div>
+        </div>
+        <div className="h-40 skeleton-shimmer" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="h-64 skeleton-shimmer" />
+          <div className="h-64 skeleton-shimmer" />
+        </div>
       </div>
     );
   }
@@ -68,9 +78,9 @@ export function ProductItem() {
   const isArchived = product.status === 'archived' || !product.is_active;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 page-enter">
       {/* Breadcrumb + actions */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 hero-enter">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate('/products')}
@@ -145,11 +155,11 @@ export function ProductItem() {
       </div>
 
       {/* 2-column grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 section-enter" style={{ animationDelay: '0.1s' }}>
         {/* Left column */}
         <div className="space-y-4">
           {/* Material Specs */}
-          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
+          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center gap-2 mb-3">
               <Ruler className="h-4 w-4 text-slate-400" />
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Material Specifications</h3>
@@ -171,7 +181,7 @@ export function ProductItem() {
           </div>
 
           {/* Production */}
-          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
+          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center gap-2 mb-3">
               <Box className="h-4 w-4 text-slate-400" />
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Production</h3>
@@ -192,7 +202,7 @@ export function ProductItem() {
         {/* Right column */}
         <div className="space-y-4">
           {/* Usage */}
-          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
+          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center gap-2 mb-3">
               <BarChart3 className="h-4 w-4 text-slate-400" />
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Usage</h3>
@@ -206,7 +216,7 @@ export function ProductItem() {
 
           {/* Waste Info */}
           {(product.original_box_sf != null || product.original_doors_fronts_sf != null) && (
-            <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
+            <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
               <div className="flex items-center gap-2 mb-3">
                 <Warehouse className="h-4 w-4 text-slate-400" />
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Waste Adjustment</h3>
@@ -225,7 +235,7 @@ export function ProductItem() {
           )}
 
           {/* Metadata */}
-          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
+          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center gap-2 mb-3">
               <Clock className="h-4 w-4 text-slate-400" />
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Metadata</h3>
@@ -256,7 +266,7 @@ export function ProductItem() {
       {Array.isArray(product.cut_pieces) && (product.cut_pieces as unknown as CutPiece[]).length > 0 && (() => {
         const pieces = product.cut_pieces as unknown as CutPiece[];
         return (
-          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
+          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Scissors className="h-4 w-4 text-slate-400" />

@@ -36,9 +36,16 @@ export function QuotationDetailsPage() {
 
   if (loading || !quotation) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <div className="h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <div className="text-slate-500 text-sm">Loading quotation...</div>
+      <div className="space-y-5 page-enter">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 skeleton-shimmer" />
+          <div className="space-y-1.5">
+            <div className="h-3 w-20 skeleton-shimmer" />
+            <div className="h-6 w-48 skeleton-shimmer" />
+          </div>
+        </div>
+        <div className="h-48 skeleton-shimmer" />
+        <div className="glass-white h-96 animate-pulse" />
       </div>
     );
   }

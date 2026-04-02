@@ -433,15 +433,24 @@ export function Settings() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-slate-600">Loading settings...</div>
+      <div className="space-y-8 page-enter">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-8 w-36 skeleton-shimmer" />
+            <div className="h-4 w-64 skeleton-shimmer" />
+          </div>
+          <div className="h-10 w-32 skeleton-shimmer" />
+        </div>
+        {[1,2,3].map(i => (
+          <div key={i} className="bg-white rounded-xl border border-slate-200 h-48 animate-pulse" style={{ borderRadius: '14px' }} />
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 page-enter">
+      <div className="flex items-center justify-between hero-enter">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
           <p className="text-slate-600 mt-1">Configure system settings and import data</p>
@@ -465,7 +474,7 @@ export function Settings() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter" style={{ animationDelay: '0.05s' }}>
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-xl font-semibold text-slate-900">Local Backup</h2>
@@ -523,7 +532,7 @@ export function Settings() {
       </div>
 
       {showDataImport && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
           <h2 className="text-xl font-semibold text-slate-900 mb-4">Import Data</h2>
           <div className="space-y-4">
             <div>
@@ -562,7 +571,7 @@ export function Settings() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter" style={{ animationDelay: '0.15s' }}>
         <h2 className="text-xl font-semibold text-slate-900 mb-6">Taxes by Material Type</h2>
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
@@ -656,7 +665,7 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter" style={{ animationDelay: '0.2s' }}>
         <h2 className="text-xl font-semibold text-slate-900 mb-6">Custom Types</h2>
         <div className="space-y-4">
           <p className="text-sm text-slate-600">
@@ -698,7 +707,7 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
         <h2 className="text-xl font-semibold text-slate-900 mb-6">Custom Units</h2>
         <div className="space-y-4">
           <p className="text-sm text-slate-600">
@@ -740,7 +749,7 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
         <h2 className="text-xl font-semibold text-slate-900 mb-6">Labor Costs</h2>
         <div className="space-y-4">
           {laborSettings.map((setting) => (
@@ -765,7 +774,7 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
         <h2 className="text-xl font-semibold text-slate-900 mb-6">Currency Exchange Rate</h2>
         <div className="space-y-4">
           {currencySettings.map((setting) => (
@@ -793,7 +802,7 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
         <h2 className="text-xl font-semibold text-slate-900 mb-6">Company Logo</h2>
         <div className="space-y-4">
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -826,7 +835,7 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
         <h2 className="text-xl font-semibold text-slate-900 mb-6">Material Waste Percentages</h2>
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
@@ -878,7 +887,7 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
         <h2 className="text-xl font-semibold text-slate-900 mb-6">Team Members</h2>
         <div className="space-y-4">
           <p className="text-sm text-slate-600">

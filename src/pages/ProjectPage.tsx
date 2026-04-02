@@ -235,9 +235,19 @@ export function ProjectPage() {
 
   if (loading || !project) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <div className="h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <div className="text-slate-500 text-sm">Loading project...</div>
+      <div className="space-y-5 page-enter">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 skeleton-shimmer" />
+          <div className="space-y-1.5">
+            <div className="h-3 w-20 skeleton-shimmer" />
+            <div className="h-6 w-56 skeleton-shimmer" />
+          </div>
+        </div>
+        <div className="h-44 skeleton-shimmer" />
+        <div className="flex gap-2">
+          {[1,2,3,4,5,6].map(i => <div key={i} className="h-10 w-24 skeleton-shimmer" />)}
+        </div>
+        <div className="glass-white h-96 animate-pulse" />
       </div>
     );
   }
@@ -292,9 +302,9 @@ export function ProjectPage() {
     .reduce((sum, q) => sum + (q.total_amount || 0), 0);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 page-enter">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 hero-enter">
         <button onClick={() => navigate('/projects')} className="flex-shrink-0 p-2 rounded-xl bg-white/60 hover:bg-white/80 border border-slate-200/50 text-slate-600 hover:text-slate-800 transition-colors">
           <ArrowLeft className="h-4 w-4" />
         </button>

@@ -89,8 +89,22 @@ export function PriceListItem() {
 
   if (loading || !item) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-slate-600">Loading...</div>
+      <div className="space-y-5 page-enter">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 skeleton-shimmer" />
+          <div className="space-y-1">
+            <div className="h-3 w-20 skeleton-shimmer" />
+            <div className="h-5 w-48 skeleton-shimmer" />
+          </div>
+        </div>
+        <div className="h-44 skeleton-shimmer" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <div className="h-40 skeleton-shimmer" />
+            <div className="h-48 skeleton-shimmer" />
+          </div>
+          <div className="h-64 skeleton-shimmer" />
+        </div>
       </div>
     );
   }
@@ -98,9 +112,9 @@ export function PriceListItem() {
   const hasSpecs = !!(item.material || item.dimensions || item.sf_per_sheet != null || item.sku_code);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 page-enter">
       {/* Breadcrumb + actions */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 hero-enter">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate('/prices')}
@@ -163,12 +177,12 @@ export function PriceListItem() {
       </div>
 
       {/* 2-column grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 section-enter" style={{ animationDelay: '0.1s' }}>
         {/* Left column */}
         <div className="space-y-4">
           {/* Specifications */}
           {hasSpecs && (
-            <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
+            <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
               <div className="flex items-center gap-2 mb-3">
                 <Ruler className="h-4 w-4 text-slate-400" />
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Specifications</h3>
@@ -209,7 +223,7 @@ export function PriceListItem() {
           )}
 
           {/* Price History */}
-          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
+          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center gap-2 mb-3">
               <Clock className="h-4 w-4 text-slate-400" />
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Price History</h3>
@@ -311,7 +325,7 @@ export function PriceListItem() {
 
           {/* Notes */}
           {item.notes && (
-            <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
+            <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
               <div className="flex items-center gap-2 mb-2">
                 <FileText className="h-4 w-4 text-slate-400" />
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Notes</h3>
@@ -321,7 +335,7 @@ export function PriceListItem() {
           )}
 
           {/* Metadata */}
-          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
+          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center gap-2 mb-3">
               <Clock className="h-4 w-4 text-slate-400" />
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Metadata</h3>

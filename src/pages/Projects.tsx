@@ -415,16 +415,29 @@ export function Projects() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-slate-600">Loading projects...</div>
+      <div className="space-y-6 page-enter">
+        <div className="flex justify-between items-start mb-6">
+          <div className="space-y-2">
+            <div className="h-8 w-40 skeleton-shimmer" />
+            <div className="h-4 w-56 skeleton-shimmer" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-10 w-28 skeleton-shimmer" />
+            <div className="h-10 w-32 skeleton-shimmer" />
+          </div>
+        </div>
+        <div className="glass-white h-14 animate-pulse" />
+        <div className="space-y-3">
+          {[1,2,3,4].map(i => <div key={i} className="glass-white h-32 animate-pulse" />)}
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="page-enter">
       <div className="mb-6">
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex justify-between items-start mb-6 hero-enter">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Projects</h1>
             <p className="mt-2 text-slate-600">Manage your millwork quotations</p>

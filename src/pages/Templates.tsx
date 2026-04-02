@@ -154,14 +154,23 @@ export function Templates({ embedded = false }: TemplatesProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-slate-600">Loading templates...</div>
+      <div className="space-y-6 page-enter">
+        {!embedded && (
+          <div className="space-y-2">
+            <div className="h-8 w-52 skeleton-shimmer" />
+            <div className="h-4 w-72 skeleton-shimmer" />
+          </div>
+        )}
+        <div className="glass-white h-16 animate-pulse" style={{ borderRadius: '14px' }} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3,4,5,6].map(i => <div key={i} className="h-52 skeleton-shimmer" />)}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       {!embedded && (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -186,7 +195,7 @@ export function Templates({ embedded = false }: TemplatesProps) {
       )}
 
       {recentTemplates.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 section-enter" style={{ animationDelay: '0.05s' }}>
           <div className="flex items-center mb-3">
             <Clock className="h-5 w-5 text-blue-600 mr-2" />
             <h2 className="font-semibold text-slate-900">Recently Used Templates</h2>
@@ -196,7 +205,7 @@ export function Templates({ embedded = false }: TemplatesProps) {
               <button
                 key={template.id}
                 onClick={() => setPreviewTemplate(template)}
-                className="text-left px-3 py-2 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                className="text-left px-3 py-2 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200"
               >
                 <div className="font-medium text-slate-900 text-sm">{template.name}</div>
                 <div className="text-xs text-slate-600 mt-1">
@@ -269,10 +278,10 @@ export function Templates({ embedded = false }: TemplatesProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTemplates.map(template => (
+            {filteredTemplates.map((template, idx) => (
               <div
                 key={template.id}
-                className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                className={`bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-lg hover:border-blue-300/60 hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
               >
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">

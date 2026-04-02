@@ -138,10 +138,9 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <History className="h-8 w-8 text-slate-400 animate-pulse mx-auto mb-4" />
-              <p className="text-slate-600">Loading version history...</p>
+          <div className="flex items-center justify-center py-12 page-enter">
+            <div className="space-y-3">
+              {[1,2,3].map(i => <div key={i} className="h-20 w-full skeleton-shimmer" style={{ width: '400px' }} />)}
             </div>
           </div>
         ) : filteredVersions.length === 0 ? (
