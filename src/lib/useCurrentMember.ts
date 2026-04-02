@@ -11,11 +11,14 @@ interface CurrentMember {
 }
 
 export function useCurrentMember(): CurrentMember {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [member, setMember] = useState<TeamMember | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for auth to finish loading before deciding there's no user
+    if (authLoading) return;
+
     if (!user) {
       setMember(null);
       setLoading(false);
@@ -38,7 +41,7 @@ export function useCurrentMember(): CurrentMember {
     })();
 
     return () => { cancelled = true; };
-  }, [user?.id]);
+  }, [user?.id, authLoading]);
 
   return { member, loading };
 }
