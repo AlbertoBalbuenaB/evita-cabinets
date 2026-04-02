@@ -59,9 +59,9 @@ const LOG_TYPE_ORDER: LogType[] = ['note', 'change', 'decision', 'risk', 'issue'
 // ---------------------------------------------------------------------------
 
 interface MentionItem {
-  id: string;   // encoded: "project:{uuid}" | "quotation:{projectId}:{id}" | "cabinet:{sku}" | "price_item:{id}"
+  id: string;
   label: string;
-  type: 'project' | 'quotation' | 'cabinet' | 'price_item' | 'department';
+  type: 'project' | 'quotation' | 'cabinet' | 'price_item' | 'department' | 'team_member';
   subtitle?: string;
 }
 
@@ -70,7 +70,8 @@ const MENTION_TYPE_CONFIG = {
   quotation:  { groupLabel: 'Quotations', Icon: FileText,  iconColor: 'text-blue-600',   iconBg: 'bg-blue-100'   },
   cabinet:    { groupLabel: 'Cabinets',   Icon: Package,   iconColor: 'text-amber-600',  iconBg: 'bg-amber-100'  },
   price_item:  { groupLabel: 'Price List',  Icon: DollarSign, iconColor: 'text-green-600',   iconBg: 'bg-green-100'   },
-  department:  { groupLabel: 'Departments', Icon: Users,      iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100' },
+  department:   { groupLabel: 'Departments', Icon: Users,      iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100' },
+  team_member:  { groupLabel: 'Team Members',Icon: User,       iconColor: 'text-sky-600',     iconBg: 'bg-sky-100'     },
 } as const;
 
 function isUuid(s: string): boolean {
@@ -83,7 +84,9 @@ function mentionToUrl(id: string): string {
   if (type === 'project')     return `/projects/${parts[1]}`;
   if (type === 'quotation')   return `/projects/${parts[1]}/quotations/${parts[2]}`;
   if (type === 'cabinet')     return isUuid(parts[1]) ? `/products/${parts[1]}` : '/products';
-  if (type === 'price_item')  return `/prices/${parts[1]}`;
+  if (type === 'price_item')    return `/prices/${parts[1]}`;
+  if (type === 'department')    return '#';
+  if (type === 'team_member')   return '#';
   return '#';
 }
 
@@ -514,6 +517,63 @@ function Toolbar({ editor }: ToolbarProps) {
 }
 
 // ---------------------------------------------------------------------------
+// ReplyEditor — lightweight TipTap editor for log replies with mentions
+// ---------------------------------------------------------------------------
+
+interface ReplyEditorProps {
+  getMentionItems: () => MentionItem[];
+  onSubmit: (jsonContent: string) => void;
+  onCancel: () => void;
+  disabled?: boolean;
+}
+
+function ReplyEditor({ getMentionItems, onSubmit, onCancel, disabled }: ReplyEditorProps) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({ heading: false, blockquote: false, codeBlock: false }),
+      LinkExt.configure({ openOnClick: false }),
+      Placeholder.configure({ placeholder: 'Write a reply… Use @ to mention people or teams.' }),
+      buildMentionExtension(getMentionItems),
+    ],
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm max-w-none focus:outline-none min-h-[48px] px-2.5 py-2 text-xs text-slate-700',
+      },
+    },
+  });
+
+  function handleSubmit() {
+    if (!editor || editor.isEmpty) return;
+    const json = editor.getJSON();
+    onSubmit(JSON.stringify(json));
+    editor.commands.clearContent();
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <div
+        className="border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-indigo-400 focus-within:border-indigo-400 bg-white"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSubmit(); }
+          if (e.key === 'Escape') onCancel();
+        }}
+      >
+        <EditorContent editor={editor} />
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        <Button size="sm" onClick={handleSubmit} disabled={disabled || !editor || editor.isEmpty}>
+          {disabled ? 'Posting…' : 'Post Reply'}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onCancel}>
+          <X className="h-3.5 w-3.5" />
+        </Button>
+        <span className="text-[10px] text-slate-400">Ctrl+Enter to post · @ to mention</span>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // LogEntry — renders a single log entry (read-only) using TipTap
 // ---------------------------------------------------------------------------
 
@@ -521,6 +581,7 @@ interface LogEntryProps {
   log: ProjectLog;
   replies: ProjectLogReply[];
   teamMembers: TeamMember[];
+  getMentionItems: () => MentionItem[];
   onEdit: () => void;
   onDelete: () => void;
   onReplyAdded: (reply: ProjectLogReply) => void;
@@ -535,7 +596,7 @@ function AuthorAvatar({ name, className = '' }: { name: string; className?: stri
   );
 }
 
-function LogEntry({ log, replies, teamMembers, onEdit, onDelete, onReplyAdded }: LogEntryProps) {
+function LogEntry({ log, replies, teamMembers, getMentionItems, onEdit, onDelete, onReplyAdded }: LogEntryProps) {
   const navigate = useNavigate();
   const { member: currentMember } = useCurrentMember();
   const logType = (log.log_type as LogType) || 'note';
@@ -543,7 +604,6 @@ function LogEntry({ log, replies, teamMembers, onEdit, onDelete, onReplyAdded }:
   const { Icon } = cfg;
 
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const [replyText, setReplyText] = useState('');
   const [postingReply, setPostingReply] = useState(false);
 
   const htmlContent = useMemo(() => renderContent(log.comment), [log.comment]);
@@ -568,9 +628,8 @@ function LogEntry({ log, replies, teamMembers, onEdit, onDelete, onReplyAdded }:
     try { return format(new Date(ts), "d MMM · h:mm a"); } catch { return ts ?? ''; }
   }
 
-  async function handlePostReply() {
-    const text = replyText.trim();
-    if (!text || postingReply) return;
+  async function handlePostReply(content: string) {
+    if (!content.trim() || postingReply) return;
     setPostingReply(true);
 
     const authorId = currentMember?.id ?? null;
@@ -579,19 +638,18 @@ function LogEntry({ log, replies, teamMembers, onEdit, onDelete, onReplyAdded }:
     const optimistic: ProjectLogReply = {
       id: crypto.randomUUID(),
       log_id: log.id,
-      comment: text,
+      comment: content,
       author_id: authorId,
       author_name: authorName,
       created_at: new Date().toISOString(),
     };
     onReplyAdded(optimistic);
-    setReplyText('');
     setShowReplyForm(false);
 
     try {
       await supabase.from('project_log_replies').insert({
         log_id: log.id,
-        comment: text,
+        comment: content,
         author_id: authorId,
         author_name: authorName,
       });
@@ -687,7 +745,11 @@ function LogEntry({ log, replies, teamMembers, onEdit, onDelete, onReplyAdded }:
                   <span className="text-xs font-medium text-slate-700">{reply.author_name ?? 'Anonymous'}</span>
                   <span className="text-[10px] text-slate-400">{formatShortTimestamp(reply.created_at)}</span>
                 </div>
-                <p className="text-xs text-slate-600 mt-0.5 whitespace-pre-wrap">{reply.comment}</p>
+                {isRichContent(reply.comment) ? (
+                  <div className="text-xs text-slate-600 mt-0.5 prose prose-sm max-w-none [&_.mention-link]:text-purple-600 [&_.mention-link]:no-underline" dangerouslySetInnerHTML={{ __html: renderContent(reply.comment) }} />
+                ) : (
+                  <p className="text-xs text-slate-600 mt-0.5 whitespace-pre-wrap">{reply.comment}</p>
+                )}
               </div>
             </div>
           ))}
@@ -700,29 +762,13 @@ function LogEntry({ log, replies, teamMembers, onEdit, onDelete, onReplyAdded }:
                   : <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center"><User className="h-2.5 w-2.5 text-slate-400" /></div>
                 }
               </div>
-              <div className="flex-1 space-y-2">
-                <textarea
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handlePostReply(); if (e.key === 'Escape') setShowReplyForm(false); }}
-                  placeholder="Write a reply… (Ctrl+Enter to post)"
-                  rows={2}
-                  autoFocus
-                  className="w-full text-xs px-2.5 py-2 border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 bg-white"
+              <div className="flex-1">
+                <ReplyEditor
+                  getMentionItems={getMentionItems}
+                  onSubmit={handlePostReply}
+                  onCancel={() => setShowReplyForm(false)}
+                  disabled={postingReply}
                 />
-                <div className="flex items-center gap-2 flex-wrap">
-                  {currentMember && (
-                    <span className="text-xs text-slate-500">
-                      {currentMember.name}
-                    </span>
-                  )}
-                  <Button size="sm" onClick={handlePostReply} disabled={!replyText.trim() || postingReply}>
-                    {postingReply ? 'Posting…' : 'Post Reply'}
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => { setShowReplyForm(false); setReplyText(''); }}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
               </div>
             </div>
           )}
@@ -781,7 +827,7 @@ function EntryForm({ getMentionItems, initialContent, initialType = 'note', init
         openOnClick: false,
         HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer', class: 'bitacora-link' },
       }),
-      Placeholder.configure({ placeholder: 'Add an observation, change, decision… Use @ to reference projects, quotations, or products.' }),
+      Placeholder.configure({ placeholder: 'Add an observation, change, decision… Use @ to mention people, teams, projects or products.' }),
       buildMentionExtension(getMentionItems),
     ],
     content: startContent,
@@ -946,6 +992,12 @@ export function BitacoraSection({ projectId }: Props) {
           id: `department:${d.id}`,
           label: d.name,
           type: 'department' as const,
+        })),
+        ...(members || []).map((m) => ({
+          id: `team_member:${m.id}`,
+          label: m.name,
+          type: 'team_member' as const,
+          subtitle: m.job_title || m.role || undefined,
         })),
       ];
 
@@ -1164,6 +1216,7 @@ export function BitacoraSection({ projectId }: Props) {
                 log={log}
                 replies={repliesByLog[log.id] ?? []}
                 teamMembers={teamMembers}
+                getMentionItems={getMentionItems}
                 onEdit={() => setEditingId(log.id)}
                 onDelete={() => deleteLog(log.id)}
                 onReplyAdded={(reply) => handleReplyAdded(log.id, reply)}
