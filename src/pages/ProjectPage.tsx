@@ -67,10 +67,11 @@ export function ProjectPage() {
   }, [projectId]);
 
   useEffect(() => {
-    if (activeTab === 'management' && !managementLoaded) {
-      supabase.from('team_members').select('*').eq('is_active', true).order('display_order')
-        .then(({ data }) => { setTeamMembers(data || []); setManagementLoaded(true); });
-    }
+    if (activeTab !== 'management' || managementLoaded) return;
+    let cancelled = false;
+    supabase.from('team_members').select('id, name, role, is_active, display_order').eq('is_active', true).order('display_order')
+      .then(({ data }) => { if (!cancelled) { setTeamMembers(data || []); setManagementLoaded(true); } });
+    return () => { cancelled = true; };
   }, [activeTab, managementLoaded]);
 
   useEffect(() => {
@@ -179,53 +180,83 @@ export function ProjectPage() {
 
     if (error) { alert('Failed to duplicate'); console.error(error); return; }
     if (data) {
-      // Copy areas and cabinets from source quotation
+      // Copy areas and all child records from source quotation
       const { data: srcAreas } = await supabase.from('project_areas').select('*').eq('project_id', quotation.id);
-      if (srcAreas) {
+      if (srcAreas?.length) {
+        const srcAreaIds = srcAreas.map(a => a.id);
+
+        // Batch-fetch all child records in parallel (avoids N+1)
+        const [cabsRes, itemsRes, countertopsRes, closetItemsRes, sectionsRes] = await Promise.all([
+          supabase.from('area_cabinets').select('*').in('area_id', srcAreaIds),
+          supabase.from('area_items').select('*').in('area_id', srcAreaIds),
+          supabase.from('area_countertops').select('*').in('area_id', srcAreaIds),
+          supabase.from('area_closet_items').select('*').in('area_id', srcAreaIds),
+          supabase.from('area_sections').select('*').in('area_id', srcAreaIds),
+        ]);
+
+        // Group by area_id for fast lookup
+        const groupBy = <T extends { area_id: string }>(items: T[] | null) => {
+          const map = new Map<string, T[]>();
+          (items || []).forEach(item => {
+            if (!map.has(item.area_id)) map.set(item.area_id, []);
+            map.get(item.area_id)!.push(item);
+          });
+          return map;
+        };
+        const cabsByArea = groupBy(cabsRes.data);
+        const itemsByArea = groupBy(itemsRes.data);
+        const countertopsByArea = groupBy(countertopsRes.data);
+        const closetItemsByArea = groupBy(closetItemsRes.data);
+        const sectionsByArea = groupBy(sectionsRes.data);
+
         for (const area of srcAreas) {
           const { id: areaId, created_at: ac, updated_at: au, ...areaData } = area;
           const { data: newArea } = await supabase.from('project_areas').insert({ ...areaData, project_id: data.id }).select('id').single();
           if (!newArea) continue;
 
-          const { data: srcCabs } = await supabase.from('area_cabinets').select('*').eq('area_id', areaId);
+          const insertPromises: Promise<unknown>[] = [];
+
+          const srcCabs = cabsByArea.get(areaId);
           if (srcCabs?.length) {
             const newCabs = srcCabs.map(({ id: cId, created_at: cc, updated_at: cu, ...cabData }) => ({
               ...cabData, area_id: newArea.id,
             }));
-            await supabase.from('area_cabinets').insert(newCabs);
+            insertPromises.push(supabase.from('area_cabinets').insert(newCabs));
           }
 
-          const { data: srcItems } = await supabase.from('area_items').select('*').eq('area_id', areaId);
+          const srcItems = itemsByArea.get(areaId);
           if (srcItems?.length) {
             const newItems = srcItems.map(({ id: iId, created_at: ic, updated_at: iu, ...itemData }) => ({
               ...itemData, area_id: newArea.id,
             }));
-            await supabase.from('area_items').insert(newItems);
+            insertPromises.push(supabase.from('area_items').insert(newItems));
           }
 
-          const { data: srcCountertops } = await supabase.from('area_countertops').select('*').eq('area_id', areaId);
+          const srcCountertops = countertopsByArea.get(areaId);
           if (srcCountertops?.length) {
             const newCountertops = srcCountertops.map(({ id: ctId, created_at: ctc, updated_at: ctu, ...ctData }) => ({
               ...ctData, area_id: newArea.id,
             }));
-            await supabase.from('area_countertops').insert(newCountertops);
+            insertPromises.push(supabase.from('area_countertops').insert(newCountertops));
           }
 
-          const { data: srcClosetItems } = await supabase.from('area_closet_items').select('*').eq('area_id', areaId);
+          const srcClosetItems = closetItemsByArea.get(areaId);
           if (srcClosetItems?.length) {
             const newClosetItems = srcClosetItems.map(({ id: clId, created_at: clc, updated_at: clu, catalog_item: _ci, ...clData }) => ({
               ...clData, area_id: newArea.id,
             }));
-            await supabase.from('area_closet_items').insert(newClosetItems);
+            insertPromises.push(supabase.from('area_closet_items').insert(newClosetItems));
           }
 
-          const { data: srcSections } = await supabase.from('area_sections').select('*').eq('area_id', areaId);
+          const srcSections = sectionsByArea.get(areaId);
           if (srcSections?.length) {
             const newSections = srcSections.map(({ id: sId, created_at: sc, updated_at: su, ...sectionData }) => ({
               ...sectionData, area_id: newArea.id,
             }));
-            await supabase.from('area_sections').insert(newSections);
+            insertPromises.push(supabase.from('area_sections').insert(newSections));
           }
+
+          await Promise.all(insertPromises);
         }
       }
 

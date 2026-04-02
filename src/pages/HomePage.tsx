@@ -253,8 +253,14 @@ export function HomePage() {
   const feedSearchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let cancelled = false;
     fetchSettings();
-    loadAll();
+    (async () => {
+      setLoading(true);
+      await Promise.all([loadTasks(), loadLogs(), loadQuotesData()]);
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   async function loadAll() {

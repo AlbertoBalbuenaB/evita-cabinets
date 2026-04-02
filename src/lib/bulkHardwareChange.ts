@@ -239,15 +239,18 @@ export async function executeBulkHardwareChange(
       newHardwareId ? supabase.from('price_list').select('concept_description').eq('id', newHardwareId).single() : Promise.resolve({ data: null }),
     ]);
 
+    // Batch-fetch all cabinets in one query (avoids N+1)
+    const cabinetIds = preview.affectedCabinets.map(c => c.id);
+    const { data: allCabinets } = await supabase
+      .from(tableName)
+      .select('*')
+      .in('id', cabinetIds);
+    const cabinetsMap = new Map((allCabinets || []).map(c => [c.id, c]));
+
     const updatePromises: Promise<any>[] = [];
 
     for (const cabinet of preview.affectedCabinets) {
-      const { data: currentCabinet } = await supabase
-        .from(tableName)
-        .select('hardware')
-        .eq('id', cabinet.id)
-        .single();
-
+      const currentCabinet = cabinetsMap.get(cabinet.id);
       if (!currentCabinet) continue;
 
       const hardwareArray = currentCabinet.hardware as HardwareItem[];
@@ -267,36 +270,25 @@ export async function executeBulkHardwareChange(
         newHardwareArray = hardwareArray.filter(hw => hw.hardware_id !== oldHardwareId);
       }
 
-      const updates: any = {
-        hardware: newHardwareArray as any,
-        hardware_cost: cabinet.newCost,
-      };
-
-      const { data: fullCabinet } = await supabase
-        .from(tableName)
-        .select('*')
-        .eq('id', cabinet.id)
-        .single();
-
-      if (fullCabinet) {
-        const newSubtotal =
-          (fullCabinet.box_material_cost || 0) +
-          (fullCabinet.box_edgeband_cost || 0) +
-          (fullCabinet.box_interior_finish_cost || 0) +
-          (fullCabinet.doors_material_cost || 0) +
-          (fullCabinet.doors_edgeband_cost || 0) +
-          (fullCabinet.doors_interior_finish_cost || 0) +
-          (fullCabinet.back_panel_material_cost || 0) +
-          cabinet.newCost +
-          (fullCabinet.accessories_cost || 0) +
-          (fullCabinet.door_profile_cost || 0) +
-          (fullCabinet.labor_cost || 0);
-
-        updates.subtotal = newSubtotal;
-      }
+      const newSubtotal =
+        (currentCabinet.box_material_cost || 0) +
+        (currentCabinet.box_edgeband_cost || 0) +
+        (currentCabinet.box_interior_finish_cost || 0) +
+        (currentCabinet.doors_material_cost || 0) +
+        (currentCabinet.doors_edgeband_cost || 0) +
+        (currentCabinet.doors_interior_finish_cost || 0) +
+        (currentCabinet.back_panel_material_cost || 0) +
+        cabinet.newCost +
+        (currentCabinet.accessories_cost || 0) +
+        (currentCabinet.door_profile_cost || 0) +
+        (currentCabinet.labor_cost || 0);
 
       updatePromises.push(
-        supabase.from(tableName).update(updates).eq('id', cabinet.id)
+        supabase.from(tableName).update({
+          hardware: newHardwareArray as any,
+          hardware_cost: cabinet.newCost,
+          subtotal: newSubtotal,
+        }).eq('id', cabinet.id)
       );
     }
 

@@ -120,19 +120,22 @@ export async function recalculateAllCabinetPrices(
 
   const { data: areas } = await areasQuery;
 
-  // Single pass: fetch all cabinets per area and count total
+  // Batch-fetch all cabinets for all areas in one query (avoids N+1)
   let processedCount = 0;
   let totalCabinets = 0;
   const areaCabinetsMap = new Map<string, any[]>();
 
-  for (const area of areas || []) {
-    const { data: cabinets } = await supabase
+  const allAreaIds = (areas || []).map(a => a.id);
+  if (allAreaIds.length > 0) {
+    const { data: allCabinets } = await supabase
       .from('area_cabinets')
       .select('*')
-      .eq('area_id', area.id);
-    const cabinetList = cabinets || [];
-    areaCabinetsMap.set(area.id, cabinetList);
-    totalCabinets += cabinetList.length;
+      .in('area_id', allAreaIds);
+    (allCabinets || []).forEach(cab => {
+      if (!areaCabinetsMap.has(cab.area_id)) areaCabinetsMap.set(cab.area_id, []);
+      areaCabinetsMap.get(cab.area_id)!.push(cab);
+    });
+    totalCabinets = (allCabinets || []).length;
   }
 
   // Build products map for O(1) lookups instead of .find() per cabinet

@@ -304,19 +304,19 @@ export function Settings() {
       const { data, error } = await supabase
         .from('team_members')
         .select('*')
-        .eq('is_active', true)
         .order('display_order');
 
       if (error) throw error;
-      setTeamMembers(data || []);
+      const all = data || [];
+      setAllMembers(all);
+      setTeamMembers(all.filter(m => m.is_active));
     } catch (error) {
       console.error('Error loading team members:', error);
     }
   }
 
   async function loadAllMembers() {
-    const { data } = await supabase.from('team_members').select('*').order('display_order');
-    setAllMembers(data || []);
+    loadTeamMembers();
   }
 
   async function toggleMemberActive(id: string, isActive: boolean) {
