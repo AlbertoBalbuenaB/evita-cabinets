@@ -618,6 +618,7 @@ export interface CADRenderOptions {
   showEdgeBand: boolean;
   hoverPieceIdx: number | null;
   unit: UnitSystem;
+  labelScale: number;
 }
 
 export function renderBoardCAD(
@@ -625,7 +626,7 @@ export function renderBoardCAD(
   board: BoardResult,
   opts: CADRenderOptions,
 ): void {
-  const { zoom, offsetX, offsetY, showLabels, showDimensions, showKerf, showOffcuts, showGrain, showEdgeBand, hoverPieceIdx, unit } = opts;
+  const { zoom, offsetX, offsetY, showLabels, showDimensions, showKerf, showOffcuts, showGrain, showEdgeBand, hoverPieceIdx, unit, labelScale = 1 } = opts;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
@@ -769,7 +770,8 @@ export function renderBoardCAD(
 
     // Labels
     if (showLabels && pw > 28 && ph > 16) {
-      const fontSize = Math.min(13, Math.max(8, Math.min(pw / 5.5, ph / 3)));
+      const baseSize = Math.min(13, Math.max(8, Math.min(pw / 5.5, ph / 3)));
+      const fontSize = baseSize * labelScale;
       ctx.fillStyle = '#1e293b';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';

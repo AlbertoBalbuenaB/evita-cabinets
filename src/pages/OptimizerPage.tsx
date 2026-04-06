@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { LayoutDashboard, Upload, Table, FolderOpen, Save, Zap, FileDown, Loader2 } from 'lucide-react';
+import { useRef, useState, useEffect } from 'react';
+import { LayoutDashboard, Upload, Download, ChevronDown, Zap, Loader2, Table, FolderOpen, Save, FileDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useOptimizerStore } from '../hooks/useOptimizerStore';
 import { toMM } from '../lib/optimizer/units';
@@ -17,6 +17,16 @@ export function OptimizerPage() {
 
   const [leftCollapsed, setLeftCollapsed]   = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+
+  // close dropdowns on click outside
+  useEffect(() => {
+    if (!importOpen && !exportOpen) return;
+    const close = () => { setImportOpen(false); setExportOpen(false); };
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [importOpen, exportOpen]);
 
   // ── CSV import ────────────────────────────────────────────
   const handleCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,18 +169,53 @@ export function OptimizerPage() {
         <input ref={xlsxRef} type="file" accept=".xlsx,.xls" onChange={handleXLSX} className="hidden" />
         <input ref={jsonRef} type="file" accept=".json"      onChange={handleJSON} className="hidden" />
 
-        <Button variant="secondary" size="sm" onClick={() => csvRef.current?.click()}  className="flex items-center gap-1">
-          <Upload className="h-3.5 w-3.5" />CSV
-        </Button>
-        <Button variant="secondary" size="sm" onClick={() => xlsxRef.current?.click()} className="flex items-center gap-1">
-          <Table className="h-3.5 w-3.5" />Excel
-        </Button>
-        <Button variant="secondary" size="sm" onClick={() => jsonRef.current?.click()} className="flex items-center gap-1">
-          <FolderOpen className="h-3.5 w-3.5" />Open
-        </Button>
-        <Button variant="secondary" size="sm" onClick={() => store.saveProject()} className="flex items-center gap-1">
-          <Save className="h-3.5 w-3.5" />Save
-        </Button>
+        {/* Import dropdown */}
+        <div className="relative">
+          <Button variant="secondary" size="sm"
+            onClick={(e: React.MouseEvent) => { e.stopPropagation(); setImportOpen(v => !v); setExportOpen(false); }}
+            className="flex items-center gap-1">
+            <Upload className="h-3.5 w-3.5" />Import
+            <ChevronDown className={`h-3 w-3 transition-transform ${importOpen ? 'rotate-180' : ''}`} />
+          </Button>
+          {importOpen && (
+            <div className="absolute top-full mt-1 left-0 z-50 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1">
+              <button onClick={() => { csvRef.current?.click(); setImportOpen(false); }}
+                className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left">
+                <Upload className="h-3.5 w-3.5 text-slate-400" />CSV
+              </button>
+              <button onClick={() => { xlsxRef.current?.click(); setImportOpen(false); }}
+                className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left">
+                <Table className="h-3.5 w-3.5 text-slate-400" />Excel
+              </button>
+              <button onClick={() => { jsonRef.current?.click(); setImportOpen(false); }}
+                className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left">
+                <FolderOpen className="h-3.5 w-3.5 text-slate-400" />Open Project
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Export dropdown */}
+        <div className="relative">
+          <Button variant="secondary" size="sm"
+            onClick={(e: React.MouseEvent) => { e.stopPropagation(); setExportOpen(v => !v); setImportOpen(false); }}
+            className="flex items-center gap-1">
+            <Download className="h-3.5 w-3.5" />Export
+            <ChevronDown className={`h-3 w-3 transition-transform ${exportOpen ? 'rotate-180' : ''}`} />
+          </Button>
+          {exportOpen && (
+            <div className="absolute top-full mt-1 left-0 z-50 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1">
+              <button onClick={() => { store.saveProject(); setExportOpen(false); }}
+                className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left">
+                <Save className="h-3.5 w-3.5 text-slate-400" />Save Project
+              </button>
+              <button onClick={() => { store.exportPDF(); setExportOpen(false); }} disabled={!store.result}
+                className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left disabled:opacity-40">
+                <FileDown className="h-3.5 w-3.5 text-slate-400" />PDF
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className="w-px h-4 bg-slate-200 mx-0.5" />
 
@@ -187,10 +232,6 @@ export function OptimizerPage() {
           className="flex items-center gap-1">
           {store.isOptimizing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
           Optimize
-        </Button>
-        <Button variant="secondary" size="sm" onClick={() => store.exportPDF()} disabled={!store.result}
-          className="flex items-center gap-1">
-          <FileDown className="h-3.5 w-3.5" />PDF
         </Button>
       </div>
 

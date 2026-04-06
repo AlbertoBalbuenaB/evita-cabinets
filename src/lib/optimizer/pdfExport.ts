@@ -5,6 +5,14 @@ import { EbConfig } from './types';
 
 const EB_LABELS: Record<number, string> = { 1: 'A', 2: 'B', 3: 'C' };
 
+function lightenRgb(rgb: { r: number; g: number; b: number }, factor: number) {
+  return {
+    r: Math.round(rgb.r * factor + 255 * (1 - factor)),
+    g: Math.round(rgb.g * factor + 255 * (1 - factor)),
+    b: Math.round(rgb.b * factor + 255 * (1 - factor)),
+  };
+}
+
 export function exportOptimizerPDF(
   result: OptimizationResult,
   projectName: string,
@@ -12,6 +20,7 @@ export function exportOptimizerPDF(
   unit: UnitSystem = 'mm',
   ebConfig?: EbConfig,
   areas?: string[],
+  labelScale: number = 1,
 ): void {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
   const pageW = doc.internal.pageSize.getWidth();
@@ -102,7 +111,8 @@ export function exportOptimizerPDF(
       const px = startX + piece.x * scale, py = startY + piece.y * scale;
       const pw = piece.w * scale, ph = piece.h * scale;
       const rgb = hexToRgb(PIECE_COLORS[piece.idx % PIECE_COLORS.length]);
-      doc.setFillColor(rgb.r, rgb.g, rgb.b);
+      const light = lightenRgb(rgb, 0.45);
+      doc.setFillColor(light.r, light.g, light.b);
       doc.setDrawColor(Math.max(0, rgb.r - 30), Math.max(0, rgb.g - 30), Math.max(0, rgb.b - 30));
       doc.setLineWidth(0.3);
       doc.rect(px + 0.3, py + 0.3, pw - 0.6, ph - 0.6, 'FD');
@@ -133,13 +143,32 @@ export function exportOptimizerPDF(
       drawEB(edges.right, px + pw - inset, py + inset, px + pw - inset, py + ph - inset);
 
       if (pw > 12 && ph > 8) {
-        doc.setFontSize(Math.min(7, Math.max(4, pw / 6))); doc.setTextColor(0, 0, 0);
-        doc.text(`${fmtNum(piece.piece.ancho, unit)}×${fmtNum(piece.piece.alto, unit)}`,
-          px + pw / 2, py + ph / 2 - (piece.piece.nombre && ph > 10 ? 1.5 : 0),
+        const dimFz = Math.min(7, Math.max(4, pw / 6)) * labelScale;
+        const dimText = `${fmtNum(piece.piece.ancho, unit)}×${fmtNum(piece.piece.alto, unit)}`;
+        const hasName = piece.piece.nombre && ph > 10;
+        const nameFz = Math.min(5, Math.max(3, pw / 8)) * labelScale;
+
+        // White background behind text
+        doc.setFontSize(dimFz);
+        const dimW = doc.getTextWidth(dimText);
+        let bgH = dimFz * 0.4 + 1.5;
+        let bgW = dimW + 2;
+        if (hasName) {
+          doc.setFontSize(nameFz);
+          const nameW = doc.getTextWidth(piece.piece.nombre!);
+          bgW = Math.max(bgW, nameW + 2);
+          bgH += nameFz * 0.4 + 2;
+        }
+        doc.setFillColor(255, 255, 255);
+        doc.rect(px + pw / 2 - bgW / 2, py + ph / 2 - bgH / 2 - 0.5, bgW, bgH, 'F');
+
+        doc.setFontSize(dimFz); doc.setTextColor(0, 0, 0);
+        doc.text(dimText,
+          px + pw / 2, py + ph / 2 - (hasName ? dimFz * 0.22 + 1 : 0),
           { align: 'center', baseline: 'middle' });
-        if (piece.piece.nombre && ph > 10) {
-          doc.setFontSize(Math.min(5, Math.max(3, pw / 8))); doc.setTextColor(80, 80, 80);
-          doc.text(piece.piece.nombre, px + pw / 2, py + ph / 2 + 2, { align: 'center', baseline: 'middle' });
+        if (hasName) {
+          doc.setFontSize(nameFz); doc.setTextColor(80, 80, 80);
+          doc.text(piece.piece.nombre!, px + pw / 2, py + ph / 2 + dimFz * 0.22 + 1.5, { align: 'center', baseline: 'middle' });
         }
       }
     });

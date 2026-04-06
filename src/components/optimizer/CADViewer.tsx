@@ -1,7 +1,8 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { BoardResult, UnitSystem } from '../../lib/optimizer/types';
 import { renderBoardCAD, hitTestPiece } from '../../lib/optimizer/engine';
-import { ZoomIn, ZoomOut, Maximize2, Ruler, Tag, Layers, Scissors, Wheat, PanelTop } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, Ruler, Tag, BoxSelect, Disc, TreePine, Square, Minus, Plus } from 'lucide-react';
+import { useOptimizerStore } from '../../hooks/useOptimizerStore';
 
 const MIN_ZOOM = 0.015;
 const MAX_ZOOM = 30;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function CADViewer({ board, unit }: Props) {
+  const { labelScale, setLabelScale } = useOptimizerStore();
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef({ x: 0, y: 0 });
@@ -50,9 +52,9 @@ export function CADViewer({ board, unit }: Props) {
     renderBoardCAD(canvas, board, {
       zoom, offsetX: offset.x, offsetY: offset.y,
       showLabels, showDimensions, showKerf, showOffcuts, showGrain, showEdgeBand,
-      hoverPieceIdx: hoverIdx, unit,
+      hoverPieceIdx: hoverIdx, unit, labelScale,
     });
-  }, [board, zoom, offset, showLabels, showDimensions, showKerf, showOffcuts, showGrain, showEdgeBand, hoverIdx, unit]);
+  }, [board, zoom, offset, showLabels, showDimensions, showKerf, showOffcuts, showGrain, showEdgeBand, hoverIdx, unit, labelScale]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -136,14 +138,18 @@ export function CADViewer({ board, unit }: Props) {
         <div className="w-px h-4 bg-slate-200 mx-1" />
         <ToolBtn icon={Ruler}    active={showDimensions} onClick={() => setShowDimensions(v => !v)} title="Show dimensions" />
         <ToolBtn icon={Tag}      active={showLabels}     onClick={() => setShowLabels(v => !v)}     title="Show labels" />
-        <ToolBtn icon={Wheat}    active={showGrain}      onClick={() => setShowGrain(v => !v)}      title="Show grain"
+        <ToolBtn icon={TreePine}  active={showGrain}      onClick={() => setShowGrain(v => !v)}      title="Show grain"
           activeColor="text-amber-600 bg-amber-50" />
-        <ToolBtn icon={PanelTop} active={showEdgeBand}  onClick={() => setShowEdgeBand(v => !v)}  title="Show edge band"
+        <ToolBtn icon={Square}   active={showEdgeBand}  onClick={() => setShowEdgeBand(v => !v)}  title="Show edge band"
           activeColor="text-slate-800 bg-slate-100" />
-        <ToolBtn icon={Layers}   active={showOffcuts}    onClick={() => setShowOffcuts(v => !v)}    title="Show offcuts"
+        <ToolBtn icon={BoxSelect} active={showOffcuts}   onClick={() => setShowOffcuts(v => !v)}    title="Show offcuts"
           activeColor="text-green-600 bg-green-50" />
-        <ToolBtn icon={Scissors} active={showKerf}       onClick={() => setShowKerf(v => !v)}       title="Show kerf"
+        <ToolBtn icon={Disc}     active={showKerf}       onClick={() => setShowKerf(v => !v)}       title="Show kerf"
           activeColor="text-red-500 bg-red-50" />
+        <div className="w-px h-4 bg-slate-200 mx-1" />
+        <ToolBtn icon={Minus} onClick={() => setLabelScale(Math.round((labelScale - 0.1) * 10) / 10)} title="Decrease text size" />
+        <span className="text-xs text-slate-400 px-0.5 tabular-nums select-none w-8 text-center">{labelScale.toFixed(1)}x</span>
+        <ToolBtn icon={Plus}  onClick={() => setLabelScale(Math.round((labelScale + 0.1) * 10) / 10)} title="Increase text size" />
       </div>
 
       <div

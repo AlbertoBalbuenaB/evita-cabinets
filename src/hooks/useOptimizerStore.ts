@@ -19,6 +19,7 @@ interface OptimizerState {
   unit: UnitSystem;
   selectedBoardIndex: number | null;
   ebConfig: EbConfig;
+  labelScale: number;
 
   setUnit: (u: UnitSystem) => void;
   addPiece: (p: Omit<Pieza, 'id'>) => void;
@@ -41,6 +42,7 @@ interface OptimizerState {
   setMinOffcut: (v: number) => void;
   setBoardTrim: (v: number) => void;
   setEbConfig: (cfg: EbConfig) => void;
+  setLabelScale: (s: number) => void;
   runOptimize: () => Promise<void>;
   exportPDF: () => void;
   saveProject: () => void;
@@ -73,6 +75,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
   minOffcut: 200,
   boardTrim: 5,
   ebConfig: EMPTY_EB,
+  labelScale: 1.0,
   projectName: '',
   clientName: '',
   unit: 'mm' as UnitSystem,
@@ -108,6 +111,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
   setMinOffcut: (v) => set({ minOffcut: v }),
   setBoardTrim: (v) => set({ boardTrim: v }),
   setEbConfig: (cfg) => set({ ebConfig: cfg }),
+  setLabelScale: (s) => set({ labelScale: Math.min(2.0, Math.max(0.5, s)) }),
 
   runOptimize: async () => {
     const state = get();
@@ -127,7 +131,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
   exportPDF: () => {
     const state = get();
     if (!state.result) { alert('Run optimization first'); return; }
-    exportOptimizerPDF(state.result, state.projectName, state.clientName, state.unit, state.ebConfig, state.areas);
+    exportOptimizerPDF(state.result, state.projectName, state.clientName, state.unit, state.ebConfig, state.areas, state.labelScale);
   },
 
   saveProject: () => {
@@ -148,5 +152,5 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
     } catch (error) { alert('Error loading project: ' + String(error)); }
   },
 
-  reset: () => set({ pieces: [], stocks: [DEFAULT_STOCK], remnants: [], areas: [], globalSierra: 3.2, minOffcut: 200, boardTrim: 5, ebConfig: EMPTY_EB, projectName: '', clientName: '', result: null, isOptimizing: false, activeTab: 'boards', selectedBoardIndex: null }),
+  reset: () => set({ pieces: [], stocks: [DEFAULT_STOCK], remnants: [], areas: [], globalSierra: 3.2, minOffcut: 200, boardTrim: 5, ebConfig: EMPTY_EB, labelScale: 1.0, projectName: '', clientName: '', result: null, isOptimizing: false, activeTab: 'boards', selectedBoardIndex: null }),
 }));
