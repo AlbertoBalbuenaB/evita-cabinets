@@ -226,10 +226,22 @@ export function OptimizerSidebar() {
     if (cb.der > 0) totalEB += (p.alto + 30) * p.cantidad;
   });
 
-  return (
-    <div className="space-y-4">
+  // ── Options popover state ──────────────────────────────────
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const optRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!optionsOpen) return;
+    const handler = (e: MouseEvent) => { if (optRef.current && !optRef.current.contains(e.target as Node)) setOptionsOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [optionsOpen]);
 
-      {/* ═══ ROW 1: Parts (full width) ════════════════════════ */}
+  return (
+    <div className="flex flex-col lg:flex-row gap-4 min-h-0">
+
+      {/* ═══ LEFT COLUMN: Parts + Stock Sheets ═══════════════ */}
+      <div className="flex-1 min-w-0 space-y-4">
+
       <Section icon={LayoutList} title="Parts">
         {/* Add piece form */}
         <div className="px-5 py-4 bg-blue-50/30 border-b border-slate-100/60">
@@ -443,8 +455,10 @@ export function OptimizerSidebar() {
         )}
       </Section>
 
-      {/* ═══ ROW 3: 3-column grid ═════════════════════════════ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      </div>{/* end LEFT COLUMN */}
+
+      {/* ═══ RIGHT COLUMN: Areas + Options ═══════════════════ */}
+      <div className="lg:w-80 lg:shrink-0 space-y-4">
 
         {/* ─── Areas ──────────────────────────────────────── */}
         <Section icon={FolderOpen} title="Areas" className="stagger-1">
@@ -474,96 +488,109 @@ export function OptimizerSidebar() {
           </div>
         </Section>
 
-        {/* ─── Options ────────────────────────────────────── */}
-        <Section icon={Settings} title="Options" className="stagger-2">
-          <div className="px-5 py-4 space-y-3">
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Kerf (mm)</label>
-                <input type="number" step="0.1" value={store.globalSierra} onChange={e => store.setGlobalSierra(+e.target.value)}
-                  className={inputCls + ' text-center'} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Min. offcut (mm)</label>
-                <input type="number" value={store.minOffcut} onChange={e => store.setMinOffcut(+e.target.value)}
-                  className={inputCls + ' text-center'} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Board trim (mm)</label>
-                <input type="number" min={0} max={50} step={1} value={store.boardTrim}
-                  onChange={e => store.setBoardTrim(Math.max(0, parseFloat(e.target.value) || 0))}
-                  className={inputCls + ' text-center'} />
-              </div>
+        {/* ─── Options (popover) ─────────────────────────── */}
+        <div ref={optRef} className="relative stagger-2">
+          <button onClick={() => setOptionsOpen(v => !v)}
+            className={`glass-white w-full flex items-center gap-2.5 px-5 py-3.5 hover:shadow-lg transition-all duration-200 cursor-pointer ${optionsOpen ? 'shadow-lg' : ''}`}>
+            <Settings className="h-4 w-4 text-slate-400 shrink-0" />
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex-1 text-left">Options</span>
+            <div className="flex items-center gap-2 text-xs text-slate-400 tabular-nums">
+              <span>Kerf {store.globalSierra}</span>
+              <span>·</span>
+              <span>Trim {store.boardTrim}</span>
             </div>
-
-            {edgebandItems.length > 0 && (
-              <div className="pt-3 mt-3 border-t border-slate-100/60">
-                <div className="text-sm font-semibold text-slate-600 mb-2">Edge Banding</div>
-                <div className="space-y-2">
-                  {(['a', 'b', 'c'] as const).map(key => {
-                    const label = key.toUpperCase();
-                    const lineStyle = key === 'a' ? '━━' : key === 'b' ? '╌╌' : '····';
-                    const selected = store.ebConfig[key];
-                    return (
-                      <div key={key}>
-                        <label className="text-xs text-slate-500 font-medium">Type {label} ({lineStyle})</label>
-                        <CompactAutocomplete
-                          value={selected.id}
-                          onChange={val => {
-                            const item = edgebandItems.find(i => i.id === val);
-                            store.setEbConfig({
-                              ...store.ebConfig,
-                              [key]: item ? { id: item.id, name: item.concept_description, price: item.price } : { id: '', name: '', price: 0 },
-                            });
-                          }}
-                          placeholder="Not assigned"
-                          options={edgebandItems.map(item => ({
-                            value: item.id,
-                            label: `${item.concept_description} — $${item.price}/m${item.dimensions ? ` (${item.dimensions})` : ''}`,
-                          }))}
-                          className="mt-0.5"
-                        />
-                      </div>
-                    );
-                  })}
+            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${optionsOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {optionsOpen && (
+            <div className="absolute z-50 top-full left-0 right-0 mt-1 glass-white shadow-xl p-5 space-y-4" style={{ borderRadius: 14 }}>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Kerf (mm)</label>
+                  <input type="number" step="0.1" value={store.globalSierra} onChange={e => store.setGlobalSierra(+e.target.value)}
+                    className={inputCls + ' text-center'} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Min. offcut (mm)</label>
+                  <input type="number" value={store.minOffcut} onChange={e => store.setMinOffcut(+e.target.value)}
+                    className={inputCls + ' text-center'} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Board trim (mm)</label>
+                  <input type="number" min={0} max={50} step={1} value={store.boardTrim}
+                    onChange={e => store.setBoardTrim(Math.max(0, parseFloat(e.target.value) || 0))}
+                    className={inputCls + ' text-center'} />
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Remnants sub-section */}
-          <div className="border-t border-slate-100/60 px-5 py-4">
-            <div className="text-sm font-semibold text-slate-600 mb-2">Remnants</div>
-            <div className="grid grid-cols-2 gap-2">
-              <select value={remMat} onChange={e => setRemMat(e.target.value)} className={inputCls}>
-                {stockNames.length > 0 ? stockNames.map(m => <option key={m}>{m}</option>) : <option>Default</option>}
-              </select>
-              <input value={remGrosor} onChange={e => setRemGrosor(e.target.value)} placeholder="Thickness" className={inputCls + ' text-center'} />
-              <input value={remAncho} onChange={e => setRemAncho(e.target.value)} placeholder="Width" className={inputCls + ' text-center'} />
-              <input value={remAlto} onChange={e => setRemAlto(e.target.value)} placeholder="Height" className={inputCls + ' text-center'} />
-            </div>
-            <button onClick={() => {
-              store.addRemnant({ material: remMat || 'Default',
-                grosor: toMM(parseFloat(remGrosor) || 18, unit),
-                ancho: toMM(parseFloat(remAncho) || 0, unit), alto: toMM(parseFloat(remAlto) || 0, unit) });
-            }} className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200/70 hover:bg-white/60 text-slate-600 text-sm rounded-lg transition-colors">
-              <Plus className="h-4 w-4" />Add Remnant
-            </button>
-            {store.remnants.length > 0 && (
-              <div className="space-y-1.5 pt-2 mt-2 border-t border-slate-100/60">
-                {store.remnants.map(r => (
-                  <div key={r.id} className="flex justify-between items-center text-sm group">
-                    <span className="text-slate-600">{r.material} — {parseFloat(fromMM(r.ancho, unit).toFixed(0))}×{parseFloat(fromMM(r.alto, unit).toFixed(0))}</span>
-                    <button onClick={() => store.removeRemnant(r.id)}
-                      className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><X className="h-3.5 w-3.5" /></button>
+              {edgebandItems.length > 0 && (
+                <div className="pt-3 border-t border-slate-100/60">
+                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Edge Banding</div>
+                  <div className="space-y-2">
+                    {(['a', 'b', 'c'] as const).map(key => {
+                      const label = key.toUpperCase();
+                      const lineStyle = key === 'a' ? '━━' : key === 'b' ? '╌╌' : '····';
+                      const selected = store.ebConfig[key];
+                      return (
+                        <div key={key}>
+                          <label className="text-xs text-slate-500 font-medium">Type {label} ({lineStyle})</label>
+                          <CompactAutocomplete
+                            value={selected.id}
+                            onChange={val => {
+                              const item = edgebandItems.find(i => i.id === val);
+                              store.setEbConfig({
+                                ...store.ebConfig,
+                                [key]: item ? { id: item.id, name: item.concept_description, price: item.price } : { id: '', name: '', price: 0 },
+                              });
+                            }}
+                            placeholder="Not assigned"
+                            options={edgebandItems.map(item => ({
+                              value: item.id,
+                              label: `${item.concept_description} — $${item.price}/m${item.dimensions ? ` (${item.dimensions})` : ''}`,
+                            }))}
+                            className="mt-0.5"
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </Section>
+                </div>
+              )}
 
-      </div>
+              {/* Remnants */}
+              <div className="pt-3 border-t border-slate-100/60">
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Remnants</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <select value={remMat} onChange={e => setRemMat(e.target.value)} className={inputCls}>
+                    {stockNames.length > 0 ? stockNames.map(m => <option key={m}>{m}</option>) : <option>Default</option>}
+                  </select>
+                  <input value={remGrosor} onChange={e => setRemGrosor(e.target.value)} placeholder="Thickness" className={inputCls + ' text-center'} />
+                  <input value={remAncho} onChange={e => setRemAncho(e.target.value)} placeholder="Width" className={inputCls + ' text-center'} />
+                  <input value={remAlto} onChange={e => setRemAlto(e.target.value)} placeholder="Height" className={inputCls + ' text-center'} />
+                </div>
+                <button onClick={() => {
+                  store.addRemnant({ material: remMat || 'Default',
+                    grosor: toMM(parseFloat(remGrosor) || 18, unit),
+                    ancho: toMM(parseFloat(remAncho) || 0, unit), alto: toMM(parseFloat(remAlto) || 0, unit) });
+                }} className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200/70 hover:bg-white/60 text-slate-600 text-sm rounded-lg transition-colors">
+                  <Plus className="h-4 w-4" />Add Remnant
+                </button>
+                {store.remnants.length > 0 && (
+                  <div className="space-y-1.5 pt-2 mt-2 border-t border-slate-100/60">
+                    {store.remnants.map(r => (
+                      <div key={r.id} className="flex justify-between items-center text-sm group">
+                        <span className="text-slate-600">{r.material} — {parseFloat(fromMM(r.ancho, unit).toFixed(0))}×{parseFloat(fromMM(r.alto, unit).toFixed(0))}</span>
+                        <button onClick={() => store.removeRemnant(r.id)}
+                          className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+      </div>{/* end RIGHT COLUMN */}
     </div>
   );
 }
