@@ -1,5 +1,12 @@
 import type { Database } from '../lib/database.types';
 
+export interface Cubrecanto {
+  sup: number;  // 0=none, 1=type A, 2=type B, 3=type C
+  inf: number;
+  izq: number;
+  der: number;
+}
+
 export interface CutPiece {
   id: string;
   nombre: string;
@@ -7,6 +14,7 @@ export interface CutPiece {
   alto: number;     // mm
   cantidad: number;
   material: 'cuerpo' | 'frente' | 'custom';
+  cubrecanto?: Cubrecanto;
 }
 
 export type Product = Database['public']['Tables']['products_catalog']['Row'];

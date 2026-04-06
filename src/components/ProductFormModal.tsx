@@ -3,8 +3,9 @@ import { Modal } from './Modal';
 import { Button } from './Button';
 import { Input } from './Input';
 import { CollectionSelector } from './CollectionSelector';
-import type { Product, ProductInsert, CutPiece } from '../types';
+import type { Product, ProductInsert, CutPiece, Cubrecanto } from '../types';
 import { calculateDespiece } from '../lib/despieceCalculator';
+import { EdgeBandPopover } from './EdgeBandPopover';
 
 interface ProductFormModalProps {
   product: Product | null;
@@ -703,6 +704,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                         <th className="text-center px-2 py-1.5 font-medium">Height (mm)</th>
                         <th className="text-center px-2 py-1.5 font-medium">Qty</th>
                         <th className="text-center px-2 py-1.5 font-medium">Material</th>
+                        <th className="text-center px-2 py-1.5 font-medium">EB</th>
                         <th className="px-1 py-1.5"></th>
                       </tr>
                     </thead>
@@ -767,6 +769,14 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                             </select>
                           </td>
                           <td className="px-1 py-1 text-center">
+                            <EdgeBandPopover
+                              cubrecanto={piece.cubrecanto ?? { sup: 0, inf: 0, izq: 0, der: 0 }}
+                              onUpdate={(cb: Cubrecanto) => setCutPieces((prev) =>
+                                prev.map((p) => p.id === piece.id ? { ...p, cubrecanto: cb } : p)
+                              )}
+                            />
+                          </td>
+                          <td className="px-1 py-1 text-center">
                             <button
                               type="button"
                               onClick={() => setCutPieces((prev) => prev.filter((p) => p.id !== piece.id))}
@@ -787,7 +797,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 onClick={() =>
                   setCutPieces((prev) => [
                     ...prev,
-                    { id: crypto.randomUUID(), nombre: '', ancho: 0, alto: 0, cantidad: 1, material: 'custom' },
+                    { id: crypto.randomUUID(), nombre: '', ancho: 0, alto: 0, cantidad: 1, material: 'custom', cubrecanto: { sup: 0, inf: 0, izq: 0, der: 0 } },
                   ])
                 }
                 className="w-full py-1.5 px-3 border border-dashed border-slate-300 hover:border-slate-400 text-slate-500 hover:text-slate-700 text-xs rounded-lg transition-colors"

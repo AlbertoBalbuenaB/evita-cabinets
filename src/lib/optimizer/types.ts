@@ -5,6 +5,8 @@
 //   English:  algorithmic / structural (boards, pieces, placed, score)
 // ─────────────────────────────────────────────────────────────
 
+import type { Cubrecanto } from '../../types';
+
 export interface Pieza {
   id: string;
   nombre: string;
@@ -15,12 +17,7 @@ export interface Pieza {
   cantidad: number;
   vetaHorizontal: boolean;
   /** Edge banding per side: 0=none, 1=type A, 2=type B, 3=type C */
-  cubrecanto: {
-    sup: number;
-    inf: number;
-    izq: number;
-    der: number;
-  };
+  cubrecanto: Cubrecanto;
   /** Project area grouping (e.g. "Kitchen", "Closet") */
   area?: string;
   // internal index assigned before optimization

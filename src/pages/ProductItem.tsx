@@ -285,6 +285,7 @@ export function ProductItem() {
                     <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Height (mm)</th>
                     <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Qty</th>
                     <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Material</th>
+                    <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">EB</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -303,6 +304,24 @@ export function ProductItem() {
                           {piece.material === 'cuerpo' ? 'Box Construction' :
                            piece.material === 'frente' ? 'Doors & Fronts' : 'Custom'}
                         </span>
+                      </td>
+                      <td className="py-2 text-center">
+                        {(() => {
+                          const cb = piece.cubrecanto;
+                          if (!cb) return <span className="text-slate-300">—</span>;
+                          const count = [cb.sup, cb.inf, cb.izq, cb.der].filter(v => v > 0).length;
+                          if (count === 0) return <span className="text-slate-300">—</span>;
+                          const labels: string[] = [];
+                          if (cb.sup > 0) labels.push('T');
+                          if (cb.inf > 0) labels.push('B');
+                          if (cb.izq > 0) labels.push('L');
+                          if (cb.der > 0) labels.push('R');
+                          return (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-700 text-white text-xs font-medium">
+                              {labels.join(' ')}
+                            </span>
+                          );
+                        })()}
                       </td>
                     </tr>
                   ))}
