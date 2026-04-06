@@ -148,28 +148,50 @@ export function exportOptimizerPDF(
         const hasName = piece.piece.nombre && ph > 10;
         const nameFz = Math.min(5, Math.max(3, pw / 8)) * labelScale;
 
-        // White background behind text
+        // Measure text widths
+        doc.setFont('Helvetica', 'bold');
         doc.setFontSize(dimFz);
         const dimW = doc.getTextWidth(dimText);
-        let bgH = dimFz * 0.4 + 1.5;
-        let bgW = dimW + 2;
+        let nameW = 0;
         if (hasName) {
+          doc.setFont('Helvetica', 'normal');
           doc.setFontSize(nameFz);
-          const nameW = doc.getTextWidth(piece.piece.nombre!);
-          bgW = Math.max(bgW, nameW + 2);
-          bgH += nameFz * 0.4 + 2;
+          nameW = doc.getTextWidth(piece.piece.nombre!);
         }
-        doc.setFillColor(255, 255, 255);
-        doc.rect(px + pw / 2 - bgW / 2, py + ph / 2 - bgH / 2 - 0.5, bgW, bgH, 'F');
 
-        doc.setFontSize(dimFz); doc.setTextColor(0, 0, 0);
-        doc.text(dimText,
-          px + pw / 2, py + ph / 2 - (hasName ? dimFz * 0.22 + 1 : 0),
+        // Semi-transparent white background
+        const pad = 1.5;
+        const lineGap = hasName ? 1.8 : 0;
+        const bgW = Math.max(dimW, nameW) + pad * 2;
+        const bgH = dimFz * 0.35 + (hasName ? nameFz * 0.35 + lineGap : 0) + pad * 2;
+        const bgX = px + pw / 2 - bgW / 2;
+        const bgY = py + ph / 2 - bgH / 2;
+
+        doc.saveGraphicsState();
+        doc.setGState(new (doc as any).GState({ opacity: 0.55 }));
+        doc.setFillColor(255, 255, 255);
+        doc.rect(bgX, bgY, bgW, bgH, 'F');
+        doc.setGState(new (doc as any).GState({ opacity: 1 }));
+        doc.restoreGraphicsState();
+
+        // Dimension text (bold)
+        const cy = py + ph / 2;
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(dimFz);
+        doc.setTextColor(30, 30, 30);
+        doc.text(dimText, px + pw / 2, cy - (hasName ? lineGap / 2 + nameFz * 0.15 : 0),
           { align: 'center', baseline: 'middle' });
+
+        // Name text (normal, gray)
         if (hasName) {
-          doc.setFontSize(nameFz); doc.setTextColor(80, 80, 80);
-          doc.text(piece.piece.nombre!, px + pw / 2, py + ph / 2 + dimFz * 0.22 + 1.5, { align: 'center', baseline: 'middle' });
+          doc.setFont('Helvetica', 'normal');
+          doc.setFontSize(nameFz);
+          doc.setTextColor(80, 80, 80);
+          doc.text(piece.piece.nombre!, px + pw / 2, cy + lineGap / 2 + dimFz * 0.15,
+            { align: 'center', baseline: 'middle' });
         }
+
+        doc.setFont('Helvetica', 'normal');
       }
     });
 
