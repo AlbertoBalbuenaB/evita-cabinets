@@ -436,10 +436,10 @@ export function OptimizerSidebar() {
                   <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Height</th>
                   <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">Qty</th>
                   <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">Grain</th>
-                  <th className="py-2.5 px-1 text-center text-xs font-medium text-slate-400 uppercase" title="Top">T</th>
-                  <th className="py-2.5 px-1 text-center text-xs font-medium text-slate-400 uppercase" title="Bottom">B</th>
-                  <th className="py-2.5 px-1 text-center text-xs font-medium text-slate-400 uppercase" title="Left">L</th>
-                  <th className="py-2.5 px-1 text-center text-xs font-medium text-slate-400 uppercase" title="Right">R</th>
+                  <th className="py-2.5 px-1 w-9 text-center text-xs font-medium text-slate-400 uppercase" title="Top">T</th>
+                  <th className="py-2.5 px-1 w-9 text-center text-xs font-medium text-slate-400 uppercase" title="Bottom">B</th>
+                  <th className="py-2.5 px-1 w-9 text-center text-xs font-medium text-slate-400 uppercase" title="Left">L</th>
+                  <th className="py-2.5 px-1 w-9 text-center text-xs font-medium text-slate-400 uppercase" title="Right">R</th>
                   <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Material</th>
                   <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Area</th>
                   <th className="py-2.5 px-2 w-10"></th>
@@ -459,23 +459,30 @@ export function OptimizerSidebar() {
                           {p.vetaHorizontal ? 'Fixed' : '—'}
                         </button>
                       </td>
-                      <td className="py-1.5 px-1 text-center">
+                      <td className="py-1.5 px-1 w-9 text-center">
                         <EdgeBandCell value={p.cubrecanto.sup} side="Top" onChange={v => store.updatePiece(p.id, { cubrecanto: { ...p.cubrecanto, sup: v } })} />
                       </td>
-                      <td className="py-1.5 px-1 text-center">
+                      <td className="py-1.5 px-1 w-9 text-center">
                         <EdgeBandCell value={p.cubrecanto.inf} side="Bottom" onChange={v => store.updatePiece(p.id, { cubrecanto: { ...p.cubrecanto, inf: v } })} />
                       </td>
-                      <td className="py-1.5 px-1 text-center">
+                      <td className="py-1.5 px-1 w-9 text-center">
                         <EdgeBandCell value={p.cubrecanto.izq} side="Left" onChange={v => store.updatePiece(p.id, { cubrecanto: { ...p.cubrecanto, izq: v } })} />
                       </td>
-                      <td className="py-1.5 px-1 text-center">
+                      <td className="py-1.5 px-1 w-9 text-center">
                         <EdgeBandCell value={p.cubrecanto.der} side="Right" onChange={v => store.updatePiece(p.id, { cubrecanto: { ...p.cubrecanto, der: v } })} />
                       </td>
-                      <td className="py-1.5 px-3 text-slate-600 text-xs">
-                        <span className="inline-block bg-slate-100 px-2 py-0.5 rounded text-slate-600">{material}</span>
+                      <td className="py-1.5 px-2">
+                        <select value={p.material} onChange={e => store.updatePiece(p.id, { material: e.target.value })}
+                          className="text-xs border border-transparent hover:border-slate-200/70 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded bg-transparent text-slate-600 cursor-pointer py-0.5 px-1 transition-colors">
+                          {stockNames.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
                       </td>
-                      <td className="py-1.5 px-3 text-xs">
-                        {area !== '—' ? <span className="inline-block bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium">{area}</span> : <span className="text-slate-300">—</span>}
+                      <td className="py-1.5 px-2">
+                        <select value={p.area || ''} onChange={e => store.updatePiece(p.id, { area: e.target.value || undefined })}
+                          className="text-xs border border-transparent hover:border-slate-200/70 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded bg-transparent text-slate-600 cursor-pointer py-0.5 px-1 transition-colors">
+                          <option value="">—</option>
+                          {store.areas.map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
                       </td>
                       <td className="py-1.5 px-2">
                         <button onClick={() => store.removePiece(p.id)}

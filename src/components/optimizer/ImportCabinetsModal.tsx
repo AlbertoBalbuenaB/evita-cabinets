@@ -17,6 +17,7 @@ export function ImportCabinetsModal({ isOpen, onClose }: Props) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Map<string, number>>(new Map()); // productId → qty
+  const [importArea, setImportArea] = useState(''); // '' = auto (use product name)
 
   useEffect(() => {
     if (!isOpen) return;
@@ -75,7 +76,7 @@ export function ImportCabinetsModal({ isOpen, onClose }: Props) {
       const product = products.find(p => p.id === productId);
       if (!product) return;
       const pieces = product.cut_pieces as unknown as CutPiece[];
-      const areaName = product.description || product.sku;
+      const areaName = importArea || product.description || product.sku;
 
       // Add area if it doesn't exist
       if (areaName && !store.areas.includes(areaName)) {
@@ -101,20 +102,31 @@ export function ImportCabinetsModal({ isOpen, onClose }: Props) {
     onClose();
     setSelected(new Map());
     setSearch('');
+    setImportArea('');
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Import from Cabinets" size="lg">
       <div className="space-y-4">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by SKU, description, or collection..."
-            className="w-full pl-9 pr-4 py-2.5 border border-slate-200/70 rounded-lg bg-white/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-          />
+        {/* Search + Area selector */}
+        <div className="flex gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by SKU, description, or collection..."
+              className="w-full pl-9 pr-4 py-2.5 border border-slate-200/70 rounded-lg bg-white/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+          <div className="shrink-0">
+            <label className="block text-xs font-medium text-slate-500 mb-1">Import to area</label>
+            <select value={importArea} onChange={e => setImportArea(e.target.value)}
+              className="w-48 py-2 px-3 border border-slate-200/70 rounded-lg bg-white/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+              <option value="">Auto (product name)</option>
+              {store.areas.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+          </div>
         </div>
 
         {/* Product list */}
