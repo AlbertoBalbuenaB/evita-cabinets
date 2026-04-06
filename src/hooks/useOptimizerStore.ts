@@ -81,7 +81,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
   unit: 'mm' as UnitSystem,
   result: null,
   isOptimizing: false,
-  activeTab: 'boards',
+  activeTab: 'setup',
   selectedBoardIndex: null,
 
   addPiece: (p) => set((state) => ({ pieces: [...state.pieces, { ...p, id: crypto.randomUUID() }] })),
@@ -120,7 +120,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
     await new Promise((r) => setTimeout(r, 100));
     try {
       const result = runOptimization(state.pieces, state.stocks, state.remnants, state.globalSierra, state.minOffcut, state.boardTrim);
-      set({ result, isOptimizing: false, selectedBoardIndex: 0 });
+      set({ result, isOptimizing: false, selectedBoardIndex: 0, activeTab: 'results' });
     } catch (error) {
       console.error('Optimization error:', error);
       set({ isOptimizing: false });
@@ -152,5 +152,5 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
     } catch (error) { alert('Error loading project: ' + String(error)); }
   },
 
-  reset: () => set({ pieces: [], stocks: [DEFAULT_STOCK], remnants: [], areas: [], globalSierra: 3.2, minOffcut: 200, boardTrim: 5, ebConfig: EMPTY_EB, labelScale: 1.0, projectName: '', clientName: '', result: null, isOptimizing: false, activeTab: 'boards', selectedBoardIndex: null }),
+  reset: () => set({ pieces: [], stocks: [DEFAULT_STOCK], remnants: [], areas: [], globalSierra: 3.2, minOffcut: 200, boardTrim: 5, ebConfig: EMPTY_EB, labelScale: 1.0, projectName: '', clientName: '', result: null, isOptimizing: false, activeTab: 'setup', selectedBoardIndex: null }),
 }));
