@@ -78,25 +78,25 @@ function CompactAutocomplete({ options, value, onChange, placeholder, className 
 }
 
 // ── Section wrapper ─────────────────────────────────────────
-function Section({ icon: Icon, title, children, defaultOpen = true }: {
-  icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode; defaultOpen?: boolean;
+function Section({ icon: Icon, title, children, defaultOpen = true, className = '' }: {
+  icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode; defaultOpen?: boolean; className?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-      <div className="flex items-center gap-2.5 px-4 py-3 cursor-pointer select-none hover:bg-slate-50 transition-colors"
+    <div className={`glass-white overflow-hidden hover:shadow-lg transition-all duration-200 section-enter ${className}`}>
+      <div className="flex items-center gap-2.5 px-5 py-3.5 cursor-pointer select-none hover:bg-white/40 transition-colors"
         onClick={() => setOpen(v => !v)}>
-        <Icon className="h-4.5 w-4.5 text-slate-500 shrink-0" />
-        <span className="text-sm font-semibold text-slate-700 flex-1">{title}</span>
-        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${open ? '' : '-rotate-90'}`} />
+        <Icon className="h-4 w-4 text-slate-400 shrink-0" />
+        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex-1">{title}</span>
+        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
       </div>
-      {open && <div className="border-t border-slate-100">{children}</div>}
+      {open && <div className="border-t border-white/60">{children}</div>}
     </div>
   );
 }
 
 // ── Shared input styles ─────────────────────────────────────
-const inputCls = "w-full text-sm border border-slate-200 rounded-md px-2.5 py-1.5 bg-white focus:border-blue-400 focus:ring-1 focus:ring-blue-100 outline-none tabular-nums";
+const inputCls = "w-full text-sm border border-slate-200/70 rounded-lg px-3 py-2 bg-white/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 tabular-nums transition-colors";
 
 interface PriceListItem {
   id: string;
@@ -232,7 +232,7 @@ export function OptimizerSidebar() {
       {/* ═══ ROW 1: Parts (full width) ════════════════════════ */}
       <Section icon={LayoutList} title="Parts">
         {/* Add piece form */}
-        <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
+        <div className="px-5 py-4 bg-blue-50/30 border-b border-slate-100/60">
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 items-end">
             <div>
               <label className="block text-xs font-medium text-slate-500 mb-1">Width</label>
@@ -283,7 +283,7 @@ export function OptimizerSidebar() {
             </div>
             <div className="flex items-end">
               <button onClick={addPiece} disabled={!pAncho || !pAlto}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                 <Plus className="h-4 w-4" />Add
               </button>
             </div>
@@ -295,22 +295,22 @@ export function OptimizerSidebar() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="py-2 px-4 text-left font-medium text-slate-500">Name</th>
-                  <th className="py-2 px-3 text-right font-medium text-slate-500">Width</th>
-                  <th className="py-2 px-3 text-right font-medium text-slate-500">Height</th>
-                  <th className="py-2 px-3 text-center font-medium text-slate-500">Qty</th>
-                  <th className="py-2 px-3 text-center font-medium text-slate-500">Grain</th>
-                  <th className="py-2 px-3 text-center font-medium text-slate-500">EB</th>
-                  <th className="py-2 px-3 text-left font-medium text-slate-500">Material</th>
-                  <th className="py-2 px-3 text-left font-medium text-slate-500">Area</th>
-                  <th className="py-2 px-2 w-10"></th>
+                <tr className="border-b border-slate-200/60">
+                  <th className="py-2.5 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Name</th>
+                  <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Width</th>
+                  <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Height</th>
+                  <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">Qty</th>
+                  <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">Grain</th>
+                  <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">EB</th>
+                  <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Material</th>
+                  <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Area</th>
+                  <th className="py-2.5 px-2 w-10"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100/80">
                 {groupedPieces.map(({ area, material, pieces }) => (
                   pieces.map(p => (
-                    <tr key={p.id} className="hover:bg-blue-50/40 group">
+                    <tr key={p.id} className="hover:bg-slate-100/50 transition-colors group">
                       <td className="py-1.5 px-4 text-slate-800">{p.nombre || <span className="text-slate-300">—</span>}</td>
                       <td className="py-1.5 px-3 text-right tabular-nums text-slate-700">{parseFloat(fromMM(p.ancho, unit).toFixed(3))}</td>
                       <td className="py-1.5 px-3 text-right tabular-nums text-slate-700">{parseFloat(fromMM(p.alto, unit).toFixed(3))}</td>
@@ -350,7 +350,7 @@ export function OptimizerSidebar() {
 
         {/* Summary bar */}
         {store.pieces.length > 0 && (
-          <div className="flex items-center gap-4 px-4 py-2.5 bg-slate-50 border-t border-slate-200 text-sm text-slate-500">
+          <div className="flex items-center gap-4 px-5 py-2.5 bg-blue-50/30 border-t border-slate-100/60 text-sm text-slate-500">
             <span className="font-medium text-slate-700">{store.pieces.length} part{store.pieces.length !== 1 ? 's' : ''}</span>
             <span>{(store.pieces.reduce((s, p) => s + p.ancho * p.alto * p.cantidad, 0) / 1e6).toFixed(2)} m²</span>
             {totalEB > 0 && <span className="text-amber-600">EB: {(totalEB / 1000).toFixed(2)} m</span>}
@@ -362,63 +362,59 @@ export function OptimizerSidebar() {
         )}
       </Section>
 
-      {/* ═══ ROW 2: 3-column grid ═════════════════════════════ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-        {/* ─── Areas ──────────────────────────────────────── */}
-        <Section icon={FolderOpen} title="Areas">
-          <div className="px-4 py-3">
-            <div className="flex gap-2">
-              <input value={newArea} onChange={e => setNewArea(e.target.value)} placeholder="e.g. Kitchen, Closet..."
-                onKeyDown={e => { if (e.key === 'Enter' && newArea.trim()) { store.addArea(newArea.trim()); setNewArea(''); } }}
-                className={inputCls} />
-              <button onClick={() => { if (newArea.trim()) { store.addArea(newArea.trim()); setNewArea(''); } }}
-                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors shrink-0">
-                <Plus className="h-4 w-4" />
-              </button>
+      {/* ═══ ROW 2: Stock Sheets (full width) ═══════════════════ */}
+      <Section icon={Layers} title="Stock Sheets">
+        {/* Add stock form */}
+        <div className="px-5 py-4 bg-blue-50/30 border-b border-slate-100/60">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Width</label>
+              <input value={sAncho} onChange={e => setSAncho(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
             </div>
-            {store.areas.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {store.areas.map(a => (
-                  <span key={a} className="inline-flex items-center gap-1.5 text-sm bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg">
-                    {a}
-                    <button onClick={() => store.removeArea(a)} className="text-blue-400 hover:text-red-500"><X className="h-3 w-3" /></button>
-                  </span>
-                ))}
-              </div>
-            )}
-            {store.areas.length === 0 && (
-              <p className="text-sm text-slate-400 mt-2">No areas defined. Parts will be ungrouped.</p>
-            )}
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Height</label>
+              <input value={sAlto} onChange={e => setSAlto(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Price</label>
+              <input value={sCosto} onChange={e => setSCosto(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Material name</label>
+              <input value={sNombre} onChange={e => setSNombre(e.target.value)} onKeyDown={handleStockKey} placeholder="Material" className={inputCls} />
+            </div>
+            <button onClick={addStock}
+              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+              <Plus className="h-4 w-4" />Add
+            </button>
           </div>
-        </Section>
-
-        {/* ─── Stock Sheets ───────────────────────────────── */}
-        <Section icon={Layers} title="Stock Sheets">
+          <p className="text-xs text-slate-400 mt-2">Qty 0 = unlimited sheets</p>
+        </div>
+        {store.stocks.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="py-2 px-3 text-right font-medium text-slate-500">Width</th>
-                  <th className="py-2 px-3 text-right font-medium text-slate-500">Height</th>
-                  <th className="py-2 px-3 text-right font-medium text-slate-500">$</th>
-                  <th className="py-2 px-2 text-center font-medium text-slate-500">Qty</th>
-                  <th className="py-2 px-3 text-left font-medium text-slate-500">Material</th>
-                  <th className="py-2 w-8"></th>
+                <tr className="border-b border-slate-200/60">
+                  <th className="py-2.5 px-4 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Width</th>
+                  <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Height</th>
+                  <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Price</th>
+                  <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">Qty</th>
+                  <th className="py-2.5 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Material</th>
+                  <th className="py-2.5 w-10"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100/80">
                 {store.stocks.map(s => (
-                  <tr key={s.id} className="hover:bg-blue-50/40 group">
-                    <td className="py-1.5 px-3 text-right tabular-nums text-slate-700">{parseFloat(fromMM(s.ancho, unit).toFixed(3))}</td>
-                    <td className="py-1.5 px-3 text-right tabular-nums text-slate-700">{parseFloat(fromMM(s.alto, unit).toFixed(3))}</td>
-                    <td className="py-1.5 px-3 text-right tabular-nums text-slate-700">{s.costo}</td>
-                    <td className="py-1.5 px-2 text-center">
+                  <tr key={s.id} className="hover:bg-slate-100/50 transition-colors group">
+                    <td className="py-2 px-4 text-right tabular-nums text-slate-700">{parseFloat(fromMM(s.ancho, unit).toFixed(3))}</td>
+                    <td className="py-2 px-3 text-right tabular-nums text-slate-700">{parseFloat(fromMM(s.alto, unit).toFixed(3))}</td>
+                    <td className="py-2 px-3 text-right tabular-nums text-slate-700">${s.costo}</td>
+                    <td className="py-2 px-3 text-center">
                       <input type="number" min="0" value={s.qty || 0}
                         onChange={e => store.updateStock(s.id, { qty: parseInt(e.target.value) || 0 })}
-                        className="w-12 text-sm text-center border border-transparent hover:border-slate-200 focus:border-blue-400 rounded bg-transparent tabular-nums" />
+                        className="w-14 text-sm text-center border border-transparent hover:border-slate-200/70 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 rounded-lg bg-transparent tabular-nums transition-colors" />
                     </td>
-                    <td className="py-1.5 px-3">
+                    <td className="py-2 px-4">
                       {sheetMaterials.length > 0 ? (
                         <CompactAutocomplete
                           value={s.materialId || ''} onChange={val => handleSelectSheet(val, s.id)}
@@ -426,10 +422,10 @@ export function OptimizerSidebar() {
                           options={sheetMaterials.map(m => ({ value: m.id, label: m.concept_description }))}
                         />
                       ) : (
-                        <span className="text-sm text-slate-500 truncate">{s.nombre}</span>
+                        <span className="text-sm text-slate-600">{s.nombre}</span>
                       )}
                     </td>
-                    <td className="py-1.5 px-1">
+                    <td className="py-2 px-2">
                       <button onClick={() => store.removeStock(s.id)}
                         className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1">
                         <X className="h-3.5 w-3.5" />
@@ -440,37 +436,47 @@ export function OptimizerSidebar() {
               </tbody>
             </table>
           </div>
-          {/* Add stock row */}
-          <div className="px-4 py-3 bg-slate-50 border-t border-slate-100">
-            <div className="grid grid-cols-5 gap-2 items-end">
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Width</label>
-                <input value={sAncho} onChange={e => setSAncho(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Height</label>
-                <input value={sAlto} onChange={e => setSAlto(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Price</label>
-                <input value={sCosto} onChange={e => setSCosto(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Name</label>
-                <input value={sNombre} onChange={e => setSNombre(e.target.value)} onKeyDown={handleStockKey} placeholder="Material" className={inputCls} />
-              </div>
-              <button onClick={addStock}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors">
-                <Plus className="h-4 w-4" />Add
+        ) : (
+          <div className="px-5 py-6 text-center text-sm text-slate-400">
+            No stock sheets added yet. Use the form above to add sheets.
+          </div>
+        )}
+      </Section>
+
+      {/* ═══ ROW 3: 3-column grid ═════════════════════════════ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        {/* ─── Areas ──────────────────────────────────────── */}
+        <Section icon={FolderOpen} title="Areas" className="stagger-1">
+          <div className="px-5 py-4">
+            <div className="flex gap-2">
+              <input value={newArea} onChange={e => setNewArea(e.target.value)} placeholder="e.g. Kitchen, Closet..."
+                onKeyDown={e => { if (e.key === 'Enter' && newArea.trim()) { store.addArea(newArea.trim()); setNewArea(''); } }}
+                className={inputCls} />
+              <button onClick={() => { if (newArea.trim()) { store.addArea(newArea.trim()); setNewArea(''); } }}
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shrink-0">
+                <Plus className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-xs text-slate-400 mt-2">Qty 0 = unlimited sheets</p>
+            {store.areas.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {store.areas.map(a => (
+                  <span key={a} className="inline-flex items-center gap-1.5 text-sm bg-blue-600/10 text-blue-800 px-2.5 py-1 rounded-full font-medium border border-blue-600/15">
+                    {a}
+                    <button onClick={() => store.removeArea(a)} className="text-blue-400 hover:text-red-500 transition-colors"><X className="h-3 w-3" /></button>
+                  </span>
+                ))}
+              </div>
+            )}
+            {store.areas.length === 0 && (
+              <p className="text-sm text-slate-400 mt-2">No areas defined. Parts will be ungrouped.</p>
+            )}
           </div>
         </Section>
 
         {/* ─── Options ────────────────────────────────────── */}
-        <Section icon={Settings} title="Options">
-          <div className="px-4 py-3 space-y-3">
+        <Section icon={Settings} title="Options" className="stagger-2">
+          <div className="px-5 py-4 space-y-3">
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">Kerf (mm)</label>
@@ -491,7 +497,7 @@ export function OptimizerSidebar() {
             </div>
 
             {edgebandItems.length > 0 && (
-              <div className="pt-3 mt-3 border-t border-slate-100">
+              <div className="pt-3 mt-3 border-t border-slate-100/60">
                 <div className="text-sm font-semibold text-slate-600 mb-2">Edge Banding</div>
                 <div className="space-y-2">
                   {(['a', 'b', 'c'] as const).map(key => {
@@ -526,7 +532,7 @@ export function OptimizerSidebar() {
           </div>
 
           {/* Remnants sub-section */}
-          <div className="border-t border-slate-100 px-4 py-3">
+          <div className="border-t border-slate-100/60 px-5 py-4">
             <div className="text-sm font-semibold text-slate-600 mb-2">Remnants</div>
             <div className="grid grid-cols-2 gap-2">
               <select value={remMat} onChange={e => setRemMat(e.target.value)} className={inputCls}>
@@ -540,11 +546,11 @@ export function OptimizerSidebar() {
               store.addRemnant({ material: remMat || 'Default',
                 grosor: toMM(parseFloat(remGrosor) || 18, unit),
                 ancho: toMM(parseFloat(remAncho) || 0, unit), alto: toMM(parseFloat(remAlto) || 0, unit) });
-            }} className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm rounded-md transition-colors">
+            }} className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200/70 hover:bg-white/60 text-slate-600 text-sm rounded-lg transition-colors">
               <Plus className="h-4 w-4" />Add Remnant
             </button>
             {store.remnants.length > 0 && (
-              <div className="space-y-1.5 pt-2 mt-2 border-t border-slate-100">
+              <div className="space-y-1.5 pt-2 mt-2 border-t border-slate-100/60">
                 {store.remnants.map(r => (
                   <div key={r.id} className="flex justify-between items-center text-sm group">
                     <span className="text-slate-600">{r.material} — {parseFloat(fromMM(r.ancho, unit).toFixed(0))}×{parseFloat(fromMM(r.alto, unit).toFixed(0))}</span>
