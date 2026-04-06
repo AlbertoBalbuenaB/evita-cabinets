@@ -746,6 +746,63 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_movements: {
+        Row: {
+          created_at: string
+          created_by_member_id: string | null
+          id: string
+          movement_type: string
+          notes: string | null
+          price_list_item_id: string
+          quantity: number
+          reference_id: string | null
+          reference_type: string | null
+          running_average_cost: number | null
+          unit_cost: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by_member_id?: string | null
+          id?: string
+          movement_type: string
+          notes?: string | null
+          price_list_item_id: string
+          quantity: number
+          reference_id?: string | null
+          reference_type?: string | null
+          running_average_cost?: number | null
+          unit_cost?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by_member_id?: string | null
+          id?: string
+          movement_type?: string
+          notes?: string | null
+          price_list_item_id?: string
+          quantity?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          running_average_cost?: number | null
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_price_list_item_id_fkey"
+            columns: ["price_list_item_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_created_by_member_id_fkey"
+            columns: ["created_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           actor_id: string | null
@@ -859,6 +916,7 @@ export type Database = {
       }
       price_list: {
         Row: {
+          average_cost: number | null
           base_price: number | null
           concept_description: string
           created_at: string | null
@@ -866,7 +924,9 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean | null
+          last_purchase_cost: number | null
           material: string | null
+          min_stock_level: number
           notes: string | null
           price: number
           price_last_updated_at: string
@@ -874,12 +934,23 @@ export type Database = {
           product_url: string | null
           sf_per_sheet: number | null
           sku_code: string | null
+          stock_location: string | null
+          stock_quantity: number
           tax_rate: number | null
+          technical_depth_mm: number | null
+          technical_finish: string | null
+          technical_height_mm: number | null
+          technical_material: string | null
+          technical_thickness_mm: number | null
+          technical_width_mm: number | null
           type: string
           unit: string
           updated_at: string | null
+          weight: number | null
+          weight_unit: string | null
         }
         Insert: {
+          average_cost?: number | null
           base_price?: number | null
           concept_description: string
           created_at?: string | null
@@ -887,7 +958,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          last_purchase_cost?: number | null
           material?: string | null
+          min_stock_level?: number
           notes?: string | null
           price?: number
           price_last_updated_at?: string
@@ -895,12 +968,23 @@ export type Database = {
           product_url?: string | null
           sf_per_sheet?: number | null
           sku_code?: string | null
+          stock_location?: string | null
+          stock_quantity?: number
           tax_rate?: number | null
+          technical_depth_mm?: number | null
+          technical_finish?: string | null
+          technical_height_mm?: number | null
+          technical_material?: string | null
+          technical_thickness_mm?: number | null
+          technical_width_mm?: number | null
           type: string
           unit: string
           updated_at?: string | null
+          weight?: number | null
+          weight_unit?: string | null
         }
         Update: {
+          average_cost?: number | null
           base_price?: number | null
           concept_description?: string
           created_at?: string | null
@@ -908,7 +992,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          last_purchase_cost?: number | null
           material?: string | null
+          min_stock_level?: number
           notes?: string | null
           price?: number
           price_last_updated_at?: string
@@ -916,12 +1002,73 @@ export type Database = {
           product_url?: string | null
           sf_per_sheet?: number | null
           sku_code?: string | null
+          stock_location?: string | null
+          stock_quantity?: number
           tax_rate?: number | null
+          technical_depth_mm?: number | null
+          technical_finish?: string | null
+          technical_height_mm?: number | null
+          technical_material?: string | null
+          technical_thickness_mm?: number | null
+          technical_width_mm?: number | null
           type?: string
           unit?: string
           updated_at?: string | null
+          weight?: number | null
+          weight_unit?: string | null
         }
         Relationships: []
+      }
+      price_list_suppliers: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          notes: string | null
+          price_list_item_id: string
+          supplier_id: string
+          supplier_price: number | null
+          supplier_sku: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          notes?: string | null
+          price_list_item_id: string
+          supplier_id: string
+          supplier_price?: number | null
+          supplier_sku?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          notes?: string | null
+          price_list_item_id?: string
+          supplier_id?: string
+          supplier_price?: number | null
+          supplier_sku?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_list_suppliers_price_list_item_id_fkey"
+            columns: ["price_list_item_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_list_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products_catalog: {
         Row: {
@@ -1246,6 +1393,96 @@ export type Database = {
           },
         ]
       }
+      project_purchase_items: {
+        Row: {
+          assigned_to_member_id: string | null
+          concept: string
+          created_at: string
+          deadline: string | null
+          display_order: number
+          id: string
+          inventory_committed: boolean
+          notes: string | null
+          price: number
+          price_list_item_id: string | null
+          priority: string
+          project_id: string
+          quantity: number
+          status: string
+          subtotal: number | null
+          supplier_id: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_member_id?: string | null
+          concept: string
+          created_at?: string
+          deadline?: string | null
+          display_order?: number
+          id?: string
+          inventory_committed?: boolean
+          notes?: string | null
+          price?: number
+          price_list_item_id?: string | null
+          priority?: string
+          project_id: string
+          quantity?: number
+          status?: string
+          supplier_id?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_member_id?: string | null
+          concept?: string
+          created_at?: string
+          deadline?: string | null
+          display_order?: number
+          id?: string
+          inventory_committed?: boolean
+          notes?: string | null
+          price?: number
+          price_list_item_id?: string | null
+          priority?: string
+          project_id?: string
+          quantity?: number
+          status?: string
+          supplier_id?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_purchase_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_purchase_items_price_list_item_id_fkey"
+            columns: ["price_list_item_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_purchase_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_purchase_items_assigned_to_member_id_fkey"
+            columns: ["assigned_to_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_tasks: {
         Row: {
           assignee_id: string | null
@@ -1436,6 +1673,7 @@ export type Database = {
           created_by_member_id: string | null
           customer: string | null
           id: string
+          inventory_auto_committed: boolean
           last_modified_at: string | null
           last_modified_by_member_id: string | null
           name: string
@@ -1451,6 +1689,7 @@ export type Database = {
           created_by_member_id?: string | null
           customer?: string | null
           id?: string
+          inventory_auto_committed?: boolean
           last_modified_at?: string | null
           last_modified_by_member_id?: string | null
           name: string
@@ -1466,6 +1705,7 @@ export type Database = {
           created_by_member_id?: string | null
           customer?: string | null
           id?: string
+          inventory_auto_committed?: boolean
           last_modified_at?: string | null
           last_modified_by_member_id?: string | null
           name?: string
@@ -1638,6 +1878,51 @@ export type Database = {
           logo_url?: string | null
           updated_at?: string | null
           value?: string
+        }
+        Relationships: []
+      }
+      suppliers: {
+        Row: {
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          lead_time_days: number | null
+          name: string
+          notes: string | null
+          payment_terms: string | null
+          phone: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          lead_time_days?: number | null
+          name: string
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          lead_time_days?: number | null
+          name?: string
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }

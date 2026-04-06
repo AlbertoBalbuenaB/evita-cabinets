@@ -19,6 +19,7 @@ const Templates = lazy(() => import('./pages/Templates').then(m => ({ default: m
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 const OptimizerPage = lazy(() => import('./pages/OptimizerPage').then(m => ({ default: m.OptimizerPage })));
 const AiChat = lazy(() => import('./components/AiChat').then(m => ({ default: m.AiChat })));
+const Suppliers = lazy(() => import('./pages/Suppliers').then(m => ({ default: m.Suppliers })));
 
 function AdminRoute({ children }: { children: ReactNode }) {
   const { member, loading } = useCurrentMember();
@@ -69,6 +70,7 @@ function App() {
             <Route path="/templates" element={<Templates />} />
             <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
             <Route path="/optimizer" element={<OptimizerPage />} />
+            <Route path="/suppliers" element={<Suppliers />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

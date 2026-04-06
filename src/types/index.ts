@@ -441,3 +441,35 @@ export interface TemplateAnalytics {
     usage_count: number;
   }>;
 }
+
+// ── Supplier & Inventory types ───────────────────────────────────────────────
+
+export type Supplier = Database['public']['Tables']['suppliers']['Row'];
+export type SupplierInsert = Database['public']['Tables']['suppliers']['Insert'];
+export type SupplierUpdate = Database['public']['Tables']['suppliers']['Update'];
+
+export type PriceListSupplier = Database['public']['Tables']['price_list_suppliers']['Row'];
+export type PriceListSupplierInsert = Database['public']['Tables']['price_list_suppliers']['Insert'];
+
+export type InventoryMovement = Database['public']['Tables']['inventory_movements']['Row'];
+export type InventoryMovementInsert = Database['public']['Tables']['inventory_movements']['Insert'];
+
+export type ProjectPurchaseItem = Database['public']['Tables']['project_purchase_items']['Row'];
+export type ProjectPurchaseItemInsert = Database['public']['Tables']['project_purchase_items']['Insert'];
+export type ProjectPurchaseItemUpdate = Database['public']['Tables']['project_purchase_items']['Update'];
+
+export interface ProjectPurchaseItemWithDetails extends ProjectPurchaseItem {
+  price_list_item?: PriceListItem | null;
+  supplier?: Supplier | null;
+  assigned_member?: TeamMember | null;
+}
+
+export interface InventoryMovementWithDetails extends InventoryMovement {
+  price_list_item?: Pick<PriceListItem, 'concept_description' | 'unit'> | null;
+  created_by_member?: Pick<TeamMember, 'name'> | null;
+}
+
+export interface PriceListItemWithInventory extends PriceListItem {
+  suppliers?: (PriceListSupplier & { supplier: Supplier })[];
+  recent_movements?: InventoryMovementWithDetails[];
+}
