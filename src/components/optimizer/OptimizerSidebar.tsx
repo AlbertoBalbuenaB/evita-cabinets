@@ -221,6 +221,10 @@ export function OptimizerSidebar() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-white">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+      {/* ── Column 1: Parts + Areas ─────────────────────── */}
+      <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
 
       {/* ═══ PARTS ══════════════════════════════════════════ */}
       <SectionHeader icon={LayoutList} title="Parts" open={panelsOpen} onToggle={() => setPanelsOpen(v => !v)} />
@@ -362,6 +366,10 @@ export function OptimizerSidebar() {
           </div>
         )}
       </div>
+      </div>{/* end Column 1 */}
+
+      {/* ── Column 2: Stock Sheets + Options + Remnants ──── */}
+      <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
 
       {/* ═══ STOCK SHEETS ═══════════════════════════════════ */}
       <SectionHeader icon={Layers} title="Stock Sheets" open={stocksOpen} onToggle={() => setStocksOpen(v => !v)} />
@@ -522,6 +530,8 @@ export function OptimizerSidebar() {
           )}
         </div>
       )}
+      </div>{/* end Column 2 */}
+    </div>{/* end grid */}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { LayoutDashboard, Upload, Download, ChevronDown, Zap, Loader2, Table, FolderOpen, Save, FileDown } from 'lucide-react';
+import { LayoutDashboard, Upload, Download, ChevronDown, Zap, Loader2, Table, FolderOpen, Save, FileDown, Settings } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useOptimizerStore } from '../hooks/useOptimizerStore';
 import { toMM } from '../lib/optimizer/units';
@@ -7,7 +7,6 @@ import { Button } from '../components/Button';
 import { OptimizerSidebar } from '../components/optimizer/OptimizerSidebar';
 import { CADViewer } from '../components/optimizer/CADViewer';
 import { RightStatsPanel } from '../components/optimizer/RightStatsPanel';
-import { ResizablePanel } from '../components/optimizer/ResizablePanel';
 
 export function OptimizerPage() {
   const store   = useOptimizerStore();
@@ -15,8 +14,6 @@ export function OptimizerPage() {
   const xlsxRef = useRef<HTMLInputElement>(null);
   const jsonRef = useRef<HTMLInputElement>(null);
 
-  const [leftCollapsed, setLeftCollapsed]   = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
 
@@ -250,32 +247,43 @@ export function OptimizerPage() {
         </div>
       )}
 
-      {/* ── Three-panel body ──────────────────────────────── */}
-      <div className="flex flex-1 overflow-hidden min-h-0">
+      {/* ── Tab bar ─────────────────────────────────────── */}
+      <div className="bg-white border-b border-slate-200 px-4 flex items-center shrink-0">
+        {([
+          { id: 'setup' as const, label: 'Setup', Icon: Settings },
+          { id: 'results' as const, label: 'Results', Icon: LayoutDashboard },
+        ]).map(({ id, label, Icon }) => (
+          <button key={id} onClick={() => store.setActiveTab(id)}
+            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+              store.activeTab === id
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}>
+            <Icon className="h-4 w-4" />{label}
+          </button>
+        ))}
+      </div>
 
-        {/* Left: resizable + collapsible */}
-        <ResizablePanel
-          side="left" defaultWidth={300} minWidth={220} maxWidth={480}
-          collapsed={leftCollapsed} onToggle={() => setLeftCollapsed(v => !v)}
-        >
-          <OptimizerSidebar />
-        </ResizablePanel>
-
-        {/* Center: CAD viewer */}
-        <CADViewer board={selectedBoard} unit={store.unit} />
-
-        {/* Right: resizable + collapsible */}
-        <ResizablePanel
-          side="right" defaultWidth={288} minWidth={220} maxWidth={420}
-          collapsed={rightCollapsed} onToggle={() => setRightCollapsed(v => !v)}
-        >
-          <RightStatsPanel
-            result={store.result}
-            selectedIdx={store.selectedBoardIndex ?? 0}
-            onSelectBoard={(idx) => store.setSelectedBoard(idx)}
-          />
-        </ResizablePanel>
-
+      {/* ── Tab content ──────────────────────────────────── */}
+      <div className="flex-1 overflow-hidden min-h-0">
+        {store.activeTab === 'setup' ? (
+          <div className="h-full overflow-y-auto bg-slate-50">
+            <div className="max-w-5xl mx-auto p-4">
+              <OptimizerSidebar />
+            </div>
+          </div>
+        ) : (
+          <div className="h-full flex flex-col lg:flex-row overflow-hidden">
+            <CADViewer board={selectedBoard} unit={store.unit} />
+            <div className="lg:w-80 lg:shrink-0 lg:border-l border-t lg:border-t-0 border-slate-200 overflow-y-auto bg-white">
+              <RightStatsPanel
+                result={store.result}
+                selectedIdx={store.selectedBoardIndex ?? 0}
+                onSelectBoard={(idx) => store.setSelectedBoard(idx)}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

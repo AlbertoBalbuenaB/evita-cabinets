@@ -102,7 +102,7 @@ export interface CutStep {
   isTrim?: boolean;
 }
 
-export type OptimizerTab = 'boards' | 'cutlist' | 'summary';
+export type OptimizerTab = 'setup' | 'results';
 
 /** Display unit system — the engine always stores and computes in mm internally */
 export type UnitSystem = 'mm' | 'in';
