@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { LayoutDashboard, Upload, Download, ChevronDown, Zap, Loader2, Table, FolderOpen, Save, FileDown, Settings } from 'lucide-react';
+import { LayoutDashboard, Upload, Download, ChevronDown, Zap, Loader2, Table, FolderOpen, Save, FileDown, Settings, Package } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useOptimizerStore } from '../hooks/useOptimizerStore';
 import { toMM } from '../lib/optimizer/units';
@@ -7,6 +7,7 @@ import { Button } from '../components/Button';
 import { OptimizerSidebar } from '../components/optimizer/OptimizerSidebar';
 import { CADViewer } from '../components/optimizer/CADViewer';
 import { RightStatsPanel } from '../components/optimizer/RightStatsPanel';
+import { ImportCabinetsModal } from '../components/optimizer/ImportCabinetsModal';
 
 export function OptimizerPage() {
   const store   = useOptimizerStore();
@@ -16,6 +17,7 @@ export function OptimizerPage() {
 
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [cabinetModalOpen, setCabinetModalOpen] = useState(false);
 
   // close dropdowns on click outside
   useEffect(() => {
@@ -175,7 +177,7 @@ export function OptimizerPage() {
             <ChevronDown className={`h-3 w-3 transition-transform ${importOpen ? 'rotate-180' : ''}`} />
           </Button>
           {importOpen && (
-            <div className="absolute top-full mt-1 left-0 z-50 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1">
+            <div className="absolute top-full mt-1 left-0 z-50 w-52 bg-white rounded-lg shadow-lg border border-slate-200 py-1">
               <button onClick={() => { csvRef.current?.click(); setImportOpen(false); }}
                 className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left">
                 <Upload className="h-3.5 w-3.5 text-slate-400" />CSV
@@ -187,6 +189,24 @@ export function OptimizerPage() {
               <button onClick={() => { jsonRef.current?.click(); setImportOpen(false); }}
                 className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left">
                 <FolderOpen className="h-3.5 w-3.5 text-slate-400" />Open Project
+              </button>
+              <button onClick={() => { setCabinetModalOpen(true); setImportOpen(false); }}
+                className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left">
+                <Package className="h-3.5 w-3.5 text-slate-400" />Cabinets
+              </button>
+              <div className="border-t border-slate-100 my-1" />
+              <button onClick={() => {
+                const csv = 'nombre,ancho,alto,grosor,material,cantidad,veta\nSide Panel,610,762,18,Melamina,2,no\nBack Panel,726,762,18,Melamina,1,no\nShelf,726,574,18,Melamina,1,no\nDoor,378,759,18,MDF,2,si\n';
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'evita_optimizer_template.csv';
+                a.click();
+                URL.revokeObjectURL(a.href);
+                setImportOpen(false);
+              }}
+                className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left">
+                <FileDown className="h-3.5 w-3.5 text-slate-400" />CSV Template
               </button>
             </div>
           )}
@@ -283,6 +303,8 @@ export function OptimizerPage() {
           </div>
         )}
       </div>
+
+      <ImportCabinetsModal isOpen={cabinetModalOpen} onClose={() => setCabinetModalOpen(false)} />
     </div>
   );
 }

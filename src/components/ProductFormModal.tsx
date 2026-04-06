@@ -5,7 +5,7 @@ import { Input } from './Input';
 import { CollectionSelector } from './CollectionSelector';
 import type { Product, ProductInsert, CutPiece, Cubrecanto } from '../types';
 import { calculateDespiece } from '../lib/despieceCalculator';
-import { EdgeBandInline } from './EdgeBandPopover';
+import { EdgeBandCell } from './EdgeBandPopover';
 
 interface ProductFormModalProps {
   product: Product | null;
@@ -704,7 +704,10 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                         <th className="text-center px-2 py-1.5 font-medium">Height (mm)</th>
                         <th className="text-center px-2 py-1.5 font-medium">Qty</th>
                         <th className="text-center px-2 py-1.5 font-medium">Material</th>
-                        <th className="text-center px-2 py-1.5 font-medium">EB</th>
+                        <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Top">T</th>
+                        <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Bottom">B</th>
+                        <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Left">L</th>
+                        <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Right">R</th>
                         <th className="px-1 py-1.5"></th>
                       </tr>
                     </thead>
@@ -768,14 +771,18 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                               <option value="custom">Custom</option>
                             </select>
                           </td>
-                          <td className="px-1 py-1 text-center">
-                            <EdgeBandInline
-                              cubrecanto={piece.cubrecanto ?? { sup: 0, inf: 0, izq: 0, der: 0 }}
-                              onUpdate={(cb: Cubrecanto) => setCutPieces((prev) =>
-                                prev.map((p) => p.id === piece.id ? { ...p, cubrecanto: cb } : p)
-                              )}
-                            />
-                          </td>
+                          {(['sup', 'inf', 'izq', 'der'] as const).map(side => {
+                            const cb = piece.cubrecanto ?? { sup: 0, inf: 0, izq: 0, der: 0 };
+                            const sideLabel = { sup: 'Top', inf: 'Bottom', izq: 'Left', der: 'Right' }[side];
+                            return (
+                              <td key={side} className="px-0.5 py-1 text-center">
+                                <EdgeBandCell value={cb[side]} side={sideLabel}
+                                  onChange={v => setCutPieces(prev =>
+                                    prev.map(p => p.id === piece.id ? { ...p, cubrecanto: { ...cb, [side]: v } } : p)
+                                  )} />
+                              </td>
+                            );
+                          })}
                           <td className="px-1 py-1 text-center">
                             <button
                               type="button"
