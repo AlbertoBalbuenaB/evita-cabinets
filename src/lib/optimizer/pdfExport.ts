@@ -228,9 +228,9 @@ export async function exportOptimizerPDF(
       doc.restoreGraphicsState();
     }
 
-    // Board grain — very subtle like CAD (alpha ~0.06)
+    // Board grain — very subtle
     doc.saveGraphicsState();
-    doc.setGState(new (doc as any).GState({ opacity: 0.04 }));
+    doc.setGState(new (doc as any).GState({ opacity: 0.02 }));
     doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.1);
     for (let gy = 3; gy < boardH; gy += 3) {
       doc.line(startX + 1, startY + gy, startX + boardW - 1, startY + gy);
