@@ -5,7 +5,7 @@ import { Input } from './Input';
 import { CollectionSelector } from './CollectionSelector';
 import type { Product, ProductInsert, CutPiece, Cubrecanto } from '../types';
 import { calculateDespiece } from '../lib/despieceCalculator';
-import { EdgeBandPopover } from './EdgeBandPopover';
+import { EdgeBandInline } from './EdgeBandPopover';
 
 interface ProductFormModalProps {
   product: Product | null;
@@ -769,7 +769,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                             </select>
                           </td>
                           <td className="px-1 py-1 text-center">
-                            <EdgeBandPopover
+                            <EdgeBandInline
                               cubrecanto={piece.cubrecanto ?? { sup: 0, inf: 0, izq: 0, der: 0 }}
                               onUpdate={(cb: Cubrecanto) => setCutPieces((prev) =>
                                 prev.map((p) => p.id === piece.id ? { ...p, cubrecanto: cb } : p)
