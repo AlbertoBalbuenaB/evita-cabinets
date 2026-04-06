@@ -175,7 +175,7 @@ export function OptimizerPage() {
             <ChevronDown className={`h-3 w-3 transition-transform ${importOpen ? 'rotate-180' : ''}`} />
           </Button>
           {importOpen && (
-            <div className="absolute top-full mt-1 left-0 z-50 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1">
+            <div className="absolute top-full mt-1 left-0 z-50 w-52 bg-white rounded-lg shadow-lg border border-slate-200 py-1">
               <button onClick={() => { csvRef.current?.click(); setImportOpen(false); }}
                 className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left">
                 <Upload className="h-3.5 w-3.5 text-slate-400" />CSV
@@ -187,6 +187,20 @@ export function OptimizerPage() {
               <button onClick={() => { jsonRef.current?.click(); setImportOpen(false); }}
                 className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left">
                 <FolderOpen className="h-3.5 w-3.5 text-slate-400" />Open Project
+              </button>
+              <div className="border-t border-slate-100 my-1" />
+              <button onClick={() => {
+                const csv = 'nombre,ancho,alto,grosor,material,cantidad,veta\nSide Panel,610,762,18,Melamina,2,no\nBack Panel,726,762,18,Melamina,1,no\nShelf,726,574,18,Melamina,1,no\nDoor,378,759,18,MDF,2,si\n';
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'evita_optimizer_template.csv';
+                a.click();
+                URL.revokeObjectURL(a.href);
+                setImportOpen(false);
+              }}
+                className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left">
+                <FileDown className="h-3.5 w-3.5 text-slate-400" />CSV Template
               </button>
             </div>
           )}
