@@ -237,15 +237,16 @@ export function OptimizerSidebar() {
   }, [optionsOpen]);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 min-h-0">
+    <div className="flex flex-col xl:flex-row gap-4 min-h-0">
 
       {/* ═══ LEFT COLUMN: Parts + Stock Sheets ═══════════════ */}
       <div className="flex-1 min-w-0 space-y-4">
 
       <Section icon={LayoutList} title="Parts">
         {/* Add piece form */}
-        <div className="px-5 py-4 bg-blue-50/30 border-b border-slate-100/60">
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 items-end">
+        <div className="px-5 py-4 bg-blue-50/30 border-b border-slate-100/60 space-y-2">
+          {/* Row 1: dimensions + name */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 items-end">
             <div>
               <label className="block text-xs font-medium text-slate-500 mb-1">Width</label>
               <input value={pAncho} onChange={e => setPAncho(e.target.value)} onKeyDown={handlePieceKey}
@@ -266,39 +267,36 @@ export function OptimizerSidebar() {
               <input value={pNombre} onChange={e => setPNombre(e.target.value)} onKeyDown={handlePieceKey}
                 placeholder="Optional" className={inputCls} />
             </div>
-            <div>
+          </div>
+          {/* Row 2: material + area + thickness + grain + add button */}
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex-1 min-w-[120px]">
               <label className="block text-xs font-medium text-slate-500 mb-1">Material</label>
-              <select value={pMat} onChange={e => setPMat(e.target.value)}
-                className={inputCls}>
+              <select value={pMat} onChange={e => setPMat(e.target.value)} className={inputCls}>
                 <option value="">Default</option>
                 {stockNames.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
-            <div>
+            <div className="flex-1 min-w-[100px]">
               <label className="block text-xs font-medium text-slate-500 mb-1">Area</label>
-              <select value={pArea} onChange={e => setPArea(e.target.value)}
-                className={inputCls}>
+              <select value={pArea} onChange={e => setPArea(e.target.value)} className={inputCls}>
                 <option value="">None</option>
                 {store.areas.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
-            <div className="flex items-end gap-2">
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Thick.</label>
-                <input value={pGrosor} onChange={e => setPGrosor(e.target.value)} className={inputCls + ' text-center w-16'} />
-              </div>
-              <label className="flex items-center gap-1.5 cursor-pointer pb-2" title="Fixed grain direction">
-                <input type="checkbox" checked={pVeta} onChange={e => setPVeta(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600" />
-                <span className="text-xs text-slate-500 whitespace-nowrap">Grain</span>
-              </label>
+            <div className="w-20">
+              <label className="block text-xs font-medium text-slate-500 mb-1">Thick.</label>
+              <input value={pGrosor} onChange={e => setPGrosor(e.target.value)} className={inputCls + ' text-center'} />
             </div>
-            <div className="flex items-end">
-              <button onClick={addPiece} disabled={!pAncho || !pAlto}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                <Plus className="h-4 w-4" />Add
-              </button>
-            </div>
+            <label className="flex items-center gap-1.5 cursor-pointer pb-2 shrink-0" title="Fixed grain direction">
+              <input type="checkbox" checked={pVeta} onChange={e => setPVeta(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600" />
+              <span className="text-xs text-slate-500 whitespace-nowrap">Grain</span>
+            </label>
+            <button onClick={addPiece} disabled={!pAncho || !pAlto}
+              className="flex items-center justify-center gap-1.5 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0">
+              <Plus className="h-4 w-4" />Add
+            </button>
           </div>
         </div>
 
@@ -458,7 +456,7 @@ export function OptimizerSidebar() {
       </div>{/* end LEFT COLUMN */}
 
       {/* ═══ RIGHT COLUMN: Areas + Options ═══════════════════ */}
-      <div className="lg:w-80 lg:shrink-0 space-y-4">
+      <div className="xl:w-72 xl:shrink-0 space-y-4">
 
         {/* ─── Areas ──────────────────────────────────────── */}
         <Section icon={FolderOpen} title="Areas" className="stagger-1">
