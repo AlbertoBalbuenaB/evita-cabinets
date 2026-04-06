@@ -209,9 +209,13 @@ export function OptimizerPage() {
                 className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left">
                 <Save className="h-3.5 w-3.5 text-slate-400" />Save Project
               </button>
-              <button onClick={() => { store.exportPDF(); setExportOpen(false); }} disabled={!store.result}
+              <button onClick={() => { store.exportPDF('en'); setExportOpen(false); }} disabled={!store.result}
                 className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left disabled:opacity-40">
-                <FileDown className="h-3.5 w-3.5 text-slate-400" />PDF
+                <FileDown className="h-3.5 w-3.5 text-slate-400" />PDF (English)
+              </button>
+              <button onClick={() => { store.exportPDF('es'); setExportOpen(false); }} disabled={!store.result}
+                className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left disabled:opacity-40">
+                <FileDown className="h-3.5 w-3.5 text-slate-400" />PDF (Español)
               </button>
             </div>
           )}

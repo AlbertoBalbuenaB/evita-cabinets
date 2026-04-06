@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Pieza, StockSize, Remnant, OptimizationResult, OptimizerTab, UnitSystem, EbConfig } from '../lib/optimizer/types';
 import { runOptimization } from '../lib/optimizer/engine';
-import { exportOptimizerPDF } from '../lib/optimizer/pdfExport';
+import { exportOptimizerPDF, PdfLang } from '../lib/optimizer/pdfExport';
 
 interface OptimizerState {
   pieces: Pieza[];
@@ -44,7 +44,7 @@ interface OptimizerState {
   setEbConfig: (cfg: EbConfig) => void;
   setLabelScale: (s: number) => void;
   runOptimize: () => Promise<void>;
-  exportPDF: () => void;
+  exportPDF: (lang?: PdfLang) => void;
   saveProject: () => void;
   loadProject: (json: string) => void;
   reset: () => void;
@@ -128,10 +128,10 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
     }
   },
 
-  exportPDF: () => {
+  exportPDF: (lang: PdfLang = 'en') => {
     const state = get();
     if (!state.result) { alert('Run optimization first'); return; }
-    exportOptimizerPDF(state.result, state.projectName, state.clientName, state.unit, state.ebConfig, state.areas, state.labelScale);
+    exportOptimizerPDF(state.result, state.projectName, state.clientName, state.unit, state.ebConfig, state.areas, state.labelScale, lang);
   },
 
   saveProject: () => {

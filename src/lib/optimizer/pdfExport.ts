@@ -5,6 +5,97 @@ import { EbConfig } from './types';
 
 const EB_LABELS: Record<number, string> = { 1: 'A', 2: 'B', 3: 'C' };
 
+export type PdfLang = 'en' | 'es';
+
+const i18n: Record<PdfLang, Record<string, string>> = {
+  en: {
+    subtitle: 'Board Cutting Optimizer',
+    date: 'Date',
+    project: 'Project',
+    client: 'Client',
+    areas: 'Areas',
+    sheets: 'Sheets',
+    parts: 'Parts',
+    efficiency: 'Efficiency',
+    totalCost: 'Total cost',
+    edgeBanding: 'Edge banding',
+    strategy: 'Strategy',
+    time: 'Time',
+    sheet: 'Sheet',
+    material: 'Material',
+    thickness: 'Thickness',
+    size: 'Size',
+    usage: 'Usage',
+    cost: 'Cost',
+    trim: 'Trim',
+    cutList: 'Cut List',
+    area: 'Area',
+    unassigned: 'Unassigned',
+    name: 'Name',
+    width: 'Width',
+    height: 'Height',
+    rot: 'Rot',
+    grain: 'Grain',
+    eb: 'EB',
+    yes: 'Yes',
+    fixed: 'Fixed',
+    free: 'Free',
+    part: 'Part',
+    unnamed: 'Unnamed',
+    notSpecified: 'Not specified',
+    ebSummary: 'Edge Banding Summary',
+    typeASolid: 'Type A (solid)',
+    typeBDashed: 'Type B (dashed)',
+    typeCDotted: 'Type C (dotted)',
+    total: 'Total',
+    linearM: 'linear m',
+    ebWasteNote: 'Note: Each side includes +3cm waste allowance.',
+  },
+  es: {
+    subtitle: 'Optimizador de Corte',
+    date: 'Fecha',
+    project: 'Proyecto',
+    client: 'Cliente',
+    areas: 'Áreas',
+    sheets: 'Láminas',
+    parts: 'Piezas',
+    efficiency: 'Eficiencia',
+    totalCost: 'Costo total',
+    edgeBanding: 'Cubrecanto',
+    strategy: 'Estrategia',
+    time: 'Tiempo',
+    sheet: 'Lámina',
+    material: 'Material',
+    thickness: 'Espesor',
+    size: 'Tamaño',
+    usage: 'Uso',
+    cost: 'Costo',
+    trim: 'Recorte',
+    cutList: 'Lista de Corte',
+    area: 'Área',
+    unassigned: 'Sin asignar',
+    name: 'Nombre',
+    width: 'Ancho',
+    height: 'Alto',
+    rot: 'Rot',
+    grain: 'Veta',
+    eb: 'CC',
+    yes: 'Sí',
+    fixed: 'Fija',
+    free: 'Libre',
+    part: 'Pieza',
+    unnamed: 'Sin nombre',
+    notSpecified: 'No especificado',
+    ebSummary: 'Resumen de Cubrecanto',
+    typeASolid: 'Tipo A (continuo)',
+    typeBDashed: 'Tipo B (discontinuo)',
+    typeCDotted: 'Tipo C (punteado)',
+    total: 'Total',
+    linearM: 'm lineales',
+    ebWasteNote: 'Nota: Cada lado incluye +3cm de desperdicio.',
+  },
+};
+
 export function exportOptimizerPDF(
   result: OptimizationResult,
   projectName: string,
@@ -13,7 +104,10 @@ export function exportOptimizerPDF(
   ebConfig?: EbConfig,
   areas?: string[],
   labelScale: number = 1,
+  lang: PdfLang = 'en',
 ): void {
+  const t = i18n[lang];
+  const dateFmt = lang === 'es' ? 'es-MX' : 'en-US';
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -27,16 +121,16 @@ export function exportOptimizerPDF(
   doc.text('Evita Optimizer', pageW / 2, 60, { align: 'center' });
   doc.setFontSize(14);
   doc.setTextColor(148, 163, 184);
-  doc.text('Board Cutting Optimizer', pageW / 2, 75, { align: 'center' });
+  doc.text(t.subtitle, pageW / 2, 75, { align: 'center' });
   doc.setFontSize(11);
   doc.setTextColor(100, 116, 139);
-  doc.text(`Date: ${new Date().toLocaleDateString('en-US')}`, pageW / 2, 95, { align: 'center' });
+  doc.text(`${t.date}: ${new Date().toLocaleDateString(dateFmt)}`, pageW / 2, 95, { align: 'center' });
   doc.setFontSize(12);
   doc.setTextColor(203, 213, 225);
-  doc.text(`Project: ${projectName || 'Unnamed'}`, pageW / 2, 120, { align: 'center' });
-  doc.text(`Client: ${clientName || 'Not specified'}`, pageW / 2, 130, { align: 'center' });
+  doc.text(`${t.project}: ${projectName || t.unnamed}`, pageW / 2, 120, { align: 'center' });
+  doc.text(`${t.client}: ${clientName || t.notSpecified}`, pageW / 2, 130, { align: 'center' });
   if (areas && areas.length > 0) {
-    doc.text(`Areas: ${areas.join(', ')}`, pageW / 2, 140, { align: 'center' });
+    doc.text(`${t.areas}: ${areas.join(', ')}`, pageW / 2, 140, { align: 'center' });
   }
 
   let totalEB = 0;
@@ -51,13 +145,13 @@ export function exportOptimizerPDF(
   doc.setFontSize(10);
   doc.setTextColor(148, 163, 184);
   const stats = [
-    `Sheets: ${result.boards.length}`,
-    `Parts: ${result.totalPieces}`,
-    `Efficiency: ${result.efficiency.toFixed(1)}%`,
-    `Total cost: $${result.totalCost.toFixed(2)}`,
-    `Edge banding: ${(totalEB / 1000).toFixed(2)} linear m`,
-    `Strategy: ${result.strategy}`,
-    `Time: ${result.timeMs.toFixed(0)}ms`,
+    `${t.sheets}: ${result.boards.length}`,
+    `${t.parts}: ${result.totalPieces}`,
+    `${t.efficiency}: ${result.efficiency.toFixed(1)}%`,
+    `${t.totalCost}: $${result.totalCost.toFixed(2)}`,
+    `${t.edgeBanding}: ${(totalEB / 1000).toFixed(2)} ${t.linearM}`,
+    `${t.strategy}: ${result.strategy}`,
+    `${t.time}: ${result.timeMs.toFixed(0)}ms`,
   ];
   let statY = 155;
   stats.forEach((stat) => { doc.text(stat, pageW / 2, statY, { align: 'center' }); statY += 8; });
@@ -69,10 +163,10 @@ export function exportOptimizerPDF(
     doc.rect(0, 0, pageW, pageH, 'F');
 
     doc.setFontSize(16); doc.setTextColor(15, 23, 42); doc.setFont('Helvetica', 'bold');
-    doc.text(`Sheet ${boardIdx + 1}`, 20, 20);
+    doc.text(`${t.sheet} ${boardIdx + 1}`, 20, 20);
     doc.setFontSize(10); doc.setFont('Helvetica', 'normal'); doc.setTextColor(71, 85, 105);
-    doc.text(`Material: ${board.material} | Thickness: ${fmtDim(board.grosor, unit)} | Size: ${fmtDim(board.ancho, unit)}×${fmtDim(board.alto, unit)}`, 20, 28);
-    doc.text(`Usage: ${board.usage.toFixed(1)}% | Cost: $${board.stockInfo.costo.toFixed(2)} | ${board.placed.length} parts | Trim: ${board.trim}mm`, 20, 35);
+    doc.text(`${t.material}: ${board.material} | ${t.thickness}: ${fmtDim(board.grosor, unit)} | ${t.size}: ${fmtDim(board.ancho, unit)}×${fmtDim(board.alto, unit)}`, 20, 28);
+    doc.text(`${t.usage}: ${board.usage.toFixed(1)}% | ${t.cost}: $${board.stockInfo.costo.toFixed(2)} | ${board.placed.length} ${t.parts.toLowerCase()} | ${t.trim}: ${board.trim}mm`, 20, 35);
 
     const maxBoardW = pageW - 50, maxBoardH = pageH - 75;
     const scale = Math.min(maxBoardW / board.ancho, maxBoardH / board.alto);
@@ -221,7 +315,7 @@ export function exportOptimizerPDF(
   // ── Cut list (grouped by area) ────────────────────────────
   doc.addPage();
   doc.setFontSize(14); doc.setFont('Helvetica', 'bold'); doc.setTextColor(15, 23, 42);
-  doc.text('Cut List', 20, 20);
+  doc.text(t.cutList, 20, 20);
   let cutListY = 30;
   const colX = [10, 22, 55, 78, 101, 120, 136, 150, 170, 200];
 
@@ -232,7 +326,7 @@ export function exportOptimizerPDF(
   // Group by area
   const byArea = new Map<string, typeof allPieces>();
   allPieces.forEach(item => {
-    const area = item.piece.piece.area || 'Unassigned';
+    const area = item.piece.piece.area || t.unassigned;
     if (!byArea.has(area)) byArea.set(area, []);
     byArea.get(area)!.push(item);
   });
@@ -240,10 +334,10 @@ export function exportOptimizerPDF(
   byArea.forEach((items, area) => {
     if (cutListY > pageH - 25) { doc.addPage(); cutListY = 20; }
     doc.setFontSize(11); doc.setFont('Helvetica', 'bold'); doc.setTextColor(15, 23, 42);
-    doc.text(`Area: ${area}`, 20, cutListY);
+    doc.text(`${t.area}: ${area}`, 20, cutListY);
     cutListY += 7;
     doc.setFontSize(7); doc.setTextColor(71, 85, 105); doc.setFont('Helvetica', 'bold');
-    ['#', 'Name', 'Width', 'Height', 'Sheet', 'Rot', 'Grain', 'EB', 'Material'].forEach((h, i) => {
+    ['#', t.name, t.width, t.height, t.sheet, t.rot, t.grain, t.eb, t.material].forEach((h, i) => {
       doc.text(h, colX[i], cutListY, { align: i === 1 || i === 8 ? 'left' : 'center' });
     });
     cutListY += 5;
@@ -257,12 +351,12 @@ export function exportOptimizerPDF(
       (['sup', 'inf', 'izq', 'der'] as const).forEach(s => { if (cb[s] > 0) ebParts.push(`${s[0].toUpperCase()}:${EB_LABELS[cb[s]]}`); });
       [
         [`${pIdx + 1}`, 'center'],
-        [p.piece.nombre || 'Part', 'left'],
+        [p.piece.nombre || t.part, 'left'],
         [fmtNum(p.piece.ancho, unit), 'center'],
         [fmtNum(p.piece.alto, unit), 'center'],
         [`S${item.boardIdx + 1}`, 'center'],
-        [p.rotated ? 'Yes' : '—', 'center'],
-        [p.piece.vetaHorizontal ? 'Fixed' : 'Free', 'center'],
+        [p.rotated ? t.yes : '—', 'center'],
+        [p.piece.vetaHorizontal ? t.fixed : t.free, 'center'],
         [ebParts.join(' ') || '—', 'center'],
         [p.piece.material || '—', 'left'],
       ].forEach(([text, align], i) => {
@@ -278,7 +372,7 @@ export function exportOptimizerPDF(
     if (cutListY > pageH - 40) { doc.addPage(); cutListY = 20; }
     cutListY += 5;
     doc.setFontSize(12); doc.setFont('Helvetica', 'bold'); doc.setTextColor(15, 23, 42);
-    doc.text('Edge Banding Summary', 20, cutListY);
+    doc.text(t.ebSummary, 20, cutListY);
     cutListY += 8;
 
     const byType: Record<number, number> = { 1: 0, 2: 0, 3: 0 };
@@ -292,9 +386,9 @@ export function exportOptimizerPDF(
 
     doc.setFontSize(9); doc.setFont('Helvetica', 'normal'); doc.setTextColor(50, 50, 50);
     const ebNames: Record<number, string> = {
-      1: ebConfig?.a?.name ? `Type A — ${ebConfig.a.name}` : 'Type A (solid)',
-      2: ebConfig?.b?.name ? `Type B — ${ebConfig.b.name}` : 'Type B (dashed)',
-      3: ebConfig?.c?.name ? `Type C — ${ebConfig.c.name}` : 'Type C (dotted)',
+      1: ebConfig?.a?.name ? `${t.typeASolid.split('(')[0].trim()} — ${ebConfig.a.name}` : t.typeASolid,
+      2: ebConfig?.b?.name ? `${t.typeBDashed.split('(')[0].trim()} — ${ebConfig.b.name}` : t.typeBDashed,
+      3: ebConfig?.c?.name ? `${t.typeCDotted.split('(')[0].trim()} — ${ebConfig.c.name}` : t.typeCDotted,
     };
     const ebPrices: Record<number, number> = { 1: ebConfig?.a?.price || 0, 2: ebConfig?.b?.price || 0, 3: ebConfig?.c?.price || 0 };
     let ebTotalCost = 0;
@@ -308,13 +402,14 @@ export function exportOptimizerPDF(
       }
     });
     doc.setFont('Helvetica', 'bold');
-    doc.text(`Total: ${(totalEB / 1000).toFixed(2)} linear m${ebTotalCost > 0 ? ` — Cost: $${ebTotalCost.toFixed(2)}` : ''}`, 25, cutListY);
+    doc.text(`${t.total}: ${(totalEB / 1000).toFixed(2)} ${t.linearM}${ebTotalCost > 0 ? ` — ${t.cost}: $${ebTotalCost.toFixed(2)}` : ''}`, 25, cutListY);
     cutListY += 5;
     doc.setFont('Helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(120, 120, 120);
-    doc.text('Note: Each side includes +3cm waste allowance.', 25, cutListY);
+    doc.text(t.ebWasteNote, 25, cutListY);
   }
 
-  doc.save(`optimization_${(projectName || 'project').replace(/\s+/g, '_')}.pdf`);
+  const filePrefix = lang === 'es' ? 'optimizacion' : 'optimization';
+  doc.save(`${filePrefix}_${(projectName || 'project').replace(/\s+/g, '_')}.pdf`);
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
