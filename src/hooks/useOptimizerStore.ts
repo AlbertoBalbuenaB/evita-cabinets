@@ -44,7 +44,7 @@ interface OptimizerState {
   setEbConfig: (cfg: EbConfig) => void;
   setLabelScale: (s: number) => void;
   runOptimize: () => Promise<void>;
-  exportPDF: (lang?: PdfLang) => void;
+  exportPDF: (lang?: PdfLang) => Promise<void>;
   saveProject: () => void;
   loadProject: (json: string) => void;
   reset: () => void;
@@ -128,10 +128,10 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
     }
   },
 
-  exportPDF: (lang: PdfLang = 'en') => {
+  exportPDF: async (lang: PdfLang = 'en') => {
     const state = get();
     if (!state.result) { alert('Run optimization first'); return; }
-    exportOptimizerPDF(state.result, state.projectName, state.clientName, state.unit, state.ebConfig, state.areas, state.labelScale, lang);
+    await exportOptimizerPDF(state.result, state.projectName, state.clientName, state.unit, state.ebConfig, state.areas, state.labelScale, lang);
   },
 
   saveProject: () => {

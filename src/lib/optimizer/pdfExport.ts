@@ -5,6 +5,20 @@ import { EbConfig } from './types';
 
 const EB_LABELS: Record<number, string> = { 1: 'A', 2: 'B', 3: 'C' };
 
+async function loadImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch { return null; }
+}
+
 export type PdfLang = 'en' | 'es';
 
 const i18n: Record<PdfLang, Record<string, string>> = {
@@ -96,7 +110,7 @@ const i18n: Record<PdfLang, Record<string, string>> = {
   },
 };
 
-export function exportOptimizerPDF(
+export async function exportOptimizerPDF(
   result: OptimizationResult,
   projectName: string,
   clientName: string,
@@ -105,34 +119,14 @@ export function exportOptimizerPDF(
   areas?: string[],
   labelScale: number = 1,
   lang: PdfLang = 'en',
-): void {
+): Promise<void> {
   const t = i18n[lang];
   const dateFmt = lang === 'es' ? 'es-MX' : 'en-US';
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
 
-  // ── Cover ─────────────────────────────────────────────────
-  doc.setFillColor(15, 18, 25);
-  doc.rect(0, 0, pageW, pageH, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('Helvetica', 'bold');
-  doc.setFontSize(48);
-  doc.text('Evita Optimizer', pageW / 2, 60, { align: 'center' });
-  doc.setFontSize(14);
-  doc.setTextColor(148, 163, 184);
-  doc.text(t.subtitle, pageW / 2, 75, { align: 'center' });
-  doc.setFontSize(11);
-  doc.setTextColor(100, 116, 139);
-  doc.text(`${t.date}: ${new Date().toLocaleDateString(dateFmt)}`, pageW / 2, 95, { align: 'center' });
-  doc.setFontSize(12);
-  doc.setTextColor(203, 213, 225);
-  doc.text(`${t.project}: ${projectName || t.unnamed}`, pageW / 2, 120, { align: 'center' });
-  doc.text(`${t.client}: ${clientName || t.notSpecified}`, pageW / 2, 130, { align: 'center' });
-  if (areas && areas.length > 0) {
-    doc.text(`${t.areas}: ${areas.join(', ')}`, pageW / 2, 140, { align: 'center' });
-  }
-
+  // Pre-compute EB total (used later)
   let totalEB = 0;
   result.boards.forEach(b => b.placed.forEach(p => {
     const cb = p.piece.cubrecanto;
@@ -142,19 +136,66 @@ export function exportOptimizerPDF(
     if (cb.der > 0) totalEB += p.piece.alto + 30;
   }));
 
-  doc.setFontSize(10);
-  doc.setTextColor(148, 163, 184);
-  const stats = [
-    `${t.sheets}: ${result.boards.length}`,
-    `${t.parts}: ${result.totalPieces}`,
-    `${t.efficiency}: ${result.efficiency.toFixed(1)}%`,
-    `${t.totalCost}: $${result.totalCost.toFixed(2)}`,
-    `${t.edgeBanding}: ${(totalEB / 1000).toFixed(2)} ${t.linearM}`,
-    `${t.strategy}: ${result.strategy}`,
-    `${t.time}: ${result.timeMs.toFixed(0)}ms`,
-  ];
-  let statY = 155;
-  stats.forEach((stat) => { doc.text(stat, pageW / 2, statY, { align: 'center' }); statY += 8; });
+  // Load logo
+  const logoData = await loadImageAsBase64('/evita_logo.png');
+
+  // ── Cover ─────────────────────────────────────────────────
+  doc.setFillColor(15, 18, 25);
+  doc.rect(0, 0, pageW, pageH, 'F');
+
+  // Logo (aspect ratio 1280:673 ≈ 1.90)
+  let curY = 35;
+  if (logoData) {
+    const logoH = 28;
+    const logoW = logoH * 1.90;
+    doc.saveGraphicsState();
+    doc.setGState(new (doc as any).GState({ opacity: 0.85 }));
+    doc.addImage(logoData, 'PNG', pageW / 2 - logoW / 2, curY, logoW, logoH);
+    doc.restoreGraphicsState();
+    curY += logoH + 10;
+  } else {
+    // Fallback: text logo
+    doc.setFont('Helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(100, 116, 139);
+    doc.text('EVITA CABINETS', pageW / 2, curY + 10, { align: 'center' });
+    curY += 25;
+  }
+
+  // Accent line
+  doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.3);
+  doc.line(pageW / 2 - 60, curY, pageW / 2 + 60, curY);
+  curY += 14;
+
+  // Project name — hero text
+  doc.setFont('Helvetica', 'bold'); doc.setFontSize(36); doc.setTextColor(255, 255, 255);
+  doc.text(projectName || t.unnamed, pageW / 2, curY, { align: 'center' });
+  curY += 10;
+
+  // Subtitle
+  doc.setFontSize(12); doc.setTextColor(148, 163, 184); doc.setFont('Helvetica', 'normal');
+  doc.text(t.subtitle, pageW / 2, curY, { align: 'center' });
+  curY += 12;
+
+  // Accent line
+  doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.3);
+  doc.line(pageW / 2 - 60, curY, pageW / 2 + 60, curY);
+  curY += 10;
+
+  // Key stats — compact
+  doc.setFontSize(9); doc.setTextColor(100, 116, 139); doc.setFont('Helvetica', 'normal');
+  const summaryLine = `${t.sheets}: ${result.boards.length}  ·  ${t.parts}: ${result.totalPieces}  ·  ${t.efficiency}: ${result.efficiency.toFixed(1)}%`;
+  doc.text(summaryLine, pageW / 2, curY, { align: 'center' });
+  curY += 6;
+  if (totalEB > 0) {
+    doc.text(`${t.edgeBanding}: ${(totalEB / 1000).toFixed(2)} ${t.linearM}`, pageW / 2, curY, { align: 'center' });
+    curY += 6;
+  }
+  if (areas && areas.length > 0) {
+    doc.text(`${t.areas}: ${areas.join(', ')}`, pageW / 2, curY, { align: 'center' });
+  }
+
+  // Date — bottom right
+  doc.setFontSize(9); doc.setTextColor(71, 85, 105);
+  doc.text(new Date().toLocaleDateString(dateFmt, { year: 'numeric', month: 'long', day: 'numeric' }), pageW - 20, pageH - 12, { align: 'right' });
 
   // ── Board pages ───────────────────────────────────────────
   result.boards.forEach((board, boardIdx) => {
