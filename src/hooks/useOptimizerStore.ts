@@ -11,6 +11,7 @@ interface OptimizerState {
   globalSierra: number;
   minOffcut: number;
   boardTrim: number;
+  trimIncludesKerf: boolean;
   projectName: string;
   clientName: string;
   result: OptimizationResult | null;
@@ -41,6 +42,7 @@ interface OptimizerState {
   setGlobalSierra: (v: number) => void;
   setMinOffcut: (v: number) => void;
   setBoardTrim: (v: number) => void;
+  setTrimIncludesKerf: (v: boolean) => void;
   setEbConfig: (cfg: EbConfig) => void;
   setLabelScale: (s: number) => void;
   runOptimize: () => Promise<void>;
@@ -74,6 +76,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
   globalSierra: 3.2,
   minOffcut: 200,
   boardTrim: 5,
+  trimIncludesKerf: false,
   ebConfig: EMPTY_EB,
   labelScale: 1.0,
   projectName: '',
@@ -110,6 +113,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
   setGlobalSierra: (v) => set({ globalSierra: v }),
   setMinOffcut: (v) => set({ minOffcut: v }),
   setBoardTrim: (v) => set({ boardTrim: v }),
+  setTrimIncludesKerf: (v) => set({ trimIncludesKerf: v }),
   setEbConfig: (cfg) => set({ ebConfig: cfg }),
   setLabelScale: (s) => set({ labelScale: Math.min(2.0, Math.max(0.5, s)) }),
 
@@ -119,7 +123,8 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
     set({ isOptimizing: true });
     await new Promise((r) => setTimeout(r, 100));
     try {
-      const result = runOptimization(state.pieces, state.stocks, state.remnants, state.globalSierra, state.minOffcut, state.boardTrim);
+      const effectiveTrim = state.trimIncludesKerf ? state.boardTrim + state.globalSierra : state.boardTrim;
+      const result = runOptimization(state.pieces, state.stocks, state.remnants, state.globalSierra, state.minOffcut, effectiveTrim);
       set({ result, isOptimizing: false, selectedBoardIndex: 0, activeTab: 'results' });
     } catch (error) {
       console.error('Optimization error:', error);
@@ -136,7 +141,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
 
   saveProject: () => {
     const state = get();
-    const data = { version: '1.1', projectName: state.projectName, clientName: state.clientName, pieces: state.pieces, stocks: state.stocks, remnants: state.remnants, areas: state.areas, globalSierra: state.globalSierra, minOffcut: state.minOffcut, boardTrim: state.boardTrim, ebConfig: state.ebConfig };
+    const data = { version: '1.2', projectName: state.projectName, clientName: state.clientName, pieces: state.pieces, stocks: state.stocks, remnants: state.remnants, areas: state.areas, globalSierra: state.globalSierra, minOffcut: state.minOffcut, boardTrim: state.boardTrim, trimIncludesKerf: state.trimIncludesKerf, ebConfig: state.ebConfig };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -156,9 +161,9 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
         }
         return p;
       });
-      set({ projectName: data.projectName || '', clientName: data.clientName || '', pieces, stocks: data.stocks || [DEFAULT_STOCK], remnants: data.remnants || [], areas: data.areas || [], globalSierra: data.globalSierra || 3.2, minOffcut: data.minOffcut || 200, boardTrim: data.boardTrim ?? 5, ebConfig: data.ebConfig || EMPTY_EB });
+      set({ projectName: data.projectName || '', clientName: data.clientName || '', pieces, stocks: data.stocks || [DEFAULT_STOCK], remnants: data.remnants || [], areas: data.areas || [], globalSierra: data.globalSierra || 3.2, minOffcut: data.minOffcut || 200, boardTrim: data.boardTrim ?? 5, trimIncludesKerf: data.trimIncludesKerf ?? false, ebConfig: data.ebConfig || EMPTY_EB });
     } catch (error) { alert('Error loading project: ' + String(error)); }
   },
 
-  reset: () => set({ pieces: [], stocks: [DEFAULT_STOCK], remnants: [], areas: [], globalSierra: 3.2, minOffcut: 200, boardTrim: 5, ebConfig: EMPTY_EB, labelScale: 1.0, projectName: '', clientName: '', result: null, isOptimizing: false, activeTab: 'setup', selectedBoardIndex: null }),
+  reset: () => set({ pieces: [], stocks: [DEFAULT_STOCK], remnants: [], areas: [], globalSierra: 3.2, minOffcut: 200, boardTrim: 5, trimIncludesKerf: false, ebConfig: EMPTY_EB, labelScale: 1.0, projectName: '', clientName: '', result: null, isOptimizing: false, activeTab: 'setup', selectedBoardIndex: null }),
 }));

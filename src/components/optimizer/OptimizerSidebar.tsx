@@ -366,6 +366,12 @@ export function OptimizerSidebar() {
                   </div>
                 </div>
 
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={store.trimIncludesKerf} onChange={e => store.setTrimIncludesKerf(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600" />
+                  <span className="text-xs text-slate-500">Include kerf in board trim</span>
+                </label>
+
                 {edgebandItems.length > 0 && (
                   <div className="pt-3 border-t border-slate-100/60">
                     <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Edge Banding</div>
