@@ -139,44 +139,37 @@ export async function exportOptimizerPDF(
   // Load logo
   const logoData = await loadImageAsBase64('/evita_logo.png');
 
-  // ── Cover ─────────────────────────────────────────────────
-  doc.setFillColor(15, 18, 25);
-  doc.rect(0, 0, pageW, pageH, 'F');
-
+  // ── Cover (white background) ──────────────────────────────
   // Logo (aspect ratio 1280:673 ≈ 1.90)
   let curY = 35;
   if (logoData) {
     const logoH = 28;
     const logoW = logoH * 1.90;
-    doc.saveGraphicsState();
-    doc.setGState(new (doc as any).GState({ opacity: 0.85 }));
     doc.addImage(logoData, 'PNG', pageW / 2 - logoW / 2, curY, logoW, logoH);
-    doc.restoreGraphicsState();
     curY += logoH + 10;
   } else {
-    // Fallback: text logo
-    doc.setFont('Helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(30, 41, 59);
     doc.text('EVITA CABINETS', pageW / 2, curY + 10, { align: 'center' });
     curY += 25;
   }
 
   // Accent line
-  doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.3);
+  doc.setDrawColor(203, 213, 225); doc.setLineWidth(0.3);
   doc.line(pageW / 2 - 60, curY, pageW / 2 + 60, curY);
   curY += 14;
 
   // Project name — hero text
-  doc.setFont('Helvetica', 'bold'); doc.setFontSize(36); doc.setTextColor(255, 255, 255);
+  doc.setFont('Helvetica', 'bold'); doc.setFontSize(36); doc.setTextColor(15, 23, 42);
   doc.text(projectName || t.unnamed, pageW / 2, curY, { align: 'center' });
   curY += 10;
 
   // Subtitle
-  doc.setFontSize(12); doc.setTextColor(148, 163, 184); doc.setFont('Helvetica', 'normal');
+  doc.setFontSize(12); doc.setTextColor(100, 116, 139); doc.setFont('Helvetica', 'normal');
   doc.text(t.subtitle, pageW / 2, curY, { align: 'center' });
   curY += 12;
 
   // Accent line
-  doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.3);
+  doc.setDrawColor(203, 213, 225); doc.setLineWidth(0.3);
   doc.line(pageW / 2 - 60, curY, pageW / 2 + 60, curY);
   curY += 10;
 
@@ -194,7 +187,7 @@ export async function exportOptimizerPDF(
   }
 
   // Date — bottom right
-  doc.setFontSize(9); doc.setTextColor(71, 85, 105);
+  doc.setFontSize(9); doc.setTextColor(148, 163, 184);
   doc.text(new Date().toLocaleDateString(dateFmt, { year: 'numeric', month: 'long', day: 'numeric' }), pageW - 20, pageH - 12, { align: 'right' });
 
   // ── Board pages ───────────────────────────────────────────
