@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { ChevronDown, Layers, Settings, LayoutList, X, Plus, FolderOpen, Trash2 } from 'lucide-react';
 import { useOptimizerStore } from '../../hooks/useOptimizerStore';
 import { toMM, fromMM } from '../../lib/optimizer/units';
@@ -83,7 +83,7 @@ function Section({ icon: Icon, title, children, defaultOpen = true, className = 
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className={`glass-white overflow-hidden hover:shadow-lg transition-all duration-200 section-enter ${className}`}>
+    <div className={`glass-white hover:shadow-lg transition-all duration-200 section-enter ${className}`}>
       <div className="flex items-center gap-2.5 px-5 py-3.5 cursor-pointer select-none hover:bg-white/40 transition-colors"
         onClick={() => setOpen(v => !v)}>
         <Icon className="h-4 w-4 text-slate-400 shrink-0" />
@@ -226,16 +226,31 @@ export function OptimizerSidebar() {
     if (cb.der > 0) totalEB += (p.alto + 30) * p.cantidad;
   });
 
-  // ── Sidebar collapse state ─────────────────────────────────
+  // ── Sidebar collapse + resize state ────────────────────────
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarW, setSidebarW] = useState(320);
+  const dragRef = useRef<{ startX: number; startW: number } | null>(null);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!dragRef.current) return;
+      const delta = e.clientX - dragRef.current.startX;
+      setSidebarW(Math.max(240, Math.min(480, dragRef.current.startW + delta)));
+    };
+    const onUp = () => { dragRef.current = null; document.body.style.cursor = ''; document.body.style.userSelect = ''; };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+  }, []);
 
   return (
     <div className="flex h-full overflow-hidden">
 
-      {/* ═══ LEFT SIDEBAR: Areas + Options (collapsible) ═════ */}
-      <div className={`shrink-0 border-r border-slate-200/60 bg-white/40 backdrop-blur-sm overflow-y-auto transition-all duration-200 ${sidebarOpen ? 'w-72' : 'w-0'}`}>
+      {/* ═══ LEFT SIDEBAR: Areas + Stock Sheets + Options ════ */}
+      <div className="shrink-0 border-r border-slate-200/60 bg-white/40 backdrop-blur-sm overflow-y-auto transition-[width] duration-200"
+        style={{ width: sidebarOpen ? sidebarW : 0 }}>
         {sidebarOpen && (
-          <div className="w-72 p-3 space-y-3">
+          <div className="p-3 space-y-3" style={{ width: sidebarW }}>
             {/* Areas */}
             <Section icon={FolderOpen} title="Areas" className="stagger-1">
               <div className="px-4 py-3">
@@ -264,8 +279,56 @@ export function OptimizerSidebar() {
               </div>
             </Section>
 
+            {/* Stock Sheets */}
+            <Section icon={Layers} title="Stock Sheets" className="stagger-2">
+              <div className="px-4 py-3 space-y-2">
+                <div className="grid grid-cols-3 gap-2 items-end">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Width</label>
+                    <input value={sAncho} onChange={e => setSAncho(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Height</label>
+                    <input value={sAlto} onChange={e => setSAlto(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Material</label>
+                    <input value={sNombre} onChange={e => setSNombre(e.target.value)} onKeyDown={handleStockKey} placeholder="Name" className={inputCls} />
+                  </div>
+                </div>
+                <button onClick={addStock}
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">
+                  <Plus className="h-3.5 w-3.5" />Add Sheet
+                </button>
+                <p className="text-[10px] text-slate-400">Qty 0 = unlimited</p>
+              </div>
+              {store.stocks.length > 0 && (
+                <div className="border-t border-slate-100/60">
+                  {store.stocks.map(s => (
+                    <div key={s.id} className="flex items-center justify-between px-4 py-1.5 text-xs hover:bg-slate-50 group border-b border-slate-50 last:border-0">
+                      <span className="tabular-nums text-slate-700">{parseFloat(fromMM(s.ancho, unit).toFixed(0))}×{parseFloat(fromMM(s.alto, unit).toFixed(0))}</span>
+                      <span className="text-slate-500 truncate mx-2 flex-1 min-w-0">
+                        {sheetMaterials.length > 0 ? (
+                          <CompactAutocomplete
+                            value={s.materialId || ''} onChange={val => handleSelectSheet(val, s.id)}
+                            placeholder={s.nombre}
+                            options={sheetMaterials.map(m => ({ value: m.id, label: m.concept_description }))}
+                          />
+                        ) : s.nombre}
+                      </span>
+                      <input type="number" min="0" value={s.qty || 0}
+                        onChange={e => store.updateStock(s.id, { qty: parseInt(e.target.value) || 0 })}
+                        className="w-10 text-xs text-center border border-transparent hover:border-slate-200/70 focus:border-blue-500 rounded bg-transparent tabular-nums" />
+                      <button onClick={() => store.removeStock(s.id)}
+                        className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 ml-1"><X className="h-3 w-3" /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Section>
+
             {/* Options */}
-            <Section icon={Settings} title="Options" className="stagger-2">
+            <Section icon={Settings} title="Options" className="stagger-3">
               <div className="px-4 py-3 space-y-3">
                 <div className="space-y-2">
                   <div>
@@ -357,14 +420,20 @@ export function OptimizerSidebar() {
         )}
       </div>
 
-      {/* Sidebar toggle */}
-      <button onClick={() => setSidebarOpen(v => !v)}
-        className="shrink-0 w-5 flex items-center justify-center hover:bg-slate-100 transition-colors border-r border-slate-200/60"
-        title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}>
-        <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${sidebarOpen ? '-rotate-90' : 'rotate-90'}`} />
-      </button>
+      {/* Sidebar toggle + resize handle */}
+      <div className="shrink-0 flex flex-col border-r border-slate-200/60">
+        <button onClick={() => setSidebarOpen(v => !v)}
+          className="w-5 h-8 flex items-center justify-center hover:bg-slate-100 transition-colors"
+          title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}>
+          <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${sidebarOpen ? '-rotate-90' : 'rotate-90'}`} />
+        </button>
+        {sidebarOpen && (
+          <div className="flex-1 w-5 cursor-col-resize hover:bg-blue-100 active:bg-blue-200 transition-colors"
+            onMouseDown={e => { dragRef.current = { startX: e.clientX, startW: sidebarW }; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; }} />
+        )}
+      </div>
 
-      {/* ═══ MAIN CONTENT: Parts + Stock Sheets ═════════════ */}
+      {/* ═══ MAIN CONTENT: Parts ════════════════════════════ */}
       <div className="flex-1 min-w-0 overflow-y-auto p-4 space-y-4">
 
       <Section icon={LayoutList} title="Parts">
@@ -446,13 +515,37 @@ export function OptimizerSidebar() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100/80">
-                {groupedPieces.map(({ area, material, pieces }) => (
-                  pieces.map(p => (
+                {groupedPieces.map(({ area, material, pieces }, gi) => (
+                  <Fragment key={`${area}|||${material}`}>
+                    {/* Area group header */}
+                    {(gi === 0 || area !== groupedPieces[gi - 1].area) && (
+                      <tr className="bg-blue-50/40">
+                        <td colSpan={13} className="py-1.5 px-4">
+                          <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">{area === '—' ? 'Unassigned' : area}</span>
+                        </td>
+                      </tr>
+                    )}
+                    {pieces.map(p => (
                     <tr key={p.id} className="hover:bg-slate-100/50 transition-colors group">
-                      <td className="py-1.5 px-4 text-slate-800">{p.nombre || <span className="text-slate-300">—</span>}</td>
-                      <td className="py-1.5 px-3 text-right tabular-nums text-slate-700">{parseFloat(fromMM(p.ancho, unit).toFixed(3))}</td>
-                      <td className="py-1.5 px-3 text-right tabular-nums text-slate-700">{parseFloat(fromMM(p.alto, unit).toFixed(3))}</td>
-                      <td className="py-1.5 px-3 text-center font-semibold tabular-nums text-slate-700">{p.cantidad}</td>
+                      <td className="py-1 px-3">
+                        <input value={p.nombre} onChange={e => store.updatePiece(p.id, { nombre: e.target.value })}
+                          placeholder="—" className="w-full bg-transparent text-sm border border-transparent hover:border-slate-200/70 focus:border-blue-500 rounded px-1 py-0.5 outline-none text-slate-800" />
+                      </td>
+                      <td className="py-1 px-2">
+                        <input type="number" defaultValue={parseFloat(fromMM(p.ancho, unit).toFixed(3))}
+                          onBlur={e => { const v = parseFloat(e.target.value); if (v > 0) store.updatePiece(p.id, { ancho: toMM(v, unit) }); }}
+                          className="w-full bg-transparent text-sm text-right border border-transparent hover:border-slate-200/70 focus:border-blue-500 rounded px-1 py-0.5 outline-none tabular-nums text-slate-700" />
+                      </td>
+                      <td className="py-1 px-2">
+                        <input type="number" defaultValue={parseFloat(fromMM(p.alto, unit).toFixed(3))}
+                          onBlur={e => { const v = parseFloat(e.target.value); if (v > 0) store.updatePiece(p.id, { alto: toMM(v, unit) }); }}
+                          className="w-full bg-transparent text-sm text-right border border-transparent hover:border-slate-200/70 focus:border-blue-500 rounded px-1 py-0.5 outline-none tabular-nums text-slate-700" />
+                      </td>
+                      <td className="py-1 px-2">
+                        <input type="number" min="1" value={p.cantidad}
+                          onChange={e => store.updatePiece(p.id, { cantidad: Math.max(1, parseInt(e.target.value) || 1) })}
+                          className="w-full bg-transparent text-sm text-center font-semibold border border-transparent hover:border-slate-200/70 focus:border-blue-500 rounded px-1 py-0.5 outline-none tabular-nums text-slate-700" />
+                      </td>
                       <td className="py-1.5 px-3 text-center">
                         <button onClick={() => store.updatePiece(p.id, { vetaHorizontal: !p.vetaHorizontal })}
                           className={`text-xs px-1.5 py-0.5 rounded ${p.vetaHorizontal ? 'bg-amber-100 text-amber-700 font-medium' : 'text-slate-300 hover:bg-slate-100'}`}>
@@ -491,7 +584,8 @@ export function OptimizerSidebar() {
                         </button>
                       </td>
                     </tr>
-                  ))
+                  ))}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -512,87 +606,6 @@ export function OptimizerSidebar() {
             <button onClick={() => store.clearPieces()} className="text-red-400 hover:text-red-600 text-sm flex items-center gap-1">
               <Trash2 className="h-3.5 w-3.5" />Clear all
             </button>
-          </div>
-        )}
-      </Section>
-
-      {/* ═══ ROW 2: Stock Sheets (full width) ═══════════════════ */}
-      <Section icon={Layers} title="Stock Sheets">
-        {/* Add stock form */}
-        <div className="px-5 py-4 bg-blue-50/30 border-b border-slate-100/60">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end">
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Width</label>
-              <input value={sAncho} onChange={e => setSAncho(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Height</label>
-              <input value={sAlto} onChange={e => setSAlto(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Price</label>
-              <input value={sCosto} onChange={e => setSCosto(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Material name</label>
-              <input value={sNombre} onChange={e => setSNombre(e.target.value)} onKeyDown={handleStockKey} placeholder="Material" className={inputCls} />
-            </div>
-            <button onClick={addStock}
-              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
-              <Plus className="h-4 w-4" />Add
-            </button>
-          </div>
-          <p className="text-xs text-slate-400 mt-2">Qty 0 = unlimited sheets</p>
-        </div>
-        {store.stocks.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200/60">
-                  <th className="py-2.5 px-4 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Width</th>
-                  <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Height</th>
-                  <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Price</th>
-                  <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">Qty</th>
-                  <th className="py-2.5 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Material</th>
-                  <th className="py-2.5 w-10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100/80">
-                {store.stocks.map(s => (
-                  <tr key={s.id} className="hover:bg-slate-100/50 transition-colors group">
-                    <td className="py-2 px-4 text-right tabular-nums text-slate-700">{parseFloat(fromMM(s.ancho, unit).toFixed(3))}</td>
-                    <td className="py-2 px-3 text-right tabular-nums text-slate-700">{parseFloat(fromMM(s.alto, unit).toFixed(3))}</td>
-                    <td className="py-2 px-3 text-right tabular-nums text-slate-700">${s.costo}</td>
-                    <td className="py-2 px-3 text-center">
-                      <input type="number" min="0" value={s.qty || 0}
-                        onChange={e => store.updateStock(s.id, { qty: parseInt(e.target.value) || 0 })}
-                        className="w-14 text-sm text-center border border-transparent hover:border-slate-200/70 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 rounded-lg bg-transparent tabular-nums transition-colors" />
-                    </td>
-                    <td className="py-2 px-4">
-                      {sheetMaterials.length > 0 ? (
-                        <CompactAutocomplete
-                          value={s.materialId || ''} onChange={val => handleSelectSheet(val, s.id)}
-                          placeholder={s.nombre}
-                          options={sheetMaterials.map(m => ({ value: m.id, label: m.concept_description }))}
-                        />
-                      ) : (
-                        <span className="text-sm text-slate-600">{s.nombre}</span>
-                      )}
-                    </td>
-                    <td className="py-2 px-2">
-                      <button onClick={() => store.removeStock(s.id)}
-                        className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1">
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="px-5 py-6 text-center text-sm text-slate-400">
-            No stock sheets added yet. Use the form above to add sheets.
           </div>
         )}
       </Section>

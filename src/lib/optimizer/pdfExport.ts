@@ -230,7 +230,7 @@ export async function exportOptimizerPDF(
 
     // Board grain — very subtle like CAD (alpha ~0.06)
     doc.saveGraphicsState();
-    doc.setGState(new (doc as any).GState({ opacity: 0.08 }));
+    doc.setGState(new (doc as any).GState({ opacity: 0.04 }));
     doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.1);
     for (let gy = 3; gy < boardH; gy += 3) {
       doc.line(startX + 1, startY + gy, startX + boardW - 1, startY + gy);
@@ -351,7 +351,7 @@ export async function exportOptimizerPDF(
   doc.setFontSize(14); doc.setFont('Helvetica', 'bold'); doc.setTextColor(15, 23, 42);
   doc.text(t.cutList, 20, 20);
   let cutListY = 30;
-  const colX = [10, 22, 55, 78, 101, 120, 136, 150, 170, 200];
+  const colX = [10, 22, 55, 78, 101, 120, 136, 148, 156, 164, 172, 200];
 
   // Collect all placed pieces with their board index
   const allPieces: { piece: typeof result.boards[0]['placed'][0]; boardIdx: number; board: typeof result.boards[0] }[] = [];
@@ -371,8 +371,8 @@ export async function exportOptimizerPDF(
     doc.text(`${t.area}: ${area}`, 20, cutListY);
     cutListY += 7;
     doc.setFontSize(7); doc.setTextColor(71, 85, 105); doc.setFont('Helvetica', 'bold');
-    ['#', t.name, t.width, t.height, t.sheet, t.rot, t.grain, t.eb, t.material].forEach((h, i) => {
-      doc.text(h, colX[i], cutListY, { align: i === 1 || i === 8 ? 'left' : 'center' });
+    ['#', t.name, t.width, t.height, t.sheet, t.rot, t.grain, 'T', 'B', 'L', 'R', t.material].forEach((h, i) => {
+      doc.text(h, colX[i], cutListY, { align: i === 1 || i === 11 ? 'left' : 'center' });
     });
     cutListY += 5;
     doc.setFont('Helvetica', 'normal');
@@ -381,8 +381,6 @@ export async function exportOptimizerPDF(
       doc.setTextColor(30, 41, 59);
       const p = item.piece;
       const cb = p.piece.cubrecanto;
-      const ebParts: string[] = [];
-      (['sup', 'inf', 'izq', 'der'] as const).forEach(s => { if (cb[s] > 0) ebParts.push(`${s[0].toUpperCase()}:${EB_LABELS[cb[s]]}`); });
       [
         [`${pIdx + 1}`, 'center'],
         [p.piece.nombre || t.part, 'left'],
@@ -391,7 +389,10 @@ export async function exportOptimizerPDF(
         [`S${item.boardIdx + 1}`, 'center'],
         [p.rotated ? t.yes : '—', 'center'],
         [p.piece.vetaHorizontal ? t.fixed : t.free, 'center'],
-        [ebParts.join(' ') || '—', 'center'],
+        [cb.sup > 0 ? EB_LABELS[cb.sup] : '—', 'center'],
+        [cb.inf > 0 ? EB_LABELS[cb.inf] : '—', 'center'],
+        [cb.izq > 0 ? EB_LABELS[cb.izq] : '—', 'center'],
+        [cb.der > 0 ? EB_LABELS[cb.der] : '—', 'center'],
         [p.piece.material || '—', 'left'],
       ].forEach(([text, align], i) => {
         doc.text(text as string, colX[i], cutListY, { align: align as 'left' | 'center' });
@@ -431,12 +432,12 @@ export async function exportOptimizerPDF(
         const meters = byType[t] / 1000;
         const cost = meters * ebPrices[t];
         ebTotalCost += cost;
-        doc.text(`${ebNames[t]}: ${meters.toFixed(2)} m${ebPrices[t] > 0 ? ` — $${ebPrices[t].toFixed(2)}/m = $${cost.toFixed(2)}` : ''}`, 25, cutListY);
+        doc.text(`${ebNames[t]}: ${meters.toFixed(2)} m`, 25, cutListY);
         cutListY += 5;
       }
     });
     doc.setFont('Helvetica', 'bold');
-    doc.text(`${t.total}: ${(totalEB / 1000).toFixed(2)} ${t.linearM}${ebTotalCost > 0 ? ` — ${t.cost}: $${ebTotalCost.toFixed(2)}` : ''}`, 25, cutListY);
+    doc.text(`${t.total}: ${(totalEB / 1000).toFixed(2)} ${t.linearM}`, 25, cutListY);
     cutListY += 5;
     doc.setFont('Helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(120, 120, 120);
     doc.text(t.ebWasteNote, 25, cutListY);
