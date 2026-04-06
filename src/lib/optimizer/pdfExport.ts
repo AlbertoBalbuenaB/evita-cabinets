@@ -126,16 +126,6 @@ export function exportOptimizerPDF(
       doc.setLineWidth(0.5);
       doc.rect(px + 0.3, py + 0.3, pw - 0.6, ph - 0.6, 'S');
 
-      // Piece grain direction — subtle brown like CAD (#92400e at 12%)
-      if (piece.piece.vetaHorizontal) {
-        doc.saveGraphicsState();
-        doc.setGState(new (doc as any).GState({ opacity: 0.15 }));
-        doc.setDrawColor(146, 64, 14);
-        doc.setLineWidth(0.08);
-        if (piece.rotated) { for (let dx = 2; dx < pw; dx += 2.5) doc.line(px + dx, py + 1, px + dx, py + ph - 1); }
-        else { for (let dy = 2; dy < ph; dy += 2.5) doc.line(px + 1, py + dy, px + pw - 1, py + dy); }
-        doc.restoreGraphicsState();
-      }
 
       const cb = piece.piece.cubrecanto;
       const edges = piece.rotated
