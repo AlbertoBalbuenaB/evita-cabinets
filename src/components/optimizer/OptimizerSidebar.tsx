@@ -1,15 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Layers, Settings, LayoutList, X, Pencil, Plus, FolderOpen } from 'lucide-react';
+import { ChevronDown, Layers, Settings, LayoutList, X, Plus, FolderOpen, Trash2 } from 'lucide-react';
 import { useOptimizerStore } from '../../hooks/useOptimizerStore';
-import { toMM, fromMM, unitLabel } from '../../lib/optimizer/units';
+import { toMM, fromMM } from '../../lib/optimizer/units';
 import { Pieza } from '../../lib/optimizer/types';
 import { supabase } from '../../lib/supabase';
 import { EdgeBandPopover } from '../EdgeBandPopover';
 
-const sectionHeaderCls = "flex items-center gap-2 px-3 py-2 bg-slate-100 border-b border-slate-200 cursor-pointer select-none hover:bg-slate-200/60 transition-colors";
-const cellInput = "w-full bg-transparent text-xs px-1.5 py-1 border border-transparent focus:border-blue-400 focus:bg-white rounded outline-none text-center tabular-nums";
-
-// ── Compact autocomplete for tight spaces ────────────────────
+// ── Compact autocomplete ────────────────────────────────────
 function CompactAutocomplete({ options, value, onChange, placeholder, className = '' }: {
   options: { value: string; label: string }[];
   value: string;
@@ -55,23 +52,23 @@ function CompactAutocomplete({ options, value, onChange, placeholder, className 
       {open ? (
         <input ref={inputRef} value={search} onChange={e => setSearch(e.target.value)} onKeyDown={handleKey}
           placeholder="Search..." onClick={e => e.stopPropagation()}
-          className="w-full text-[10px] border border-blue-400 bg-white rounded px-1 py-0.5 outline-none" />
+          className="w-full text-sm border border-blue-400 bg-white rounded-md px-2.5 py-1.5 outline-none" />
       ) : (
         <button onClick={() => setOpen(true)}
-          className="w-full text-[10px] text-left text-slate-600 truncate cursor-pointer hover:text-blue-600 py-0.5">
+          className="w-full text-sm text-left text-slate-600 truncate cursor-pointer hover:text-blue-600 py-1">
           {selected?.label || placeholder || 'Select...'}
         </button>
       )}
       {open && (
-        <div className="absolute z-50 left-0 right-0 mt-0.5 bg-white border border-slate-200 rounded shadow-lg max-h-48 overflow-auto">
+        <div className="absolute z-50 left-0 right-0 mt-0.5 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-auto">
           <div ref={listRef}>
             {filtered.length > 0 ? filtered.map((o, i) => (
               <div key={o.value} onClick={() => { onChange(o.value); setOpen(false); setSearch(''); }}
-                className={`px-2 py-1 text-[10px] cursor-pointer truncate ${i === hlIdx ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-50'} ${value === o.value ? 'font-semibold' : ''}`}>
+                className={`px-3 py-1.5 text-sm cursor-pointer truncate ${i === hlIdx ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-50'} ${value === o.value ? 'font-semibold' : ''}`}>
                 {o.label}
               </div>
             )) : (
-              <div className="px-2 py-2 text-[10px] text-slate-400 text-center">No results</div>
+              <div className="px-3 py-2 text-sm text-slate-400 text-center">No results</div>
             )}
           </div>
         </div>
@@ -80,19 +77,26 @@ function CompactAutocomplete({ options, value, onChange, placeholder, className 
   );
 }
 
-function SectionHeader({ icon: Icon, title, open, onToggle }: {
-  icon: React.ComponentType<{ className?: string }>; title: string; open: boolean; onToggle: () => void;
+// ── Section wrapper ─────────────────────────────────────────
+function Section({ icon: Icon, title, children, defaultOpen = true }: {
+  icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode; defaultOpen?: boolean;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className={sectionHeaderCls} onClick={onToggle}>
-      <Icon className="h-4 w-4 text-slate-500 shrink-0" />
-      <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide flex-1">{title}</span>
-      <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform ${open ? '' : '-rotate-90'}`} />
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="flex items-center gap-2.5 px-4 py-3 cursor-pointer select-none hover:bg-slate-50 transition-colors"
+        onClick={() => setOpen(v => !v)}>
+        <Icon className="h-4.5 w-4.5 text-slate-500 shrink-0" />
+        <span className="text-sm font-semibold text-slate-700 flex-1">{title}</span>
+        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${open ? '' : '-rotate-90'}`} />
+      </div>
+      {open && <div className="border-t border-slate-100">{children}</div>}
     </div>
   );
 }
 
-// EdgeBandPopover imported from ../EdgeBandPopover
+// ── Shared input styles ─────────────────────────────────────
+const inputCls = "w-full text-sm border border-slate-200 rounded-md px-2.5 py-1.5 bg-white focus:border-blue-400 focus:ring-1 focus:ring-blue-100 outline-none tabular-nums";
 
 interface PriceListItem {
   id: string;
@@ -105,11 +109,6 @@ interface PriceListItem {
 export function OptimizerSidebar() {
   const store = useOptimizerStore();
   const unit = store.unit;
-
-  const [panelsOpen, setPanelsOpen] = useState(true);
-  const [stocksOpen, setStocksOpen] = useState(true);
-  const [optionsOpen, setOptionsOpen] = useState(true);
-  const [remnantsOpen, setRemnantsOpen] = useState(false);
 
   // ── Price list data ───────────────────────────────────────
   const [sheetMaterials, setSheetMaterials] = useState<PriceListItem[]>([]);
@@ -125,7 +124,7 @@ export function OptimizerSidebar() {
 
   const stockNames = Array.from(new Set(store.stocks.map(s => s.nombre))).filter(Boolean);
 
-  // ── Panel add state ───────────────────────────────────────
+  // ── Piece add state ───────────────────────────────────────
   const [pAncho, setPAncho] = useState('');
   const [pAlto, setPAlto] = useState('');
   const [pCant, setPCant] = useState('1');
@@ -144,6 +143,12 @@ export function OptimizerSidebar() {
 
   // ── Area add state ────────────────────────────────────────
   const [newArea, setNewArea] = useState('');
+
+  // ── Remnant state ─────────────────────────────────────────
+  const [remMat, setRemMat] = useState('Default');
+  const [remGrosor, setRemGrosor] = useState('18');
+  const [remAncho, setRemAncho] = useState('800');
+  const [remAlto, setRemAlto] = useState('600');
 
   const addPiece = () => {
     const ancho = toMM(parseFloat(pAncho) || 0, unit);
@@ -177,7 +182,6 @@ export function OptimizerSidebar() {
     const mat = sheetMaterials.find(m => m.id === sheetId);
     if (!mat) return;
     if (stockId) {
-      // Assign material to existing stock
       const dims = mat.dimensions || '';
       const numMatch = dims.match(/(\d+\.?\d*)\s*[x×]\s*(\d+\.?\d*)/i);
       store.updateStock(stockId, {
@@ -187,7 +191,6 @@ export function OptimizerSidebar() {
         ...(numMatch ? { ancho: parseFloat(numMatch[1]), alto: parseFloat(numMatch[2]) } : {}),
       });
     } else {
-      // Pre-fill add row
       const dims = mat.dimensions || '';
       const numMatch = dims.match(/(\d+\.?\d*)\s*[x×]\s*(\d+\.?\d*)/i);
       if (numMatch) { setSAncho(numMatch[1]); setSAlto(numMatch[2]); }
@@ -198,12 +201,6 @@ export function OptimizerSidebar() {
 
   const handlePieceKey = (e: React.KeyboardEvent) => { if (e.key === 'Enter') addPiece(); };
   const handleStockKey = (e: React.KeyboardEvent) => { if (e.key === 'Enter') addStock(); };
-
-  // ── Remnant state ─────────────────────────────────────────
-  const [remMat, setRemMat] = useState('Default');
-  const [remGrosor, setRemGrosor] = useState('18');
-  const [remAncho, setRemAncho] = useState('800');
-  const [remAlto, setRemAlto] = useState('600');
 
   // ── Group pieces by area then material ────────────────────
   const groupedPieces: { area: string; material: string; pieces: Pieza[] }[] = [];
@@ -219,319 +216,348 @@ export function OptimizerSidebar() {
   });
   groupedPieces.sort((a, b) => a.area.localeCompare(b.area) || a.material.localeCompare(b.material));
 
+  // ── EB total ──────────────────────────────────────────────
+  let totalEB = 0;
+  store.pieces.forEach(p => {
+    const cb = p.cubrecanto;
+    if (cb.sup > 0) totalEB += (p.ancho + 30) * p.cantidad;
+    if (cb.inf > 0) totalEB += (p.ancho + 30) * p.cantidad;
+    if (cb.izq > 0) totalEB += (p.alto + 30) * p.cantidad;
+    if (cb.der > 0) totalEB += (p.alto + 30) * p.cantidad;
+  });
+
   return (
-    <div className="flex-1 overflow-y-auto bg-white">
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="space-y-4">
 
-      {/* ── Column 1: Parts + Areas ─────────────────────── */}
-      <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
-
-      {/* ═══ PARTS ══════════════════════════════════════════ */}
-      <SectionHeader icon={LayoutList} title="Parts" open={panelsOpen} onToggle={() => setPanelsOpen(v => !v)} />
-      {panelsOpen && (
-        <div>
-          {/* Area + Material + grain bar */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border-b border-slate-100 flex-wrap">
-            <select value={pArea} onChange={e => setPArea(e.target.value)}
-              className="text-xs border border-slate-200 rounded px-1.5 py-0.5 bg-white text-slate-700 w-24">
-              <option value="">No area</option>
-              {store.areas.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
-            <select value={pMat} onChange={e => setPMat(e.target.value)}
-              className="text-xs border border-slate-200 rounded px-1.5 py-0.5 bg-white text-slate-700 flex-1 truncate min-w-0">
-              <option value="">Material...</option>
-              {stockNames.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
-            <input value={pGrosor} onChange={e => setPGrosor(e.target.value)} placeholder="18"
-              className="text-xs border border-slate-200 rounded px-1.5 py-0.5 bg-white text-center w-10" title="Thickness" />
-            <label className="flex items-center gap-1 cursor-pointer shrink-0" title="Fixed grain">
-              <input type="checkbox" checked={pVeta} onChange={e => setPVeta(e.target.checked)}
-                className="w-3 h-3 rounded border-slate-300 text-blue-600" />
-              <span className="text-[10px] text-slate-500">Grain</span>
-            </label>
+      {/* ═══ ROW 1: Parts (full width) ════════════════════════ */}
+      <Section icon={LayoutList} title="Parts">
+        {/* Add piece form */}
+        <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 items-end">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Width</label>
+              <input value={pAncho} onChange={e => setPAncho(e.target.value)} onKeyDown={handlePieceKey}
+                placeholder={unit === 'in' ? '24' : '600'} className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Height</label>
+              <input value={pAlto} onChange={e => setPAlto(e.target.value)} onKeyDown={handlePieceKey}
+                placeholder={unit === 'in' ? '16' : '400'} className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Qty</label>
+              <input value={pCant} onChange={e => setPCant(e.target.value)} onKeyDown={handlePieceKey}
+                className={inputCls + ' text-center'} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Name</label>
+              <input value={pNombre} onChange={e => setPNombre(e.target.value)} onKeyDown={handlePieceKey}
+                placeholder="Optional" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Material</label>
+              <select value={pMat} onChange={e => setPMat(e.target.value)}
+                className={inputCls}>
+                <option value="">Default</option>
+                {stockNames.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Area</label>
+              <select value={pArea} onChange={e => setPArea(e.target.value)}
+                className={inputCls}>
+                <option value="">None</option>
+                {store.areas.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+            <div className="flex items-end gap-2">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Thick.</label>
+                <input value={pGrosor} onChange={e => setPGrosor(e.target.value)} className={inputCls + ' text-center w-16'} />
+              </div>
+              <label className="flex items-center gap-1.5 cursor-pointer pb-2" title="Fixed grain direction">
+                <input type="checkbox" checked={pVeta} onChange={e => setPVeta(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600" />
+                <span className="text-xs text-slate-500 whitespace-nowrap">Grain</span>
+              </label>
+            </div>
+            <div className="flex items-end">
+              <button onClick={addPiece} disabled={!pAncho || !pAlto}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                <Plus className="h-4 w-4" />Add
+              </button>
+            </div>
           </div>
-
-          {/* Grouped panels table */}
-          {groupedPieces.length > 0 ? (
-            groupedPieces.map(({ area, material, pieces }) => (
-              <div key={`${area}|||${material}`}>
-                <div className="px-3 py-1 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
-                  {area !== '—' && <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">{area}</span>}
-                  <span className="text-[10px] font-semibold text-slate-600 truncate">{material}</span>
-                  <span className="text-[10px] text-slate-400 ml-auto">{pieces.length} pcs</span>
-                </div>
-                <table className="w-full text-xs">
-                  <tbody>
-                    {pieces.map(p => (
-                      <tr key={p.id} className="border-b border-slate-50 hover:bg-blue-50/40 group">
-                        <td className="px-2 py-0.5 text-xs tabular-nums text-slate-700">{parseFloat(fromMM(p.ancho, unit).toFixed(3))}</td>
-                        <td className="px-1 py-0.5 text-xs tabular-nums text-slate-700">{parseFloat(fromMM(p.alto, unit).toFixed(3))}</td>
-                        <td className="px-1 py-0.5 text-center text-xs font-semibold tabular-nums text-slate-700 w-8">{p.cantidad}</td>
-                        <td className="px-1 py-0.5 text-center w-6">
-                          <button onClick={() => store.updatePiece(p.id, { vetaHorizontal: !p.vetaHorizontal })}
-                            className={`text-xs px-0.5 rounded ${p.vetaHorizontal ? 'bg-amber-100 text-amber-700' : 'text-slate-300'}`}>
-                            {p.vetaHorizontal ? '|||' : '~'}
-                          </button>
-                        </td>
-                        <td className="px-1 py-0.5 text-center w-6">
-                          <EdgeBandPopover cubrecanto={p.cubrecanto} onUpdate={cb => store.updatePiece(p.id, { cubrecanto: cb })} />
-                        </td>
-                        <td className="px-1 py-0.5 truncate max-w-14 text-xs text-slate-500">{p.nombre || '—'}</td>
-                        <td className="px-0.5 py-0.5 w-4">
-                          <button onClick={() => store.removePiece(p.id)}
-                            className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-0.5">
-                            <X className="h-3 w-3" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))
-          ) : null}
-
-          {/* Table header for add row */}
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="py-1 px-2 text-left font-semibold text-slate-500">Width</th>
-                <th className="py-1 px-1 text-left font-semibold text-slate-500">Height</th>
-                <th className="py-1 px-1 text-center font-semibold text-slate-500 w-8">Qty</th>
-                <th className="py-1 px-1 text-center font-semibold text-slate-500 w-6">V</th>
-                <th className="py-1 px-1 text-center font-semibold text-slate-500 w-6">EB</th>
-                <th className="py-1 px-1 text-left font-semibold text-slate-500">Name</th>
-                <th className="py-1 w-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="bg-green-50/40">
-                <td className="px-1 py-0.5"><input value={pAncho} onChange={e => setPAncho(e.target.value)} onKeyDown={handlePieceKey}
-                  placeholder={unit === 'in' ? '24' : '600'} className={cellInput + ' text-left'} /></td>
-                <td className="px-0.5 py-0.5"><input value={pAlto} onChange={e => setPAlto(e.target.value)} onKeyDown={handlePieceKey}
-                  placeholder={unit === 'in' ? '16' : '400'} className={cellInput + ' text-left'} /></td>
-                <td className="px-0.5 py-0.5"><input value={pCant} onChange={e => setPCant(e.target.value)} onKeyDown={handlePieceKey}
-                  className={cellInput} /></td>
-                <td colSpan={2}></td>
-                <td className="px-0.5 py-0.5"><input value={pNombre} onChange={e => setPNombre(e.target.value)} onKeyDown={handlePieceKey}
-                  placeholder="Name" className={cellInput + ' text-left'} /></td>
-                <td className="px-0.5 py-0.5"><button onClick={addPiece} disabled={!pAncho || !pAlto}
-                  className="text-green-600 hover:text-green-700 disabled:text-slate-300 p-0.5"><Pencil className="h-3 w-3" /></button></td>
-              </tr>
-            </tbody>
-          </table>
-
-          {/* Summary */}
-          {(() => {
-            let totalEB = 0;
-            store.pieces.forEach(p => {
-              const cb = p.cubrecanto;
-              if (cb.sup > 0) totalEB += (p.ancho + 30) * p.cantidad;
-              if (cb.inf > 0) totalEB += (p.ancho + 30) * p.cantidad;
-              if (cb.izq > 0) totalEB += (p.alto + 30) * p.cantidad;
-              if (cb.der > 0) totalEB += (p.alto + 30) * p.cantidad;
-            });
-            return (
-              <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex-wrap gap-1">
-                <span>{store.pieces.length} part{store.pieces.length !== 1 ? 's' : ''}</span>
-                <span>{(store.pieces.reduce((s, p) => s + p.ancho * p.alto * p.cantidad, 0) / 1e6).toFixed(2)} m²</span>
-                {totalEB > 0 && <span className="text-amber-600">EB: {(totalEB / 1000).toFixed(2)}m</span>}
-                {store.pieces.length > 0 && (
-                  <button onClick={() => store.clearPieces()} className="text-red-400 hover:text-red-600 text-xs">Clear</button>
-                )}
-              </div>
-            );
-          })()}
         </div>
-      )}
 
-      {/* ═══ AREAS ══════════════════════════════════════════ */}
-      <SectionHeader icon={FolderOpen} title="Areas" open={store.areas.length > 0 || false} onToggle={() => {}} />
-      <div className="px-3 py-1.5 border-b border-slate-100">
-        <div className="flex gap-1.5">
-          <input value={newArea} onChange={e => setNewArea(e.target.value)} placeholder="e.g. Kitchen, Closet..."
-            onKeyDown={e => { if (e.key === 'Enter' && newArea.trim()) { store.addArea(newArea.trim()); setNewArea(''); } }}
-            className="flex-1 text-xs border border-slate-200 rounded px-1.5 py-1 bg-white" />
-          <button onClick={() => { if (newArea.trim()) { store.addArea(newArea.trim()); setNewArea(''); } }}
-            className="text-xs text-green-600 hover:text-green-700 px-1"><Plus className="h-3.5 w-3.5" /></button>
-        </div>
-        {store.areas.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1.5">
-            {store.areas.map(a => (
-              <span key={a} className="inline-flex items-center gap-1 text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">
-                {a}
-                <button onClick={() => store.removeArea(a)} className="text-blue-400 hover:text-red-500"><X className="h-2.5 w-2.5" /></button>
-              </span>
-            ))}
+        {/* Pieces table */}
+        {store.pieces.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="py-2 px-4 text-left font-medium text-slate-500">Name</th>
+                  <th className="py-2 px-3 text-right font-medium text-slate-500">Width</th>
+                  <th className="py-2 px-3 text-right font-medium text-slate-500">Height</th>
+                  <th className="py-2 px-3 text-center font-medium text-slate-500">Qty</th>
+                  <th className="py-2 px-3 text-center font-medium text-slate-500">Grain</th>
+                  <th className="py-2 px-3 text-center font-medium text-slate-500">EB</th>
+                  <th className="py-2 px-3 text-left font-medium text-slate-500">Material</th>
+                  <th className="py-2 px-3 text-left font-medium text-slate-500">Area</th>
+                  <th className="py-2 px-2 w-10"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {groupedPieces.map(({ area, material, pieces }) => (
+                  pieces.map(p => (
+                    <tr key={p.id} className="hover:bg-blue-50/40 group">
+                      <td className="py-1.5 px-4 text-slate-800">{p.nombre || <span className="text-slate-300">—</span>}</td>
+                      <td className="py-1.5 px-3 text-right tabular-nums text-slate-700">{parseFloat(fromMM(p.ancho, unit).toFixed(3))}</td>
+                      <td className="py-1.5 px-3 text-right tabular-nums text-slate-700">{parseFloat(fromMM(p.alto, unit).toFixed(3))}</td>
+                      <td className="py-1.5 px-3 text-center font-semibold tabular-nums text-slate-700">{p.cantidad}</td>
+                      <td className="py-1.5 px-3 text-center">
+                        <button onClick={() => store.updatePiece(p.id, { vetaHorizontal: !p.vetaHorizontal })}
+                          className={`text-xs px-1.5 py-0.5 rounded ${p.vetaHorizontal ? 'bg-amber-100 text-amber-700 font-medium' : 'text-slate-300 hover:bg-slate-100'}`}>
+                          {p.vetaHorizontal ? 'Fixed' : '—'}
+                        </button>
+                      </td>
+                      <td className="py-1.5 px-3 text-center">
+                        <EdgeBandPopover cubrecanto={p.cubrecanto} onUpdate={cb => store.updatePiece(p.id, { cubrecanto: cb })} />
+                      </td>
+                      <td className="py-1.5 px-3 text-slate-600 text-xs">
+                        <span className="inline-block bg-slate-100 px-2 py-0.5 rounded text-slate-600">{material}</span>
+                      </td>
+                      <td className="py-1.5 px-3 text-xs">
+                        {area !== '—' ? <span className="inline-block bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium">{area}</span> : <span className="text-slate-300">—</span>}
+                      </td>
+                      <td className="py-1.5 px-2">
+                        <button onClick={() => store.removePiece(p.id)}
+                          className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="px-4 py-8 text-center text-sm text-slate-400">
+            No parts added yet. Use the form above or import from CSV/Excel.
           </div>
         )}
-      </div>
-      </div>{/* end Column 1 */}
 
-      {/* ── Column 2: Stock Sheets + Options + Remnants ──── */}
-      <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
+        {/* Summary bar */}
+        {store.pieces.length > 0 && (
+          <div className="flex items-center gap-4 px-4 py-2.5 bg-slate-50 border-t border-slate-200 text-sm text-slate-500">
+            <span className="font-medium text-slate-700">{store.pieces.length} part{store.pieces.length !== 1 ? 's' : ''}</span>
+            <span>{(store.pieces.reduce((s, p) => s + p.ancho * p.alto * p.cantidad, 0) / 1e6).toFixed(2)} m²</span>
+            {totalEB > 0 && <span className="text-amber-600">EB: {(totalEB / 1000).toFixed(2)} m</span>}
+            <div className="flex-1" />
+            <button onClick={() => store.clearPieces()} className="text-red-400 hover:text-red-600 text-sm flex items-center gap-1">
+              <Trash2 className="h-3.5 w-3.5" />Clear all
+            </button>
+          </div>
+        )}
+      </Section>
 
-      {/* ═══ STOCK SHEETS ═══════════════════════════════════ */}
-      <SectionHeader icon={Layers} title="Stock Sheets" open={stocksOpen} onToggle={() => setStocksOpen(v => !v)} />
-      {stocksOpen && (
-        <div>
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="py-1.5 px-2 text-left font-semibold text-slate-500">Width</th>
-                <th className="py-1.5 px-1 text-left font-semibold text-slate-500">Height</th>
-                <th className="py-1.5 px-1 text-center font-semibold text-slate-500">$</th>
-                <th className="py-1.5 px-1 text-center font-semibold text-slate-500 w-8">Qty</th>
-                <th className="py-1.5 px-1 text-left font-semibold text-slate-500">Material</th>
-                <th className="py-1.5 w-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {store.stocks.map(s => (
-                <tr key={s.id} className="border-b border-slate-50 hover:bg-blue-50/40 group">
-                  <td className="px-2 py-0.5 text-xs tabular-nums text-slate-700">{parseFloat(fromMM(s.ancho, unit).toFixed(3))}</td>
-                  <td className="px-1 py-0.5 text-xs tabular-nums text-slate-700">{parseFloat(fromMM(s.alto, unit).toFixed(3))}</td>
-                  <td className="px-1 py-0.5 text-center text-xs tabular-nums text-slate-700">{s.costo}</td>
-                  <td className="px-1 py-0.5 text-center">
-                    <input type="number" min="0" value={s.qty || 0}
-                      onChange={e => store.updateStock(s.id, { qty: parseInt(e.target.value) || 0 })}
-                      className="w-8 text-xs text-center border border-transparent hover:border-slate-200 focus:border-blue-400 rounded bg-transparent tabular-nums" />
-                  </td>
-                  <td className="px-1 py-0.5">
-                    {sheetMaterials.length > 0 ? (
-                      <CompactAutocomplete
-                        value={s.materialId || ''}
-                        onChange={val => handleSelectSheet(val, s.id)}
-                        placeholder={s.nombre}
-                        options={sheetMaterials.map(m => ({ value: m.id, label: m.concept_description }))}
-                      />
-                    ) : (
-                      <span className="text-xs text-slate-500 truncate">{s.nombre}</span>
-                    )}
-                  </td>
-                  <td className="px-0.5 py-0.5">
-                    <button onClick={() => store.removeStock(s.id)}
-                      className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-0.5">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              <tr className="bg-green-50/40 border-t border-slate-200">
-                <td className="px-1 py-0.5"><input value={sAncho} onChange={e => setSAncho(e.target.value)} onKeyDown={handleStockKey}
-                  className={cellInput + ' text-left'} /></td>
-                <td className="px-0.5 py-0.5"><input value={sAlto} onChange={e => setSAlto(e.target.value)} onKeyDown={handleStockKey}
-                  className={cellInput + ' text-left'} /></td>
-                <td className="px-0.5 py-0.5"><input value={sCosto} onChange={e => setSCosto(e.target.value)} onKeyDown={handleStockKey}
-                  className={cellInput} /></td>
-                <td className="px-0.5 py-0.5"><input value={sQty} onChange={e => setSQty(e.target.value)} onKeyDown={handleStockKey}
-                  placeholder="0" className={cellInput} /></td>
-                <td className="px-0.5 py-0.5"><input value={sNombre} onChange={e => setSNombre(e.target.value)} onKeyDown={handleStockKey}
-                  placeholder="Name" className={cellInput + ' text-left'} /></td>
-                <td className="px-0.5 py-0.5"><button onClick={addStock}
-                  className="text-green-600 hover:text-green-700 p-0.5"><Pencil className="h-3 w-3" /></button></td>
-              </tr>
-            </tbody>
-          </table>
-          <div className="px-3 py-1 bg-slate-50 border-t border-slate-200 text-[10px] text-slate-400">
-            Qty 0 = unlimited sheets
-          </div>
-        </div>
-      )}
+      {/* ═══ ROW 2: 3-column grid ═════════════════════════════ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-      {/* ═══ OPTIONS ═════════════════════════════════════════ */}
-      <SectionHeader icon={Settings} title="Options" open={optionsOpen} onToggle={() => setOptionsOpen(v => !v)} />
-      {optionsOpen && (
-        <div className="px-3 py-2 space-y-2.5 border-b border-slate-100">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-600">Kerf (mm)</span>
-            <input type="number" step="0.1" value={store.globalSierra} onChange={e => store.setGlobalSierra(+e.target.value)}
-              className="w-16 text-xs text-right border border-slate-200 rounded px-1.5 py-0.5 tabular-nums" />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-600">Min. offcut (mm)</span>
-            <input type="number" value={store.minOffcut} onChange={e => store.setMinOffcut(+e.target.value)}
-              className="w-16 text-xs text-right border border-slate-200 rounded px-1.5 py-0.5 tabular-nums" />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-600">Board trim (mm) <span className="text-slate-400" title="Edge strip discarded per side">ⓘ</span></span>
-            <input type="number" min={0} max={50} step={1} value={store.boardTrim}
-              onChange={e => store.setBoardTrim(Math.max(0, parseFloat(e.target.value) || 0))}
-              className="w-16 text-xs text-right border border-slate-200 rounded px-1.5 py-0.5 tabular-nums" />
-          </div>
-
-          {edgebandItems.length > 0 && (
-            <div className="pt-2 mt-2 border-t border-slate-100">
-              <div className="text-xs font-semibold text-slate-600 mb-2">Edge Banding</div>
-              {(['a', 'b', 'c'] as const).map(key => {
-                const label = key.toUpperCase();
-                const lineStyle = key === 'a' ? '━━' : key === 'b' ? '╌╌' : '····';
-                const selected = store.ebConfig[key];
-                return (
-                  <div key={key} className="mb-1.5">
-                    <label className="text-[10px] text-slate-500 font-semibold">Type {label} ({lineStyle})</label>
-                    <CompactAutocomplete
-                      value={selected.id}
-                      onChange={val => {
-                        const item = edgebandItems.find(i => i.id === val);
-                        store.setEbConfig({
-                          ...store.ebConfig,
-                          [key]: item ? { id: item.id, name: item.concept_description, price: item.price } : { id: '', name: '', price: 0 },
-                        });
-                      }}
-                      placeholder="Not assigned"
-                      options={edgebandItems.map(item => ({
-                        value: item.id,
-                        label: `${item.concept_description} — $${item.price}/m${item.dimensions ? ` (${item.dimensions})` : ''}`,
-                      }))}
-                      className="mt-0.5"
-                    />
-                  </div>
-                );
-              })}
+        {/* ─── Areas ──────────────────────────────────────── */}
+        <Section icon={FolderOpen} title="Areas">
+          <div className="px-4 py-3">
+            <div className="flex gap-2">
+              <input value={newArea} onChange={e => setNewArea(e.target.value)} placeholder="e.g. Kitchen, Closet..."
+                onKeyDown={e => { if (e.key === 'Enter' && newArea.trim()) { store.addArea(newArea.trim()); setNewArea(''); } }}
+                className={inputCls} />
+              <button onClick={() => { if (newArea.trim()) { store.addArea(newArea.trim()); setNewArea(''); } }}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors shrink-0">
+                <Plus className="h-4 w-4" />
+              </button>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* ═══ REMNANTS ════════════════════════════════════════ */}
-      <SectionHeader icon={Layers} title="Remnants" open={remnantsOpen} onToggle={() => setRemnantsOpen(v => !v)} />
-      {remnantsOpen && (
-        <div className="px-3 py-2 space-y-2 border-b border-slate-100">
-          <div className="flex gap-1.5">
-            <select value={remMat} onChange={e => setRemMat(e.target.value)}
-              className="text-xs border border-slate-200 rounded px-1 py-0.5 flex-1">
-              {stockNames.length > 0 ? stockNames.map(m => <option key={m}>{m}</option>) : <option>Default</option>}
-            </select>
-            <input value={remGrosor} onChange={e => setRemGrosor(e.target.value)} placeholder="18"
-              className="w-12 text-xs text-center border border-slate-200 rounded px-1 py-0.5" />
+            {store.areas.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {store.areas.map(a => (
+                  <span key={a} className="inline-flex items-center gap-1.5 text-sm bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg">
+                    {a}
+                    <button onClick={() => store.removeArea(a)} className="text-blue-400 hover:text-red-500"><X className="h-3 w-3" /></button>
+                  </span>
+                ))}
+              </div>
+            )}
+            {store.areas.length === 0 && (
+              <p className="text-sm text-slate-400 mt-2">No areas defined. Parts will be ungrouped.</p>
+            )}
           </div>
-          <div className="flex gap-1.5">
-            <input value={remAncho} onChange={e => setRemAncho(e.target.value)} placeholder="Width"
-              className="flex-1 text-xs border border-slate-200 rounded px-1.5 py-0.5" />
-            <input value={remAlto} onChange={e => setRemAlto(e.target.value)} placeholder="Height"
-              className="flex-1 text-xs border border-slate-200 rounded px-1.5 py-0.5" />
+        </Section>
+
+        {/* ─── Stock Sheets ───────────────────────────────── */}
+        <Section icon={Layers} title="Stock Sheets">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="py-2 px-3 text-right font-medium text-slate-500">Width</th>
+                  <th className="py-2 px-3 text-right font-medium text-slate-500">Height</th>
+                  <th className="py-2 px-3 text-right font-medium text-slate-500">$</th>
+                  <th className="py-2 px-2 text-center font-medium text-slate-500">Qty</th>
+                  <th className="py-2 px-3 text-left font-medium text-slate-500">Material</th>
+                  <th className="py-2 w-8"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {store.stocks.map(s => (
+                  <tr key={s.id} className="hover:bg-blue-50/40 group">
+                    <td className="py-1.5 px-3 text-right tabular-nums text-slate-700">{parseFloat(fromMM(s.ancho, unit).toFixed(3))}</td>
+                    <td className="py-1.5 px-3 text-right tabular-nums text-slate-700">{parseFloat(fromMM(s.alto, unit).toFixed(3))}</td>
+                    <td className="py-1.5 px-3 text-right tabular-nums text-slate-700">{s.costo}</td>
+                    <td className="py-1.5 px-2 text-center">
+                      <input type="number" min="0" value={s.qty || 0}
+                        onChange={e => store.updateStock(s.id, { qty: parseInt(e.target.value) || 0 })}
+                        className="w-12 text-sm text-center border border-transparent hover:border-slate-200 focus:border-blue-400 rounded bg-transparent tabular-nums" />
+                    </td>
+                    <td className="py-1.5 px-3">
+                      {sheetMaterials.length > 0 ? (
+                        <CompactAutocomplete
+                          value={s.materialId || ''} onChange={val => handleSelectSheet(val, s.id)}
+                          placeholder={s.nombre}
+                          options={sheetMaterials.map(m => ({ value: m.id, label: m.concept_description }))}
+                        />
+                      ) : (
+                        <span className="text-sm text-slate-500 truncate">{s.nombre}</span>
+                      )}
+                    </td>
+                    <td className="py-1.5 px-1">
+                      <button onClick={() => store.removeStock(s.id)}
+                        className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Add stock row */}
+          <div className="px-4 py-3 bg-slate-50 border-t border-slate-100">
+            <div className="grid grid-cols-5 gap-2 items-end">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Width</label>
+                <input value={sAncho} onChange={e => setSAncho(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Height</label>
+                <input value={sAlto} onChange={e => setSAlto(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Price</label>
+                <input value={sCosto} onChange={e => setSCosto(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Name</label>
+                <input value={sNombre} onChange={e => setSNombre(e.target.value)} onKeyDown={handleStockKey} placeholder="Material" className={inputCls} />
+              </div>
+              <button onClick={addStock}
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors">
+                <Plus className="h-4 w-4" />Add
+              </button>
+            </div>
+            <p className="text-xs text-slate-400 mt-2">Qty 0 = unlimited sheets</p>
+          </div>
+        </Section>
+
+        {/* ─── Options ────────────────────────────────────── */}
+        <Section icon={Settings} title="Options">
+          <div className="px-4 py-3 space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Kerf (mm)</label>
+                <input type="number" step="0.1" value={store.globalSierra} onChange={e => store.setGlobalSierra(+e.target.value)}
+                  className={inputCls + ' text-center'} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Min. offcut (mm)</label>
+                <input type="number" value={store.minOffcut} onChange={e => store.setMinOffcut(+e.target.value)}
+                  className={inputCls + ' text-center'} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Board trim (mm)</label>
+                <input type="number" min={0} max={50} step={1} value={store.boardTrim}
+                  onChange={e => store.setBoardTrim(Math.max(0, parseFloat(e.target.value) || 0))}
+                  className={inputCls + ' text-center'} />
+              </div>
+            </div>
+
+            {edgebandItems.length > 0 && (
+              <div className="pt-3 mt-3 border-t border-slate-100">
+                <div className="text-sm font-semibold text-slate-600 mb-2">Edge Banding</div>
+                <div className="space-y-2">
+                  {(['a', 'b', 'c'] as const).map(key => {
+                    const label = key.toUpperCase();
+                    const lineStyle = key === 'a' ? '━━' : key === 'b' ? '╌╌' : '····';
+                    const selected = store.ebConfig[key];
+                    return (
+                      <div key={key}>
+                        <label className="text-xs text-slate-500 font-medium">Type {label} ({lineStyle})</label>
+                        <CompactAutocomplete
+                          value={selected.id}
+                          onChange={val => {
+                            const item = edgebandItems.find(i => i.id === val);
+                            store.setEbConfig({
+                              ...store.ebConfig,
+                              [key]: item ? { id: item.id, name: item.concept_description, price: item.price } : { id: '', name: '', price: 0 },
+                            });
+                          }}
+                          placeholder="Not assigned"
+                          options={edgebandItems.map(item => ({
+                            value: item.id,
+                            label: `${item.concept_description} — $${item.price}/m${item.dimensions ? ` (${item.dimensions})` : ''}`,
+                          }))}
+                          className="mt-0.5"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Remnants sub-section */}
+          <div className="border-t border-slate-100 px-4 py-3">
+            <div className="text-sm font-semibold text-slate-600 mb-2">Remnants</div>
+            <div className="grid grid-cols-2 gap-2">
+              <select value={remMat} onChange={e => setRemMat(e.target.value)} className={inputCls}>
+                {stockNames.length > 0 ? stockNames.map(m => <option key={m}>{m}</option>) : <option>Default</option>}
+              </select>
+              <input value={remGrosor} onChange={e => setRemGrosor(e.target.value)} placeholder="Thickness" className={inputCls + ' text-center'} />
+              <input value={remAncho} onChange={e => setRemAncho(e.target.value)} placeholder="Width" className={inputCls + ' text-center'} />
+              <input value={remAlto} onChange={e => setRemAlto(e.target.value)} placeholder="Height" className={inputCls + ' text-center'} />
+            </div>
             <button onClick={() => {
               store.addRemnant({ material: remMat || 'Default',
                 grosor: toMM(parseFloat(remGrosor) || 18, unit),
                 ancho: toMM(parseFloat(remAncho) || 0, unit), alto: toMM(parseFloat(remAlto) || 0, unit) });
-            }} className="text-xs text-green-600 hover:text-green-700 font-semibold px-1.5">+</button>
+            }} className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm rounded-md transition-colors">
+              <Plus className="h-4 w-4" />Add Remnant
+            </button>
+            {store.remnants.length > 0 && (
+              <div className="space-y-1.5 pt-2 mt-2 border-t border-slate-100">
+                {store.remnants.map(r => (
+                  <div key={r.id} className="flex justify-between items-center text-sm group">
+                    <span className="text-slate-600">{r.material} — {parseFloat(fromMM(r.ancho, unit).toFixed(0))}×{parseFloat(fromMM(r.alto, unit).toFixed(0))}</span>
+                    <button onClick={() => store.removeRemnant(r.id)}
+                      className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><X className="h-3.5 w-3.5" /></button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          {store.remnants.length > 0 && (
-            <div className="space-y-1 pt-1 border-t border-slate-100">
-              {store.remnants.map(r => (
-                <div key={r.id} className="flex justify-between items-center text-xs group">
-                  <span className="text-slate-600">{r.material} {parseFloat(fromMM(r.ancho, unit).toFixed(0))}×{parseFloat(fromMM(r.alto, unit).toFixed(0))}</span>
-                  <button onClick={() => store.removeRemnant(r.id)}
-                    className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><X className="h-3 w-3" /></button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-      </div>{/* end Column 2 */}
-    </div>{/* end grid */}
+        </Section>
+
+      </div>
     </div>
   );
 }
