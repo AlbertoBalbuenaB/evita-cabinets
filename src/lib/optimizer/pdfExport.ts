@@ -5,14 +5,6 @@ import { EbConfig } from './types';
 
 const EB_LABELS: Record<number, string> = { 1: 'A', 2: 'B', 3: 'C' };
 
-function lightenRgb(rgb: { r: number; g: number; b: number }, factor: number) {
-  return {
-    r: Math.round(rgb.r * factor + 255 * (1 - factor)),
-    g: Math.round(rgb.g * factor + 255 * (1 - factor)),
-    b: Math.round(rgb.b * factor + 255 * (1 - factor)),
-  };
-}
-
 export function exportOptimizerPDF(
   result: OptimizationResult,
   projectName: string,
@@ -87,41 +79,62 @@ export function exportOptimizerPDF(
     const boardW = board.ancho * scale, boardH = board.alto * scale;
     const startX = (pageW - boardW) / 2, startY = 50;
 
-    doc.setDrawColor(51, 65, 85); doc.setLineWidth(0.5); doc.setFillColor(245, 245, 245);
+    // Board background — white like CAD
+    doc.setDrawColor(51, 65, 85); doc.setLineWidth(0.5); doc.setFillColor(255, 255, 255);
     doc.rect(startX, startY, boardW, boardH, 'FD');
 
+    // Trim areas — nearly invisible like CAD (alpha ~0.09)
     if (board.trim > 0) {
       const t = board.trim * scale;
-      doc.setFillColor(220, 220, 220);
+      doc.saveGraphicsState();
+      doc.setGState(new (doc as any).GState({ opacity: 0.10 }));
+      doc.setFillColor(100, 116, 139);
       doc.rect(startX, startY, boardW, t, 'F');
       doc.rect(startX, startY + boardH - t, boardW, t, 'F');
       doc.rect(startX, startY + t, t, boardH - 2 * t, 'F');
       doc.rect(startX + boardW - t, startY + t, t, boardH - 2 * t, 'F');
-      doc.setDrawColor(180, 180, 180); doc.setLineWidth(0.2); doc.setLineDash([1, 1]);
+      doc.setGState(new (doc as any).GState({ opacity: 0.40 }));
+      doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.2); doc.setLineDash([1.5, 1.5]);
       doc.rect(startX + t, startY + t, boardW - 2 * t, boardH - 2 * t);
       doc.setLineDash([]);
+      doc.restoreGraphicsState();
     }
 
-    doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.1);
+    // Board grain — very subtle like CAD (alpha ~0.06)
+    doc.saveGraphicsState();
+    doc.setGState(new (doc as any).GState({ opacity: 0.08 }));
+    doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.1);
     for (let gy = 3; gy < boardH; gy += 3) {
       doc.line(startX + 1, startY + gy, startX + boardW - 1, startY + gy);
     }
+    doc.restoreGraphicsState();
 
     board.placed.forEach((piece) => {
       const px = startX + piece.x * scale, py = startY + piece.y * scale;
       const pw = piece.w * scale, ph = piece.h * scale;
       const rgb = hexToRgb(PIECE_COLORS[piece.idx % PIECE_COLORS.length]);
-      const light = lightenRgb(rgb, 0.45);
-      doc.setFillColor(light.r, light.g, light.b);
-      doc.setDrawColor(Math.max(0, rgb.r - 30), Math.max(0, rgb.g - 30), Math.max(0, rgb.b - 30));
-      doc.setLineWidth(0.3);
-      doc.rect(px + 0.3, py + 0.3, pw - 0.6, ph - 0.6, 'FD');
 
+      // Panel fill — 20% opacity like CAD (globalAlpha=0.18)
+      doc.saveGraphicsState();
+      doc.setGState(new (doc as any).GState({ opacity: 0.20 }));
+      doc.setFillColor(rgb.r, rgb.g, rgb.b);
+      doc.rect(px + 0.3, py + 0.3, pw - 0.6, ph - 0.6, 'F');
+      doc.restoreGraphicsState();
+
+      // Panel border — full color like CAD
+      doc.setDrawColor(rgb.r, rgb.g, rgb.b);
+      doc.setLineWidth(0.5);
+      doc.rect(px + 0.3, py + 0.3, pw - 0.6, ph - 0.6, 'S');
+
+      // Piece grain direction — subtle brown like CAD (#92400e at 12%)
       if (piece.piece.vetaHorizontal) {
-        doc.setDrawColor(Math.max(0, rgb.r - 50), Math.max(0, rgb.g - 50), Math.max(0, rgb.b - 50));
+        doc.saveGraphicsState();
+        doc.setGState(new (doc as any).GState({ opacity: 0.15 }));
+        doc.setDrawColor(146, 64, 14);
         doc.setLineWidth(0.08);
         if (piece.rotated) { for (let dx = 2; dx < pw; dx += 2.5) doc.line(px + dx, py + 1, px + dx, py + ph - 1); }
         else { for (let dy = 2; dy < ph; dy += 2.5) doc.line(px + 1, py + dy, px + pw - 1, py + dy); }
+        doc.restoreGraphicsState();
       }
 
       const cb = piece.piece.cubrecanto;
@@ -171,7 +184,6 @@ export function exportOptimizerPDF(
         doc.setGState(new (doc as any).GState({ opacity: 0.8 }));
         doc.setFillColor(255, 255, 255);
         doc.rect(bgX, bgY, bgW, bgH, 'F');
-        doc.setGState(new (doc as any).GState({ opacity: 1 }));
         doc.restoreGraphicsState();
 
         // Dimension text (bold)
@@ -195,9 +207,13 @@ export function exportOptimizerPDF(
       }
     });
 
+    // Offcuts — green dashed like CAD (alpha ~0.65)
+    doc.saveGraphicsState();
+    doc.setGState(new (doc as any).GState({ opacity: 0.65 }));
     doc.setDrawColor(34, 197, 94); doc.setLineWidth(0.3); doc.setLineDash([1.5, 1.5]);
     board.offcuts.forEach((o) => doc.rect(startX + o.x * scale, startY + o.y * scale, o.w * scale, o.h * scale));
     doc.setLineDash([]);
+    doc.restoreGraphicsState();
 
     doc.setDrawColor(60, 60, 60); doc.setLineWidth(0.2); doc.setFontSize(7); doc.setTextColor(60, 60, 60);
     const dimY = startY + boardH + 5;
