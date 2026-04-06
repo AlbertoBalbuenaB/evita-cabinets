@@ -4,7 +4,7 @@ import { useOptimizerStore } from '../../hooks/useOptimizerStore';
 import { toMM, fromMM } from '../../lib/optimizer/units';
 import { Pieza } from '../../lib/optimizer/types';
 import { supabase } from '../../lib/supabase';
-import { EdgeBandInline } from '../EdgeBandPopover';
+import { EdgeBandCell } from '../EdgeBandPopover';
 
 // ── Compact autocomplete ────────────────────────────────────
 function CompactAutocomplete({ options, value, onChange, placeholder, className = '' }: {
@@ -436,7 +436,10 @@ export function OptimizerSidebar() {
                   <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Height</th>
                   <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">Qty</th>
                   <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">Grain</th>
-                  <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">EB</th>
+                  <th className="py-2.5 px-1 text-center text-xs font-medium text-slate-400 uppercase" title="Top">T</th>
+                  <th className="py-2.5 px-1 text-center text-xs font-medium text-slate-400 uppercase" title="Bottom">B</th>
+                  <th className="py-2.5 px-1 text-center text-xs font-medium text-slate-400 uppercase" title="Left">L</th>
+                  <th className="py-2.5 px-1 text-center text-xs font-medium text-slate-400 uppercase" title="Right">R</th>
                   <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Material</th>
                   <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Area</th>
                   <th className="py-2.5 px-2 w-10"></th>
@@ -456,8 +459,17 @@ export function OptimizerSidebar() {
                           {p.vetaHorizontal ? 'Fixed' : '—'}
                         </button>
                       </td>
-                      <td className="py-1.5 px-3 text-center">
-                        <EdgeBandInline cubrecanto={p.cubrecanto} onUpdate={cb => store.updatePiece(p.id, { cubrecanto: cb })} />
+                      <td className="py-1.5 px-1 text-center">
+                        <EdgeBandCell value={p.cubrecanto.sup} side="Top" onChange={v => store.updatePiece(p.id, { cubrecanto: { ...p.cubrecanto, sup: v } })} />
+                      </td>
+                      <td className="py-1.5 px-1 text-center">
+                        <EdgeBandCell value={p.cubrecanto.inf} side="Bottom" onChange={v => store.updatePiece(p.id, { cubrecanto: { ...p.cubrecanto, inf: v } })} />
+                      </td>
+                      <td className="py-1.5 px-1 text-center">
+                        <EdgeBandCell value={p.cubrecanto.izq} side="Left" onChange={v => store.updatePiece(p.id, { cubrecanto: { ...p.cubrecanto, izq: v } })} />
+                      </td>
+                      <td className="py-1.5 px-1 text-center">
+                        <EdgeBandCell value={p.cubrecanto.der} side="Right" onChange={v => store.updatePiece(p.id, { cubrecanto: { ...p.cubrecanto, der: v } })} />
                       </td>
                       <td className="py-1.5 px-3 text-slate-600 text-xs">
                         <span className="inline-block bg-slate-100 px-2 py-0.5 rounded text-slate-600">{material}</span>

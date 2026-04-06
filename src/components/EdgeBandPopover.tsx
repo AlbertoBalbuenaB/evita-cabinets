@@ -66,8 +66,32 @@ export function EdgeBandPopover({
   );
 }
 
-/** Inline 4-button row — used in product cut list table where there's more room.
- *  Each button shows the side label (T/B/L/R) and clicking cycles through —→A→B→C→— */
+/** Single-side EB toggle — renders ONE button that cycles —→A→B→C→—.
+ *  Used as individual cells in a table (one per side: T, B, L, R). */
+export function EdgeBandCell({
+  value,
+  onChange,
+  side,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  side: string;
+}) {
+  const cycle = () => onChange((value + 1) % 4);
+  return (
+    <button
+      type="button"
+      onClick={cycle}
+      title={`${side}: ${EB_LABELS[value]} — click to cycle`}
+      className={`w-7 h-6 rounded text-[10px] font-bold flex items-center justify-center transition-all
+        ${value > 0 ? EB_CLS_ACTIVE[value] + ' ring-1 ring-offset-1 ring-blue-300' : 'bg-slate-50 text-slate-300 hover:bg-slate-100 hover:text-slate-500'}`}
+    >
+      {EB_LABELS[value]}
+    </button>
+  );
+}
+
+/** Legacy inline row — kept for backward compatibility */
 export function EdgeBandInline({
   cubrecanto,
   onUpdate,
@@ -75,29 +99,16 @@ export function EdgeBandInline({
   cubrecanto: Cubrecanto;
   onUpdate: (cb: Cubrecanto) => void;
 }) {
-  const cycle = (k: keyof Cubrecanto) => {
-    const next = ((cubrecanto[k] + 1) % 4) as 0 | 1 | 2 | 3;
-    onUpdate({ ...cubrecanto, [k]: next });
-  };
-
   return (
     <div className="flex gap-0.5 justify-center">
-      {SIDES.map(([k, label]) => {
-        const val = cubrecanto[k];
-        const active = val > 0;
-        return (
-          <button
-            key={k}
-            type="button"
-            onClick={() => cycle(k)}
-            title={`${label}: ${EB_LABELS[val]} — click to cycle`}
-            className={`w-6 h-5 rounded text-[10px] font-bold flex items-center justify-center transition-all
-              ${active ? EB_CLS_ACTIVE[val] : 'bg-slate-50 text-slate-300 hover:bg-slate-100 hover:text-slate-500'}`}
-          >
-            {active ? label : label}
-          </button>
-        );
-      })}
+      {SIDES.map(([k, label]) => (
+        <EdgeBandCell
+          key={k}
+          value={cubrecanto[k]}
+          onChange={v => onUpdate({ ...cubrecanto, [k]: v })}
+          side={label}
+        />
+      ))}
     </div>
   );
 }

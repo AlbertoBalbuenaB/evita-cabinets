@@ -285,7 +285,10 @@ export function ProductItem() {
                     <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Height (mm)</th>
                     <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Qty</th>
                     <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Material</th>
-                    <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">EB</th>
+                    <th className="text-center pb-2 font-medium text-slate-400 text-xs uppercase" title="Top">T</th>
+                    <th className="text-center pb-2 font-medium text-slate-400 text-xs uppercase" title="Bottom">B</th>
+                    <th className="text-center pb-2 font-medium text-slate-400 text-xs uppercase" title="Left">L</th>
+                    <th className="text-center pb-2 font-medium text-slate-400 text-xs uppercase" title="Right">R</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -305,24 +308,17 @@ export function ProductItem() {
                            piece.material === 'frente' ? 'Doors & Fronts' : 'Custom'}
                         </span>
                       </td>
-                      <td className="py-2 text-center">
-                        {(() => {
-                          const cb = piece.cubrecanto;
-                          if (!cb) return <span className="text-slate-300">—</span>;
-                          const count = [cb.sup, cb.inf, cb.izq, cb.der].filter(v => v > 0).length;
-                          if (count === 0) return <span className="text-slate-300">—</span>;
-                          const labels: string[] = [];
-                          if (cb.sup > 0) labels.push('T');
-                          if (cb.inf > 0) labels.push('B');
-                          if (cb.izq > 0) labels.push('L');
-                          if (cb.der > 0) labels.push('R');
-                          return (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-700 text-white text-xs font-medium">
-                              {labels.join(' ')}
-                            </span>
-                          );
-                        })()}
-                      </td>
+                      {(['sup', 'inf', 'izq', 'der'] as const).map(side => {
+                        const cb = piece.cubrecanto;
+                        const val = cb ? cb[side] : 0;
+                        const label = { 0: '—', 1: 'A', 2: 'B', 3: 'C' }[val] || '—';
+                        const cls = val === 1 ? 'bg-slate-800 text-white' : val === 2 ? 'bg-slate-600 text-white' : val === 3 ? 'bg-slate-400 text-white' : 'text-slate-300';
+                        return (
+                          <td key={side} className="py-2 text-center">
+                            <span className={`inline-flex items-center justify-center w-6 h-5 rounded text-[10px] font-bold ${cls}`}>{label}</span>
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
