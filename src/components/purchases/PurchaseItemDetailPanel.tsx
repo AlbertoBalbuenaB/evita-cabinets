@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, User, Building2 } from 'lucide-react';
 import type { ProjectPurchaseItemWithDetails } from '../../types';
 import { PurchaseItemComments } from './PurchaseItemComments';
@@ -47,8 +48,10 @@ export function PurchaseItemDetailPanel({
 
   const assignedId = item.assigned_to_member_id ?? estelaId ?? '';
 
-  return (
-    // top: 56px matches h-14 on the nav in Layout.tsx — panel sits flush below navbar
+  return createPortal(
+    // Rendered into <body> so any transformed/filtered ancestor in the
+    // project page can't establish a containing block for this fixed element.
+    // top: 56px matches h-14 on the nav in Layout.tsx — panel sits flush below navbar.
     <div
       className="fixed left-0 right-0 bottom-0 flex items-stretch justify-end"
       style={{ zIndex: 9999, top: 56 }}
@@ -141,6 +144,7 @@ export function PurchaseItemDetailPanel({
           to   { transform: translateX(0);    opacity: 1; }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body,
   );
 }
