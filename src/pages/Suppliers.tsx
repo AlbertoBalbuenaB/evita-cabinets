@@ -11,7 +11,7 @@ interface SupplierWithCount extends Supplier {
   item_count: number;
 }
 
-export function Suppliers() {
+export function Suppliers({ embedded = false }: { embedded?: boolean }) {
   const [suppliers, setSuppliers] = useState<SupplierWithCount[]>([]);
   const [filtered, setFiltered] = useState<SupplierWithCount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,23 +130,25 @@ export function Suppliers() {
   return (
     <>
       <div className="page-enter">
-        {/* Header */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hero-enter">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Suppliers</h1>
-            <p className="mt-1 text-slate-500 text-sm">
-              {suppliers.filter((s) => s.is_active).length} active supplier
-              {suppliers.filter((s) => s.is_active).length !== 1 ? 's' : ''}
-              {' '}· Manage vendor contacts and purchase sources
-            </p>
+        {/* Header — hidden when embedded as a tab */}
+        {!embedded && (
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hero-enter">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Suppliers</h1>
+              <p className="mt-1 text-slate-500 text-sm">
+                {suppliers.filter((s) => s.is_active).length} active supplier
+                {suppliers.filter((s) => s.is_active).length !== 1 ? 's' : ''}
+                {' '}· Manage vendor contacts and purchase sources
+              </p>
+            </div>
+            {isAdmin && (
+              <Button onClick={handleAddNew} className="self-start sm:self-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                New Supplier
+              </Button>
+            )}
           </div>
-          {isAdmin && (
-            <Button onClick={handleAddNew} className="self-start sm:self-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              New Supplier
-            </Button>
-          )}
-        </div>
+        )}
 
         {/* Filters */}
         <div className="mb-5 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
@@ -169,6 +171,12 @@ export function Suppliers() {
             />
             Show inactive
           </label>
+          {embedded && isAdmin && (
+            <Button onClick={handleAddNew} size="sm" className="self-start sm:self-auto whitespace-nowrap">
+              <Plus className="h-4 w-4 mr-2" />
+              New Supplier
+            </Button>
+          )}
         </div>
 
         {/* Table */}

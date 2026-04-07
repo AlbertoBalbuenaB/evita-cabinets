@@ -6,7 +6,6 @@ import {
   FolderOpen,
   Package,
   Warehouse,
-  Truck,
   Settings as SettingsIcon,
   LogOut,
   Bell,
@@ -55,7 +54,6 @@ export function Layout({ children, onLogout }: LayoutProps) {
     { path: '/projects', label: 'Projects', icon: FolderOpen },
     { path: '/products', label: 'Cabinets', icon: Package },
     { path: '/prices', label: 'Inventory', icon: Warehouse },
-    { path: '/suppliers', label: 'Suppliers', icon: Truck },
     { path: '/optimizer', label: 'Optimizer', icon: LayoutDashboard },
   ];
 

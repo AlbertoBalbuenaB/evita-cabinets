@@ -12,9 +12,10 @@ import { AutocompleteSelect } from '../components/AutocompleteSelect';
 import { formatCurrency } from '../lib/calculations';
 import { InventoryStockTable } from '../components/inventory/InventoryStockTable';
 import { InventoryMovementsTable } from '../components/inventory/InventoryMovementsTable';
+import { Suppliers } from './Suppliers';
 import type { PriceListItem, PriceListInsert } from '../types';
 
-type InventoryTab = 'catalog' | 'stock' | 'movements';
+type InventoryTab = 'catalog' | 'stock' | 'movements' | 'suppliers';
 
 type SortField = 'concept_description' | 'type' | 'unit' | 'price' | 'price_last_updated_at';
 type SortDirection = 'asc' | 'desc';
@@ -312,6 +313,7 @@ export function PriceList() {
           { key: 'catalog', label: 'Catalog' },
           { key: 'stock', label: 'Stock' },
           { key: 'movements', label: 'Movements' },
+          { key: 'suppliers', label: 'Suppliers' },
         ] as const).map((tab) => (
           <button
             key={tab.key}
@@ -414,6 +416,7 @@ export function PriceList() {
 
       {activeTab === 'stock' && <InventoryStockTable />}
       {activeTab === 'movements' && <InventoryMovementsTable />}
+      {activeTab === 'suppliers' && <Suppliers embedded />}
 
     </div>
 
@@ -1065,13 +1068,13 @@ function PriceListFormModal({
           </div>
         </div>
 
-        {/* Inventory & Suppliers */}
+        {/* Inventory */}
         <div className="border-t border-slate-100 pt-4">
-          <p className="text-sm font-semibold text-slate-700 mb-1">Inventory &amp; Suppliers</p>
+          <p className="text-sm font-semibold text-slate-700 mb-1">Inventory</p>
           <p className="text-xs text-slate-400 mb-3">
             {item ? 'Directly editing stock is for corrections. Use "Record Movement" on the item page for accurate tracking.' : 'Set the initial stock for this item.'}
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Input
               label="Current Stock"
               type="number"
@@ -1095,7 +1098,11 @@ function PriceListFormModal({
               placeholder="e.g. Warehouse A, Shelf 3"
             />
           </div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Suppliers</p>
+        </div>
+
+        {/* Suppliers */}
+        <div className="border-t border-slate-100 pt-4">
+          <p className="text-sm font-semibold text-slate-700 mb-3">Suppliers</p>
           {localSuppliers.length > 0 && (
             <div className="overflow-x-auto mb-3">
               <table className="w-full text-xs">
