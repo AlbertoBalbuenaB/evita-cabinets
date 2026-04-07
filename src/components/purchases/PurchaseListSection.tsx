@@ -1,11 +1,13 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Printer, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { formatCurrency } from '../../lib/calculations';
 import { Button } from '../Button';
 import { PurchaseSummaryCards } from './PurchaseSummaryCards';
 import { PurchaseItemRow } from './PurchaseItemRow';
 import { ConsumeInventoryModal } from './ConsumeInventoryModal';
+import { PurchaseItemDetailPanel } from './PurchaseItemDetailPanel';
+import { printPurchaseList } from '../../utils/printPurchaseList';
 import type { ProjectPurchaseItemWithDetails } from '../../types';
 
 interface PurchaseListSectionProps {
@@ -37,7 +39,11 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [consumeItem, setConsumeItem] = useState<ProjectPurchaseItemWithDetails | null>(null);
+  const [detailItem, setDetailItem] = useState<ProjectPurchaseItemWithDetails | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+
+  // Estela Alvarez default assignment
+  const estelaId = teamMembers.find((m) => m.name === 'Estela Alvarez')?.id ?? null;
 
   // Load reference data once
   useEffect(() => {
@@ -76,6 +82,8 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
     setItems((prev) =>
       prev.map((i) => (i.id === id ? { ...i, ...changes } : i))
     );
+    // Sync detailItem if it's the same item
+    setDetailItem((prev) => prev && prev.id === id ? { ...prev, ...changes } : prev);
     const { error } = await supabase
       .from('project_purchase_items')
       .update(changes)
@@ -85,6 +93,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
 
   async function handleDelete(id: string) {
     setItems((prev) => prev.filter((i) => i.id !== id));
+    if (detailItem?.id === id) setDetailItem(null);
     const { error } = await supabase.from('project_purchase_items').delete().eq('id', id);
     if (error) loadItems();
   }
@@ -99,6 +108,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
         quantity: 1,
         price: 0,
         display_order: maxOrder + 1,
+        assigned_to_member_id: estelaId,
       })
       .select('*, price_list_item:price_list(id, concept_description, unit, price, stock_quantity, average_cost), supplier:suppliers(name), assigned_member:team_members!assigned_to_member_id(name)')
       .single();
@@ -137,12 +147,10 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
     const [moved] = reordered.splice(dragIdx, 1);
     reordered.splice(targetIdx, 0, moved);
 
-    // Assign new display_order
     const updated = reordered.map((item, idx) => ({ ...item, display_order: idx }));
     setItems(updated);
     setDragId(null);
 
-    // Persist order
     for (const item of updated) {
       if (oldItems.find((o) => o.id === item.id)?.display_order !== item.display_order) {
         await supabase
@@ -181,55 +189,66 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
     <div className="space-y-4">
       <PurchaseSummaryCards items={items} />
 
-      {/* Filter bar */}
-      <div className="space-y-3">
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-xs font-medium text-slate-400 mr-1">Status:</span>
-          {STATUSES.map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                statusFilter === s
-                  ? 'bg-slate-800 text-white border-slate-800'
-                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-xs font-medium text-slate-400 mr-1">Priority:</span>
-          {PRIORITIES.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPriorityFilter(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                priorityFilter === p
-                  ? 'bg-slate-800 text-white border-slate-800'
-                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-          <div className="flex-1" />
+      {/* Filter bar — single compact row */}
+      <div className="flex flex-wrap gap-2 items-center">
+        {/* Status dropdown */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-slate-400">Status:</span>
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search items..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition w-48"
-            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="appearance-none pl-3 pr-7 py-2 text-xs font-medium border border-slate-200 bg-white rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
+            >
+              {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           </div>
-          <Button size="sm" onClick={handleAddItem}>
-            <Plus className="h-3.5 w-3.5 mr-1" />
-            Add Item
-          </Button>
         </div>
+
+        {/* Priority dropdown */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-slate-400">Priority:</span>
+          <div className="relative">
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="appearance-none pl-3 pr-7 py-2 text-xs font-medium border border-slate-200 bg-white rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
+            >
+              {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+          </div>
+        </div>
+
+        <div className="flex-1" />
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search items..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition w-44"
+          />
+        </div>
+
+        {/* Print */}
+        <button
+          onClick={() => printPurchaseList(filtered, projectName, statusFilter, priorityFilter, teamMembers)}
+          className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-600 border border-slate-200 bg-white rounded-lg hover:bg-slate-50 transition-colors"
+          title="Print purchase list"
+        >
+          <Printer className="h-3.5 w-3.5" />
+          Print
+        </button>
+
+        <Button size="sm" onClick={handleAddItem}>
+          <Plus className="h-3.5 w-3.5 mr-1" />
+          Add Item
+        </Button>
       </div>
 
       {/* Table */}
@@ -244,20 +263,17 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
                 <th className="text-center px-2 py-2.5 font-semibold text-slate-600 w-[72px]">In Stock</th>
                 <th className="text-center px-2 py-2.5 font-semibold text-slate-600 w-[72px]">To Buy</th>
                 <th className="text-left px-2 py-2.5 font-semibold text-slate-600 w-[64px]">Unit</th>
-                <th className="text-right px-2 py-2.5 font-semibold text-slate-600 w-[96px]">Price</th>
+                <th className="text-right px-2 py-2.5 font-semibold text-slate-600 w-[108px]">Price</th>
                 <th className="text-right px-2 py-2.5 font-semibold text-slate-600 w-[96px]">Subtotal</th>
                 <th className="text-center px-2 py-2.5 font-semibold text-slate-600 w-[88px]">Priority</th>
                 <th className="text-center px-2 py-2.5 font-semibold text-slate-600 w-[120px]">Status</th>
-                <th className="text-left px-2 py-2.5 font-semibold text-slate-600 w-[100px]">Deadline</th>
-                <th className="text-left px-2 py-2.5 font-semibold text-slate-600 w-[116px]">Assigned</th>
-                <th className="text-left px-2 py-2.5 font-semibold text-slate-600">Notes</th>
                 <th className="w-[80px] px-2 py-2.5"></th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={14} className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={11} className="px-4 py-12 text-center text-slate-400">
                     <p className="text-sm">No purchase items yet.</p>
                     <button
                       onClick={handleAddItem}
@@ -280,6 +296,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
                     onUpdate={handleUpdate}
                     onDelete={handleDelete}
                     onConsumeInventory={(i) => setConsumeItem(i)}
+                    onOpenDetail={(i) => setDetailItem(i)}
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
@@ -296,7 +313,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
                   <td className="px-2 py-3 text-sm font-bold text-slate-900 text-right tabular-nums">
                     {formatCurrency(filteredTotal)}
                   </td>
-                  <td colSpan={6}></td>
+                  <td colSpan={3}></td>
                 </tr>
               </tfoot>
             )}
@@ -314,6 +331,18 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
             loadItems();
           }}
           onCancel={() => setConsumeItem(null)}
+        />
+      )}
+
+      {/* Item Detail Panel */}
+      {detailItem && (
+        <PurchaseItemDetailPanel
+          item={detailItem}
+          teamMembers={teamMembers}
+          projectId={projectId}
+          estelaId={estelaId}
+          onUpdate={handleUpdate}
+          onClose={() => setDetailItem(null)}
         />
       )}
     </div>

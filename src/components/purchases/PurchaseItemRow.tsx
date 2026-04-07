@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { GripVertical, Trash2, Package, ChevronDown } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { GripVertical, Trash2, Package, Info, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '../../lib/calculations';
-import type { ProjectPurchaseItemWithDetails, PriceListItem, Supplier, TeamMember } from '../../types';
+import type { ProjectPurchaseItemWithDetails } from '../../types';
 
 interface PriceListOption {
   id: string;
@@ -21,6 +22,7 @@ interface PurchaseItemRowProps {
   onUpdate: (id: string, changes: Record<string, any>) => void;
   onDelete: (id: string) => void;
   onConsumeInventory: (item: ProjectPurchaseItemWithDetails) => void;
+  onOpenDetail: (item: ProjectPurchaseItemWithDetails) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, id: string) => void;
@@ -43,12 +45,13 @@ const PRIORITY_DOT: Record<string, string> = {
 export function PurchaseItemRow({
   item,
   priceListItems,
-  suppliers,
-  teamMembers,
-  projectName,
+  suppliers: _suppliers,
+  teamMembers: _teamMembers,
+  projectName: _projectName,
   onUpdate,
   onDelete,
   onConsumeInventory,
+  onOpenDetail,
   onDragStart,
   onDragOver,
   onDrop,
@@ -56,8 +59,8 @@ export function PurchaseItemRow({
   const [conceptSearch, setConceptSearch] = useState(item.concept);
   const [showDropdown, setShowDropdown] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const conceptRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Sync concept from props when item changes externally
@@ -65,16 +68,31 @@ export function PurchaseItemRow({
     setConceptSearch(item.concept);
   }, [item.concept]);
 
-  // Click outside to close dropdown
+  // Recalculate dropdown position whenever it opens
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowDropdown(false);
-      }
+    if (showDropdown && conceptRef.current) {
+      const rect = conceptRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: 'fixed',
+        top: rect.bottom + 2,
+        left: rect.left,
+        width: Math.max(rect.width, 260),
+        zIndex: 9999,
+      });
     }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
+  }, [showDropdown]);
+
+  // Close dropdown on scroll or resize to avoid misalignment
+  useEffect(() => {
+    if (!showDropdown) return;
+    function close() { setShowDropdown(false); }
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => {
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+    };
+  }, [showDropdown]);
 
   const debouncedUpdate = useCallback(
     (id: string, changes: Record<string, any>) => {
@@ -107,9 +125,9 @@ export function PurchaseItemRow({
     const changes: Record<string, any> = {
       concept: pli.concept_description,
       price_list_item_id: pli.id,
+      price: price,
     };
     if (!item.unit) changes.unit = pli.unit;
-    if (!item.price || item.price === 0) changes.price = price;
     handleImmediateUpdate(changes);
   }
 
@@ -129,6 +147,37 @@ export function PurchaseItemRow({
     !item.inventory_committed &&
     !!item.price_list_item_id;
 
+  // Price pricelist indicator
+  const linkedPriceListItem = hasLinkedItem
+    ? priceListItems.find((p) => p.id === item.price_list_item_id)
+    : null;
+  const listPrice = linkedPriceListItem
+    ? (linkedPriceListItem.price_list_suppliers?.find((s) => s.is_primary)?.supplier_price ?? linkedPriceListItem.price)
+    : null;
+  const isPriceOverridden = listPrice !== null && item.price !== null && Math.abs(item.price - listPrice) > 0.001;
+
+  const dropdown = showDropdown && filteredPLI.length > 0
+    ? createPortal(
+        <div
+          style={dropdownStyle}
+          className="max-h-52 overflow-y-auto bg-white rounded-lg border border-slate-200 shadow-xl"
+        >
+          {filteredPLI.map((pli) => (
+            <button
+              key={pli.id}
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); handleSelectPriceListItem(pli); }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors flex items-center justify-between"
+            >
+              <span className="truncate">{pli.concept_description}</span>
+              <span className="text-xs text-slate-400 ml-2 flex-shrink-0">{pli.unit}</span>
+            </button>
+          ))}
+        </div>,
+        document.body
+      )
+    : null;
+
   return (
     <tr
       draggable
@@ -146,32 +195,19 @@ export function PurchaseItemRow({
 
       {/* Concept */}
       <td className="px-2 py-2 min-w-[240px]">
-        <div ref={dropdownRef} className="relative">
+        <div className="relative">
           <input
             ref={conceptRef}
             type="text"
             value={conceptSearch}
             onChange={(e) => handleConceptChange(e.target.value)}
             onFocus={() => conceptSearch && setShowDropdown(true)}
+            onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
             className="w-full px-2 py-1.5 text-sm border border-transparent hover:border-slate-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
             placeholder="Type to search items..."
           />
-          {showDropdown && filteredPLI.length > 0 && (
-            <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto bg-white rounded-lg border border-slate-200 shadow-lg">
-              {filteredPLI.map((pli) => (
-                <button
-                  key={pli.id}
-                  type="button"
-                  onMouseDown={(e) => { e.preventDefault(); handleSelectPriceListItem(pli); }}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors flex items-center justify-between"
-                >
-                  <span className="truncate">{pli.concept_description}</span>
-                  <span className="text-xs text-slate-400 ml-2 flex-shrink-0">{pli.unit}</span>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
+        {dropdown}
       </td>
 
       {/* Qty */}
@@ -226,15 +262,23 @@ export function PurchaseItemRow({
       </td>
 
       {/* Price */}
-      <td className="px-2 py-2 w-[96px]">
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          defaultValue={item.price}
-          onBlur={(e) => handleFieldChange('price', parseFloat(e.target.value) || 0)}
-          className="w-full px-2 py-1.5 text-sm text-right tabular-nums border border-transparent hover:border-slate-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
-        />
+      <td className="px-2 py-2 w-[108px]">
+        <div className="relative flex items-center">
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            defaultValue={item.price}
+            onBlur={(e) => handleFieldChange('price', parseFloat(e.target.value) || 0)}
+            className="w-full px-2 py-1.5 text-sm text-right tabular-nums border border-transparent hover:border-slate-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
+          />
+          {isPriceOverridden && (
+            <AlertCircle
+              className="absolute -right-0.5 -top-0.5 h-3 w-3 text-amber-400 flex-shrink-0 pointer-events-none"
+              title={`Manually overridden (list price: ${formatCurrency(listPrice!)})`}
+            />
+          )}
+        </div>
       </td>
 
       {/* Subtotal */}
@@ -273,44 +317,18 @@ export function PurchaseItemRow({
         </select>
       </td>
 
-      {/* Deadline */}
-      <td className="px-2 py-2 w-[100px]">
-        <input
-          type="date"
-          defaultValue={item.deadline ?? ''}
-          onChange={(e) => handleImmediateUpdate({ deadline: e.target.value || null })}
-          className="w-full px-1 py-1.5 text-xs border border-transparent hover:border-slate-200 focus:border-blue-300 rounded-md outline-none transition bg-transparent"
-        />
-      </td>
-
-      {/* Assigned */}
-      <td className="px-2 py-2 w-[116px]">
-        <select
-          value={item.assigned_to_member_id ?? ''}
-          onChange={(e) => handleImmediateUpdate({ assigned_to_member_id: e.target.value || null })}
-          className="w-full appearance-none px-2 py-1.5 text-xs border border-transparent hover:border-slate-200 focus:border-blue-300 rounded-md outline-none transition bg-transparent cursor-pointer"
-        >
-          <option value="">—</option>
-          {teamMembers.map((m) => (
-            <option key={m.id} value={m.id}>{m.name}</option>
-          ))}
-        </select>
-      </td>
-
-      {/* Notes */}
-      <td className="px-2 py-2 min-w-[100px]">
-        <input
-          type="text"
-          defaultValue={item.notes ?? ''}
-          onBlur={(e) => handleFieldChange('notes', e.target.value || null)}
-          className="w-full px-2 py-1.5 text-xs border border-transparent hover:border-slate-200 focus:border-blue-300 rounded-md outline-none transition bg-transparent"
-          placeholder="Notes..."
-        />
-      </td>
-
       {/* Actions */}
       <td className="px-2 py-2 w-[80px]">
         <div className="flex items-center gap-1">
+          {/* Info / detail panel button */}
+          <button
+            onClick={() => onOpenDetail(item)}
+            className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
+            title="More info (assigned, comments)"
+          >
+            <Info className="h-3.5 w-3.5" />
+          </button>
+
           {canConsume && (
             <button
               onClick={() => onConsumeInventory(item)}
