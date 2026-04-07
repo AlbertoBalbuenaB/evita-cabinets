@@ -114,6 +114,7 @@ export function PriceListItem() {
   const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
   const [allSuppliers, setAllSuppliers] = useState<{ value: string; label: string }[]>([]);
   const [showLinkForm, setShowLinkForm] = useState(false);
+  const [editingSupplierRow, setEditingSupplierRow] = useState<SupplierRow | null>(null);
   const [linkForm, setLinkForm] = useState({ supplier_id: '', supplier_sku: '', supplier_price: '', is_primary: false });
   const [linkSaving, setLinkSaving] = useState(false);
 
@@ -212,19 +213,29 @@ export function PriceListItem() {
     if (!id || !linkForm.supplier_id) return;
     setLinkSaving(true);
     try {
-      const { error } = await supabase.from('price_list_suppliers').insert({
-        price_list_item_id: id,
-        supplier_id: linkForm.supplier_id,
-        supplier_sku: linkForm.supplier_sku || null,
-        supplier_price: linkForm.supplier_price ? parseFloat(linkForm.supplier_price) : null,
-        is_primary: linkForm.is_primary,
-      });
-      if (error) throw error;
+      if (editingSupplierRow) {
+        const { error } = await supabase.from('price_list_suppliers').update({
+          supplier_sku: linkForm.supplier_sku || null,
+          supplier_price: linkForm.supplier_price ? parseFloat(linkForm.supplier_price) : null,
+          is_primary: linkForm.is_primary,
+        }).eq('id', editingSupplierRow.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('price_list_suppliers').insert({
+          price_list_item_id: id,
+          supplier_id: linkForm.supplier_id,
+          supplier_sku: linkForm.supplier_sku || null,
+          supplier_price: linkForm.supplier_price ? parseFloat(linkForm.supplier_price) : null,
+          is_primary: linkForm.is_primary,
+        });
+        if (error) throw error;
+      }
       setShowLinkForm(false);
+      setEditingSupplierRow(null);
       setLinkForm({ supplier_id: '', supplier_sku: '', supplier_price: '', is_primary: false });
       loadSuppliers();
     } catch (err: any) {
-      alert(err.message || 'Failed to link supplier.');
+      alert(err.message || 'Failed to save supplier.');
     } finally {
       setLinkSaving(false);
     }
@@ -644,13 +655,31 @@ export function PriceListItem() {
                             )}
                           </td>
                           <td className="py-1.5 pl-2 text-center">
-                            <button
-                              onClick={() => removeSupplier(s.id)}
-                              className="p-1 text-slate-400 hover:text-red-500 transition-colors rounded"
-                              title="Remove"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                onClick={() => {
+                                  setEditingSupplierRow(s);
+                                  setLinkForm({
+                                    supplier_id: s.supplier_id,
+                                    supplier_sku: s.supplier_sku ?? '',
+                                    supplier_price: s.supplier_price?.toString() ?? '',
+                                    is_primary: s.is_primary,
+                                  });
+                                  setShowLinkForm(true);
+                                }}
+                                className="p-1 text-slate-400 hover:text-blue-500 transition-colors rounded"
+                                title="Edit"
+                              >
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => removeSupplier(s.id)}
+                                className="p-1 text-slate-400 hover:text-red-500 transition-colors rounded"
+                                title="Remove"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -661,14 +690,26 @@ export function PriceListItem() {
 
               {showLinkForm ? (
                 <form onSubmit={handleLinkSupplier} className="space-y-3 p-3 bg-white/60 rounded-lg border border-slate-200/40">
-                  <AutocompleteSelect
-                    label="Supplier"
-                    required
-                    options={allSuppliers}
-                    value={linkForm.supplier_id}
-                    onChange={(v) => setLinkForm((p) => ({ ...p, supplier_id: v }))}
-                    placeholder="Select supplier..."
-                  />
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    {editingSupplierRow ? 'Edit Supplier' : 'Link Supplier'}
+                  </p>
+                  {editingSupplierRow ? (
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Supplier</label>
+                      <div className="px-3 py-1.5 text-sm bg-slate-100 rounded-lg text-slate-700 font-medium">
+                        {editingSupplierRow.supplier?.name ?? '—'}
+                      </div>
+                    </div>
+                  ) : (
+                    <AutocompleteSelect
+                      label="Supplier"
+                      required
+                      options={allSuppliers}
+                      value={linkForm.supplier_id}
+                      onChange={(v) => setLinkForm((p) => ({ ...p, supplier_id: v }))}
+                      placeholder="Select supplier..."
+                    />
+                  )}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="block text-xs font-medium text-slate-400 mb-1">Supplier SKU</label>
@@ -704,9 +745,13 @@ export function PriceListItem() {
                   </label>
                   <div className="flex gap-2">
                     <Button type="submit" size="sm" disabled={linkSaving}>
-                      {linkSaving ? 'Saving...' : 'Link Supplier'}
+                      {linkSaving ? 'Saving...' : editingSupplierRow ? 'Save Changes' : 'Link Supplier'}
                     </Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setShowLinkForm(false)}>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => {
+                      setShowLinkForm(false);
+                      setEditingSupplierRow(null);
+                      setLinkForm({ supplier_id: '', supplier_sku: '', supplier_price: '', is_primary: false });
+                    }}>
                       Cancel
                     </Button>
                   </div>

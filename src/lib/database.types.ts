@@ -788,17 +788,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "inventory_movements_price_list_item_id_fkey"
-            columns: ["price_list_item_id"]
-            isOneToOne: false
-            referencedRelation: "price_list"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "inventory_movements_created_by_member_id_fkey"
             columns: ["created_by_member_id"]
             isOneToOne: false
             referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_price_list_item_id_fkey"
+            columns: ["price_list_item_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
             referencedColumns: ["id"]
           },
         ]
@@ -1399,16 +1399,16 @@ export type Database = {
           concept: string
           created_at: string
           deadline: string | null
-          display_order: number
+          display_order: number | null
           id: string
           inventory_committed: boolean
           notes: string | null
-          price: number
+          price: number | null
           price_list_item_id: string | null
-          priority: string
+          priority: string | null
           project_id: string
           quantity: number
-          status: string
+          status: string | null
           subtotal: number | null
           supplier_id: string | null
           unit: string | null
@@ -1419,16 +1419,17 @@ export type Database = {
           concept: string
           created_at?: string
           deadline?: string | null
-          display_order?: number
+          display_order?: number | null
           id?: string
           inventory_committed?: boolean
           notes?: string | null
-          price?: number
+          price?: number | null
           price_list_item_id?: string | null
-          priority?: string
+          priority?: string | null
           project_id: string
           quantity?: number
-          status?: string
+          status?: string | null
+          subtotal?: number | null
           supplier_id?: string | null
           unit?: string | null
           updated_at?: string
@@ -1438,26 +1439,27 @@ export type Database = {
           concept?: string
           created_at?: string
           deadline?: string | null
-          display_order?: number
+          display_order?: number | null
           id?: string
           inventory_committed?: boolean
           notes?: string | null
-          price?: number
+          price?: number | null
           price_list_item_id?: string | null
-          priority?: string
+          priority?: string | null
           project_id?: string
           quantity?: number
-          status?: string
+          status?: string | null
+          subtotal?: number | null
           supplier_id?: string | null
           unit?: string | null
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "project_purchase_items_project_id_fkey"
-            columns: ["project_id"]
+            foreignKeyName: "project_purchase_items_assigned_to_member_id_fkey"
+            columns: ["assigned_to_member_id"]
             isOneToOne: false
-            referencedRelation: "projects"
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
           {
@@ -1468,17 +1470,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "project_purchase_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "project_purchase_items_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_purchase_items_assigned_to_member_id_fkey"
-            columns: ["assigned_to_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
         ]
@@ -2269,6 +2271,10 @@ export type Database = {
       check_project_price_staleness: {
         Args: { p_project_id: string }
         Returns: boolean
+      }
+      commit_project_inventory: {
+        Args: { p_project_id: string }
+        Returns: undefined
       }
       count_cabinets_with_hardware: {
         Args: {
