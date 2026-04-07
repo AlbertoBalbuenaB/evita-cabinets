@@ -713,7 +713,6 @@ function PriceListFormModal({
   item,
   onSave,
   onClose,
-  existingTypes,
 }: PriceListFormModalProps) {
   const [formData, setFormData] = useState<PriceListInsert>({
     sku_code: item?.sku_code || '',

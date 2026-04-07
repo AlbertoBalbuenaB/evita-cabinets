@@ -504,16 +504,6 @@ function extractMaterialIds(projectData: ProjectExport): Set<string> {
   return ids;
 }
 
-function extractClosetCatalogIds(projectData: ProjectExport): Set<string> {
-  const ids = new Set<string>();
-  projectData.areas.forEach(areaData => {
-    (areaData.closetItems || []).forEach(ci => {
-      if (ci.closet_catalog_id) ids.add(ci.closet_catalog_id);
-    });
-  });
-  return ids;
-}
-
 async function checkMaterialsAvailability(
   materialIds: Set<string>,
   projectData: ProjectExport
@@ -628,38 +618,6 @@ async function checkMaterialsAvailability(
   });
 
   return warnings;
-}
-
-async function generateProjectName(baseName: string, importMode: 'new' | 'version'): Promise<string> {
-  if (importMode === 'new') {
-    return `${baseName} (Imported)`;
-  }
-
-  const { data: existingProjects, error } = await supabase
-    .from('quotations')
-    .select('name')
-    .like('name', `${baseName}%`);
-
-  if (error || !existingProjects) {
-    return `${baseName} - v2`;
-  }
-
-  const versionNumbers: number[] = [];
-  const versionRegex = new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} - v(\\d+)$`);
-
-  existingProjects.forEach(project => {
-    const match = project.name.match(versionRegex);
-    if (match) {
-      versionNumbers.push(parseInt(match[1], 10));
-    }
-  });
-
-  if (versionNumbers.length === 0) {
-    return `${baseName} - v2`;
-  }
-
-  const maxVersion = Math.max(...versionNumbers);
-  return `${baseName} - v${maxVersion + 1}`;
 }
 
 function sanitizeFileName(name: string): string {

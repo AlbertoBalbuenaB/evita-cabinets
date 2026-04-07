@@ -358,7 +358,7 @@ async function calculateImplicitPrice(
   product: Product,
   storedCost: number,
   materialType: MaterialImpact['materialType'],
-  settings: any
+  _settings: any
 ): Promise<number> {
   // Calculate how many square feet or linear feet this cabinet uses
   let usageAmount = 0;
@@ -422,7 +422,7 @@ async function calculateNewCost(
   material: PriceListItem,
   materialType: MaterialImpact['materialType'],
   priceList: PriceListItem[],
-  settings: any
+  _settings: any
 ): Promise<number> {
   switch (materialType) {
     case 'box_material':

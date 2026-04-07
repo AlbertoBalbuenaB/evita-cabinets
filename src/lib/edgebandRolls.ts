@@ -197,7 +197,7 @@ export async function calculateAreaEdgebandRolls(
 
 export async function recalculateAreaEdgebandCosts(areaId: string): Promise<boolean> {
   try {
-    const { edgebandUsages, cabinetCosts, cabinets } = await calculateAreaEdgebandRolls(areaId);
+    const { cabinetCosts, cabinets } = await calculateAreaEdgebandRolls(areaId);
 
     const cabinetsMap = new Map(cabinets.map(c => [c.id, c]));
     const updateResults = await Promise.all(cabinetCosts.map(cost => {

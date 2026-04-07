@@ -217,10 +217,9 @@ export async function previewBulkMaterialChange(
 
   if (error) throw error;
 
-  const [{ data: newMaterial }, products, { data: priceList }] = await Promise.all([
+  const [{ data: newMaterial }, products] = await Promise.all([
     supabase.from('price_list').select('*').eq('id', newMaterialId).single(),
     fetchAllProducts({ onlyActive: false }),
-    supabase.from('price_list').select('*'),
   ]);
 
   if (!newMaterial) {
@@ -228,7 +227,6 @@ export async function previewBulkMaterialChange(
   }
 
   const productsMap = new Map(products.map(p => [p.sku, p]));
-  const priceListMap = new Map(priceList?.map(p => [p.id, p]) || []);
 
   let totalCostBefore = 0;
   let totalCostAfter = 0;

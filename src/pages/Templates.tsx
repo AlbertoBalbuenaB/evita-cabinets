@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Search, Filter, X, TrendingUp, BarChart3, Clock, Bookmark, CreditCard as Edit2, Trash2, Copy } from 'lucide-react';
+import { Search, BarChart3, Clock, Bookmark, CreditCard as Edit2, Trash2, Copy } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
-import { formatCurrency } from '../lib/calculations';
 import {
   getAllTemplates,
-  searchTemplates,
-  getTemplatesByCategory,
   deleteTemplate,
   duplicateTemplate,
   getTemplateAnalytics,

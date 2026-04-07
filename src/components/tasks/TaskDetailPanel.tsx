@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { createNotifications } from '../../lib/notifications';
 import { useCurrentMember } from '../../lib/useCurrentMember';
-import { format } from 'date-fns';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../Button';
 import type {
@@ -36,7 +35,7 @@ const PRESET_COLORS = [
   '#8b5cf6','#06b6d4','#84cc16','#f97316','#ec4899',
 ];
 
-export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, onUpdate, onDelete, onReload, onTagCreated }: Props) {
+export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, onUpdate, onDelete, onTagCreated }: Props) {
   const { member: currentMember } = useCurrentMember();
   const initialAssigneeIds = useRef(task.assignees.map((a) => a.id));
   const [title, setTitle] = useState(task.title);

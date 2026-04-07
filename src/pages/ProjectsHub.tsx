@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, FolderOpen, Tag, MapPin, User, Calendar, FileText, Filter } from 'lucide-react';
+import { Plus, Search, FolderOpen, MapPin, User, Calendar, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
 import { NewProjectModal } from '../components/NewProjectModal';
@@ -26,7 +26,6 @@ export function ProjectsHub() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {

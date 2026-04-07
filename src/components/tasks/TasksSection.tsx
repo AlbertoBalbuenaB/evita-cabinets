@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckSquare, List, LayoutGrid, Calendar, Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { Button } from '../Button';
 import { useCurrentMember } from '../../lib/useCurrentMember';
 import type {
   TeamMember, EnhancedTask, TaskTag,

@@ -42,10 +42,6 @@ export async function printQuotation(
   );
 
   const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal + closetItemsSubtotal;
-  const otherExpenses = project.other_expenses || 0;
-  // install_delivery stored in MXN in DB
-  const installDeliveryMxn = project.install_delivery || 0;
-  const projectTotal = materialsSubtotal + otherExpenses + installDeliveryMxn;
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {

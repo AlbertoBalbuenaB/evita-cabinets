@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Pencil as Edit2, Tag, Package, Ruler, Box, Layers,
+  ArrowLeft, Pencil as Edit2, Package, Ruler, Box, Layers,
   Check, X, Clock, BarChart3, Warehouse, LayoutDashboard
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';

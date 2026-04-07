@@ -4,7 +4,7 @@ import {
   CheckSquare, Clock, ChevronDown, ChevronRight, CheckCircle2,
   ScrollText, ArrowRightCircle, Lightbulb, AlertTriangle, Star,
   Activity, ExternalLink, Filter, X, TrendingUp, FolderOpen, ArrowRight,
-  Users, Calendar, Ban, GitMerge, Search,
+  Users, Ban, GitMerge, Search,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
@@ -262,12 +262,6 @@ export function HomePage() {
     })();
     return () => { cancelled = true; };
   }, []);
-
-  async function loadAll() {
-    setLoading(true);
-    await Promise.all([loadTasks(), loadLogs(), loadQuotesData()]);
-    setLoading(false);
-  }
 
   async function loadQuotesData() {
     const [recentRes, pipelineRes] = await Promise.all([

@@ -241,7 +241,7 @@ export async function generateProjectBrief(projectId: string): Promise<string> {
       const sortedAccessories = Array.from(cabinetAccessories.entries())
         .sort((a, b) => b[1].totalQuantity - a[1].totalQuantity);
 
-      sortedAccessories.forEach(([id, data]) => {
+      sortedAccessories.forEach(([, data]) => {
         accessoryParts.push(`${data.name}: ${data.totalQuantity} units`);
       });
 

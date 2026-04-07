@@ -3,7 +3,6 @@ import { Upload, X, FileJson, AlertTriangle, CheckCircle2, Loader2 } from 'lucid
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { Input } from './Input';
-import { formatCurrency } from '../lib/calculations';
 import { supabase } from '../lib/supabase';
 import {
   validateQuotationImport,

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek,
-  isSameMonth, isSameDay, isToday, format, addMonths, subMonths,
+  isSameMonth, isToday, format, addMonths, subMonths,
 } from 'date-fns';
 import type { EnhancedTask } from '../../types';
 import { TASK_PRIORITY_CONFIG } from '../../types';

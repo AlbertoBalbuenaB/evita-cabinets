@@ -146,10 +146,9 @@ export async function previewBulkHardwareChange(
     return hardwareArray.some(hw => hw.hardware_id === oldHardwareId);
   });
 
-  const [{ data: oldHardware }, { data: newHardware }, { data: priceList }] = await Promise.all([
+  const [{ data: oldHardware }, { data: newHardware }] = await Promise.all([
     supabase.from('price_list').select('*').eq('id', oldHardwareId).single(),
     newHardwareId ? supabase.from('price_list').select('*').eq('id', newHardwareId).single() : Promise.resolve({ data: null }),
-    supabase.from('price_list').select('*'),
   ]);
 
   if (!oldHardware) {
@@ -159,8 +158,6 @@ export async function previewBulkHardwareChange(
   if (operationType === 'replace' && !newHardware) {
     throw new Error('New hardware not found');
   }
-
-  const priceListMap = new Map(priceList?.map(p => [p.id, p]) || []);
 
   let totalCostBefore = 0;
   let totalCostAfter = 0;

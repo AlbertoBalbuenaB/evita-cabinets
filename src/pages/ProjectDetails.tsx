@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History, SeparatorHorizontal, LayoutDashboard } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History, SeparatorHorizontal, LayoutDashboard } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { fetchAllProducts } from '../lib/fetchAllProducts';
 import { Button } from '../components/Button';
@@ -99,7 +99,7 @@ export function ProjectDetails({ project: initialProject, parentProject, onBack 
   const [hasStalePrices, setHasStalePrices] = useState(false);
   const [isBulkPriceUpdateOpen, setIsBulkPriceUpdateOpen] = useState(false);
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
-  const [versionCount, setVersionCount] = useState(0);
+  const [, setVersionCount] = useState(0);
 const [isEditingDate, setIsEditingDate] = useState(false);
   const [editedQuoteDate, setEditedQuoteDate] = useState(project.quote_date);
   const [hasAreasOrderChanged, setHasAreasOrderChanged] = useState(false);

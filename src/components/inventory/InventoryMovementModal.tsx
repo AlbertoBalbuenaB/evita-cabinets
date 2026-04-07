@@ -5,7 +5,6 @@ import { Input } from '../Input';
 import { AutocompleteSelect } from '../AutocompleteSelect';
 import { supabase } from '../../lib/supabase';
 import { useCurrentMember } from '../../lib/useCurrentMember';
-import type { PriceListItem } from '../../types';
 
 interface InventoryMovementModalProps {
   priceListItemId?: string;

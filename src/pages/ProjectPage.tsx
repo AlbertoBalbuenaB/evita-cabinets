@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Pencil as Edit2, FileText, FolderOpen, Hammer, BarChart3,
-  Plus, Calendar, Tag, User, MapPin, Check, Save, X, Copy, Trash2,
+  ArrowLeft, Pencil as Edit2, FileText, FolderOpen, BarChart3,
+  Plus, Calendar, Save, X, Copy, Trash2,
   Receipt, ClipboardList, Files, ScrollText, MoreVertical, TrendingUp,
   ArrowUpDown, Upload, ShoppingCart
 } from 'lucide-react';
@@ -84,7 +84,7 @@ export function ProjectPage() {
 
   async function loadProject() {
     setLoading(true);
-    const [{ data: proj, error: pErr }, { data: quots, error: qErr }] = await Promise.all([
+    const [{ data: proj, error: pErr }, { data: quots }] = await Promise.all([
       supabase.from('projects').select('*').eq('id', projectId).single(),
       supabase.from('quotations').select('*').eq('project_id', projectId).order('version_number', { ascending: true }),
     ]);

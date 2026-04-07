@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { OptimizationResult, PIECE_COLORS, generateCutSequence } from './engine';
+import { OptimizationResult, PIECE_COLORS } from './engine';
 import { UnitSystem, fmtDim, fmtNum } from './units';
 import { EbConfig } from './types';
 
@@ -126,7 +126,7 @@ const i18n: Record<PdfLang, Record<string, string>> = {
 export async function exportOptimizerPDF(
   result: OptimizationResult,
   projectName: string,
-  clientName: string,
+  _clientName: string,
   unit: UnitSystem = 'mm',
   ebConfig?: EbConfig,
   areas?: string[],

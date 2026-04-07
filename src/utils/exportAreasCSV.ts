@@ -1,5 +1,4 @@
 import type { ProjectArea, AreaCabinet, AreaItem, AreaCountertop } from '../types';
-import { formatCurrency } from '../lib/calculations';
 
 export interface AreaExportData {
   areaName: string;

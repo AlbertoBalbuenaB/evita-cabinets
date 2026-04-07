@@ -362,7 +362,7 @@ class Optimizer {
     return r;
   }
 
-  private _localSearch(bds: Board[], mat: string, grs: number): Board[] {
+  private _localSearch(bds: Board[], _mat: string, _grs: number): Board[] {
     let boards = [...bds];
     let improved = true;
     while (improved && boards.length > 1) {

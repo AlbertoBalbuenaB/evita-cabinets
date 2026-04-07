@@ -156,7 +156,7 @@ export function OptimizerSidebar() {
   const [sAlto, setSAlto] = useState('1220');
   const [sNombre, setSNombre] = useState('');
   const [sCosto, setSCosto] = useState('450');
-  const [sQty, setSQty] = useState('0');
+  const [sQty] = useState('0');
 
   // ── Area add state ────────────────────────────────────────
   const [newArea, setNewArea] = useState('');

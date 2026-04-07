@@ -1,5 +1,4 @@
-import { useState, useRef } from 'react';
-import { Plus } from 'lucide-react';
+import { useState } from 'react';
 import type { EnhancedTask, TaskStatus } from '../../types';
 import { TASK_STATUS_CONFIG, TASK_STATUS_ORDER } from '../../types';
 import { TaskCard } from './TaskCard';

@@ -58,6 +58,6 @@ export function groupProjectsByGroupId(quotations: Quotation[]): ProjectGroup[] 
   return groups;
 }
 
-export function getProjectVersionNumber(quotation: Quotation, allQuotations: Quotation[]): number {
+export function getProjectVersionNumber(quotation: Quotation, _allQuotations: Quotation[]): number {
   return quotation.version_number ?? 1;
 }

@@ -1,4 +1,3 @@
-import { supabase } from './supabase';
 import type { AreaCabinet, Product, PriceListItem } from '../types';
 
 export interface CabinetMaterialSummary {

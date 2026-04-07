@@ -469,7 +469,7 @@ export async function calculateAreaSheetMaterials(
 
 export async function recalculateAreaSheetMaterialCosts(areaId: string): Promise<boolean> {
   try {
-    const { sheetUsages, cabinetCosts, cabinets } = await calculateAreaSheetMaterials(areaId);
+    const { cabinetCosts, cabinets } = await calculateAreaSheetMaterials(areaId);
 
     const cabinetsMap = new Map(cabinets.map(c => [c.id, c]));
     const updateResults = await Promise.all(cabinetCosts.map(cost => {

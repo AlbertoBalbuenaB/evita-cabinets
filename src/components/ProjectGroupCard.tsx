@@ -31,7 +31,6 @@ export function ProjectGroupCard({
   onEdit,
   onDelete,
   onDuplicate,
-  onStatusChange,
   onUngroup,
   staleProjectIds,
   exchangeRate = 1,

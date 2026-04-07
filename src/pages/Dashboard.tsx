@@ -464,7 +464,7 @@ export function Dashboard() {
       });
 
       const trends: HardwareTrend[] = Array.from(hardwareMap.entries())
-        .map(([id, data]) => ({
+        .map(([, data]) => ({
           hardware_name: data.name,
           usage_count: data.count,
           total_quantity: data.totalQty,

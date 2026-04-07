@@ -6,7 +6,7 @@ import { Input } from '../components/Input';
 import { clearSettingsCache, useSettingsStore } from '../lib/settingsStore';
 import { downloadFullBackup, type BackupSummary } from '../utils/backupExport';
 import type { Setting, TaxByType, CustomType, CustomUnit, TeamMember, Department } from '../types';
-import { SYSTEM_ROLE_LABELS, SYSTEM_ROLES, type SystemRole } from '../types';
+import { SYSTEM_ROLE_LABELS, SYSTEM_ROLES } from '../types';
 import { useCurrentMember } from '../lib/useCurrentMember';
 
 export function Settings() {
