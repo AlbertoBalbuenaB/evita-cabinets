@@ -1065,13 +1065,13 @@ function PriceListFormModal({
           </div>
         </div>
 
-        {/* Inventory */}
+        {/* Inventory & Suppliers */}
         <div className="border-t border-slate-100 pt-4">
-          <p className="text-sm font-semibold text-slate-700 mb-1">Inventory</p>
+          <p className="text-sm font-semibold text-slate-700 mb-1">Inventory &amp; Suppliers</p>
           <p className="text-xs text-slate-400 mb-3">
             {item ? 'Directly editing stock is for corrections. Use "Record Movement" on the item page for accurate tracking.' : 'Set the initial stock for this item.'}
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             <Input
               label="Current Stock"
               type="number"
@@ -1095,11 +1095,7 @@ function PriceListFormModal({
               placeholder="e.g. Warehouse A, Shelf 3"
             />
           </div>
-        </div>
-
-        {/* Suppliers */}
-        <div className="border-t border-slate-100 pt-4">
-          <p className="text-sm font-semibold text-slate-700 mb-3">Suppliers</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Suppliers</p>
           {localSuppliers.length > 0 && (
             <div className="overflow-x-auto mb-3">
               <table className="w-full text-xs">
