@@ -1753,6 +1753,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         <QuotationOptimizerTab
           quotationId={project.id}
           totalCabinetsCount={areas.reduce((s, a) => s + a.cabinets.length, 0)}
+          areasById={Object.fromEntries(areas.map((a) => [a.id, a.name]))}
         />
       )}
 

@@ -1,47 +1,64 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Hammer, Play, Save, Loader2, RefreshCw, AlertTriangle, LayoutDashboard } from 'lucide-react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { Hammer, Play, Save, Loader2, RefreshCw, LayoutDashboard } from 'lucide-react';
 import { Button } from '../../Button';
 import { CADViewer } from '../CADViewer';
 import { RightStatsPanel } from '../RightStatsPanel';
 import { getQuotationOptimizerStore } from '../../../hooks/createQuotationOptimizerStore';
+import { supabase } from '../../../lib/supabase';
 import { QuotationOptimizerSidebar } from './QuotationOptimizerSidebar';
 import { OptimizerWarningsPanel } from './OptimizerWarningsPanel';
+import { OptimizerVersionsList } from './OptimizerVersionsList';
+import { OptimizerComparisonPanel } from './OptimizerComparisonPanel';
+import { PricingMethodToggle } from './PricingMethodToggle';
+import { FtVsOptimizerComparisonCard } from './FtVsOptimizerComparisonCard';
+import { PerAreaBoardsBreakdown } from './PerAreaBoardsBreakdown';
+import { StaleBadge } from './StaleBadge';
 import type { OptimizationResult } from '../../../lib/optimizer/types';
+import type { PricingMethod } from '../../../types';
 
 interface Props {
   quotationId: string;
   totalCabinetsCount: number;
+  /** Map of area_id → area name, so the per-area breakdown can show labels. */
+  areasById: Record<string, string>;
+}
+
+interface QuotationHeaderSlice {
+  sqftTotal: number;
+  optimizerTotal: number | null;
+  pricingMethod: PricingMethod;
+  optimizerIsStale: boolean;
 }
 
 /**
  * Top-level component for the "Cut-list Pricing" tab inside ProjectDetails.
  *
- * Orchestrates the per-quotation Zustand store: on mount, lists existing
- * runs and loads the active one (if any). Provides the build → run →
- * save workflow in the header bar, and composes the reused CADViewer +
- * RightStatsPanel with the new QuotationOptimizerSidebar on the left.
+ * Phase 5 added: build/run/save workflow + 3-panel layout.
+ * Phase 6 adds: versions dropdown, comparison modal, pricing-method
+ * toggle (writes quotations.pricing_method), ft²-vs-optimizer card,
+ * per-area boards breakdown, stale badge with re-run action.
  *
- * This tab intentionally does NOT render the project/client name in its
- * own header — the parent ProjectDetails already shows the quotation
- * breadcrumb above.
+ * The tab does NOT change the quotation rollup yet — that wiring lives
+ * in Phase 7 (updateProjectTotal branch). Flipping the toggle here
+ * only updates the DB column; the user will see the total change once
+ * Phase 7 lands.
  */
-export function QuotationOptimizerTab({ quotationId, totalCabinetsCount }: Props) {
+export function QuotationOptimizerTab({ quotationId, totalCabinetsCount, areasById }: Props) {
   const useStore = useMemo(() => getQuotationOptimizerStore(quotationId), [quotationId]);
 
-  // Reactive slices
-  const isBuilding       = useStore((s) => s.isBuilding);
-  const isOptimizing     = useStore((s) => s.isOptimizing);
-  const isSaving         = useStore((s) => s.isSaving);
-  const lastError        = useStore((s) => s.lastError);
-  const pendingResult    = useStore((s) => s.pendingResult);
-  const pendingPieces    = useStore((s) => s.pendingPieces);
-  const pendingWarnings  = useStore((s) => s.pendingWarnings);
+  // Reactive slices from the per-quotation store.
+  const isBuilding        = useStore((s) => s.isBuilding);
+  const isOptimizing      = useStore((s) => s.isOptimizing);
+  const isSaving          = useStore((s) => s.isSaving);
+  const lastError         = useStore((s) => s.lastError);
+  const pendingResult     = useStore((s) => s.pendingResult);
+  const pendingPieces     = useStore((s) => s.pendingPieces);
+  const pendingWarnings   = useStore((s) => s.pendingWarnings);
   const pendingCabCovered = useStore((s) => s.pendingCabinetsCovered);
   const pendingCabSkipped = useStore((s) => s.pendingCabinetsSkipped);
-  const loadedRun        = useStore((s) => s.loadedRun);
-  const runs             = useStore((s) => s.runs);
-  const activeRunId      = useStore((s) => s.activeRunId);
-  const isStale          = useStore((s) => s.isStale);
+  const loadedRun         = useStore((s) => s.loadedRun);
+  const runs              = useStore((s) => s.runs);
+  const activeRunId       = useStore((s) => s.activeRunId);
 
   // Actions
   const refreshRunsList = useStore((s) => s.refreshRunsList);
@@ -49,16 +66,43 @@ export function QuotationOptimizerTab({ quotationId, totalCabinetsCount }: Props
   const runOptimize     = useStore((s) => s.runOptimize);
   const saveAsRun       = useStore((s) => s.saveAsRun);
   const loadRun         = useStore((s) => s.loadRun);
+  const setActive       = useStore((s) => s.setActive);
+  const renameRun       = useStore((s) => s.renameRun);
+  const deleteRun       = useStore((s) => s.deleteRun);
 
   // Local UI state
   const [selectedBoardIdx, setSelectedBoardIdx] = useState(0);
   const [saveName, setSaveName] = useState('');
+  const [compareOpen, setCompareOpen] = useState(false);
 
-  // On mount / quotation change: refresh runs and auto-load the active one.
+  // Quotation header fields (pricing_method + totals + stale flag).
+  const [header, setHeader] = useState<QuotationHeaderSlice>({
+    sqftTotal: 0,
+    optimizerTotal: null,
+    pricingMethod: 'sqft',
+    optimizerIsStale: false,
+  });
+
+  const refreshHeader = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('quotations')
+      .select('total_amount, optimizer_total_amount, pricing_method, optimizer_is_stale')
+      .eq('id', quotationId)
+      .single();
+    if (error || !data) return;
+    setHeader({
+      sqftTotal:        Number(data.total_amount ?? 0),
+      optimizerTotal:   data.optimizer_total_amount != null ? Number(data.optimizer_total_amount) : null,
+      pricingMethod:    (data.pricing_method as PricingMethod) ?? 'sqft',
+      optimizerIsStale: data.optimizer_is_stale === true,
+    });
+  }, [quotationId]);
+
+  // On mount: fetch header + runs + auto-load active run.
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      await refreshRunsList();
+      await Promise.all([refreshRunsList(), refreshHeader()]);
       if (cancelled) return;
       const state = useStore.getState();
       if (state.activeRunId) {
@@ -66,9 +110,9 @@ export function QuotationOptimizerTab({ quotationId, totalCabinetsCount }: Props
       }
     })();
     return () => { cancelled = true; };
-  }, [quotationId, refreshRunsList, loadRun, useStore]);
+  }, [quotationId, refreshRunsList, refreshHeader, loadRun, useStore]);
 
-  // Pick the result to display: pending (unsaved) takes precedence over loaded.
+  // Pick result to display: pending (unsaved) > loaded active.
   const displayResult: OptimizationResult | null =
     pendingResult ?? loadedRun?.result ?? null;
 
@@ -76,7 +120,7 @@ export function QuotationOptimizerTab({ quotationId, totalCabinetsCount }: Props
     ? displayResult.boards[Math.min(selectedBoardIdx, displayResult.boards.length - 1)]
     : null;
 
-  // Default the save name to something reasonable.
+  // Default save name
   const nextRunNumber = runs.length + 1;
   const defaultName = `Run #${nextRunNumber}`;
 
@@ -85,15 +129,64 @@ export function QuotationOptimizerTab({ quotationId, totalCabinetsCount }: Props
     try {
       await saveAsRun(name);
       setSaveName('');
-    } catch {
-      /* error is surfaced via lastError in the header */
+      await refreshHeader();
+    } catch { /* surfaced via lastError */ }
+  }
+
+  async function handleSetActive(runId: string) {
+    await setActive(runId);
+    await refreshHeader();
+  }
+
+  async function handleDeleteRun(runId: string) {
+    await deleteRun(runId);
+    await refreshHeader();
+  }
+
+  async function handlePricingMethodChange(next: PricingMethod) {
+    // Optimistic UI
+    setHeader((h) => ({ ...h, pricingMethod: next }));
+    const { error } = await supabase
+      .from('quotations')
+      .update({ pricing_method: next })
+      .eq('id', quotationId);
+    if (error) {
+      // Rollback
+      await refreshHeader();
+      alert(`Failed to switch pricing method: ${error.message}`);
     }
   }
 
+  async function handleStaleRerun() {
+    try {
+      await build();
+      await runOptimize();
+      // Auto-save as a new run (stale → fresh). User can rename later.
+      const state = useStore.getState();
+      if (state.pendingResult) {
+        const runNum = state.runs.length + 1;
+        await saveAsRun(`Re-run #${runNum}`);
+        await refreshHeader();
+      }
+    } catch { /* surfaced via lastError */ }
+  }
+
   // Reset board index when the result changes.
-  useEffect(() => {
-    setSelectedBoardIdx(0);
-  }, [displayResult]);
+  useEffect(() => { setSelectedBoardIdx(0); }, [displayResult]);
+
+  // Per-area breakdown rows (from the loaded run's snapshot).
+  const perAreaRows = useMemo(() => {
+    const attribution = loadedRun?.snapshot.areaAttribution ?? {};
+    return Object.entries(attribution).map(([areaId, v]) => ({
+      areaId,
+      areaName: areasById[areaId] ?? '(unknown area)',
+      m2: v.m2,
+      cost: v.cost,
+      boards: v.boards,
+    })).sort((a, b) => b.cost - a.cost);
+  }, [loadedRun, areasById]);
+
+  const canSelectOptimizer = activeRunId != null;
 
   return (
     <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 104px)' }}>
@@ -102,18 +195,28 @@ export function QuotationOptimizerTab({ quotationId, totalCabinetsCount }: Props
       <div className="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center gap-2 flex-wrap">
         <LayoutDashboard className="h-5 w-5 text-blue-600 shrink-0" />
         <span className="font-semibold text-slate-800 text-sm">Cut-list Pricing</span>
-        {activeRunId && (
-          <span className="text-xs text-slate-400">
-            Active: {runs.find((r) => r.id === activeRunId)?.name}
-          </span>
-        )}
-        {isStale && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-medium">
-            <AlertTriangle className="h-3 w-3" /> Stale — cabinets edited
-          </span>
+
+        <PricingMethodToggle
+          value={header.pricingMethod}
+          onChange={handlePricingMethodChange}
+          canSelectOptimizer={canSelectOptimizer}
+        />
+
+        {header.pricingMethod === 'optimizer' && header.optimizerIsStale && (
+          <StaleBadge onRerun={handleStaleRerun} />
         )}
 
         <div className="flex-1" />
+
+        <OptimizerVersionsList
+          runs={runs}
+          activeRunId={activeRunId}
+          onSetActive={handleSetActive}
+          onLoad={loadRun}
+          onRename={renameRun}
+          onDelete={handleDeleteRun}
+          onOpenCompare={() => setCompareOpen(true)}
+        />
 
         <Button
           variant="secondary"
@@ -162,7 +265,7 @@ export function QuotationOptimizerTab({ quotationId, totalCabinetsCount }: Props
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => refreshRunsList()}
+          onClick={() => { refreshRunsList(); refreshHeader(); }}
           className="flex items-center gap-1"
           title="Refresh runs list"
         >
@@ -175,6 +278,15 @@ export function QuotationOptimizerTab({ quotationId, totalCabinetsCount }: Props
           {lastError}
         </div>
       )}
+
+      {/* ── Comparison strip (ft² vs optimizer total) ─────── */}
+      <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+        <FtVsOptimizerComparisonCard
+          sqftTotal={header.sqftTotal}
+          optimizerTotal={header.optimizerTotal}
+          activeMethod={header.pricingMethod}
+        />
+      </div>
 
       {/* ── Warnings strip ────────────────────────────────── */}
       {(pendingWarnings.length > 0 || pendingCabSkipped.length > 0 || pendingPieces.length > 0) && (
@@ -214,6 +326,21 @@ export function QuotationOptimizerTab({ quotationId, totalCabinetsCount }: Props
           />
         </div>
       </div>
+
+      {/* ── Per-area breakdown below the optimizer panels ─── */}
+      {loadedRun && perAreaRows.length > 0 && (
+        <div className="px-4 py-4 border-t border-slate-200 bg-slate-50">
+          <PerAreaBoardsBreakdown rows={perAreaRows} />
+        </div>
+      )}
+
+      {/* ── Comparison modal ──────────────────────────────── */}
+      <OptimizerComparisonPanel
+        isOpen={compareOpen}
+        onClose={() => setCompareOpen(false)}
+        runs={runs}
+        activeRunId={activeRunId}
+      />
     </div>
   );
 }
