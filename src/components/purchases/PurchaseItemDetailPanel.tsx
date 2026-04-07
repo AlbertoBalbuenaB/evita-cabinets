@@ -48,8 +48,7 @@ export function PurchaseItemDetailPanel({
   const assignedId = item.assigned_to_member_id ?? estelaId ?? '';
 
   return (
-    // z-[200] ensures it renders above the sticky navbar (z-50)
-    <div className="fixed inset-0 z-[200] flex items-stretch justify-end">
+    <div className="fixed inset-0 flex items-stretch justify-end" style={{ zIndex: 9999 }}>
       {/* Backdrop */}
       <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-[1px]" />
 
