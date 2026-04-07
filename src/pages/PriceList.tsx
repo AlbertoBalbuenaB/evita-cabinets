@@ -185,7 +185,7 @@ export function PriceList() {
     setEditingItem(null);
   }
 
-  async function handleSaveItem(item: PriceListInsert) {
+  async function handleSaveItem(item: PriceListInsert, suppliers: ModalSupplier[]) {
     try {
       if (editingItem) {
         const updateData = {
@@ -228,9 +228,34 @@ export function PriceList() {
 
         if (error) throw error;
 
+        // Replace all supplier links
+        await supabase.from('price_list_suppliers').delete().eq('price_list_item_id', editingItem.id);
+        if (suppliers.length > 0) {
+          await supabase.from('price_list_suppliers').insert(
+            suppliers.map((s) => ({
+              price_list_item_id: editingItem.id,
+              supplier_id: s.supplier_id,
+              supplier_sku: s.supplier_sku || null,
+              supplier_price: s.supplier_price ? parseFloat(s.supplier_price) : null,
+              is_primary: s.is_primary,
+            }))
+          );
+        }
+
       } else {
-        const { error } = await supabase.from('price_list').insert([item]);
+        const { data: newItem, error } = await supabase.from('price_list').insert([item]).select().single();
         if (error) throw error;
+        if (newItem && suppliers.length > 0) {
+          await supabase.from('price_list_suppliers').insert(
+            suppliers.map((s) => ({
+              price_list_item_id: newItem.id,
+              supplier_id: s.supplier_id,
+              supplier_sku: s.supplier_sku || null,
+              supplier_price: s.supplier_price ? parseFloat(s.supplier_price) : null,
+              is_primary: s.is_primary,
+            }))
+          );
+        }
       }
 
       loadPriceList();
@@ -665,9 +690,18 @@ function ActionButton({ onClick, title, className, children }: {
   );
 }
 
+interface ModalSupplier {
+  id?: string;
+  supplier_id: string;
+  supplier_name: string;
+  supplier_sku: string;
+  supplier_price: string;
+  is_primary: boolean;
+}
+
 interface PriceListFormModalProps {
   item: PriceListItem | null;
-  onSave: (item: PriceListInsert) => void;
+  onSave: (item: PriceListInsert, suppliers: ModalSupplier[]) => void;
   onClose: () => void;
   existingTypes: string[];
 }
@@ -713,8 +747,33 @@ function PriceListFormModal({
   const [customTypes, setCustomTypes] = useState<string[]>([]);
   const [customUnits, setCustomUnits] = useState<string[]>([]);
 
+  // Suppliers
+  const [allSuppliers, setAllSuppliers] = useState<{ value: string; label: string }[]>([]);
+  const [localSuppliers, setLocalSuppliers] = useState<ModalSupplier[]>([]);
+  const [showAddSupplier, setShowAddSupplier] = useState(false);
+  const [supplierForm, setSupplierForm] = useState({ supplier_id: '', supplier_sku: '', supplier_price: '', is_primary: false });
+
   useEffect(() => {
     loadCustomOptions();
+    supabase.from('suppliers').select('id, name').eq('is_active', true).order('name').then(({ data }) => {
+      if (data) setAllSuppliers(data.map((s) => ({ value: s.id, label: s.name })));
+    });
+    if (item?.id) {
+      supabase.from('price_list_suppliers')
+        .select('*, supplier:suppliers(name)')
+        .eq('price_list_item_id', item.id)
+        .order('is_primary', { ascending: false })
+        .then(({ data }) => {
+          if (data) setLocalSuppliers(data.map((s: any) => ({
+            id: s.id,
+            supplier_id: s.supplier_id,
+            supplier_name: s.supplier?.name ?? '—',
+            supplier_sku: s.supplier_sku ?? '',
+            supplier_price: s.supplier_price?.toString() ?? '',
+            is_primary: s.is_primary,
+          })));
+        });
+    }
   }, []);
 
   useEffect(() => {
@@ -763,6 +822,21 @@ function PriceListFormModal({
     }
   }
 
+  function handleAddLocalSupplier() {
+    if (!supplierForm.supplier_id) return;
+    const name = allSuppliers.find((s) => s.value === supplierForm.supplier_id)?.label ?? '—';
+    const base = supplierForm.is_primary
+      ? localSuppliers.map((s) => ({ ...s, is_primary: false }))
+      : [...localSuppliers];
+    setLocalSuppliers([...base, { ...supplierForm, supplier_name: name }]);
+    setSupplierForm({ supplier_id: '', supplier_sku: '', supplier_price: '', is_primary: false });
+    setShowAddSupplier(false);
+  }
+
+  function handleRemoveLocalSupplier(idx: number) {
+    setLocalSuppliers((prev) => prev.filter((_, i) => i !== idx));
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const numOrNull = (s: string) => s.trim() !== '' ? parseFloat(s) : null;
@@ -779,7 +853,7 @@ function PriceListFormModal({
       stock_quantity: parseFloat(invData.stock_quantity) || 0,
       min_stock_level: parseFloat(invData.min_stock_level) || 0,
       stock_location: invData.stock_location || null,
-    });
+    }, localSuppliers);
   }
 
   const showImagePreview = !!(formData.image_url && formData.image_url.trim() && !imageError);
@@ -1021,6 +1095,103 @@ function PriceListFormModal({
               placeholder="e.g. Warehouse A, Shelf 3"
             />
           </div>
+        </div>
+
+        {/* Suppliers */}
+        <div className="border-t border-slate-100 pt-4">
+          <p className="text-sm font-semibold text-slate-700 mb-3">Suppliers</p>
+          {localSuppliers.length > 0 && (
+            <div className="overflow-x-auto mb-3">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200/60">
+                    <th className="text-left py-1.5 pr-2 font-medium text-slate-500">Supplier</th>
+                    <th className="text-left py-1.5 px-2 font-medium text-slate-500">SKU</th>
+                    <th className="text-right py-1.5 px-2 font-medium text-slate-500">Price</th>
+                    <th className="text-center py-1.5 px-2 font-medium text-slate-500">Primary</th>
+                    <th className="py-1.5 pl-2"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {localSuppliers.map((s, i) => (
+                    <tr key={i} className="border-b border-slate-100">
+                      <td className="py-1.5 pr-2 font-medium text-slate-700">{s.supplier_name}</td>
+                      <td className="py-1.5 px-2 font-mono text-slate-500">{s.supplier_sku || '—'}</td>
+                      <td className="py-1.5 px-2 text-right tabular-nums text-slate-700">
+                        {s.supplier_price ? formatCurrency(parseFloat(s.supplier_price)) : '—'}
+                      </td>
+                      <td className="py-1.5 px-2 text-center">
+                        {s.is_primary && (
+                          <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Primary</span>
+                        )}
+                      </td>
+                      <td className="py-1.5 pl-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveLocalSupplier(i)}
+                          className="p-1 text-slate-400 hover:text-red-500 rounded transition-colors"
+                          title="Remove"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {showAddSupplier ? (
+            <div className="space-y-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <AutocompleteSelect
+                label="Supplier"
+                required
+                options={allSuppliers}
+                value={supplierForm.supplier_id}
+                onChange={(v) => setSupplierForm((p) => ({ ...p, supplier_id: v }))}
+                placeholder="Select supplier..."
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Supplier SKU"
+                  value={supplierForm.supplier_sku}
+                  onChange={(e) => setSupplierForm((p) => ({ ...p, supplier_sku: e.target.value }))}
+                  placeholder="SKU-001"
+                />
+                <Input
+                  label="Purchase Price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={supplierForm.supplier_price}
+                  onChange={(e) => setSupplierForm((p) => ({ ...p, supplier_price: e.target.value }))}
+                  placeholder="0.00"
+                />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={supplierForm.is_primary}
+                  onChange={(e) => setSupplierForm((p) => ({ ...p, is_primary: e.target.checked }))}
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                Set as Primary Supplier
+              </label>
+              <div className="flex gap-2">
+                <Button type="button" size="sm" onClick={handleAddLocalSupplier}>Add</Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setShowAddSupplier(false)}>Cancel</Button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowAddSupplier(true)}
+              className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Supplier
+            </button>
+          )}
         </div>
 
         <div className="flex justify-end space-x-3 pt-2 border-t border-slate-100">

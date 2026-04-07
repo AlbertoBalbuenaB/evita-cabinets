@@ -4,14 +4,11 @@ import {
   ArrowLeft, Pencil as Edit2, ExternalLink, Tag, Layers, Ruler,
   Grid2x2 as Grid, Hash, Clock, TrendingUp, TrendingDown, Minus, Calendar,
   FileText, ImageOff, Image as ImageIcon, Package, MapPin, Star, Plus,
-  Trash2, Save, Box, Wrench, Link2
+  Wrench, Link2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { formatCurrency } from '../lib/calculations';
 import { supabase } from '../lib/supabase';
-import { useCurrentMember } from '../lib/useCurrentMember';
-import { Button } from '../components/Button';
-import { AutocompleteSelect } from '../components/AutocompleteSelect';
 import { InventoryMovementModal } from '../components/inventory/InventoryMovementModal';
 import { StockBadge } from '../components/inventory/StockBadge';
 import type {
@@ -82,41 +79,15 @@ const MOVEMENT_TYPE_STYLES: Record<string, string> = {
 export function PriceListItem() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { member } = useCurrentMember();
   const [item, setItem] = useState<PriceListItemType | null>(null);
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState<PriceChangeEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [imgError, setImgError] = useState(false);
 
-  // Technical info editable state
-  const [techFields, setTechFields] = useState({
-    technical_width_mm: '',
-    technical_height_mm: '',
-    technical_depth_mm: '',
-    technical_thickness_mm: '',
-    weight: '',
-    weight_unit: 'kg',
-    technical_material: '',
-    technical_finish: '',
-  });
-
-  // Inventory editable state
-  const [invFields, setInvFields] = useState({
-    stock_quantity: '',
-    min_stock_level: '',
-    stock_location: '',
-  });
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [recentMovements, setRecentMovements] = useState<InventoryMovementWithDetails[]>([]);
-
-  // Suppliers state
   const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
-  const [allSuppliers, setAllSuppliers] = useState<{ value: string; label: string }[]>([]);
-  const [showLinkForm, setShowLinkForm] = useState(false);
-  const [editingSupplierRow, setEditingSupplierRow] = useState<SupplierRow | null>(null);
-  const [linkForm, setLinkForm] = useState({ supplier_id: '', supplier_sku: '', supplier_price: '', is_primary: false });
-  const [linkSaving, setLinkSaving] = useState(false);
 
   const loadItem = useCallback(async () => {
     if (!id) { navigate('/prices', { replace: true }); return; }
@@ -125,23 +96,6 @@ export function PriceListItem() {
     if (error || !data) { navigate('/prices', { replace: true }); return; }
     setItem(data);
     setLoading(false);
-
-    // Sync editable fields
-    setTechFields({
-      technical_width_mm: data.technical_width_mm?.toString() ?? '',
-      technical_height_mm: data.technical_height_mm?.toString() ?? '',
-      technical_depth_mm: data.technical_depth_mm?.toString() ?? '',
-      technical_thickness_mm: data.technical_thickness_mm?.toString() ?? '',
-      weight: data.weight?.toString() ?? '',
-      weight_unit: data.weight_unit ?? 'kg',
-      technical_material: data.technical_material ?? '',
-      technical_finish: data.technical_finish ?? '',
-    });
-    setInvFields({
-      stock_quantity: data.stock_quantity?.toString() ?? '0',
-      min_stock_level: data.min_stock_level?.toString() ?? '0',
-      stock_location: data.stock_location ?? '',
-    });
   }, [id, navigate]);
 
   const loadHistory = useCallback(async () => {
@@ -178,73 +132,12 @@ export function PriceListItem() {
     setSuppliers((data as SupplierRow[]) || []);
   }, [id]);
 
-  const loadAllSuppliers = useCallback(async () => {
-    const { data } = await supabase.from('suppliers').select('id, name').eq('is_active', true).order('name');
-    if (data) setAllSuppliers(data.map((s) => ({ value: s.id, label: s.name })));
-  }, []);
-
   useEffect(() => {
     loadItem();
     loadHistory();
     loadMovements();
     loadSuppliers();
-    loadAllSuppliers();
-  }, [loadItem, loadHistory, loadMovements, loadSuppliers, loadAllSuppliers]);
-
-  async function saveTechField(field: string) {
-    if (!item) return;
-    const numFields = ['technical_width_mm', 'technical_height_mm', 'technical_depth_mm', 'technical_thickness_mm', 'weight'];
-    const raw = techFields[field as keyof typeof techFields];
-    const value = numFields.includes(field) ? (raw ? parseFloat(raw) : null) : (raw || null);
-    const { error } = await supabase.from('price_list').update({ [field]: value }).eq('id', item.id);
-    if (!error) setItem((prev) => prev ? { ...prev, [field]: value } : prev);
-  }
-
-  async function saveInvField(field: string) {
-    if (!item) return;
-    const raw = invFields[field as keyof typeof invFields];
-    const value = field === 'stock_location' ? (raw || null) : (parseFloat(raw) || 0);
-    const { error } = await supabase.from('price_list').update({ [field]: value }).eq('id', item.id);
-    if (!error) setItem((prev) => prev ? { ...prev, [field]: value } : prev);
-  }
-
-  async function handleLinkSupplier(e: React.FormEvent) {
-    e.preventDefault();
-    if (!id || !linkForm.supplier_id) return;
-    setLinkSaving(true);
-    try {
-      if (editingSupplierRow) {
-        const { error } = await supabase.from('price_list_suppliers').update({
-          supplier_sku: linkForm.supplier_sku || null,
-          supplier_price: linkForm.supplier_price ? parseFloat(linkForm.supplier_price) : null,
-          is_primary: linkForm.is_primary,
-        }).eq('id', editingSupplierRow.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('price_list_suppliers').insert({
-          price_list_item_id: id,
-          supplier_id: linkForm.supplier_id,
-          supplier_sku: linkForm.supplier_sku || null,
-          supplier_price: linkForm.supplier_price ? parseFloat(linkForm.supplier_price) : null,
-          is_primary: linkForm.is_primary,
-        });
-        if (error) throw error;
-      }
-      setShowLinkForm(false);
-      setEditingSupplierRow(null);
-      setLinkForm({ supplier_id: '', supplier_sku: '', supplier_price: '', is_primary: false });
-      loadSuppliers();
-    } catch (err: any) {
-      alert(err.message || 'Failed to save supplier.');
-    } finally {
-      setLinkSaving(false);
-    }
-  }
-
-  async function removeSupplier(supplierId: string) {
-    const { error } = await supabase.from('price_list_suppliers').delete().eq('id', supplierId);
-    if (!error) loadSuppliers();
-  }
+  }, [loadItem, loadHistory, loadMovements, loadSuppliers]);
 
   if (loading || !item) {
     return (
@@ -345,79 +238,20 @@ export function PriceListItem() {
 
           {/* Section 3: Technical Information */}
           <SectionCard icon={<Wrench className="h-4 w-4" />} title="Technical Information">
-            <div className="grid grid-cols-2 gap-3">
-              {([
-                { key: 'technical_width_mm', label: 'Width (mm)' },
-                { key: 'technical_height_mm', label: 'Height (mm)' },
-                { key: 'technical_depth_mm', label: 'Depth (mm)' },
-                { key: 'technical_thickness_mm', label: 'Thickness (mm)' },
-              ] as const).map(({ key, label }) => (
-                <div key={key}>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={techFields[key]}
-                    onChange={(e) => setTechFields((p) => ({ ...p, [key]: e.target.value }))}
-                    onBlur={() => saveTechField(key)}
-                    className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white/80 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                    placeholder="—"
-                  />
-                </div>
-              ))}
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Weight</label>
-                <div className="flex gap-1">
-                  <input
-                    type="number"
-                    step="any"
-                    value={techFields.weight}
-                    onChange={(e) => setTechFields((p) => ({ ...p, weight: e.target.value }))}
-                    onBlur={() => saveTechField('weight')}
-                    className="flex-1 px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white/80 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                    placeholder="—"
-                  />
-                  <select
-                    value={techFields.weight_unit}
-                    onChange={(e) => {
-                      setTechFields((p) => ({ ...p, weight_unit: e.target.value }));
-                      // save immediately
-                      supabase.from('price_list').update({ weight_unit: e.target.value }).eq('id', item.id).then(() => {
-                        setItem((prev) => prev ? { ...prev, weight_unit: e.target.value } : prev);
-                      });
-                    }}
-                    className="px-2 py-1.5 text-sm border border-slate-200 rounded-lg bg-white/80 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                  >
-                    <option value="kg">kg</option>
-                    <option value="g">g</option>
-                    <option value="lb">lb</option>
-                    <option value="oz">oz</option>
-                  </select>
-                </div>
+            {!item.technical_width_mm && !item.technical_height_mm && !item.technical_depth_mm &&
+             !item.technical_thickness_mm && !item.weight && !item.technical_material && !item.technical_finish ? (
+              <p className="text-sm text-slate-400 py-2">No technical specifications added yet.</p>
+            ) : (
+              <div className="divide-y divide-slate-200/40">
+                {item.technical_width_mm != null && <DetailRow icon={<Ruler className="h-4 w-4" />} label="Width" value={`${item.technical_width_mm} mm`} />}
+                {item.technical_height_mm != null && <DetailRow icon={<Ruler className="h-4 w-4" />} label="Height" value={`${item.technical_height_mm} mm`} />}
+                {item.technical_depth_mm != null && <DetailRow icon={<Ruler className="h-4 w-4" />} label="Depth" value={`${item.technical_depth_mm} mm`} />}
+                {item.technical_thickness_mm != null && <DetailRow icon={<Ruler className="h-4 w-4" />} label="Thickness" value={`${item.technical_thickness_mm} mm`} />}
+                {item.weight != null && <DetailRow icon={<Package className="h-4 w-4" />} label="Weight" value={`${item.weight} ${item.weight_unit ?? 'kg'}`} />}
+                {item.technical_material && <DetailRow icon={<Layers className="h-4 w-4" />} label="Material" value={item.technical_material} />}
+                {item.technical_finish && <DetailRow icon={<Wrench className="h-4 w-4" />} label="Finish" value={item.technical_finish} />}
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Material</label>
-                <input
-                  type="text"
-                  value={techFields.technical_material}
-                  onChange={(e) => setTechFields((p) => ({ ...p, technical_material: e.target.value }))}
-                  onBlur={() => saveTechField('technical_material')}
-                  className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white/80 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                  placeholder="—"
-                />
-              </div>
-              <div className="col-span-2">
-                <label className="block text-xs font-medium text-slate-400 mb-1">Finish</label>
-                <input
-                  type="text"
-                  value={techFields.technical_finish}
-                  onChange={(e) => setTechFields((p) => ({ ...p, technical_finish: e.target.value }))}
-                  onBlur={() => saveTechField('technical_finish')}
-                  className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white/80 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                  placeholder="—"
-                />
-              </div>
-            </div>
+            )}
           </SectionCard>
 
           {/* Product Link */}
@@ -524,40 +358,23 @@ export function PriceListItem() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Current Stock</label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={invFields.stock_quantity}
-                    onChange={(e) => setInvFields((p) => ({ ...p, stock_quantity: e.target.value }))}
-                    onBlur={() => saveInvField('stock_quantity')}
-                    className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white/80 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                  />
-                  <p className="mt-0.5 text-xs text-slate-400">Use movements for accurate tracking</p>
+                  <p className="text-xs font-medium text-slate-400 mb-1">Current Stock</p>
+                  <p className="text-sm font-semibold text-slate-800">{item.stock_quantity ?? 0}</p>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Min Stock Level</label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={invFields.min_stock_level}
-                    onChange={(e) => setInvFields((p) => ({ ...p, min_stock_level: e.target.value }))}
-                    onBlur={() => saveInvField('min_stock_level')}
-                    className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white/80 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                  />
+                  <p className="text-xs font-medium text-slate-400 mb-1">Min Stock Level</p>
+                  <p className="text-sm text-slate-700">{item.min_stock_level ?? 0}</p>
                 </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Location</label>
-                <input
-                  type="text"
-                  value={invFields.stock_location}
-                  onChange={(e) => setInvFields((p) => ({ ...p, stock_location: e.target.value }))}
-                  onBlur={() => saveInvField('stock_location')}
-                  className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white/80 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                  placeholder="e.g. Warehouse A, Shelf 3"
-                />
-              </div>
+              {item.stock_location && (
+                <div>
+                  <p className="text-xs font-medium text-slate-400 mb-1">Location</p>
+                  <p className="text-sm text-slate-700 flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                    {item.stock_location}
+                  </p>
+                </div>
+              )}
               <div className="flex items-center gap-4 text-sm">
                 <div>
                   <span className="text-xs text-slate-400">Weighted Avg. Cost</span>
@@ -621,151 +438,41 @@ export function PriceListItem() {
 
           {/* Section 6: Suppliers */}
           <SectionCard icon={<Link2 className="h-4 w-4" />} title="Suppliers">
-            <div className="space-y-3">
-              {suppliers.length === 0 && !showLinkForm && (
-                <p className="text-sm text-slate-400 py-2">No suppliers linked yet.</p>
-              )}
-
-              {suppliers.length > 0 && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-200/40">
-                        <th className="text-left py-1.5 pr-2 font-medium text-slate-400">Supplier</th>
-                        <th className="text-left py-1.5 px-2 font-medium text-slate-400">SKU</th>
-                        <th className="text-right py-1.5 px-2 font-medium text-slate-400">Price</th>
-                        <th className="text-center py-1.5 px-2 font-medium text-slate-400">Primary</th>
-                        <th className="text-center py-1.5 pl-2 font-medium text-slate-400"></th>
+            {suppliers.length === 0 ? (
+              <p className="text-sm text-slate-400 py-2">No suppliers linked.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200/40">
+                      <th className="text-left py-1.5 pr-2 font-medium text-slate-400">Supplier</th>
+                      <th className="text-left py-1.5 px-2 font-medium text-slate-400">SKU</th>
+                      <th className="text-right py-1.5 px-2 font-medium text-slate-400">Price</th>
+                      <th className="text-center py-1.5 pl-2 font-medium text-slate-400">Primary</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {suppliers.map((s) => (
+                      <tr key={s.id}>
+                        <td className="py-1.5 pr-2 text-slate-700 font-medium">{s.supplier?.name ?? '—'}</td>
+                        <td className="py-1.5 px-2 text-slate-500 font-mono">{s.supplier_sku ?? '—'}</td>
+                        <td className="py-1.5 px-2 text-right tabular-nums text-slate-700">
+                          {s.supplier_price != null ? formatCurrency(s.supplier_price) : '—'}
+                        </td>
+                        <td className="py-1.5 pl-2 text-center">
+                          {s.is_primary && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                              <Star className="h-3 w-3" />
+                              Primary
+                            </span>
+                          )}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {suppliers.map((s) => (
-                        <tr key={s.id}>
-                          <td className="py-1.5 pr-2 text-slate-700 font-medium">{s.supplier?.name ?? '—'}</td>
-                          <td className="py-1.5 px-2 text-slate-500 font-mono">{s.supplier_sku ?? '—'}</td>
-                          <td className="py-1.5 px-2 text-right tabular-nums text-slate-700">
-                            {s.supplier_price != null ? formatCurrency(s.supplier_price) : '—'}
-                          </td>
-                          <td className="py-1.5 px-2 text-center">
-                            {s.is_primary && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                                <Star className="h-3 w-3" />
-                                Primary
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-1.5 pl-2 text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              <button
-                                onClick={() => {
-                                  setEditingSupplierRow(s);
-                                  setLinkForm({
-                                    supplier_id: s.supplier_id,
-                                    supplier_sku: s.supplier_sku ?? '',
-                                    supplier_price: s.supplier_price?.toString() ?? '',
-                                    is_primary: s.is_primary,
-                                  });
-                                  setShowLinkForm(true);
-                                }}
-                                className="p-1 text-slate-400 hover:text-blue-500 transition-colors rounded"
-                                title="Edit"
-                              >
-                                <Edit2 className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                onClick={() => removeSupplier(s.id)}
-                                className="p-1 text-slate-400 hover:text-red-500 transition-colors rounded"
-                                title="Remove"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {showLinkForm ? (
-                <form onSubmit={handleLinkSupplier} className="space-y-3 p-3 bg-white/60 rounded-lg border border-slate-200/40">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    {editingSupplierRow ? 'Edit Supplier' : 'Link Supplier'}
-                  </p>
-                  {editingSupplierRow ? (
-                    <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1">Supplier</label>
-                      <div className="px-3 py-1.5 text-sm bg-slate-100 rounded-lg text-slate-700 font-medium">
-                        {editingSupplierRow.supplier?.name ?? '—'}
-                      </div>
-                    </div>
-                  ) : (
-                    <AutocompleteSelect
-                      label="Supplier"
-                      required
-                      options={allSuppliers}
-                      value={linkForm.supplier_id}
-                      onChange={(v) => setLinkForm((p) => ({ ...p, supplier_id: v }))}
-                      placeholder="Select supplier..."
-                    />
-                  )}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1">Supplier SKU</label>
-                      <input
-                        type="text"
-                        value={linkForm.supplier_sku}
-                        onChange={(e) => setLinkForm((p) => ({ ...p, supplier_sku: e.target.value }))}
-                        className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white/80 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                        placeholder="SKU"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1">Purchase Price</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={linkForm.supplier_price}
-                        onChange={(e) => setLinkForm((p) => ({ ...p, supplier_price: e.target.value }))}
-                        className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white/80 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={linkForm.is_primary}
-                      onChange={(e) => setLinkForm((p) => ({ ...p, is_primary: e.target.checked }))}
-                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-slate-600">Set as Primary Supplier</span>
-                  </label>
-                  <div className="flex gap-2">
-                    <Button type="submit" size="sm" disabled={linkSaving}>
-                      {linkSaving ? 'Saving...' : editingSupplierRow ? 'Save Changes' : 'Link Supplier'}
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => {
-                      setShowLinkForm(false);
-                      setEditingSupplierRow(null);
-                      setLinkForm({ supplier_id: '', supplier_sku: '', supplier_price: '', is_primary: false });
-                    }}>
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              ) : (
-                <button
-                  onClick={() => setShowLinkForm(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Link Supplier
-                </button>
-              )}
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </SectionCard>
 
           {/* Metadata */}
