@@ -205,6 +205,19 @@ export function PriceList() {
           product_url: item.product_url || null,
           image_url: item.image_url || null,
           notes: item.notes || null,
+          // Technical Information
+          technical_width_mm: item.technical_width_mm ?? null,
+          technical_height_mm: item.technical_height_mm ?? null,
+          technical_depth_mm: item.technical_depth_mm ?? null,
+          technical_thickness_mm: item.technical_thickness_mm ?? null,
+          weight: item.weight ?? null,
+          weight_unit: item.weight_unit ?? 'kg',
+          technical_material: item.technical_material ?? null,
+          technical_finish: item.technical_finish ?? null,
+          // Inventory
+          stock_quantity: item.stock_quantity ?? 0,
+          min_stock_level: item.min_stock_level ?? 0,
+          stock_location: item.stock_location ?? null,
           updated_at: new Date().toISOString(),
         };
 
@@ -679,6 +692,23 @@ function PriceListFormModal({
     notes: item?.notes || '',
   });
 
+  const [techData, setTechData] = useState({
+    technical_width_mm: item?.technical_width_mm?.toString() ?? '',
+    technical_height_mm: item?.technical_height_mm?.toString() ?? '',
+    technical_depth_mm: item?.technical_depth_mm?.toString() ?? '',
+    technical_thickness_mm: item?.technical_thickness_mm?.toString() ?? '',
+    weight: item?.weight?.toString() ?? '',
+    weight_unit: item?.weight_unit ?? 'kg',
+    technical_material: item?.technical_material ?? '',
+    technical_finish: item?.technical_finish ?? '',
+  });
+
+  const [invData, setInvData] = useState({
+    stock_quantity: item?.stock_quantity?.toString() ?? '0',
+    min_stock_level: item?.min_stock_level?.toString() ?? '0',
+    stock_location: item?.stock_location ?? '',
+  });
+
   const [imageError, setImageError] = useState(false);
   const [customTypes, setCustomTypes] = useState<string[]>([]);
   const [customUnits, setCustomUnits] = useState<string[]>([]);
@@ -735,7 +765,21 @@ function PriceListFormModal({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSave(formData);
+    const numOrNull = (s: string) => s.trim() !== '' ? parseFloat(s) : null;
+    onSave({
+      ...formData,
+      technical_width_mm: numOrNull(techData.technical_width_mm),
+      technical_height_mm: numOrNull(techData.technical_height_mm),
+      technical_depth_mm: numOrNull(techData.technical_depth_mm),
+      technical_thickness_mm: numOrNull(techData.technical_thickness_mm),
+      weight: numOrNull(techData.weight),
+      weight_unit: techData.weight_unit || 'kg',
+      technical_material: techData.technical_material || null,
+      technical_finish: techData.technical_finish || null,
+      stock_quantity: parseFloat(invData.stock_quantity) || 0,
+      min_stock_level: parseFloat(invData.min_stock_level) || 0,
+      stock_location: invData.stock_location || null,
+    });
   }
 
   const showImagePreview = !!(formData.image_url && formData.image_url.trim() && !imageError);
@@ -744,8 +788,8 @@ function PriceListFormModal({
     <Modal
       isOpen={true}
       onClose={onClose}
-      title={item ? 'Edit Price List Item' : 'Add New Price List Item'}
-      size="lg"
+      title={item ? 'Edit Inventory Item' : 'Add New Inventory Item'}
+      size="xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -883,6 +927,100 @@ function PriceListFormModal({
             placeholder="Add any relevant notes, observations, or supplier details..."
             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           />
+        </div>
+
+        {/* Technical Information */}
+        <div className="border-t border-slate-100 pt-4">
+          <p className="text-sm font-semibold text-slate-700 mb-3">Technical Information</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {([
+              { key: 'technical_width_mm', label: 'Width (mm)' },
+              { key: 'technical_height_mm', label: 'Height (mm)' },
+              { key: 'technical_depth_mm', label: 'Depth (mm)' },
+              { key: 'technical_thickness_mm', label: 'Thickness (mm)' },
+            ] as const).map(({ key, label }) => (
+              <Input
+                key={key}
+                label={label}
+                type="number"
+                step="any"
+                min="0"
+                value={techData[key]}
+                onChange={(e) => setTechData((p) => ({ ...p, [key]: e.target.value }))}
+                placeholder="—"
+              />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Weight</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  value={techData.weight}
+                  onChange={(e) => setTechData((p) => ({ ...p, weight: e.target.value }))}
+                  placeholder="—"
+                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <select
+                  value={techData.weight_unit}
+                  onChange={(e) => setTechData((p) => ({ ...p, weight_unit: e.target.value }))}
+                  className="px-2 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                  <option value="lb">lb</option>
+                  <option value="oz">oz</option>
+                </select>
+              </div>
+            </div>
+            <Input
+              label="Material"
+              value={techData.technical_material}
+              onChange={(e) => setTechData((p) => ({ ...p, technical_material: e.target.value }))}
+              placeholder="e.g. MDF, Steel, PVC"
+            />
+            <Input
+              label="Finish"
+              value={techData.technical_finish}
+              onChange={(e) => setTechData((p) => ({ ...p, technical_finish: e.target.value }))}
+              placeholder="e.g. Matte, Glossy"
+            />
+          </div>
+        </div>
+
+        {/* Inventory */}
+        <div className="border-t border-slate-100 pt-4">
+          <p className="text-sm font-semibold text-slate-700 mb-1">Inventory</p>
+          <p className="text-xs text-slate-400 mb-3">
+            {item ? 'Directly editing stock is for corrections. Use "Record Movement" on the item page for accurate tracking.' : 'Set the initial stock for this item.'}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Input
+              label="Current Stock"
+              type="number"
+              step="any"
+              min="0"
+              value={invData.stock_quantity}
+              onChange={(e) => setInvData((p) => ({ ...p, stock_quantity: e.target.value }))}
+            />
+            <Input
+              label="Min Stock Level"
+              type="number"
+              step="any"
+              min="0"
+              value={invData.min_stock_level}
+              onChange={(e) => setInvData((p) => ({ ...p, min_stock_level: e.target.value }))}
+            />
+            <Input
+              label="Location"
+              value={invData.stock_location}
+              onChange={(e) => setInvData((p) => ({ ...p, stock_location: e.target.value }))}
+              placeholder="e.g. Warehouse A, Shelf 3"
+            />
+          </div>
         </div>
 
         <div className="flex justify-end space-x-3 pt-2 border-t border-slate-100">
