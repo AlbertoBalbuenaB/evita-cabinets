@@ -44,6 +44,7 @@ import { OptimizerComparisonPanel } from './OptimizerComparisonPanel';
 import { PricingMethodToggle } from './PricingMethodToggle';
 import { FtVsOptimizerComparisonCard } from './FtVsOptimizerComparisonCard';
 import { PerAreaBoardsBreakdown } from './PerAreaBoardsBreakdown';
+import { CutListDetailPanel } from './CutListDetailPanel';
 import { StaleBadge } from './StaleBadge';
 import type { OptimizationResult } from '../../../lib/optimizer/types';
 import type { PricingMethod } from '../../../types';
@@ -94,15 +95,16 @@ export function QuotationOptimizerTab({
   const isBuilding        = useStore((s) => s.isBuilding);
   const isOptimizing      = useStore((s) => s.isOptimizing);
   const isSaving          = useStore((s) => s.isSaving);
-  const lastError         = useStore((s) => s.lastError);
-  const pendingResult     = useStore((s) => s.pendingResult);
-  const pendingPieces     = useStore((s) => s.pendingPieces);
-  const pendingWarnings   = useStore((s) => s.pendingWarnings);
-  const pendingCabCovered = useStore((s) => s.pendingCabinetsCovered);
-  const pendingCabSkipped = useStore((s) => s.pendingCabinetsSkipped);
-  const loadedRun         = useStore((s) => s.loadedRun);
-  const runs              = useStore((s) => s.runs);
-  const activeRunId       = useStore((s) => s.activeRunId);
+  const lastError          = useStore((s) => s.lastError);
+  const pendingResult      = useStore((s) => s.pendingResult);
+  const pendingPieces      = useStore((s) => s.pendingPieces);
+  const pendingWarnings    = useStore((s) => s.pendingWarnings);
+  const pendingCabCovered  = useStore((s) => s.pendingCabinetsCovered);
+  const pendingCabSkipped  = useStore((s) => s.pendingCabinetsSkipped);
+  const pendingCabinetDetails = useStore((s) => s.pendingCabinetDetails);
+  const loadedRun          = useStore((s) => s.loadedRun);
+  const runs               = useStore((s) => s.runs);
+  const activeRunId        = useStore((s) => s.activeRunId);
 
   // Actions
   const refreshRunsList = useStore((s) => s.refreshRunsList);
@@ -260,6 +262,39 @@ export function QuotationOptimizerTab({
     })).sort((a, b) => b.cost - a.cost);
   }, [loadedRun, areasById]);
 
+  // Source of truth for the cut-list detail panel: prefer the pending build
+  // (the user's current editing session); fall back to the loaded run's
+  // snapshot so users auditing an old run still see its despiece.
+  // When falling back, `cabinetDetails` is reconstructed from the snapshot
+  // pieces' tags — we have cabinetId, areaId and the per-piece `area`
+  // string, but we don't know productSku or quantity, so the labels are
+  // slightly degraded (no SKU, no ×qty suffix). That's the documented
+  // limitation in the plan.
+  const cutListSource = useMemo(() => {
+    if (pendingPieces.length > 0) {
+      return { pieces: pendingPieces, cabinetDetails: pendingCabinetDetails };
+    }
+    if (loadedRun) {
+      const derived: Record<string, {
+        productSku: string | null;
+        quantity: number;
+        areaId: string;
+        areaName: string;
+      }> = {};
+      for (const p of loadedRun.snapshot.pieces) {
+        if (!p.cabinetId || derived[p.cabinetId]) continue;
+        derived[p.cabinetId] = {
+          productSku: null,
+          quantity: 1,
+          areaId: p.areaId ?? '',
+          areaName: p.area ?? '(unknown area)',
+        };
+      }
+      return { pieces: loadedRun.snapshot.pieces, cabinetDetails: derived };
+    }
+    return null;
+  }, [pendingPieces, pendingCabinetDetails, loadedRun]);
+
   const canSelectOptimizer = activeRunId != null;
 
   return (
@@ -402,6 +437,16 @@ export function QuotationOptimizerTab({
       </div>
 
       {/* ── Per-area breakdown below the optimizer panels ─── */}
+      {/* ── Cut-list detail panel ─────────────────────────── */}
+      {cutListSource && cutListSource.pieces.length > 0 && (
+        <div className="px-4 py-4 border-t border-slate-200 bg-slate-50">
+          <CutListDetailPanel
+            pieces={cutListSource.pieces}
+            cabinetDetails={cutListSource.cabinetDetails}
+          />
+        </div>
+      )}
+
       {loadedRun && perAreaRows.length > 0 && (
         <div className="px-4 py-4 border-t border-slate-200 bg-slate-50">
           <PerAreaBoardsBreakdown rows={perAreaRows} />

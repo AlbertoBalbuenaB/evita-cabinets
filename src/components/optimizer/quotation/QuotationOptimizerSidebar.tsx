@@ -21,20 +21,21 @@ interface Props {
  * per-quotation Zustand store passed in as a prop.
  */
 export function QuotationOptimizerSidebar({ useStore }: Props) {
-  const pendingPieces        = useStore((s) => s.pendingPieces);
-  const pendingStocks        = useStore((s) => s.pendingStocks);
-  const pendingEbConfig      = useStore((s) => s.pendingEbConfig);
-  const pendingBuiltAt       = useStore((s) => s.pendingBuiltAt);
-  const globalSierra         = useStore((s) => s.globalSierra);
-  const minOffcut            = useStore((s) => s.minOffcut);
-  const boardTrim            = useStore((s) => s.boardTrim);
-  const trimIncludesKerf     = useStore((s) => s.trimIncludesKerf);
-  const setGlobalSierra      = useStore((s) => s.setGlobalSierra);
-  const setMinOffcut         = useStore((s) => s.setMinOffcut);
-  const setBoardTrim         = useStore((s) => s.setBoardTrim);
-  const setTrimIncludesKerf  = useStore((s) => s.setTrimIncludesKerf);
-  const clearPending         = useStore((s) => s.clearPending);
-  const refreshStocks        = useStore((s) => s.refreshStocks);
+  const pendingPieces              = useStore((s) => s.pendingPieces);
+  const pendingStocks              = useStore((s) => s.pendingStocks);
+  const pendingEbConfig            = useStore((s) => s.pendingEbConfig);
+  const pendingBuiltAt             = useStore((s) => s.pendingBuiltAt);
+  const pendingCabinetInstanceCount = useStore((s) => s.pendingCabinetInstanceCount);
+  const globalSierra               = useStore((s) => s.globalSierra);
+  const minOffcut                  = useStore((s) => s.minOffcut);
+  const boardTrim                  = useStore((s) => s.boardTrim);
+  const trimIncludesKerf           = useStore((s) => s.trimIncludesKerf);
+  const setGlobalSierra            = useStore((s) => s.setGlobalSierra);
+  const setMinOffcut               = useStore((s) => s.setMinOffcut);
+  const setBoardTrim               = useStore((s) => s.setBoardTrim);
+  const setTrimIncludesKerf        = useStore((s) => s.setTrimIncludesKerf);
+  const clearPending               = useStore((s) => s.clearPending);
+  const refreshStocks              = useStore((s) => s.refreshStocks);
 
   const [refreshingStocks, setRefreshingStocks] = useState(false);
 
@@ -67,7 +68,8 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
           {pendingBuiltAt ? (
             <div className="text-xs space-y-1 text-slate-600">
               <div className="flex justify-between"><span>Pieces</span><span className="font-mono tabular-nums">{totalPieceCount}</span></div>
-              <div className="flex justify-between"><span>Cabinets</span><span className="font-mono tabular-nums">{uniqueCabinets}</span></div>
+              <div className="flex justify-between"><span>Cabinet types</span><span className="font-mono tabular-nums">{uniqueCabinets}</span></div>
+              <div className="flex justify-between"><span>Cabinet units</span><span className="font-mono tabular-nums">{pendingCabinetInstanceCount}</span></div>
               <div className="flex justify-between"><span>Areas</span><span className="font-mono tabular-nums">{uniqueAreas}</span></div>
               <div className="text-[10px] text-slate-400 mt-1">Built {formatRelative(pendingBuiltAt)}</div>
             </div>
