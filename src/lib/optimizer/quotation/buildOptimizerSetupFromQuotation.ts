@@ -1,0 +1,377 @@
+/**
+ * Build an optimizer setup (pieces + stocks + eb config) from a quotation.
+ *
+ * Reads all area_cabinets belonging to the quotation, pulls their cut_pieces
+ * from products_catalog, resolves each piece's material to the corresponding
+ * price_list row via the cabinet's box/doors/back_panel material FKs, then
+ * assembles the Pieza[] + StockSize[] + EbConfig tuple that feeds the
+ * optimizer engine.
+ *
+ * This is the main entry point for Phase 3 of the optimizer-pricing
+ * implementation (plan §3). Pure I/O function — no state mutation other
+ * than the Supabase reads.
+ *
+ * Key design decisions:
+ * - Cabinets without cut_pieces are skipped (D2 mixed mode) and listed in
+ *   `cabinetsSkipped` so the caller can fall back to ft² pricing for them.
+ * - Materials missing technical info fall back to a 2440×1220 mm board
+ *   with a warning (D1).
+ * - Edge banding is limited to 3 slots (a/b/c) mapped to the 3 distinct
+ *   edgeband price_list ids referenced by the cabinets. Extra edgebands
+ *   are rolled into slot c with a warning.
+ * - Legacy `'cuerpo'`-tagged Back Panels (pre-Phase-1 templates) keep
+ *   working: if `back_panel_material_id` is set and the piece name matches
+ *   /back/i, it's routed to the back material.
+ */
+
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Pieza, StockSize, EbConfig, EbTypeConfig } from '../types';
+import type { CutPiece, Cubrecanto } from '../../../types';
+import type { Database } from '../../database.types';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** D1 fallback when a material has no technical_width/height_mm. */
+const FALLBACK_BOARD_WIDTH_MM = 2440;
+const FALLBACK_BOARD_HEIGHT_MM = 1220;
+const FALLBACK_THICKNESS_MM = 18;
+const DEFAULT_KERF_MM = 3.2;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Public types
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface BuildResult {
+  pieces: Pieza[];
+  stocks: StockSize[];
+  ebConfig: EbConfig;
+  /** Which price_list id each EbConfig slot maps to (for cost calc). */
+  ebSlotToPriceListId: Record<'a' | 'b' | 'c', string | null>;
+  /** Human-readable warnings surfaced to the UI. */
+  warnings: string[];
+  /** Cabinet ids that generated pieces (for subtotal substitution later). */
+  cabinetsCovered: Set<string>;
+  /** Cabinet ids skipped (e.g. no cut_pieces) — fall back to ft² pricing. */
+  cabinetsSkipped: Array<{ id: string; reason: string }>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+type PriceListRow = Database['public']['Tables']['price_list']['Row'];
+type AreaCabinetRow = Database['public']['Tables']['area_cabinets']['Row'];
+type ProductRow = Pick<
+  Database['public']['Tables']['products_catalog']['Row'],
+  'sku' | 'cut_pieces'
+>;
+
+const DEFAULT_CUBRECANTO: Cubrecanto = { sup: 0, inf: 0, izq: 0, der: 0 };
+
+/** Detect a Back Panel piece whose template still tags it as 'cuerpo'. */
+function isLegacyBackPanel(name: string): boolean {
+  return /back\s*panel|trasero|posterior/i.test(name);
+}
+
+/** Key used by the optimizer engine to group pieces: `${material}_${grosor}`. */
+function stockKey(priceListId: string, thicknessMm: number): string {
+  return `${priceListId}__${thicknessMm}`;
+}
+
+/** Coerce the JSONB cut_pieces blob to a typed array. */
+function parseCutPieces(raw: unknown): CutPiece[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((p): p is CutPiece =>
+    p != null &&
+    typeof p === 'object' &&
+    typeof (p as CutPiece).nombre === 'string' &&
+    typeof (p as CutPiece).ancho === 'number' &&
+    typeof (p as CutPiece).alto === 'number' &&
+    typeof (p as CutPiece).cantidad === 'number',
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main function
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function buildOptimizerSetupFromQuotation(
+  quotationId: string,
+  supabase: SupabaseClient<Database>,
+): Promise<BuildResult> {
+  const warnings: string[] = [];
+  const cabinetsCovered = new Set<string>();
+  const cabinetsSkipped: Array<{ id: string; reason: string }> = [];
+
+  // 1. Load all cabinets for this quotation (via project_areas.project_id).
+  const { data: cabinetsRaw, error: cabErr } = await supabase
+    .from('area_cabinets')
+    .select('*, project_areas!inner(id, name, project_id)')
+    .eq('project_areas.project_id', quotationId);
+
+  if (cabErr) {
+    throw new Error(`Failed to load area_cabinets: ${cabErr.message}`);
+  }
+
+  const cabinets = (cabinetsRaw ?? []) as Array<
+    AreaCabinetRow & {
+      project_areas: { id: string; name: string; project_id: string };
+    }
+  >;
+
+  if (cabinets.length === 0) {
+    return {
+      pieces: [],
+      stocks: [],
+      ebConfig: emptyEbConfig(),
+      ebSlotToPriceListId: { a: null, b: null, c: null },
+      warnings: ['This quotation has no cabinets yet.'],
+      cabinetsCovered,
+      cabinetsSkipped,
+    };
+  }
+
+  // 2. Load all referenced products_catalog rows (for cut_pieces).
+  const skus = Array.from(new Set(cabinets.map((c) => c.product_sku).filter((s): s is string => !!s)));
+  const productsBySku = new Map<string, ProductRow>();
+  if (skus.length > 0) {
+    const { data: products, error: prodErr } = await supabase
+      .from('products_catalog')
+      .select('sku, cut_pieces')
+      .in('sku', skus);
+    if (prodErr) {
+      throw new Error(`Failed to load products_catalog: ${prodErr.message}`);
+    }
+    for (const p of products ?? []) productsBySku.set(p.sku, p);
+  }
+
+  // 3. Collect every price_list id referenced by any cabinet (material + edgeband).
+  const priceListIds = new Set<string>();
+  for (const c of cabinets) {
+    if (c.box_material_id)       priceListIds.add(c.box_material_id);
+    if (c.doors_material_id)     priceListIds.add(c.doors_material_id);
+    if (c.back_panel_material_id) priceListIds.add(c.back_panel_material_id);
+    if (c.box_edgeband_id)       priceListIds.add(c.box_edgeband_id);
+    if (c.doors_edgeband_id)     priceListIds.add(c.doors_edgeband_id);
+  }
+
+  const priceListById = new Map<string, PriceListRow>();
+  if (priceListIds.size > 0) {
+    const { data: rows, error: plErr } = await supabase
+      .from('price_list')
+      .select('*')
+      .in('id', Array.from(priceListIds));
+    if (plErr) {
+      throw new Error(`Failed to load price_list: ${plErr.message}`);
+    }
+    for (const r of rows ?? []) priceListById.set(r.id, r);
+  }
+
+  // 4. Iterate cabinets → cut_pieces, emit Pieza[] and accumulate stocks/eb.
+  const pieces: Pieza[] = [];
+  const stocksByKey = new Map<string, StockSize>();
+  const ebPriceListIdsUsage = new Map<string, number>(); // count of references
+
+  for (const cab of cabinets) {
+    const areaId = cab.project_areas.id;
+    const areaName = cab.project_areas.name;
+
+    const product = cab.product_sku ? productsBySku.get(cab.product_sku) : null;
+    const cutPieces = parseCutPieces(product?.cut_pieces);
+
+    if (cutPieces.length === 0) {
+      cabinetsSkipped.push({
+        id: cab.id,
+        reason: product
+          ? `No cut_pieces defined on product ${cab.product_sku}`
+          : `Cabinet has no linked product_sku`,
+      });
+      continue;
+    }
+
+    // Count edgeband references (for slot assignment later).
+    if (cab.box_edgeband_id) {
+      ebPriceListIdsUsage.set(cab.box_edgeband_id, (ebPriceListIdsUsage.get(cab.box_edgeband_id) ?? 0) + 1);
+    }
+    if (cab.doors_edgeband_id) {
+      ebPriceListIdsUsage.set(cab.doors_edgeband_id, (ebPriceListIdsUsage.get(cab.doors_edgeband_id) ?? 0) + 1);
+    }
+
+    let cabinetProducedAnyPiece = false;
+
+    for (const cp of cutPieces) {
+      if (!cp.ancho || !cp.alto || !cp.cantidad || cp.cantidad <= 0) continue;
+
+      // Resolve which material this piece belongs to.
+      const role = cp.material;
+      let materialId: string | null = null;
+      switch (role) {
+        case 'cuerpo':
+          // Legacy: if the piece name is "Back Panel" and the cabinet has a
+          // back_panel_material_id set, route there instead (matches the new
+          // despieceCalculator behavior so existing templates keep working).
+          if (isLegacyBackPanel(cp.nombre) && cab.back_panel_material_id) {
+            materialId = cab.back_panel_material_id;
+          } else {
+            materialId = cab.box_material_id;
+          }
+          break;
+        case 'frente':
+          materialId = cab.doors_material_id;
+          break;
+        case 'back':
+          materialId = cab.back_panel_material_id ?? cab.box_material_id;
+          break;
+        case 'custom':
+          materialId = cab.box_material_id;
+          warnings.push(
+            `Cabinet "${cab.product_sku ?? cab.id}" in area "${areaName}": cut piece "${cp.nombre}" has material=custom and was routed to box material.`,
+          );
+          break;
+      }
+
+      if (!materialId) {
+        warnings.push(
+          `Cabinet "${cab.product_sku ?? cab.id}" in area "${areaName}": cut piece "${cp.nombre}" (${role}) has no material FK set — skipped.`,
+        );
+        continue;
+      }
+
+      const priceRow = priceListById.get(materialId);
+      if (!priceRow) {
+        warnings.push(
+          `Cabinet "${cab.product_sku ?? cab.id}": material id ${materialId} not found in price_list — skipped.`,
+        );
+        continue;
+      }
+
+      // Resolve thickness (D1 fallback if missing).
+      const thickness = priceRow.technical_thickness_mm ?? FALLBACK_THICKNESS_MM;
+      if (priceRow.technical_thickness_mm == null) {
+        warnings.push(
+          `Material "${priceRow.concept_description}" has no technical_thickness_mm — assuming ${FALLBACK_THICKNESS_MM} mm.`,
+        );
+      }
+
+      // Ensure a stock exists for this (material, thickness) pair.
+      const key = stockKey(priceRow.id, thickness);
+      if (!stocksByKey.has(key)) {
+        const hasTechDims =
+          priceRow.technical_width_mm != null &&
+          priceRow.technical_height_mm != null &&
+          priceRow.technical_width_mm > 0 &&
+          priceRow.technical_height_mm > 0;
+
+        if (!hasTechDims) {
+          warnings.push(
+            `Material "${priceRow.concept_description}" has no technical_width/height_mm — falling back to ${FALLBACK_BOARD_WIDTH_MM}×${FALLBACK_BOARD_HEIGHT_MM} mm board.`,
+          );
+        }
+
+        stocksByKey.set(key, {
+          id: crypto.randomUUID(),
+          nombre: `${priceRow.concept_description} ${thickness}mm`,
+          ancho: hasTechDims ? Number(priceRow.technical_width_mm)  : FALLBACK_BOARD_WIDTH_MM,
+          alto:  hasTechDims ? Number(priceRow.technical_height_mm) : FALLBACK_BOARD_HEIGHT_MM,
+          costo: Number(priceRow.price ?? 0),
+          sierra: DEFAULT_KERF_MM,
+          materialId: priceRow.id,
+          qty: 0, // unlimited
+        });
+      }
+
+      // Emit the Pieza (one entry; cantidad is multiplied by cabinet.quantity).
+      const totalQty = cp.cantidad * (cab.quantity ?? 1);
+      if (totalQty <= 0) continue;
+
+      pieces.push({
+        id: crypto.randomUUID(),
+        nombre: cp.nombre || `Piece (${cab.product_sku ?? cab.id})`,
+        material: `${priceRow.concept_description} ${thickness}mm`,
+        grosor: thickness,
+        ancho: cp.ancho,
+        alto: cp.alto,
+        cantidad: totalQty,
+        veta: 'none',
+        cubrecanto: cp.cubrecanto ?? DEFAULT_CUBRECANTO,
+        area: areaName,
+        cabinetId: cab.id,
+        areaId,
+        cutPieceRole: role,
+        sourceCutPieceId: cp.id,
+      });
+
+      cabinetProducedAnyPiece = true;
+    }
+
+    if (cabinetProducedAnyPiece) {
+      cabinetsCovered.add(cab.id);
+    } else if (!cabinetsSkipped.some((s) => s.id === cab.id)) {
+      cabinetsSkipped.push({
+        id: cab.id,
+        reason: 'All cut_pieces rejected (missing material links or invalid dimensions)',
+      });
+    }
+  }
+
+  // 5. Assign edgeband price_list ids to slots a/b/c by usage count.
+  const sortedEbIds = Array.from(ebPriceListIdsUsage.entries())
+    .sort((lhs, rhs) => rhs[1] - lhs[1])
+    .map(([id]) => id);
+
+  const ebSlotToPriceListId: Record<'a' | 'b' | 'c', string | null> = {
+    a: sortedEbIds[0] ?? null,
+    b: sortedEbIds[1] ?? null,
+    c: sortedEbIds[2] ?? null,
+  };
+
+  if (sortedEbIds.length > 3) {
+    warnings.push(
+      `This quotation references ${sortedEbIds.length} distinct edge banding types but the optimizer supports only 3 (a/b/c). ${sortedEbIds.length - 3} type(s) rolled into slot c.`,
+    );
+  }
+
+  const ebConfig: EbConfig = {
+    a: ebSlotFromPriceList(priceListById, ebSlotToPriceListId.a),
+    b: ebSlotFromPriceList(priceListById, ebSlotToPriceListId.b),
+    c: ebSlotFromPriceList(priceListById, ebSlotToPriceListId.c),
+  };
+
+  return {
+    pieces,
+    stocks: Array.from(stocksByKey.values()),
+    ebConfig,
+    ebSlotToPriceListId,
+    warnings,
+    cabinetsCovered,
+    cabinetsSkipped,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Small helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+function emptyEbSlot(): EbTypeConfig {
+  return { id: '', name: '', price: 0 };
+}
+
+function emptyEbConfig(): EbConfig {
+  return { a: emptyEbSlot(), b: emptyEbSlot(), c: emptyEbSlot() };
+}
+
+function ebSlotFromPriceList(
+  priceListById: Map<string, PriceListRow>,
+  priceListId: string | null,
+): EbTypeConfig {
+  if (!priceListId) return emptyEbSlot();
+  const row = priceListById.get(priceListId);
+  if (!row) return emptyEbSlot();
+  return {
+    id: row.id,
+    name: row.concept_description,
+    price: Number(row.price ?? 0),
+  };
+}
