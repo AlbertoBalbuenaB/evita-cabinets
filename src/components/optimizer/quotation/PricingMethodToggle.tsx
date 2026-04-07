@@ -1,4 +1,4 @@
-import { Calculator, Scissors } from 'lucide-react';
+import { Calculator, LayoutDashboard } from 'lucide-react';
 import type { PricingMethod } from '../../../types';
 
 interface Props {
@@ -51,7 +51,7 @@ export function PricingMethodToggle({ value, onChange, canSelectOptimizer, size 
         }`}
         title={canSelectOptimizer ? undefined : 'Save and activate a run first to enable optimizer pricing.'}
       >
-        <Scissors className="h-3.5 w-3.5" />
+        <LayoutDashboard className="h-3.5 w-3.5" />
         Cut-list
       </button>
     </div>

@@ -5,7 +5,7 @@ import {
   Layers as LayersIcon,
   Ruler,
   GitCompareArrows,
-  Scissors,
+  LayoutDashboard,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -80,7 +80,7 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
         <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-1">
-          <Scissors className="h-4 w-4 text-blue-600" />
+          <LayoutDashboard className="h-4 w-4 text-blue-600" />
           Cut-list Pricing Analytics
         </div>
         <p className="text-xs text-slate-400">
@@ -94,7 +94,7 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
     <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Scissors className="h-4 w-4 text-blue-600" />
+          <LayoutDashboard className="h-4 w-4 text-blue-600" />
           <h2 className="text-sm font-semibold text-slate-800">Cut-list Pricing Analytics</h2>
           <span className="text-xs text-slate-400">
             {runs.length} run{runs.length !== 1 ? 's' : ''}

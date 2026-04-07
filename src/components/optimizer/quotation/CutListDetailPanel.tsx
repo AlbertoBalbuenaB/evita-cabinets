@@ -1,4 +1,4 @@
-import { Scissors } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
 import type { Pieza } from '../../../lib/optimizer/types';
 
 export interface CabinetDisplayInfo {
@@ -54,7 +54,7 @@ export function CutListDetailPanel({ pieces, cabinetDetails }: Props) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white">
       <div className="flex items-center gap-1.5 px-3 py-2 border-b border-slate-200">
-        <Scissors className="h-3.5 w-3.5 text-blue-600" />
+        <LayoutDashboard className="h-3.5 w-3.5 text-blue-600" />
         <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wide">
           Cut-list detail — {orderedGroups.length} cabinet{orderedGroups.length !== 1 ? 's' : ''}
         </h3>
