@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X, User, Building2 } from 'lucide-react';
 import type { ProjectPurchaseItemWithDetails } from '../../types';
 import { PurchaseItemComments } from './PurchaseItemComments';
@@ -23,6 +23,18 @@ export function PurchaseItemDetailPanel({
   onClose,
 }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const [navBottom, setNavBottom] = useState(0);
+
+  // Measure nav height dynamically so panel sits flush below it
+  useEffect(() => {
+    function measure() {
+      const nav = document.querySelector('nav');
+      if (nav) setNavBottom(nav.getBoundingClientRect().bottom);
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
   // Close on Escape
   useEffect(() => {
@@ -51,7 +63,7 @@ export function PurchaseItemDetailPanel({
     // top: 57px = h-14 (56px) + border-bottom (1px) — panel sits flush below navbar
     <div
       className="fixed left-0 right-0 bottom-0 flex items-stretch justify-end"
-      style={{ zIndex: 9999, top: 57 }}
+      style={{ zIndex: 9999, top: navBottom || 57 }}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-[1px]" />
