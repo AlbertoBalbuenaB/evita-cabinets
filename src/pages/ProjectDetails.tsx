@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History, SeparatorHorizontal } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History, SeparatorHorizontal, Scissors } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { fetchAllProducts } from '../lib/fetchAllProducts';
 import { Button } from '../components/Button';
@@ -24,6 +24,7 @@ import { useSettingsStore } from '../lib/settingsStore';
 import { recalculateAreaEdgebandCosts } from '../lib/edgebandRolls';
 import { recalculateAreaSheetMaterialCosts } from '../lib/sheetMaterials';
 import { computeQuotationTotalsSqft } from '../lib/pricing/computeQuotationTotalsSqft';
+import { QuotationOptimizerTab } from '../components/optimizer/quotation/QuotationOptimizerTab';
 import { SaveTemplateModal } from '../components/SaveTemplateModal';
 import { BulkMaterialChangeModal } from '../components/BulkMaterialChangeModal';
 import { MaterialPriceUpdateModal } from '../components/MaterialPriceUpdateModal';
@@ -64,7 +65,7 @@ export function ProjectDetails({ project: initialProject, parentProject, onBack 
   const [editingCountertop, setEditingCountertop] = useState<AreaCountertop | null>(null);
   const [selectedAreaForCloset, setSelectedAreaForCloset] = useState<string | null>(null);
   const [editingClosetItem, setEditingClosetItem] = useState<AreaClosetItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'pricing' | 'analytics' | 'history'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'pricing' | 'cutlist' | 'analytics' | 'history'>('info');
 
   useEffect(() => {
     setActiveProjectTab(activeTab);
@@ -1015,6 +1016,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   const tabs = [
     { id: 'info' as const, label: 'Info', icon: Receipt },
     { id: 'pricing' as const, label: 'Pricing', icon: Calculator },
+    { id: 'cutlist' as const, label: 'Cut-list Pricing', icon: Scissors },
     { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
     { id: 'history' as const, label: 'History', icon: History },
   ];
@@ -1745,6 +1747,13 @@ const [isEditingDate, setIsEditingDate] = useState(false);
             )}
           </div>
         </ErrorBoundary>
+      )}
+
+      {activeTab === 'cutlist' && (
+        <QuotationOptimizerTab
+          quotationId={project.id}
+          totalCabinetsCount={areas.reduce((s, a) => s + a.cabinets.length, 0)}
+        />
       )}
 
       {activeTab === 'history' && (
