@@ -21,6 +21,14 @@ export interface Pieza {
   cubrecanto: Cubrecanto;
   /** Project area grouping (e.g. "Kitchen", "Closet") */
   area?: string;
+  /** Quotation-pricing tagging: cabinet this piece belongs to (for attribution) */
+  cabinetId?: string;
+  /** Quotation-pricing tagging: project_areas.id (for per-area board attribution) */
+  areaId?: string;
+  /** Quotation-pricing tagging: original CutPiece role for cost-side mapping */
+  cutPieceRole?: 'cuerpo' | 'frente' | 'back' | 'custom';
+  /** Quotation-pricing tagging: source CutPiece.id for traceability back to template */
+  sourceCutPieceId?: string;
   // internal index assigned before optimization
   _idx?: number;
 }

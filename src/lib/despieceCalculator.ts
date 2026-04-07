@@ -66,7 +66,7 @@ export function calculateDespiece(input: DespieceInput): CutPiece[] {
   add('Side Panels',   D,        H,         2, 'cuerpo');
 
   // Back Panel: inner width × full height (fits between side panels)
-  add('Back Panel',    innerW,   H,         1, 'cuerpo');
+  add('Back Panel',    innerW,   H,         1, 'back');
 
   // Top Panel: inner width × (depth minus back panel thickness)
   add('Top Panel',     innerW,   D - esp,   1, 'cuerpo');
