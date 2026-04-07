@@ -110,6 +110,14 @@ export interface QuotationOptimizerState {
   renameRun: (runId: string, name: string) => Promise<void>;
   deleteRun: (runId: string) => Promise<void>;
   clearPending: () => void;
+  /**
+   * Re-fetch the current price_list.price for every stock in the pending
+   * build and update `pendingStocks[i].costo`. Invalidates any pending
+   * engine result (stocks changed → previous optimization is obsolete).
+   * Use this after the user updates prices in the inventory module
+   * without touching cabinet configurations.
+   */
+  refreshStocks: () => Promise<void>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -435,6 +443,51 @@ export function getQuotationOptimizerStore(
       pendingCabinetsSkipped: [],
       pendingBuiltAt: null,
     }),
+
+    // ── Refresh pendingStocks[*].costo from current price_list prices ──
+    refreshStocks: async () => {
+      const state = get();
+      const materialIds = state.pendingStocks
+        .map((s) => s.materialId)
+        .filter((id): id is string => !!id);
+      if (materialIds.length === 0) {
+        set({ lastError: 'No stocks to refresh. Build from quotation first.' });
+        return;
+      }
+
+      set({ lastError: null });
+      try {
+        const { data, error } = await supabase
+          .from('price_list')
+          .select('id, price')
+          .in('id', materialIds);
+        if (error) throw error;
+
+        const priceById = new Map<string, number>();
+        for (const row of data ?? []) priceById.set(row.id, Number(row.price ?? 0));
+
+        let changedCount = 0;
+        const updatedStocks = state.pendingStocks.map((stock) => {
+          if (!stock.materialId) return stock;
+          const fresh = priceById.get(stock.materialId);
+          if (fresh == null || fresh === stock.costo) return stock;
+          changedCount += 1;
+          return { ...stock, costo: fresh };
+        });
+
+        set({
+          pendingStocks: updatedStocks,
+          // Stocks changed → previous engine result is now stale.
+          pendingResult: changedCount > 0 ? null : state.pendingResult,
+          pendingWarnings: changedCount > 0
+            ? [...state.pendingWarnings, `Refreshed ${changedCount} stock price${changedCount === 1 ? '' : 's'} from price_list. Re-run the optimizer to apply.`]
+            : state.pendingWarnings,
+        });
+      } catch (err) {
+        set({ lastError: err instanceof Error ? err.message : String(err) });
+        throw err;
+      }
+    },
   }));
 
   storeCache.set(quotationId, hook);

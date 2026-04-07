@@ -1,4 +1,5 @@
-import { Layers, Package, Scissors, Settings } from 'lucide-react';
+import { useState } from 'react';
+import { Layers, Package, Scissors, Settings, RefreshCw, Eraser, Loader2 } from 'lucide-react';
 import type { UseBoundStore, StoreApi } from 'zustand';
 import type { QuotationOptimizerState } from '../../../hooks/createQuotationOptimizerStore';
 
@@ -32,6 +33,22 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
   const setMinOffcut         = useStore((s) => s.setMinOffcut);
   const setBoardTrim         = useStore((s) => s.setBoardTrim);
   const setTrimIncludesKerf  = useStore((s) => s.setTrimIncludesKerf);
+  const clearPending         = useStore((s) => s.clearPending);
+  const refreshStocks        = useStore((s) => s.refreshStocks);
+
+  const [refreshingStocks, setRefreshingStocks] = useState(false);
+
+  const hasPending = pendingPieces.length > 0;
+
+  async function handleRefreshStocks() {
+    setRefreshingStocks(true);
+    try { await refreshStocks(); } finally { setRefreshingStocks(false); }
+  }
+
+  function handleClear() {
+    if (!confirm('Discard the current build? This will clear pending pieces, stocks, and any unsaved result.')) return;
+    clearPending();
+  }
 
   const totalPieceCount = pendingPieces.reduce((s, p) => s + p.cantidad, 0);
   const uniqueCabinets  = new Set(pendingPieces.map((p) => p.cabinetId).filter(Boolean)).size;
@@ -56,6 +73,32 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
             </div>
           ) : (
             <p className="text-xs text-slate-400 italic">Click "Build from Quotation" in the header to populate.</p>
+          )}
+
+          {hasPending && (
+            <div className="mt-2 flex gap-1.5">
+              <button
+                type="button"
+                onClick={handleRefreshStocks}
+                disabled={refreshingStocks}
+                title="Re-fetch material prices from the price list. Invalidates the current result."
+                className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                {refreshingStocks
+                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                  : <RefreshCw className="h-3 w-3" />}
+                Refresh stocks
+              </button>
+              <button
+                type="button"
+                onClick={handleClear}
+                title="Discard the current build."
+                className="inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium rounded border border-slate-200 bg-white text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+              >
+                <Eraser className="h-3 w-3" />
+                Clear
+              </button>
+            </div>
           )}
         </section>
 

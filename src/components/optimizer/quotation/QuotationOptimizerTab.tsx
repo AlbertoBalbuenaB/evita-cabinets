@@ -1,9 +1,41 @@
+/**
+ * Cut-list Pricing tab.
+ *
+ * Entry point for the optimizer-based quotation pricing path. Composes
+ * the Phase 3 library + Phase 4 store factory + Phase 5/6 UI components
+ * into a single tab inside ProjectDetails. Wired into the Phase 7 rollup
+ * so flipping `pricing_method` actually affects the quotation total.
+ *
+ * -----------------------------------------------------------------------
+ * Known follow-ups (not in scope for Phase 9):
+ * -----------------------------------------------------------------------
+ *  1. PDF export integration. When `pricing_method === 'optimizer'`, the
+ *     quotation PDF should include extra pages with the optimizer board
+ *     layouts and a per-area boards breakdown. Current PDF path lives in
+ *     `src/utils/printQuotation.ts` and would need a new section that
+ *     renders each BoardResult's placed pieces as an SVG. Scope estimate:
+ *     medium, ~1 day. Requires coordinating with the existing page-break
+ *     logic in printQuotation.
+ *
+ *  2. "Load into editor" action on old runs. Currently `loadRun` only
+ *     populates `loadedRun` (view-only). A parallel `loadRunIntoEditor`
+ *     would also populate `pendingPieces/pendingStocks/pendingEbConfig`
+ *     so the user can tweak settings and re-run without losing the
+ *     historical inputs. Trivial to add when needed.
+ *
+ *  3. Price-change stale propagation. A DB trigger on `price_list.price`
+ *     updates could mark all active runs stale when a referenced
+ *     material's price changes. For now, users can click "Refresh
+ *     stocks" in the sidebar to pull fresh prices on demand.
+ * -----------------------------------------------------------------------
+ */
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Hammer, Play, Save, Loader2, RefreshCw, LayoutDashboard } from 'lucide-react';
 import { Button } from '../../Button';
 import { CADViewer } from '../CADViewer';
 import { RightStatsPanel } from '../RightStatsPanel';
 import { getQuotationOptimizerStore } from '../../../hooks/createQuotationOptimizerStore';
+import { useOptimizerStore } from '../../../hooks/useOptimizerStore';
 import { supabase } from '../../../lib/supabase';
 import { QuotationOptimizerSidebar } from './QuotationOptimizerSidebar';
 import { OptimizerWarningsPanel } from './OptimizerWarningsPanel';
@@ -123,6 +155,27 @@ export function QuotationOptimizerTab({
     })();
     return () => { cancelled = true; };
   }, [quotationId, refreshRunsList, refreshHeader, loadRun, useStore]);
+
+  // Sync the standalone-optimizer singleton store with this quotation's
+  // engine settings on mount. CADViewer and RightStatsPanel read a few
+  // cosmetic fields (unit, labelScale, globalSierra, boardTrim) directly
+  // from that singleton for header display strings. We want those strings
+  // to reflect the values from the per-quotation store instead of whatever
+  // the standalone OptimizerPage was last configured with.
+  //
+  // This is a one-shot side-effect — we don't keep them in sync after
+  // initial mount, because the sidebar settings inputs only flow into the
+  // quotation store. If the user changes a value in the sidebar, the
+  // singleton's cosmetic strings will go out of date; that's an accepted
+  // edge case and a much smaller bug than the initial-load mismatch.
+  useEffect(() => {
+    const quotationState = useStore.getState();
+    const singleton = useOptimizerStore.getState();
+    singleton.setUnit('mm');
+    singleton.setLabelScale(1.0);
+    singleton.setGlobalSierra(quotationState.globalSierra);
+    singleton.setBoardTrim(quotationState.boardTrim);
+  }, [quotationId, useStore]);
 
   // Pick result to display: pending (unsaved) > loaded active.
   const displayResult: OptimizationResult | null =
