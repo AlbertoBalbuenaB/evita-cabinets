@@ -78,6 +78,13 @@ export interface QuotationOptimizerState {
   pendingEbSlotToPriceListId: Record<'a' | 'b' | 'c', string | null>;
   pendingCabinetsCovered: Set<string>;
   pendingCabinetsSkipped: Array<{ id: string; reason: string }>;
+  pendingCabinetInstanceCount: number;
+  pendingCabinetDetails: Record<string, {
+    productSku: string | null;
+    quantity: number;
+    areaId: string;
+    areaName: string;
+  }>;
   pendingWarnings: string[];
   pendingResult: OptimizationResult | null;
   pendingBuiltAt: string | null;
@@ -162,6 +169,8 @@ export function getQuotationOptimizerStore(
     pendingEbSlotToPriceListId: { a: null, b: null, c: null },
     pendingCabinetsCovered: new Set<string>(),
     pendingCabinetsSkipped: [],
+    pendingCabinetInstanceCount: 0,
+    pendingCabinetDetails: {},
     pendingWarnings: [],
     pendingResult: null,
     pendingBuiltAt: null,
@@ -210,6 +219,8 @@ export function getQuotationOptimizerStore(
           pendingEbSlotToPriceListId: result.ebSlotToPriceListId,
           pendingCabinetsCovered:    result.cabinetsCovered,
           pendingCabinetsSkipped:    result.cabinetsSkipped,
+          pendingCabinetInstanceCount: result.cabinetsInstanceCount,
+          pendingCabinetDetails:     result.cabinetDetails,
           pendingWarnings:           result.warnings,
           pendingResult:             null,        // invalidate any stale result
           pendingBuiltAt:            new Date().toISOString(),
@@ -441,6 +452,8 @@ export function getQuotationOptimizerStore(
       pendingWarnings: [],
       pendingCabinetsCovered: new Set<string>(),
       pendingCabinetsSkipped: [],
+      pendingCabinetInstanceCount: 0,
+      pendingCabinetDetails: {},
       pendingBuiltAt: null,
     }),
 

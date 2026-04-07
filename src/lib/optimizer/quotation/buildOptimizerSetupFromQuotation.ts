@@ -53,6 +53,16 @@ export interface BuildResult {
   warnings: string[];
   /** Cabinet ids that generated pieces (for subtotal substitution later). */
   cabinetsCovered: Set<string>;
+  /** Sum of cab.quantity for every covered cabinet — the "cabinet units" count. */
+  cabinetsInstanceCount: number;
+  /** Per-cabinet display metadata, keyed by area_cabinets.id. Used by the
+   *  Cut-list detail UI panel to label each group. */
+  cabinetDetails: Record<string, {
+    productSku: string | null;
+    quantity: number;
+    areaId: string;
+    areaName: string;
+  }>;
   /** Cabinet ids skipped (e.g. no cut_pieces) — fall back to ft² pricing. */
   cabinetsSkipped: Array<{ id: string; reason: string }>;
 }
@@ -129,6 +139,8 @@ export async function buildOptimizerSetupFromQuotation(
       ebSlotToPriceListId: { a: null, b: null, c: null },
       warnings: ['This quotation has no cabinets yet.'],
       cabinetsCovered,
+      cabinetsInstanceCount: 0,
+      cabinetDetails: {},
       cabinetsSkipped,
     };
   }
@@ -173,6 +185,8 @@ export async function buildOptimizerSetupFromQuotation(
   const pieces: Pieza[] = [];
   const stocksByKey = new Map<string, StockSize>();
   const ebPriceListIdsUsage = new Map<string, number>(); // count of references
+  let cabinetsInstanceCount = 0;
+  const cabinetDetails: BuildResult['cabinetDetails'] = {};
 
   for (const cab of cabinets) {
     const areaId = cab.project_areas.id;
@@ -308,6 +322,14 @@ export async function buildOptimizerSetupFromQuotation(
 
     if (cabinetProducedAnyPiece) {
       cabinetsCovered.add(cab.id);
+      const qty = cab.quantity ?? 1;
+      cabinetsInstanceCount += qty;
+      cabinetDetails[cab.id] = {
+        productSku: cab.product_sku,
+        quantity: qty,
+        areaId: cab.project_areas.id,
+        areaName: cab.project_areas.name,
+      };
     } else if (!cabinetsSkipped.some((s) => s.id === cab.id)) {
       cabinetsSkipped.push({
         id: cab.id,
@@ -346,6 +368,8 @@ export async function buildOptimizerSetupFromQuotation(
     ebSlotToPriceListId,
     warnings,
     cabinetsCovered,
+    cabinetsInstanceCount,
+    cabinetDetails,
     cabinetsSkipped,
   };
 }
