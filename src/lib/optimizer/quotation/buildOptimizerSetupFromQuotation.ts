@@ -85,6 +85,12 @@ function isLegacyBackPanel(name: string): boolean {
   return /back\s*panel|trasero|posterior/i.test(name);
 }
 
+/** Price-list items whose concept_description contains "not apply" are placeholders
+ *  meaning "no material selected". Treat them as absent for optimizer purposes. */
+function isNotApply(description: string | null | undefined): boolean {
+  return /not\s*apply/i.test(description ?? '');
+}
+
 /** Key used by the optimizer engine to group pieces: `${material}_${grosor}`. */
 function stockKey(priceListId: string, thicknessMm: number): string {
   return `${priceListId}__${thicknessMm}`;
@@ -208,11 +214,18 @@ export async function buildOptimizerSetupFromQuotation(
     }
 
     // Count edgeband references (for slot assignment later).
+    // Skip any "Not Apply" placeholder entries — they mean no edgeband.
     if (cab.box_edgeband_id) {
-      ebPriceListIdsUsage.set(cab.box_edgeband_id, (ebPriceListIdsUsage.get(cab.box_edgeband_id) ?? 0) + 1);
+      const ebRow = priceListById.get(cab.box_edgeband_id);
+      if (!isNotApply(ebRow?.concept_description)) {
+        ebPriceListIdsUsage.set(cab.box_edgeband_id, (ebPriceListIdsUsage.get(cab.box_edgeband_id) ?? 0) + 1);
+      }
     }
     if (cab.doors_edgeband_id) {
-      ebPriceListIdsUsage.set(cab.doors_edgeband_id, (ebPriceListIdsUsage.get(cab.doors_edgeband_id) ?? 0) + 1);
+      const ebRow = priceListById.get(cab.doors_edgeband_id);
+      if (!isNotApply(ebRow?.concept_description)) {
+        ebPriceListIdsUsage.set(cab.doors_edgeband_id, (ebPriceListIdsUsage.get(cab.doors_edgeband_id) ?? 0) + 1);
+      }
     }
 
     let cabinetProducedAnyPiece = false;
@@ -237,9 +250,19 @@ export async function buildOptimizerSetupFromQuotation(
         case 'frente':
           materialId = cab.doors_material_id;
           break;
-        case 'back':
-          materialId = cab.back_panel_material_id ?? cab.box_material_id;
+        case 'back': {
+          // If back_panel_material_id is set but is "Not Apply", fall back to box.
+          const backId = cab.back_panel_material_id;
+          if (backId) {
+            const backRow = priceListById.get(backId);
+            materialId = (backRow && isNotApply(backRow.concept_description))
+              ? cab.box_material_id
+              : backId;
+          } else {
+            materialId = cab.box_material_id;
+          }
           break;
+        }
         case 'custom':
           materialId = cab.box_material_id;
           warnings.push(
@@ -262,6 +285,9 @@ export async function buildOptimizerSetupFromQuotation(
         );
         continue;
       }
+
+      // "Not Apply" entries are placeholders — treat as no material selected.
+      if (isNotApply(priceRow.concept_description)) continue;
 
       // Resolve thickness (D1 fallback if missing).
       const thickness = priceRow.technical_thickness_mm ?? FALLBACK_THICKNESS_MM;
@@ -336,7 +362,7 @@ export async function buildOptimizerSetupFromQuotation(
       if (!finishMaterialId) continue;
 
       const priceRow = priceListById.get(finishMaterialId);
-      if (!priceRow) continue;
+      if (!priceRow || isNotApply(priceRow.concept_description)) continue;
 
       const thickness = priceRow.technical_thickness_mm ?? FALLBACK_THICKNESS_MM;
       const key = stockKey(priceRow.id, thickness);
