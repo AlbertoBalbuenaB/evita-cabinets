@@ -44,7 +44,14 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
     return s + generateCutSequence(b, unit).reduce((ss, c) => ss + (c.type === 'H' ? b.ancho : b.alto), 0);
   }, 0);
 
-  // Stock sheets grouped by dimension
+  // Stock sheets grouped by material name (for per-material board count)
+  const materialGroups: Record<string, number> = {};
+  result.boards.forEach((b) => {
+    const key = b.stockInfo.nombre;
+    materialGroups[key] = (materialGroups[key] || 0) + 1;
+  });
+
+  // Also group by dimension for the compact summary string
   const stockGroups: Record<string, number> = {};
   result.boards.forEach((b) => {
     const key = `${fmtNum(b.ancho, unit)}×${fmtNum(b.alto, unit)}`;
@@ -93,7 +100,14 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
     <div className="flex-1 bg-white flex flex-col overflow-y-auto overflow-x-hidden text-sm">
 
       <Section title="Global statistics" open={globalOpen} onToggle={() => setGlobalOpen((v) => !v)}>
-        <StatRow label="Used stock sheets" value={stockStr} />
+        {Object.entries(materialGroups).map(([name, count]) => (
+          <StatRow
+            key={name}
+            label={name}
+            value={`${count} board${count !== 1 ? 's' : ''}`}
+          />
+        ))}
+        <StatRow label="By dimension" value={stockStr} />
         <StatRow
           label="Total used area"
           value={`${totalUsed.toFixed(4)} m²`}

@@ -26,7 +26,7 @@ export interface Pieza {
   /** Quotation-pricing tagging: project_areas.id (for per-area board attribution) */
   areaId?: string;
   /** Quotation-pricing tagging: original CutPiece role for cost-side mapping */
-  cutPieceRole?: 'cuerpo' | 'frente' | 'back' | 'custom';
+  cutPieceRole?: 'cuerpo' | 'frente' | 'back' | 'custom' | 'interior-finish';
   /** Quotation-pricing tagging: source CutPiece.id for traceability back to template */
   sourceCutPieceId?: string;
   // internal index assigned before optimization
