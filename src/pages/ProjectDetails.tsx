@@ -26,6 +26,7 @@ import { recalculateAreaSheetMaterialCosts } from '../lib/sheetMaterials';
 import { computeQuotationTotalsSqft } from '../lib/pricing/computeQuotationTotalsSqft';
 import { computeOptimizerQuotationTotal } from '../lib/optimizer/quotation/computeOptimizerQuotationTotal';
 import type { OptimizerRunSnapshot } from '../lib/optimizer/quotation/types';
+import { exportOptimizerPDF, type PdfLang } from '../lib/optimizer/pdfExport';
 import { QuotationOptimizerTab } from '../components/optimizer/quotation/QuotationOptimizerTab';
 import { OptimizerRunsAnalytics } from '../components/optimizer/quotation/OptimizerRunsAnalytics';
 import { SaveTemplateModal } from '../components/SaveTemplateModal';
@@ -288,7 +289,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     //
     // Both the mode and the active_run_id are re-fetched from DB here to
     // bypass React prop staleness (the user may have toggled the method
-    // from within the Cut-list tab without remounting ProjectDetails).
+    // from within the Optimizer tab without remounting ProjectDetails).
     let optimizerGrandTotal: number | null = null;
     let writeTotal = sqftProjectTotal;
 
@@ -718,6 +719,59 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     });
   }
 
+  // Cut-list (Optimizer) PDF export — generates a board-layout PDF from the
+  // currently active optimizer run for this quotation. Always queries fresh
+  // from DB to bypass any stale React prop state on `project`.
+  async function handlePrintCutList(lang: PdfLang) {
+    try {
+      const { data: run, error } = await supabase
+        .from('quotation_optimizer_runs')
+        .select('snapshot, result, name')
+        .eq('quotation_id', project.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[handlePrintCutList] failed to load active run:', error);
+        alert('Failed to load the active optimizer run. Please try again.');
+        return;
+      }
+
+      if (!run) {
+        alert('No active optimizer run for this quotation. Save and activate one in the Optimizer tab first.');
+        return;
+      }
+
+      const snapshot = run.snapshot as unknown as OptimizerRunSnapshot;
+      const result   = run.result   as unknown as Parameters<typeof exportOptimizerPDF>[0];
+
+      // Derive area name list from tagged pieces.
+      const areaNames = Array.from(new Set(
+        snapshot.pieces.map((p) => p.area).filter((a): a is string => !!a),
+      ));
+
+      const projectName = (isPdfNameModified ? pdfProjectName : null) ?? project.pdf_project_name ?? project.name;
+      const clientName  = (isPdfCustomerModified ? pdfCustomer : null) ?? project.pdf_customer ?? (project.customer ?? '');
+
+      await exportOptimizerPDF(
+        result,
+        projectName,
+        clientName,
+        'mm',
+        snapshot.ebConfig,
+        areaNames,
+        1.0,
+        lang,
+      );
+    } catch (err) {
+      console.error('[handlePrintCutList] export failed:', err);
+      alert('Failed to export the cut-list PDF: ' + (err instanceof Error ? err.message : String(err)));
+    }
+  }
+
+  const handlePrintCutListEN = () => handlePrintCutList('en');
+  const handlePrintCutListES = () => handlePrintCutList('es');
+
   async function handleSaveChanges() {
     try {
       const today = new Date();
@@ -1094,7 +1148,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   const tabs = [
     { id: 'info' as const, label: 'Info', icon: Receipt },
     { id: 'pricing' as const, label: 'Pricing', icon: Calculator },
-    { id: 'cutlist' as const, label: 'Cut-list Pricing', icon: LayoutDashboard },
+    { id: 'cutlist' as const, label: 'Optimizer', icon: LayoutDashboard },
     { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
     { id: 'history' as const, label: 'History', icon: History },
   ];
@@ -1155,6 +1209,8 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         onSaveChanges={handleSaveChanges}
         onPrint={handlePrint}
         onPrintUSD={handlePrintUSD}
+        onPrintCutListEN={handlePrintCutListEN}
+        onPrintCutListES={handlePrintCutListES}
         onExportCSV={handleExportAreasCSV}
         onExportDetailedCSV={handleExportDetailedAreasCSV}
         onExportJSON={handleExportJSON}

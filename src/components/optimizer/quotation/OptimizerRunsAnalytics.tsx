@@ -36,7 +36,7 @@ type KpiKey = 'total_cost' | 'waste_pct' | 'board_count' | 'cost_per_m2';
  *  - A versions table with columns: name, created, total cost, waste %,
  *    boards, $/m², active badge. The whole table is scrollable.
  *  - A "Compare" button that opens the same OptimizerComparisonPanel
- *    used by the Cut-list tab.
+ *    used by the Optimizer tab.
  */
 export function OptimizerRunsAnalytics({ quotationId }: Props) {
   const [runs, setRuns] = useState<QuotationOptimizerRun[] | null>(null);
@@ -81,10 +81,10 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
         <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-1">
           <LayoutDashboard className="h-4 w-4 text-blue-600" />
-          Cut-list Pricing Analytics
+          Optimizer Analytics
         </div>
         <p className="text-xs text-slate-400">
-          Save at least one optimizer run from the Cut-list Pricing tab to see KPIs here.
+          Save at least one optimizer run from the Optimizer tab to see KPIs here.
         </p>
       </div>
     );
@@ -95,7 +95,7 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <LayoutDashboard className="h-4 w-4 text-blue-600" />
-          <h2 className="text-sm font-semibold text-slate-800">Cut-list Pricing Analytics</h2>
+          <h2 className="text-sm font-semibold text-slate-800">Optimizer Analytics</h2>
           <span className="text-xs text-slate-400">
             {runs.length} run{runs.length !== 1 ? 's' : ''}
             {activeRun && <> · active: <span className="font-medium text-slate-600">{activeRun.name}</span></>}

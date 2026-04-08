@@ -6,7 +6,7 @@ interface Props {
 }
 
 /**
- * Orange pill shown in the Cut-list Pricing tab header when any
+ * Orange pill shown in the Optimizer tab header when any
  * area_cabinet has been edited since the active optimizer run was saved.
  * Clicking it triggers a rebuild+re-run.
  */

@@ -10,10 +10,10 @@ interface Props {
 }
 
 /**
- * Segmented control: ft² ←→ Cut-list.
+ * Segmented control: ft² ←→ Optimizer.
  *
  * Writes to quotations.pricing_method via the onChange callback. The
- * "Cut-list" segment is disabled until the quotation has at least one
+ * "Optimizer" segment is disabled until the quotation has at least one
  * active optimizer run (otherwise there's nothing to flip to).
  *
  * The actual DB write (and the updateProjectTotal re-run) is owned by
@@ -52,7 +52,7 @@ export function PricingMethodToggle({ value, onChange, canSelectOptimizer, size 
         title={canSelectOptimizer ? undefined : 'Save and activate a run first to enable optimizer pricing.'}
       >
         <LayoutDashboard className="h-3.5 w-3.5" />
-        Cut-list
+        Optimizer
       </button>
     </div>
   );

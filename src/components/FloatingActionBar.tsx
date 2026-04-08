@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, RefreshCw, TrendingUp, Save, ArrowDownUp,
          Printer, FileSpreadsheet, FileJson, Download,
-         DollarSign, Package, ChevronDown } from 'lucide-react';
+         DollarSign, Package, ChevronDown, LayoutDashboard } from 'lucide-react';
 
 interface FloatingActionBarProps {
   onAddArea: () => void;
@@ -10,6 +10,8 @@ interface FloatingActionBarProps {
   onSaveChanges: () => void;
   onPrint: () => void;
   onPrintUSD: () => void;
+  onPrintCutListEN: () => void;
+  onPrintCutListES: () => void;
   onExportCSV: () => void;
   onExportDetailedCSV: () => void;
   onExportJSON: () => void;
@@ -27,6 +29,8 @@ export function FloatingActionBar({
   onSaveChanges,
   onPrint,
   onPrintUSD,
+  onPrintCutListEN,
+  onPrintCutListES,
   onExportCSV,
   onExportDetailedCSV,
   onExportJSON,
@@ -269,8 +273,10 @@ export function FloatingActionBar({
                 overflow: 'hidden',
               }}>
                 {[
-                  { icon: Printer, label: 'Standard PDF', sub: 'MXN with full details', onClick: () => { onPrint(); closeMenus(); } },
-                  { icon: DollarSign, label: 'USD Summary PDF', sub: 'Price, tariff & tax summary', onClick: () => { onPrintUSD(); closeMenus(); } },
+                  { icon: Printer,         label: 'Standard PDF',           sub: 'MXN with full details',         onClick: () => { onPrint(); closeMenus(); } },
+                  { icon: DollarSign,      label: 'USD Summary PDF',        sub: 'Price, tariff & tax summary',   onClick: () => { onPrintUSD(); closeMenus(); } },
+                  { icon: LayoutDashboard, label: 'Cut-list PDF (English)', sub: 'Optimizer board layouts',       onClick: () => { onPrintCutListEN(); closeMenus(); } },
+                  { icon: LayoutDashboard, label: 'Cut-list PDF (Español)', sub: 'Optimizer board layouts',       onClick: () => { onPrintCutListES(); closeMenus(); } },
                 ].map(({ icon: Icon, label, sub, onClick }) => (
                   <button
                     key={label}
