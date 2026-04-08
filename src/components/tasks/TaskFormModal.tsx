@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { createNotifications } from '../../lib/notifications';
 import { Button } from '../Button';
 import type { TeamMember, TaskTag, TaskStatus, TaskPriority } from '../../types';
-import { TASK_STATUS_CONFIG, TASK_PRIORITY_CONFIG } from '../../types';
+import { TASK_PRIORITY_CONFIG } from '../../types';
 
 interface Props {
   projectId: string;

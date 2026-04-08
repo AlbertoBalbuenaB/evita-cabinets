@@ -239,11 +239,11 @@ export function PurchaseItemComments({ purchaseItemId, projectId, teamMembers }:
     async function load() {
       setLoading(true);
       const { data } = await supabase
-        .from('purchase_item_comments')
+        .from('purchase_item_comments' as any)
         .select('*, replies:purchase_item_comment_replies(*)')
         .eq('purchase_item_id', purchaseItemId)
         .order('created_at');
-      setComments((data as PurchaseComment[]) || []);
+      setComments((data as unknown as PurchaseComment[]) || []);
       setLoading(false);
     }
     load();
@@ -255,12 +255,13 @@ export function PurchaseItemComments({ purchaseItemId, projectId, teamMembers }:
     const authorId = currentMember?.id ?? null;
     const authorName = currentMember?.name ?? 'Anonymous';
     const { data } = await supabase
-      .from('purchase_item_comments')
+      .from('purchase_item_comments' as any)
       .insert({ purchase_item_id: purchaseItemId, author_id: authorId, author_name: authorName, body: html })
       .select()
       .single();
     if (data) {
-      setComments((prev) => [...prev, { ...data, replies: [] }]);
+      const dataAny = data as any;
+      setComments((prev) => [...prev, { ...dataAny, replies: [] }]);
       const plainBody = html.replace(/<[^>]*>/g, '').trim().slice(0, 150);
       notifyMentions({
         content: editorJson,
@@ -271,7 +272,7 @@ export function PurchaseItemComments({ purchaseItemId, projectId, teamMembers }:
         body: plainBody || null,
         projectId,
         referenceType: 'purchase_item_comment',
-        referenceId: data.id,
+        referenceId: dataAny.id,
       }).catch(console.error);
     }
   }
@@ -280,13 +281,14 @@ export function PurchaseItemComments({ purchaseItemId, projectId, teamMembers }:
     const authorId = currentMember?.id ?? null;
     const authorName = currentMember?.name ?? 'Anonymous';
     const { data } = await supabase
-      .from('purchase_item_comment_replies')
+      .from('purchase_item_comment_replies' as any)
       .insert({ comment_id: commentId, author_id: authorId, author_name: authorName, body: html })
       .select()
       .single();
     if (data) {
+      const dataAny = data as any;
       setComments((prev) =>
-        prev.map((c) => c.id === commentId ? { ...c, replies: [...(c.replies ?? []), data as PurchaseCommentReply] } : c)
+        prev.map((c) => c.id === commentId ? { ...c, replies: [...(c.replies ?? []), dataAny as PurchaseCommentReply] } : c)
       );
       setReplyingTo(null);
       const plainBody = html.replace(/<[^>]*>/g, '').trim().slice(0, 150);
@@ -299,18 +301,18 @@ export function PurchaseItemComments({ purchaseItemId, projectId, teamMembers }:
         body: plainBody || null,
         projectId,
         referenceType: 'purchase_item_comment_reply',
-        referenceId: data.id,
+        referenceId: dataAny.id,
       }).catch(console.error);
     }
   }
 
   async function deleteComment(id: string) {
-    await supabase.from('purchase_item_comments').delete().eq('id', id);
+    await supabase.from('purchase_item_comments' as any).delete().eq('id', id);
     setComments((prev) => prev.filter((c) => c.id !== id));
   }
 
   async function deleteReply(commentId: string, replyId: string) {
-    await supabase.from('purchase_item_comment_replies').delete().eq('id', replyId);
+    await supabase.from('purchase_item_comment_replies' as any).delete().eq('id', replyId);
     setComments((prev) =>
       prev.map((c) => c.id === commentId ? { ...c, replies: (c.replies ?? []).filter((r) => r.id !== replyId) } : c)
     );

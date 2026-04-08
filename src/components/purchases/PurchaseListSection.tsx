@@ -130,7 +130,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
   }
 
   async function handleAddItem() {
-    const maxOrder = items.length > 0 ? Math.max(...items.map((i) => i.display_order)) : 0;
+    const maxOrder = items.length > 0 ? Math.max(...items.map((i) => i.display_order ?? 0)) : 0;
     const { data, error } = await supabase
       .from('project_purchase_items')
       .insert({
@@ -190,7 +190,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
     return true;
   });
 
-  const filteredTotal = filtered.reduce((sum, i) => sum + (i.subtotal ?? i.quantity * i.price), 0);
+  const filteredTotal = filtered.reduce((sum, i) => sum + (i.subtotal ?? i.quantity * (i.price ?? 0)), 0);
 
   // Group items
   function getGroupKey(item: ProjectPurchaseItemWithDetails): string {

@@ -6,7 +6,7 @@ import { Input } from '../components/Input';
 import { clearSettingsCache, useSettingsStore } from '../lib/settingsStore';
 import { downloadFullBackup, type BackupSummary } from '../utils/backupExport';
 import type { Setting, TaxByType, CustomType, CustomUnit, TeamMember, Department } from '../types';
-import { SYSTEM_ROLE_LABELS, SYSTEM_ROLES, type SystemRole } from '../types';
+import { SYSTEM_ROLE_LABELS, SYSTEM_ROLES } from '../types';
 import { useCurrentMember } from '../lib/useCurrentMember';
 
 export function Settings() {
@@ -71,7 +71,7 @@ export function Settings() {
         .order('material_type');
 
       if (error) throw error;
-      setTaxesByType(data || []);
+      setTaxesByType((data || []) as any);
     } catch (error) {
       console.error('Error loading taxes by type:', error);
     }
@@ -85,7 +85,7 @@ export function Settings() {
         .order('type_name');
 
       if (error) throw error;
-      setCustomTypes(data || []);
+      setCustomTypes((data || []) as any);
     } catch (error) {
       console.error('Error loading custom types:', error);
     }
@@ -99,7 +99,7 @@ export function Settings() {
         .order('unit_name');
 
       if (error) throw error;
-      setCustomUnits(data || []);
+      setCustomUnits((data || []) as any);
     } catch (error) {
       console.error('Error loading custom units:', error);
     }
@@ -167,8 +167,8 @@ export function Settings() {
       }
 
       for (const product of products) {
-        const newBoxSF = product.original_box_sf * (1 + boxWaste / 100);
-        const newDoorsSF = product.original_doors_fronts_sf * (1 + doorsWaste / 100);
+        const newBoxSF = (product.original_box_sf ?? 0) * (1 + boxWaste / 100);
+        const newDoorsSF = (product.original_doors_fronts_sf ?? 0) * (1 + doorsWaste / 100);
 
         const { error: updateError } = await supabase
           .from('products_catalog')

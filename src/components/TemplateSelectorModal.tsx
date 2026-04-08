@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, AlertCircle, Check, Layers } from 'lucide-react';
 import { Modal } from './Modal';
 import { Button } from './Button';
-import { getAllTemplates, searchTemplates, validateTemplateAvailability } from '../lib/templateManager';
+import { getAllTemplates, validateTemplateAvailability } from '../lib/templateManager';
 import type { CabinetTemplate, PriceListItem, Product, TemplateCategory } from '../types';
 
 interface TemplateSelectorModalProps {

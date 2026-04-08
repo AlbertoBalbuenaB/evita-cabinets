@@ -3,7 +3,7 @@ import { Modal } from './Modal';
 import { Button } from './Button';
 import { Input } from './Input';
 import { CollectionSelector } from './CollectionSelector';
-import type { Product, ProductInsert, CutPiece, Cubrecanto } from '../types';
+import type { Product, ProductInsert, CutPiece } from '../types';
 import { calculateDespiece } from '../lib/despieceCalculator';
 import { EdgeBandCell } from './EdgeBandPopover';
 
@@ -49,7 +49,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
   const [calcHasDoors, setCalcHasDoors] = useState(false);
   const [calcDoors, setCalcDoors] = useState<number>(1);
   const [calcDoorSectionH, setCalcDoorSectionH] = useState<number>(0);
-  const [calcHasDrawers, setCalcHasDrawers] = useState(formData.has_drawers);
+  const [calcHasDrawers, setCalcHasDrawers] = useState<boolean>(formData.has_drawers ?? false);
   const [calcDrawers, setCalcDrawers] = useState<number>(3);
   const [calcDrawerSectionH, setCalcDrawerSectionH] = useState<number>(0);
   const [calcError, setCalcError] = useState<string>('');
@@ -291,7 +291,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={formData.has_drawers}
+                checked={formData.has_drawers ?? false}
                 onChange={(e) => syncFormHasDrawers(e.target.checked)}
                 className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
               />

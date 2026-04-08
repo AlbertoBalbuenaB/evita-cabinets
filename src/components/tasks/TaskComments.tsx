@@ -1,4 +1,4 @@
-import { useState, forwardRef, useImperativeHandle, useEffect, useRef } from 'react';
+import { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { Send, Trash2, CornerDownRight, X, User, Users } from 'lucide-react';
 import { useEditor, EditorContent, ReactRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -11,7 +11,7 @@ import type { Instance as TippyInstance } from 'tippy.js';
 import { format } from 'date-fns';
 import { supabase } from '../../lib/supabase';
 import type { TaskComment, TaskCommentReply, TeamMember, Department } from '../../types';
-import { extractMentionIds, notifyMentions } from '../../lib/notifications';
+import { notifyMentions } from '../../lib/notifications';
 import { useCurrentMember } from '../../lib/useCurrentMember';
 
 // ---------------------------------------------------------------------------
@@ -277,13 +277,13 @@ export function TaskComments({ taskId, projectId, comments, teamMembers, onChang
       .single();
 
     if (data) {
-      const newComment: TaskComment = {
+      const newComment = {
         ...data,
-        author_name: authorId
+        author_name: (authorId
           ? teamMembers.find((m) => m.id === authorId)?.name
-          : authorName || undefined,
+          : authorName) ?? undefined,
         replies: [],
-      };
+      } as unknown as TaskComment;
       onChange([...comments, newComment]);
 
       // Notify mentioned users/departments
@@ -316,12 +316,12 @@ export function TaskComments({ taskId, projectId, comments, teamMembers, onChang
       .single();
 
     if (data) {
-      const newReply: TaskCommentReply = {
+      const newReply = {
         ...data,
-        author_name: authorId
+        author_name: (authorId
           ? teamMembers.find((m) => m.id === authorId)?.name
-          : authorName || undefined,
-      };
+          : authorName) ?? undefined,
+      } as unknown as TaskCommentReply;
       onChange(
         comments.map((c) =>
           c.id === commentId ? { ...c, replies: [...(c.replies ?? []), newReply] } : c

@@ -19,6 +19,7 @@ interface PurchaseItemRowProps {
   suppliers: { id: string; name: string }[];
   teamMembers: { id: string; name: string }[];
   projectName: string;
+  colSpan?: number;
   onUpdate: (id: string, changes: Record<string, any>) => void;
   onDelete: (id: string) => void;
   onConsumeInventory: (item: ProjectPurchaseItemWithDetails) => void;
@@ -300,17 +301,16 @@ export function PurchaseItemRow({
             className="w-full px-1.5 py-1.5 text-sm text-right tabular-nums border border-transparent hover:border-slate-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
           />
           {isPriceOverridden && (
-            <AlertCircle
-              className="absolute -right-0.5 -top-0.5 h-3 w-3 text-amber-400 pointer-events-none"
-              title={`Manually overridden (list price: ${formatCurrency(listPrice!)})`}
-            />
+            <span title={`Manually overridden (list price: ${formatCurrency(listPrice!)})`}>
+              <AlertCircle className="absolute -right-0.5 -top-0.5 h-3 w-3 text-amber-400 pointer-events-none" />
+            </span>
           )}
         </div>
       </td>
 
       {/* Subtotal */}
       <td className="px-2 py-2 w-[88px] text-right text-sm tabular-nums text-slate-700 font-medium">
-        {formatCurrency(item.subtotal ?? item.quantity * item.price)}
+        {formatCurrency(item.subtotal ?? item.quantity * (item.price ?? 0))}
       </td>
 
       {/* Priority */}

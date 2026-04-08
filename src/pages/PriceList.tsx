@@ -199,7 +199,7 @@ export function PriceList() {
           price: item.price,
           base_price: item.price,
           price_with_tax: editingItem.tax_rate && editingItem.tax_rate > 0
-            ? parseFloat((item.price * (1 + editingItem.tax_rate / 100)).toFixed(2))
+            ? parseFloat(((item.price ?? 0) * (1 + editingItem.tax_rate / 100)).toFixed(2))
             : item.price,
           price_last_updated_at: new Date().toISOString(),
           sf_per_sheet: item.sf_per_sheet,
@@ -713,7 +713,6 @@ function PriceListFormModal({
   item,
   onSave,
   onClose,
-  existingTypes,
 }: PriceListFormModalProps) {
   const [formData, setFormData] = useState<PriceListInsert>({
     sku_code: item?.sku_code || '',

@@ -192,7 +192,7 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
                   <td className="py-3 px-2 text-right tabular-nums text-slate-800">{formatCurrency(q.total_amount ?? 0)}</td>
                   <td className="py-3 px-2 text-right tabular-nums text-slate-800">{formatCurrency((q.total_amount ?? 0) / fx, 'USD')}</td>
                   <td className="py-3 px-2 text-center hidden md:table-cell">
-                    <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[q.status] || 'bg-slate-100 text-slate-600 border-slate-200/50'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[q.status ?? ''] || 'bg-slate-100 text-slate-600 border-slate-200/50'}`}>
                       {q.status}
                     </span>
                   </td>
@@ -299,7 +299,7 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
           {analytics.sorted.map((q) => {
             const amount = q.total_amount ?? 0;
             const pct = (amount / analytics.maxAmount) * 100;
-            const gradient = STATUS_GRADIENTS[q.status] || 'bg-gradient-to-r from-slate-300 to-slate-400';
+            const gradient = STATUS_GRADIENTS[q.status ?? ''] || 'bg-gradient-to-r from-slate-300 to-slate-400';
             return (
               <div key={q.id}>
                 <div className="flex justify-between items-center mb-1.5">
@@ -352,7 +352,7 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
               <tbody>
                 {analytics.sorted.map((q, i) => {
                   const prev = i > 0 ? analytics.sorted[i - 1] : null;
-                  const ch = (curr: number | null, prv: number | null) =>
+                  const ch = (curr: number | null | undefined, prv: number | null | undefined) =>
                     prev && curr !== prv ? 'bg-amber-50 text-amber-700 font-semibold' : 'text-slate-700';
                   return (
                     <tr key={q.id} className="border-b border-slate-100 last:border-0">

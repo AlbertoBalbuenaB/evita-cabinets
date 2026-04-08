@@ -3,7 +3,6 @@ import { Upload, X, FileJson, AlertTriangle, CheckCircle2, Loader2 } from 'lucid
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { Input } from './Input';
-import { formatCurrency } from '../lib/calculations';
 import { supabase } from '../lib/supabase';
 import {
   validateQuotationImport,
@@ -39,7 +38,7 @@ export function ImportQuotationModal({ isOpen, onClose, projectId, onSuccess }: 
   useEffect(() => {
     if (!projectId && isOpen) {
       supabase.from('projects').select('id, name').order('updated_at', { ascending: false })
-        .then(({ data }) => setProjects(data || []));
+        .then(({ data }) => setProjects((data || []) as any));
     }
   }, [projectId, isOpen]);
 

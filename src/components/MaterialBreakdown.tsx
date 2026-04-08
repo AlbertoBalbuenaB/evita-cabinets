@@ -149,29 +149,29 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
             const totalSF = product.box_sf * effectiveQty;
             const key = material.id;
             if (!boxMaterialsMap.has(key)) {
-              boxMaterialsMap.set(key, { materialName: material.concept_description, totalSF, sheetsNeeded: Math.ceil(totalSF / sfPerSheet), sfPerSheet, cost: cabinet.box_material_cost * areaQty });
+              boxMaterialsMap.set(key, { materialName: material.concept_description, totalSF, sheetsNeeded: Math.ceil(totalSF / sfPerSheet), sfPerSheet, cost: (cabinet.box_material_cost ?? 0) * areaQty });
             } else {
               const existing = boxMaterialsMap.get(key)!;
               existing.totalSF += totalSF;
               existing.sheetsNeeded = Math.ceil(existing.totalSF / sfPerSheet);
-              existing.cost += cabinet.box_material_cost * areaQty;
+              existing.cost += (cabinet.box_material_cost ?? 0) * areaQty;
             }
           }
         }
 
-        if (cabinet.box_interior_finish_id && cabinet.box_interior_finish_cost > 0) {
+        if (cabinet.box_interior_finish_id && (cabinet.box_interior_finish_cost ?? 0) > 0) {
           const interiorMaterial = priceList.find((p) => p.id === cabinet.box_interior_finish_id);
           if (interiorMaterial) {
             const sfPerSheet = interiorMaterial.sf_per_sheet || 32;
             const totalSF = product.box_sf * effectiveQty;
             const key = interiorMaterial.id;
             if (!boxInteriorFinishMap.has(key)) {
-              boxInteriorFinishMap.set(key, { materialName: interiorMaterial.concept_description, totalSF, sheetsNeeded: Math.ceil(totalSF / sfPerSheet), sfPerSheet, cost: cabinet.box_interior_finish_cost * areaQty });
+              boxInteriorFinishMap.set(key, { materialName: interiorMaterial.concept_description, totalSF, sheetsNeeded: Math.ceil(totalSF / sfPerSheet), sfPerSheet, cost: (cabinet.box_interior_finish_cost ?? 0) * areaQty });
             } else {
               const existing = boxInteriorFinishMap.get(key)!;
               existing.totalSF += totalSF;
               existing.sheetsNeeded = Math.ceil(existing.totalSF / sfPerSheet);
-              existing.cost += cabinet.box_interior_finish_cost * areaQty;
+              existing.cost += (cabinet.box_interior_finish_cost ?? 0) * areaQty;
             }
           }
         }
@@ -183,46 +183,46 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
             const totalSF = product.doors_fronts_sf * effectiveQty;
             const key = material.id;
             if (!doorsMaterialsMap.has(key)) {
-              doorsMaterialsMap.set(key, { materialName: material.concept_description, totalSF, sheetsNeeded: Math.ceil(totalSF / sfPerSheet), sfPerSheet, cost: cabinet.doors_material_cost * areaQty });
+              doorsMaterialsMap.set(key, { materialName: material.concept_description, totalSF, sheetsNeeded: Math.ceil(totalSF / sfPerSheet), sfPerSheet, cost: (cabinet.doors_material_cost ?? 0) * areaQty });
             } else {
               const existing = doorsMaterialsMap.get(key)!;
               existing.totalSF += totalSF;
               existing.sheetsNeeded = Math.ceil(existing.totalSF / sfPerSheet);
-              existing.cost += cabinet.doors_material_cost * areaQty;
+              existing.cost += (cabinet.doors_material_cost ?? 0) * areaQty;
             }
           }
         }
 
-        if (cabinet.doors_interior_finish_id && cabinet.doors_interior_finish_cost > 0) {
+        if (cabinet.doors_interior_finish_id && (cabinet.doors_interior_finish_cost ?? 0) > 0) {
           const interiorMaterial = priceList.find((p) => p.id === cabinet.doors_interior_finish_id);
           if (interiorMaterial) {
             const sfPerSheet = interiorMaterial.sf_per_sheet || 32;
             const totalSF = product.doors_fronts_sf * effectiveQty;
             const key = interiorMaterial.id;
             if (!doorsInteriorFinishMap.has(key)) {
-              doorsInteriorFinishMap.set(key, { materialName: interiorMaterial.concept_description, totalSF, sheetsNeeded: Math.ceil(totalSF / sfPerSheet), sfPerSheet, cost: cabinet.doors_interior_finish_cost * areaQty });
+              doorsInteriorFinishMap.set(key, { materialName: interiorMaterial.concept_description, totalSF, sheetsNeeded: Math.ceil(totalSF / sfPerSheet), sfPerSheet, cost: (cabinet.doors_interior_finish_cost ?? 0) * areaQty });
             } else {
               const existing = doorsInteriorFinishMap.get(key)!;
               existing.totalSF += totalSF;
               existing.sheetsNeeded = Math.ceil(existing.totalSF / sfPerSheet);
-              existing.cost += cabinet.doors_interior_finish_cost * areaQty;
+              existing.cost += (cabinet.doors_interior_finish_cost ?? 0) * areaQty;
             }
           }
         }
 
-        if (cabinet.use_back_panel_material && cabinet.back_panel_material_id && cabinet.back_panel_sf && cabinet.back_panel_material_cost > 0) {
+        if (cabinet.use_back_panel_material && cabinet.back_panel_material_id && cabinet.back_panel_sf && (cabinet.back_panel_material_cost ?? 0) > 0) {
           const material = priceList.find((p) => p.id === cabinet.back_panel_material_id);
           if (material) {
             const sfPerSheet = material.sf_per_sheet || 32;
             const totalSF = cabinet.back_panel_sf * areaQty;
             const key = material.id;
             if (!backPanelMaterialsMap.has(key)) {
-              backPanelMaterialsMap.set(key, { materialName: material.concept_description, totalSF, sheetsNeeded: Math.ceil(totalSF / sfPerSheet), sfPerSheet, cost: cabinet.back_panel_material_cost * areaQty });
+              backPanelMaterialsMap.set(key, { materialName: material.concept_description, totalSF, sheetsNeeded: Math.ceil(totalSF / sfPerSheet), sfPerSheet, cost: (cabinet.back_panel_material_cost ?? 0) * areaQty });
             } else {
               const existing = backPanelMaterialsMap.get(key)!;
               existing.totalSF += totalSF;
               existing.sheetsNeeded = Math.ceil(existing.totalSF / sfPerSheet);
-              existing.cost += cabinet.back_panel_material_cost * areaQty;
+              existing.cost += (cabinet.back_panel_material_cost ?? 0) * areaQty;
             }
           }
         }
@@ -230,14 +230,14 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
         if (cabinet.box_edgeband_id) {
           const edgeband = priceList.find((p) => p.id === cabinet.box_edgeband_id);
           if (edgeband) {
-            const totalMeters = product.box_edgeband * effectiveQty;
+            const totalMeters = (product.box_edgeband ?? 0) * effectiveQty;
             const key = edgeband.id;
             if (!boxEdgebandMap.has(key)) {
-              boxEdgebandMap.set(key, { edgebandName: edgeband.concept_description, totalMeters, rollsNeeded: 0, totalMetersRounded: 0, cost: cabinet.box_edgeband_cost * areaQty });
+              boxEdgebandMap.set(key, { edgebandName: edgeband.concept_description, totalMeters, rollsNeeded: 0, totalMetersRounded: 0, cost: (cabinet.box_edgeband_cost ?? 0) * areaQty });
             } else {
               const existing = boxEdgebandMap.get(key)!;
               existing.totalMeters += totalMeters;
-              existing.cost += cabinet.box_edgeband_cost * areaQty;
+              existing.cost += (cabinet.box_edgeband_cost ?? 0) * areaQty;
             }
           }
         }
@@ -245,14 +245,14 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
         if (cabinet.doors_edgeband_id) {
           const edgeband = priceList.find((p) => p.id === cabinet.doors_edgeband_id);
           if (edgeband) {
-            const totalMeters = product.doors_fronts_edgeband * effectiveQty;
+            const totalMeters = (product.doors_fronts_edgeband ?? 0) * effectiveQty;
             const key = edgeband.id;
             if (!doorsEdgebandMap.has(key)) {
-              doorsEdgebandMap.set(key, { edgebandName: edgeband.concept_description, totalMeters, rollsNeeded: 0, totalMetersRounded: 0, cost: cabinet.doors_edgeband_cost * areaQty });
+              doorsEdgebandMap.set(key, { edgebandName: edgeband.concept_description, totalMeters, rollsNeeded: 0, totalMetersRounded: 0, cost: (cabinet.doors_edgeband_cost ?? 0) * areaQty });
             } else {
               const existing = doorsEdgebandMap.get(key)!;
               existing.totalMeters += totalMeters;
-              existing.cost += cabinet.doors_edgeband_cost * areaQty;
+              existing.cost += (cabinet.doors_edgeband_cost ?? 0) * areaQty;
             }
           }
         }
@@ -299,7 +299,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
           });
         }
 
-        totalLaborCost += cabinet.labor_cost * areaQty;
+        totalLaborCost += (cabinet.labor_cost ?? 0) * areaQty;
       });
 
       area.countertops.forEach((ct) => {

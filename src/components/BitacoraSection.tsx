@@ -604,7 +604,7 @@ function AuthorAvatar({ name, className = '' }: { name: string; className?: stri
   );
 }
 
-function LogEntry({ log, replies, teamMembers, getMentionItems, projectId, onEdit, onDelete, onReplyAdded, onReplyUpdated, onReplyDeleted }: LogEntryProps) {
+function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, onReplyAdded, onReplyUpdated, onReplyDeleted }: LogEntryProps) {
   const navigate = useNavigate();
   const { member: currentMember } = useCurrentMember();
   const logType = (log.log_type as LogType) || 'note';

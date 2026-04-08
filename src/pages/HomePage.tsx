@@ -4,7 +4,7 @@ import {
   CheckSquare, Clock, ChevronDown, ChevronRight, CheckCircle2,
   ScrollText, ArrowRightCircle, Lightbulb, AlertTriangle, Star,
   Activity, ExternalLink, Filter, X, TrendingUp, FolderOpen, ArrowRight,
-  Users, Calendar, Ban, GitMerge, Search,
+  Users, Ban, GitMerge, Search,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
@@ -263,12 +263,6 @@ export function HomePage() {
     return () => { cancelled = true; };
   }, []);
 
-  async function loadAll() {
-    setLoading(true);
-    await Promise.all([loadTasks(), loadLogs(), loadQuotesData()]);
-    setLoading(false);
-  }
-
   async function loadQuotesData() {
     const [recentRes, pipelineRes] = await Promise.all([
       supabase
@@ -278,9 +272,12 @@ export function HomePage() {
         .limit(5),
       supabase.from('quotations').select('status'),
     ]);
-    setRecentQuotes(recentRes.data || []);
+    setRecentQuotes((recentRes.data || []) as any);
     const counts: Record<string, number> = {};
-    (pipelineRes.data || []).forEach(q => { counts[q.status] = (counts[q.status] || 0) + 1; });
+    (pipelineRes.data || []).forEach(q => {
+      const status = q.status ?? 'unknown';
+      counts[status] = (counts[status] || 0) + 1;
+    });
     setPipeline(counts);
   }
 
@@ -299,7 +296,7 @@ export function HomePage() {
     const [assigneesRes, membersRes, projectsRes, subtasksRes] = await Promise.all([
       supabase.from('task_assignees').select('task_id, member_id').in('task_id', taskIds),
       supabase.from('team_members').select('*'),
-      supabase.from('projects').select('id, name').in('id', projectIds),
+      supabase.from('projects').select('id, name').in('id', projectIds.filter((id): id is string => !!id)),
       supabase.from('project_tasks').select('*').in('parent_task_id', taskIds).order('display_order'),
     ]);
 
@@ -308,9 +305,9 @@ export function HomePage() {
     const assigneeRows = assigneesRes.data || [];
     const subtasksRaw = subtasksRes.data || [];
 
-    setTeamMembers(membersRes.data || []);
+    setTeamMembers((membersRes.data || []) as any);
 
-    const enhanced: CrossProjectTask[] = rawTasks.map(raw => {
+    const enhanced: CrossProjectTask[] = rawTasks.map((raw): CrossProjectTask => {
       const taskAssignees = assigneeRows
         .filter(r => r.task_id === raw.id)
         .map(r => membersMap.get(r.member_id))
@@ -324,8 +321,8 @@ export function HomePage() {
           priority: ((s as Record<string, unknown>).priority as TaskPriority) ?? 'medium',
           parent_task_id: s.parent_task_id ?? null,
           assignees: [], tags: [], subtasks: [], comments: [], deliverables: [],
-          project_name: projectsMap.get(s.project_id) ?? '',
-        }));
+          project_name: projectsMap.get(s.project_id ?? '') ?? '',
+        })) as unknown as EnhancedTask[];
 
       return {
         ...raw,
@@ -334,8 +331,8 @@ export function HomePage() {
         parent_task_id: null,
         assignees: taskAssignees,
         tags: [], subtasks: taskSubtasks, comments: [], deliverables: [],
-        project_name: projectsMap.get(raw.project_id) ?? '',
-      };
+        project_name: projectsMap.get(raw.project_id ?? '') ?? '',
+      } as unknown as CrossProjectTask;
     });
 
     setTasks(enhanced);
@@ -349,12 +346,12 @@ export function HomePage() {
 
     if (!logsData || logsData.length === 0) { setLogs([]); return; }
 
-    const projectIds = [...new Set(logsData.map(l => l.project_id))];
+    const projectIds = [...new Set(logsData.map(l => l.project_id))].filter((id): id is string => !!id);
     const { data: projectsData } = await supabase
       .from('projects').select('id, name').in('id', projectIds);
 
     const projectsMap = new Map((projectsData || []).map(p => [p.id, p.name as string]));
-    setLogs(logsData.map(l => ({ ...l, project_name: projectsMap.get(l.project_id) ?? 'Unknown Project' })));
+    setLogs(logsData.map(l => ({ ...l, project_name: projectsMap.get(l.project_id ?? '') ?? 'Unknown Project' })) as unknown as CrossProjectLog[]);
   }
 
   async function handleStatusChange(taskId: string, status: TaskStatus) {

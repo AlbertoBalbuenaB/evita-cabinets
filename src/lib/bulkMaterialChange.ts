@@ -8,8 +8,6 @@ import {
   calculateInteriorFinishCost,
   calculateDoorProfileCost,
 } from './calculations';
-import type { AreaCabinet, PriceListItem, Product } from '../types';
-
 export type MaterialChangeType =
   | 'box_material'
   | 'box_edgeband'
@@ -103,7 +101,7 @@ export async function getMaterialsInUse(
   }
 
   let query = supabase
-    .from(tableName)
+    .from(tableName as 'area_cabinets')
     .select(`${materialColumn}, ${costColumn}, quantity`)
     .not(materialColumn, 'is', null);
 
@@ -111,7 +109,7 @@ export async function getMaterialsInUse(
     query = query.in('area_id', areaIds);
   } else {
     const { data: areas } = await supabase
-      .from(areaTableName)
+      .from(areaTableName as 'project_areas')
       .select('id')
       .eq(versionId ? 'version_id' : 'project_id', versionId || projectId);
 
@@ -196,7 +194,7 @@ export async function previewBulkMaterialChange(
   }
 
   let query = supabase
-    .from(tableName)
+    .from(tableName as 'area_cabinets')
     .select('*')
     .eq(materialColumn, oldMaterialId);
 
@@ -204,7 +202,7 @@ export async function previewBulkMaterialChange(
     query = query.in('area_id', areaIds);
   } else {
     const { data: areas } = await supabase
-      .from(areaTableName)
+      .from(areaTableName as 'project_areas')
       .select('id')
       .eq(versionId ? 'version_id' : 'project_id', versionId || projectId);
 
@@ -217,10 +215,9 @@ export async function previewBulkMaterialChange(
 
   if (error) throw error;
 
-  const [{ data: newMaterial }, products, { data: priceList }] = await Promise.all([
+  const [{ data: newMaterial }, products] = await Promise.all([
     supabase.from('price_list').select('*').eq('id', newMaterialId).single(),
     fetchAllProducts({ onlyActive: false }),
-    supabase.from('price_list').select('*'),
   ]);
 
   if (!newMaterial) {
@@ -228,7 +225,6 @@ export async function previewBulkMaterialChange(
   }
 
   const productsMap = new Map(products.map(p => [p.sku, p]));
-  const priceListMap = new Map(priceList?.map(p => [p.id, p]) || []);
 
   let totalCostBefore = 0;
   let totalCostAfter = 0;
@@ -334,7 +330,7 @@ export async function executeBulkMaterialChange(
     const [{ data: oldMaterial }, { data: newMaterial }, { data: fullCabinets }] = await Promise.all([
       supabase.from('price_list').select('concept_description').eq('id', oldMaterialId).single(),
       supabase.from('price_list').select('concept_description, price').eq('id', newMaterialId).single(),
-      supabase.from(tableName).select('*').in('id', cabinetIds),
+      supabase.from(tableName as 'area_cabinets').select('*').in('id', cabinetIds),
     ]);
 
     const cabinetMap = new Map((fullCabinets || []).map((c: any) => [c.id, c]));
@@ -411,13 +407,15 @@ export async function executeBulkMaterialChange(
       }
 
       updatePromises.push(
-        supabase.from(tableName).update(updates).eq('id', cabinet.id)
+        supabase.from(tableName as 'area_cabinets').update(updates).eq('id', cabinet.id) as unknown as Promise<any>
       );
     }
 
     await Promise.all(updatePromises);
 
-    await supabase.from('material_change_log').insert({
+    // material_change_log exists in DB but is missing from generated types.
+    // Regenerate database.types.ts via Supabase CLI to remove the cast.
+    await supabase.from('material_change_log' as any).insert({
       project_id: projectId,
       user_action: `Changed ${changeType.replace('_', ' ')} from ${oldMaterial?.concept_description || 'Unknown'} to ${newMaterial?.concept_description || 'Unknown'}`,
       change_type: changeType,

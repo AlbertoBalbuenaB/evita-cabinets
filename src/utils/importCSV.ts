@@ -1,27 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { parseDimensions } from '../lib/calculations';
 
-interface ProductCSVRow {
-  'SKU (CDS)': string;
-  'Description': string;
-  'Box SF': string;
-  'Box Edgeband': string;
-  'Box Edgeband Color': string;
-  'Doors & Fronts SF': string;
-  'Doors & Fronts Edgeband': string;
-  'Total Edgeband Color': string;
-}
-
-interface PriceListCSVRow {
-  'SKU/Code': string;
-  'Concept / Description': string;
-  'Type': string;
-  'Material': string;
-  'Dimensions': string;
-  'Unit': string;
-  'Price': string;
-}
-
 function parsePrice(priceStr: string): number {
   const cleaned = priceStr.replace(/[$,]/g, '').trim();
   return parseFloat(cleaned) || 0;

@@ -1,5 +1,4 @@
 import type { ProjectArea, AreaCabinet, AreaItem, AreaCountertop } from '../types';
-import { formatCurrency } from '../lib/calculations';
 
 export interface AreaExportData {
   areaName: string;
@@ -16,14 +15,14 @@ export function prepareAreasForExport(
   areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[] })[]
 ): AreaExportData[] {
   return areas.map(area => {
-    const cabinetsTotal = area.cabinets.reduce((sum, c) => sum + c.subtotal, 0);
+    const cabinetsTotal = area.cabinets.reduce((sum, c) => sum + (c.subtotal ?? 0), 0);
     const itemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
     const countertopsTotal = area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0);
     const areaTotal = cabinetsTotal + itemsTotal + countertopsTotal;
 
     return {
       areaName: area.name,
-      cabinetCount: area.cabinets.filter(c => !c.is_accessory).length,
+      cabinetCount: area.cabinets.filter(c => !(c as { is_accessory?: boolean }).is_accessory).length,
       itemCount: area.items.length,
       countertopCount: area.countertops.length,
       cabinetsTotal,
@@ -140,14 +139,14 @@ export function generateDetailedAreasCSV(
       area.cabinets.forEach(cabinet => {
         csvLines.push([
           escapeCSVField(cabinet.product_sku || ''),
-          escapeCSVField(cabinet.description || ''),
+          escapeCSVField((cabinet as { description?: string }).description || ''),
           cabinet.quantity.toString(),
-          (cabinet.subtotal / cabinet.quantity).toFixed(2),
-          cabinet.subtotal.toFixed(2),
+          ((cabinet.subtotal ?? 0) / cabinet.quantity).toFixed(2),
+          (cabinet.subtotal ?? 0).toFixed(2),
         ].join(','));
       });
 
-      const cabinetsTotal = area.cabinets.reduce((sum, c) => sum + c.subtotal, 0);
+      const cabinetsTotal = area.cabinets.reduce((sum, c) => sum + (c.subtotal ?? 0), 0);
       csvLines.push(`,,,Cabinets Total:,${cabinetsTotal.toFixed(2)}`);
       csvLines.push('');
     }
@@ -178,7 +177,7 @@ export function generateDetailedAreasCSV(
 
       area.items.forEach(item => {
         csvLines.push([
-          escapeCSVField(item.description || ''),
+          escapeCSVField((item as { description?: string }).description || ''),
           item.quantity.toString(),
           item.unit_price.toFixed(2),
           item.subtotal.toFixed(2),
@@ -192,7 +191,7 @@ export function generateDetailedAreasCSV(
     }
 
     const areaTotal =
-      area.cabinets.reduce((sum, c) => sum + c.subtotal, 0) +
+      area.cabinets.reduce((sum, c) => sum + (c.subtotal ?? 0), 0) +
       area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0) +
       area.items.reduce((sum, i) => sum + i.subtotal, 0);
 
@@ -203,7 +202,7 @@ export function generateDetailedAreasCSV(
   csvLines.push('');
   const grandTotal = areas.reduce((sum, area) => {
     return sum +
-      area.cabinets.reduce((s, c) => s + c.subtotal, 0) +
+      area.cabinets.reduce((s, c) => s + (c.subtotal ?? 0), 0) +
       area.countertops.reduce((s, ct) => s + ct.subtotal, 0) +
       area.items.reduce((s, i) => s + i.subtotal, 0);
   }, 0);

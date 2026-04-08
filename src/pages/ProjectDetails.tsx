@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, Truck, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History, SeparatorHorizontal, Scissors } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History, SeparatorHorizontal, LayoutDashboard } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { fetchAllProducts } from '../lib/fetchAllProducts';
 import { Button } from '../components/Button';
@@ -99,7 +99,7 @@ export function ProjectDetails({ project: initialProject, parentProject, onBack 
   const [hasStalePrices, setHasStalePrices] = useState(false);
   const [isBulkPriceUpdateOpen, setIsBulkPriceUpdateOpen] = useState(false);
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
-  const [versionCount, setVersionCount] = useState(0);
+  const [, setVersionCount] = useState(0);
 const [isEditingDate, setIsEditingDate] = useState(false);
   const [editedQuoteDate, setEditedQuoteDate] = useState(project.quote_date);
   const [hasAreasOrderChanged, setHasAreasOrderChanged] = useState(false);
@@ -214,9 +214,9 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
 
       const allCabinets: AreaCabinet[] = allCabinetsResult.data || [];
-      const allItems: AreaItem[] = allItemsResult.data || [];
-      const allCountertops: AreaCountertop[] = allCountertopsResult.data || [];
-      const allClosetItems: AreaClosetItem[] = (allClosetItemsResult.data || []) as AreaClosetItem[];
+      const allItems: AreaItem[] = (allItemsResult.data || []) as unknown as AreaItem[];
+      const allCountertops: AreaCountertop[] = (allCountertopsResult.data || []) as unknown as AreaCountertop[];
+      const allClosetItems: AreaClosetItem[] = (allClosetItemsResult.data || []) as unknown as AreaClosetItem[];
       const allSections: AreaSection[] = (allSectionsResult.data || []) as AreaSection[];
 
       const areasWithCabinetsAndItems = (areasData || []).map((area) => {
@@ -377,7 +377,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
         if (error) throw error;
       } else {
-        const maxOrder = Math.max(...areas.map((a) => a.display_order), -1);
+        const maxOrder = Math.max(...areas.map((a) => a.display_order ?? 0), -1);
         const { error } = await supabase.from('project_areas').insert([
           {
             ...areaData,
@@ -402,7 +402,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     if (!confirm(`Duplicate area "${area.name}" with all its cabinets and items?`)) return;
 
     try {
-      const maxOrder = Math.max(...areas.map((a) => a.display_order), -1);
+      const maxOrder = Math.max(...areas.map((a) => a.display_order ?? 0), -1);
       const { data: newArea, error: areaError } = await supabase
         .from('project_areas')
         .insert([{
@@ -448,7 +448,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           ...rest,
           area_id: newArea.id,
         }));
-        const { error: closetError } = await supabase.from('area_closet_items').insert(closetItemsToInsert);
+        const { error: closetError } = await supabase.from('area_closet_items').insert(closetItemsToInsert as any);
         if (closetError) throw closetError;
       }
 
@@ -948,7 +948,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   }
 
   const cabinetsSubtotal = areas.reduce(
-    (sum, area) => sum + area.cabinets.reduce((s, c) => s + c.subtotal, 0) * (area.quantity ?? 1),
+    (sum, area) => sum + area.cabinets.reduce((s, c) => s + (c.subtotal ?? 0), 0) * (area.quantity ?? 1),
     0
   );
 
@@ -985,7 +985,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     if (area.applies_tariff !== true) return sum;
     const qty = area.quantity ?? 1;
     return sum + (
-      area.cabinets.reduce((s, c) => s + c.subtotal, 0) +
+      area.cabinets.reduce((s, c) => s + (c.subtotal ?? 0), 0) +
       area.items.reduce((s, i) => s + i.subtotal, 0) +
       area.countertops.reduce((s, ct) => s + ct.subtotal, 0) +
       (area.closetItems || []).reduce((s, ci) => s + ci.subtotal_mxn, 0)
@@ -1094,7 +1094,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   const tabs = [
     { id: 'info' as const, label: 'Info', icon: Receipt },
     { id: 'pricing' as const, label: 'Pricing', icon: Calculator },
-    { id: 'cutlist' as const, label: 'Cut-list Pricing', icon: Scissors },
+    { id: 'cutlist' as const, label: 'Cut-list Pricing', icon: LayoutDashboard },
     { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
     { id: 'history' as const, label: 'History', icon: History },
   ];
@@ -1288,7 +1288,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                           window.location.reload();
                         } catch (error) {
                           console.error('Error updating date:', error);
-                          alert('Failed to update date: ' + error.message);
+                          alert('Failed to update date: ' + (error instanceof Error ? error.message : String(error)));
                         }
                       }}
                       className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded font-medium"
@@ -2010,7 +2010,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                         <div className="text-xs sm:text-sm text-slate-600">Area Total</div>
                         {(() => {
                           const rawTotal =
-                            area.cabinets.reduce((sum, c) => sum + c.subtotal, 0) +
+                            area.cabinets.reduce((sum, c) => sum + (c.subtotal ?? 0), 0) +
                             area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0) +
                             area.items.reduce((sum, i) => sum + i.subtotal, 0) +
                             (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
@@ -2538,7 +2538,7 @@ function AreaFormModal({ area, onSave, onClose, tariffMultiplier }: AreaFormModa
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSave({ name, applies_tariff: appliesTariff });
+    onSave({ name, applies_tariff: appliesTariff } as ProjectAreaInsert);
   }
 
   return (

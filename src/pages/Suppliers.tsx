@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Plus, Search, Pencil as Edit2, ToggleLeft, ToggleRight, Truck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
-import { Input } from '../components/Input';
 import { SupplierFormModal } from '../components/SupplierFormModal';
 import { useCurrentMember } from '../lib/useCurrentMember';
 import type { Supplier } from '../types';

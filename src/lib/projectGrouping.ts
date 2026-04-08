@@ -33,14 +33,14 @@ export function groupProjectsByGroupId(quotations: Quotation[]): ProjectGroup[] 
       return qUpd > bestUpd ? q : best;
     });
     const sortedQuotations = [...quotationsInGroup].sort((a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      new Date(b.created_at ?? '').getTime() - new Date(a.created_at ?? '').getTime()
     );
 
-    const totalValue = quotationsInGroup.reduce((sum, q) => sum + q.total_amount, 0);
+    const totalValue = quotationsInGroup.reduce((sum, q) => sum + (q.total_amount ?? 0), 0);
     const latestDate = quotationsInGroup.reduce((latest, q) =>
       q.quote_date > latest ? q.quote_date : latest, '');
     const latestUpdatedAt = quotationsInGroup.reduce((latest, q) => {
-      const t = q.updated_at ?? q.created_at;
+      const t = q.updated_at ?? q.created_at ?? '';
       return t > latest ? t : latest;
     }, '');
 
@@ -58,6 +58,6 @@ export function groupProjectsByGroupId(quotations: Quotation[]): ProjectGroup[] 
   return groups;
 }
 
-export function getProjectVersionNumber(quotation: Quotation, allQuotations: Quotation[]): number {
+export function getProjectVersionNumber(quotation: Quotation, _allQuotations: Quotation[]): number {
   return quotation.version_number ?? 1;
 }

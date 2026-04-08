@@ -7,6 +7,8 @@ import type {
   AreaCabinet,
   PriceListItem,
   Product,
+  HardwareItem,
+  AccessoryItem,
 } from '../types';
 
 export async function getAllTemplates(): Promise<CabinetTemplate[]> {
@@ -16,7 +18,7 @@ export async function getAllTemplates(): Promise<CabinetTemplate[]> {
     .order('usage_count', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as unknown as CabinetTemplate[];
 }
 
 export async function getTemplatesByCategory(category: string): Promise<CabinetTemplate[]> {
@@ -27,7 +29,7 @@ export async function getTemplatesByCategory(category: string): Promise<CabinetT
     .order('usage_count', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as unknown as CabinetTemplate[];
 }
 
 export async function searchTemplates(searchTerm: string): Promise<CabinetTemplate[]> {
@@ -38,7 +40,7 @@ export async function searchTemplates(searchTerm: string): Promise<CabinetTempla
     .order('usage_count', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as unknown as CabinetTemplate[];
 }
 
 export async function getTemplateById(id: string): Promise<CabinetTemplate | null> {
@@ -49,7 +51,7 @@ export async function getTemplateById(id: string): Promise<CabinetTemplate | nul
     .single();
 
   if (error) throw error;
-  return data;
+  return data as unknown as CabinetTemplate;
 }
 
 export async function createTemplateFromCabinet(
@@ -102,8 +104,8 @@ export async function createTemplateFromCabinet(
     doors_interior_finish_id: cabinet.doors_interior_finish_id,
     doors_interior_finish_name: doorsInteriorFinish?.concept_description || null,
     use_doors_interior_finish: !!cabinet.doors_interior_finish_id,
-    hardware: Array.isArray(cabinet.hardware) ? cabinet.hardware : [],
-    accessories: Array.isArray(cabinet.accessories) ? cabinet.accessories : [],
+    hardware: (Array.isArray(cabinet.hardware) ? cabinet.hardware : []) as unknown as HardwareItem[],
+    accessories: (Array.isArray(cabinet.accessories) ? cabinet.accessories : []) as unknown as AccessoryItem[],
     is_rta: cabinet.is_rta,
     original_box_material_price: boxMaterial?.price || null,
     original_box_edgeband_price: boxEdgeband?.price || null,
@@ -113,11 +115,12 @@ export async function createTemplateFromCabinet(
     original_doors_interior_finish_price: doorsInteriorFinish?.price || null,
     door_profile_id: cabinet.door_profile_id || null,
     door_profile_name: doorProfile?.concept_description || null,
+    use_back_panel_material: cabinet.use_back_panel_material ?? false,
   };
 
   const { data, error } = await supabase
     .from('cabinet_templates')
-    .insert([templateData])
+    .insert([templateData as any])
     .select()
     .single();
 
@@ -128,7 +131,7 @@ export async function createTemplateFromCabinet(
     throw error;
   }
 
-  return data;
+  return data as unknown as CabinetTemplate;
 }
 
 export async function updateTemplate(
@@ -137,7 +140,7 @@ export async function updateTemplate(
 ): Promise<CabinetTemplate> {
   const { data, error } = await supabase
     .from('cabinet_templates')
-    .update(updates)
+    .update(updates as any)
     .eq('id', id)
     .select()
     .single();
@@ -149,7 +152,7 @@ export async function updateTemplate(
     throw error;
   }
 
-  return data;
+  return data as unknown as CabinetTemplate;
 }
 
 export async function deleteTemplate(id: string): Promise<void> {
@@ -177,7 +180,7 @@ export async function duplicateTemplate(
 
   const { data, error } = await supabase
     .from('cabinet_templates')
-    .insert([duplicateData])
+    .insert([duplicateData as any])
     .select()
     .single();
 
@@ -188,7 +191,7 @@ export async function duplicateTemplate(
     throw error;
   }
 
-  return data;
+  return data as unknown as CabinetTemplate;
 }
 
 export async function logTemplateUsage(
@@ -305,7 +308,7 @@ export async function getRecentlyUsedTemplates(limit: number = 5): Promise<Cabin
     .limit(limit);
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as unknown as CabinetTemplate[];
 }
 
 export function generateUniqueTemplateName(baseName: string, existingNames: string[]): string {

@@ -107,7 +107,7 @@ export function PriceListItem() {
       .eq('price_list_item_id', id)
       .order('changed_at', { ascending: false })
       .limit(50);
-    setHistory(data || []);
+    setHistory((data || []) as any);
     setHistoryLoading(false);
   }, [id]);
 

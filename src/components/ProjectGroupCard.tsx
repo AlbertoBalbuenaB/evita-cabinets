@@ -31,7 +31,6 @@ export function ProjectGroupCard({
   onEdit,
   onDelete,
   onDuplicate,
-  onStatusChange,
   onUngroup,
   staleProjectIds,
   exchangeRate = 1,
@@ -89,14 +88,14 @@ export function ProjectGroupCard({
   };
 
   const primaryProject = group.primaryProject;
-  const statusConfig = getStatusConfig(primaryProject.status);
+  const statusConfig = getStatusConfig(primaryProject.status ?? '');
 
   const groupProjectIds = group.projects.map(p => p.id);
   const allGroupSelected = selectionMode && groupProjectIds.every(id => selectedProjectIds.includes(id));
   const someGroupSelected = selectionMode && groupProjectIds.some(id => selectedProjectIds.includes(id)) && !allGroupSelected;
 
   const sortedVersions = [...group.projects].sort((a, b) =>
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    new Date(b.created_at ?? '').getTime() - new Date(a.created_at ?? '').getTime()
   );
 
   return (
@@ -230,7 +229,7 @@ export function ProjectGroupCard({
 
         <div className="pt-3 border-t border-slate-100">
           <div className="text-2xl font-bold text-slate-900 mb-3">
-            {formatCurrency(primaryProject.total_amount / exchangeRate, 'USD')}
+            {formatCurrency((primaryProject.total_amount ?? 0) / exchangeRate, 'USD')}
           </div>
 
           <div className="flex gap-2">
@@ -276,7 +275,7 @@ export function ProjectGroupCard({
                 const versionNum = getProjectVersionNumber(project, allProjects);
                 const isLatest = index === 0;
                 const isStale = staleProjectIds.includes(project.id);
-                const projectStatusConfig = getStatusConfig(project.status);
+                const projectStatusConfig = getStatusConfig(project.status ?? '');
 
                 return (
                   <div
@@ -341,10 +340,10 @@ export function ProjectGroupCard({
                               {project.status}
                             </span>
                             <span className="text-xs text-slate-400">
-                              {format(new Date(project.created_at), 'MMM dd, yyyy')}
+                              {format(new Date(project.created_at ?? ''), 'MMM dd, yyyy')}
                             </span>
                             <span className="text-sm font-bold text-slate-900">
-                              {formatCurrency(project.total_amount / exchangeRate, 'USD')}
+                              {formatCurrency((project.total_amount ?? 0) / exchangeRate, 'USD')}
                             </span>
                           </div>
                         </div>

@@ -73,12 +73,13 @@ async function fetchAllProjectsAsExports(): Promise<{ exports: ProjectExport[]; 
         exportVersion: '1.0',
         exportDate: new Date().toISOString(),
         project,
-        areas,
+        areas: areas as unknown as ProjectExport['areas'],
         metadata: {
           totalAreas: areas.length,
           totalCabinets: areas.reduce((sum, a) => sum + a.cabinets.length, 0),
           totalItems: areas.reduce((sum, a) => sum + a.items.length, 0),
           totalCountertops: areas.reduce((sum, a) => sum + a.countertops.length, 0),
+          totalClosetItems: 0,
           originalProjectId: project.id,
         },
       };

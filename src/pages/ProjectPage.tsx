@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Pencil as Edit2, FileText, FolderOpen, Hammer, BarChart3,
-  Plus, Calendar, Tag, User, MapPin, Check, Save, X, Copy, Trash2,
+  ArrowLeft, Pencil as Edit2, FileText, FolderOpen, BarChart3,
+  Plus, Calendar, Save, X, Copy, Trash2,
   Receipt, ClipboardList, Files, ScrollText, MoreVertical, TrendingUp,
   ArrowUpDown, Upload, ShoppingCart
 } from 'lucide-react';
@@ -71,7 +71,7 @@ export function ProjectPage() {
     if (activeTab !== 'management' || managementLoaded) return;
     let cancelled = false;
     supabase.from('team_members').select('id, name, role, is_active, display_order').eq('is_active', true).order('display_order')
-      .then(({ data }) => { if (!cancelled) { setTeamMembers(data || []); setManagementLoaded(true); } });
+      .then(({ data }) => { if (!cancelled) { setTeamMembers((data || []) as any); setManagementLoaded(true); } });
     return () => { cancelled = true; };
   }, [activeTab, managementLoaded]);
 
@@ -84,9 +84,9 @@ export function ProjectPage() {
 
   async function loadProject() {
     setLoading(true);
-    const [{ data: proj, error: pErr }, { data: quots, error: qErr }] = await Promise.all([
-      supabase.from('projects').select('*').eq('id', projectId).single(),
-      supabase.from('quotations').select('*').eq('project_id', projectId).order('version_number', { ascending: true }),
+    const [{ data: proj, error: pErr }, { data: quots }] = await Promise.all([
+      supabase.from('projects').select('*').eq('id', projectId ?? '').single(),
+      supabase.from('quotations').select('*').eq('project_id', projectId ?? '').order('version_number', { ascending: true }),
     ]);
 
     if (pErr || !proj) { navigate('/projects', { replace: true }); return; }
@@ -112,7 +112,7 @@ export function ProjectPage() {
       const areasByQuotation: Record<string, { name: string; subtotal: number }[]> = {};
       (allAreas || []).forEach(a => {
         if (!areasByQuotation[a.project_id]) areasByQuotation[a.project_id] = [];
-        areasByQuotation[a.project_id].push({ name: a.name, subtotal: a.subtotal });
+        areasByQuotation[a.project_id].push({ name: a.name, subtotal: a.subtotal ?? 0 });
       });
       setQuotationAreas(areasByQuotation);
     }
@@ -219,42 +219,47 @@ export function ProjectPage() {
 
           const srcCabs = cabsByArea.get(areaId);
           if (srcCabs?.length) {
-            const newCabs = srcCabs.map(({ id: cId, created_at: cc, updated_at: cu, ...cabData }) => ({
-              ...cabData, area_id: newArea.id,
-            }));
-            insertPromises.push(supabase.from('area_cabinets').insert(newCabs));
+            const newCabs = srcCabs.map((c: any) => {
+              const { id: cId, created_at: cc, updated_at: cu, ...cabData } = c;
+              return { ...cabData, area_id: newArea.id };
+            });
+            insertPromises.push(supabase.from('area_cabinets').insert(newCabs) as unknown as Promise<unknown>);
           }
 
           const srcItems = itemsByArea.get(areaId);
           if (srcItems?.length) {
-            const newItems = srcItems.map(({ id: iId, created_at: ic, updated_at: iu, ...itemData }) => ({
-              ...itemData, area_id: newArea.id,
-            }));
-            insertPromises.push(supabase.from('area_items').insert(newItems));
+            const newItems = srcItems.map((i: any) => {
+              const { id: iId, created_at: ic, updated_at: iu, ...itemData } = i;
+              return { ...itemData, area_id: newArea.id };
+            });
+            insertPromises.push(supabase.from('area_items').insert(newItems) as unknown as Promise<unknown>);
           }
 
           const srcCountertops = countertopsByArea.get(areaId);
           if (srcCountertops?.length) {
-            const newCountertops = srcCountertops.map(({ id: ctId, created_at: ctc, updated_at: ctu, ...ctData }) => ({
-              ...ctData, area_id: newArea.id,
-            }));
-            insertPromises.push(supabase.from('area_countertops').insert(newCountertops));
+            const newCountertops = srcCountertops.map((ct: any) => {
+              const { id: ctId, created_at: ctc, updated_at: ctu, ...ctData } = ct;
+              return { ...ctData, area_id: newArea.id };
+            });
+            insertPromises.push(supabase.from('area_countertops').insert(newCountertops) as unknown as Promise<unknown>);
           }
 
           const srcClosetItems = closetItemsByArea.get(areaId);
           if (srcClosetItems?.length) {
-            const newClosetItems = srcClosetItems.map(({ id: clId, created_at: clc, updated_at: clu, catalog_item: _ci, ...clData }) => ({
-              ...clData, area_id: newArea.id,
-            }));
-            insertPromises.push(supabase.from('area_closet_items').insert(newClosetItems));
+            const newClosetItems = srcClosetItems.map((ci: any) => {
+              const { id: clId, created_at: clc, updated_at: clu, catalog_item: _ci, ...clData } = ci;
+              return { ...clData, area_id: newArea.id };
+            });
+            insertPromises.push(supabase.from('area_closet_items').insert(newClosetItems) as unknown as Promise<unknown>);
           }
 
           const srcSections = sectionsByArea.get(areaId);
           if (srcSections?.length) {
-            const newSections = srcSections.map(({ id: sId, created_at: sc, updated_at: su, ...sectionData }) => ({
-              ...sectionData, area_id: newArea.id,
-            }));
-            insertPromises.push(supabase.from('area_sections').insert(newSections));
+            const newSections = srcSections.map((s: any) => {
+              const { id: sId, created_at: sc, updated_at: su, ...sectionData } = s;
+              return { ...sectionData, area_id: newArea.id };
+            });
+            insertPromises.push(supabase.from('area_sections').insert(newSections) as unknown as Promise<unknown>);
           }
 
           await Promise.all(insertPromises);
@@ -348,7 +353,7 @@ export function ProjectPage() {
             <span>/</span>
           </div>
           <h1 className="text-lg font-semibold text-slate-900 truncate">{project.name}</h1>
-          {(project as Record<string, unknown>).last_modified_at && (project as Record<string, unknown>).last_modified_by_member_id && (
+          {Boolean((project as Record<string, unknown>).last_modified_at) && Boolean((project as Record<string, unknown>).last_modified_by_member_id) && (
             <p className="text-xs text-slate-400 mt-0.5">
               Last modified: {(project as Record<string, unknown>).last_modified_member_name as string || 'Unknown'} · {formatRelativeDate(((project as Record<string, unknown>).last_modified_at as string).split('T')[0])}
             </p>

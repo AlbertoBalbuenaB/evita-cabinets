@@ -34,7 +34,7 @@ export function ImportProjectModal({ isOpen, onClose, onImportComplete }: Import
     setIsValidating(true);
 
     try {
-      const result = await validateProjectImport(file, importMode);
+      const result = await validateProjectImport(file);
       setValidationResult(result);
       if (result.isValid) {
         setTargetProjectName(result.newProjectName);
@@ -85,7 +85,7 @@ export function ImportProjectModal({ isOpen, onClose, onImportComplete }: Import
     if (selectedFile) {
       setIsValidating(true);
       try {
-        const result = await validateProjectImport(selectedFile, mode);
+        const result = await validateProjectImport(selectedFile);
         setValidationResult(result);
         if (result.isValid) {
           setTargetProjectName(result.newProjectName);
@@ -244,7 +244,7 @@ export function ImportProjectModal({ isOpen, onClose, onImportComplete }: Import
                     </p>
                     <p>
                       <span className="font-medium">Total Amount:</span>{' '}
-                      {formatCurrency(validationResult.projectData.project.total_amount)}
+                      {formatCurrency(validationResult.projectData.project.total_amount ?? 0)}
                     </p>
                   </div>
                 </div>

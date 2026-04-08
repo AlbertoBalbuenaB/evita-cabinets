@@ -62,17 +62,17 @@ export function ProjectCharts({ areas, products }: ProjectChartsProps) {
     const calculateTaxesForArea = (cabinets: AreaCabinet[], areaQty: number) => {
       return cabinets.reduce((sum, cabinet) => {
         const totalBaseCost =
-          cabinet.box_material_cost + cabinet.box_edgeband_cost + cabinet.box_interior_finish_cost +
-          cabinet.doors_material_cost + cabinet.doors_edgeband_cost + cabinet.doors_interior_finish_cost +
-          cabinet.hardware_cost;
-        const taxAmount = cabinet.subtotal - cabinet.labor_cost - totalBaseCost;
+          (cabinet.box_material_cost ?? 0) + (cabinet.box_edgeband_cost ?? 0) + (cabinet.box_interior_finish_cost ?? 0) +
+          (cabinet.doors_material_cost ?? 0) + (cabinet.doors_edgeband_cost ?? 0) + (cabinet.doors_interior_finish_cost ?? 0) +
+          (cabinet.hardware_cost ?? 0);
+        const taxAmount = (cabinet.subtotal ?? 0) - (cabinet.labor_cost ?? 0) - totalBaseCost;
         return sum + Math.max(0, taxAmount);
       }, 0) * areaQty;
     };
 
     const areasCosts = areas.map((area) => {
       const areaQty = area.quantity ?? 1;
-      const cabinetsTotal = (area.cabinets || []).reduce((sum, c) => sum + c.subtotal, 0) * areaQty;
+      const cabinetsTotal = (area.cabinets || []).reduce((sum, c) => sum + (c.subtotal ?? 0), 0) * areaQty;
       const itemsTotal = (area.items || []).reduce((sum, i) => sum + i.subtotal, 0) * areaQty;
       const countertopsTotal = (area.countertops || []).reduce((sum, ct) => sum + ct.subtotal, 0) * areaQty;
       const closetItemsTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0) * areaQty;
@@ -112,14 +112,14 @@ export function ProjectCharts({ areas, products }: ProjectChartsProps) {
     );
 
     const materialsCosts = {
-      boxMaterial: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.box_material_cost, 0) * (area.quantity ?? 1), 0),
-      boxEdgeband: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.box_edgeband_cost, 0) * (area.quantity ?? 1), 0),
-      boxInterior: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.box_interior_finish_cost, 0) * (area.quantity ?? 1), 0),
-      doorsMaterial: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.doors_material_cost, 0) * (area.quantity ?? 1), 0),
-      doorsEdgeband: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.doors_edgeband_cost, 0) * (area.quantity ?? 1), 0),
-      doorsInterior: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.doors_interior_finish_cost, 0) * (area.quantity ?? 1), 0),
-      hardware: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.hardware_cost, 0) * (area.quantity ?? 1), 0),
-      labor: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.labor_cost, 0) * (area.quantity ?? 1), 0),
+      boxMaterial: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.box_material_cost ?? 0), 0) * (area.quantity ?? 1), 0),
+      boxEdgeband: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.box_edgeband_cost ?? 0), 0) * (area.quantity ?? 1), 0),
+      boxInterior: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.box_interior_finish_cost ?? 0), 0) * (area.quantity ?? 1), 0),
+      doorsMaterial: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.doors_material_cost ?? 0), 0) * (area.quantity ?? 1), 0),
+      doorsEdgeband: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.doors_edgeband_cost ?? 0), 0) * (area.quantity ?? 1), 0),
+      doorsInterior: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.doors_interior_finish_cost ?? 0), 0) * (area.quantity ?? 1), 0),
+      hardware: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.hardware_cost ?? 0), 0) * (area.quantity ?? 1), 0),
+      labor: areas.reduce((sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.labor_cost ?? 0), 0) * (area.quantity ?? 1), 0),
       taxes: totalProjectTaxes,
     };
 
@@ -148,7 +148,7 @@ export function ProjectCharts({ areas, products }: ProjectChartsProps) {
     );
     const totalSKUs = new Set(areas.flatMap((a) => (a.cabinets || []).map((c) => c.product_sku))).size;
     const cabinetsCost = areas.reduce(
-      (sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + c.subtotal, 0) * (area.quantity ?? 1),
+      (sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.subtotal ?? 0), 0) * (area.quantity ?? 1),
       0
     );
     const avgCostPerCabinet = totalCabinets > 0 ? cabinetsCost / totalCabinets : 0;

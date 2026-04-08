@@ -177,47 +177,47 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
             <div>
               <span className="text-slate-600">Box Material Cost:</span>
               <span className="float-right font-medium">
-                {formatCurrency(cabinet.box_material_cost)}
+                {formatCurrency((cabinet.box_material_cost ?? 0))}
               </span>
             </div>
             <div>
               <span className="text-slate-600">Box Edgeband Cost:</span>
               <span className="float-right font-medium">
-                {formatCurrency(cabinet.box_edgeband_cost)}
+                {formatCurrency((cabinet.box_edgeband_cost ?? 0))}
               </span>
             </div>
-            {cabinet.box_interior_finish_cost > 0 && (
+            {(cabinet.box_interior_finish_cost ?? 0) > 0 && (
               <div>
                 <span className="text-slate-600">Box Interior Finish:</span>
                 <span className="float-right font-medium">
-                  {formatCurrency(cabinet.box_interior_finish_cost)}
+                  {formatCurrency((cabinet.box_interior_finish_cost ?? 0))}
                 </span>
               </div>
             )}
             <div>
               <span className="text-slate-600">Doors Material Cost:</span>
               <span className="float-right font-medium">
-                {formatCurrency(cabinet.doors_material_cost)}
+                {formatCurrency((cabinet.doors_material_cost ?? 0))}
               </span>
             </div>
             <div>
               <span className="text-slate-600">Doors Edgeband Cost:</span>
               <span className="float-right font-medium">
-                {formatCurrency(cabinet.doors_edgeband_cost)}
+                {formatCurrency((cabinet.doors_edgeband_cost ?? 0))}
               </span>
             </div>
-            {cabinet.doors_interior_finish_cost > 0 && (
+            {(cabinet.doors_interior_finish_cost ?? 0) > 0 && (
               <div>
                 <span className="text-slate-600">Doors Interior Finish:</span>
                 <span className="float-right font-medium">
-                  {formatCurrency(cabinet.doors_interior_finish_cost)}
+                  {formatCurrency((cabinet.doors_interior_finish_cost ?? 0))}
                 </span>
               </div>
             )}
             <div>
               <span className="text-slate-600">Hardware Cost:</span>
               <span className="float-right font-medium">
-                {formatCurrency(cabinet.hardware_cost)}
+                {formatCurrency((cabinet.hardware_cost ?? 0))}
               </span>
             </div>
             <div>
@@ -229,7 +229,7 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
             <div>
               <span className="text-slate-600">Labor Cost:</span>
               <span className="float-right font-medium">
-                {formatCurrency(cabinet.labor_cost)}
+                {formatCurrency((cabinet.labor_cost ?? 0))}
               </span>
             </div>
           </div>
@@ -238,7 +238,7 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
             <div className="flex justify-between items-center font-semibold">
               <span className="text-slate-900">Cabinet Subtotal:</span>
               <span className="text-lg text-slate-900">
-                {formatCurrency(cabinet.subtotal)}
+                {formatCurrency(cabinet.subtotal ?? 0)}
               </span>
             </div>
           </div>

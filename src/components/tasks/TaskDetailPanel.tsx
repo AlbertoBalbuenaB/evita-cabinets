@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { createNotifications } from '../../lib/notifications';
 import { useCurrentMember } from '../../lib/useCurrentMember';
-import { format } from 'date-fns';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../Button';
 import type {
@@ -36,7 +35,7 @@ const PRESET_COLORS = [
   '#8b5cf6','#06b6d4','#84cc16','#f97316','#ec4899',
 ];
 
-export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, onUpdate, onDelete, onReload, onTagCreated }: Props) {
+export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, onUpdate, onDelete, onTagCreated }: Props) {
   const { member: currentMember } = useCurrentMember();
   const initialAssigneeIds = useRef(task.assignees.map((a) => a.id));
   const [title, setTitle] = useState(task.title);
@@ -102,11 +101,11 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
     const membersMap = new Map((members ?? freshMembers).map((m) => [m.id, m]));
     const enriched: TaskComment[] = data.map((c) => ({
       ...c,
-      author_name: c.author_id ? membersMap.get(c.author_id)?.name : undefined,
+      author_name: (c.author_id ? membersMap.get(c.author_id)?.name : undefined) ?? null,
       replies: (replies || [])
         .filter((r) => r.comment_id === c.id)
-        .map((r) => ({ ...r, author_name: r.author_id ? membersMap.get(r.author_id)?.name : undefined })),
-    }));
+        .map((r) => ({ ...r, author_name: (r.author_id ? membersMap.get(r.author_id)?.name : undefined) ?? null })),
+    })) as unknown as TaskComment[];
     setComments(enriched);
   }
 
@@ -126,7 +125,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
       .eq('parent_task_id', task.id)
       .order('display_order');
     if (data) {
-      const subs: EnhancedTask[] = data.map((s) => ({
+      const subs = data.map((s) => ({
         ...s,
         description: (s as any).description ?? null,
         priority: ((s as any).priority ?? 'medium') as TaskPriority,
@@ -136,7 +135,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
         subtasks: [],
         comments: [],
         deliverables: [],
-      }));
+      })) as unknown as EnhancedTask[];
       setSubtasks(subs);
     }
   }
@@ -219,7 +218,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
       display_order: subtasks.length,
     }).select().single();
     if (data) {
-      const sub: EnhancedTask = {
+      const sub = {
         ...data,
         description: null,
         priority: 'medium',
@@ -229,7 +228,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
         subtasks: [],
         comments: [],
         deliverables: [],
-      };
+      } as unknown as EnhancedTask;
       setSubtasks((prev) => [...prev, sub]);
       setNewSubtaskTitle('');
     }

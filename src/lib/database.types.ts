@@ -1674,6 +1674,7 @@ export type Database = {
           created_at: string | null
           created_by_member_id: string | null
           customer: string | null
+          group_id: string | null
           id: string
           inventory_auto_committed: boolean
           last_modified_at: string | null
@@ -1690,6 +1691,7 @@ export type Database = {
           created_at?: string | null
           created_by_member_id?: string | null
           customer?: string | null
+          group_id?: string | null
           id?: string
           inventory_auto_committed?: boolean
           last_modified_at?: string | null
@@ -1706,6 +1708,7 @@ export type Database = {
           created_at?: string | null
           created_by_member_id?: string | null
           customer?: string | null
+          group_id?: string | null
           id?: string
           inventory_auto_committed?: boolean
           last_modified_at?: string | null
@@ -1810,6 +1813,7 @@ export type Database = {
           customer: string | null
           disclaimer_price_validity: string | null
           disclaimer_tariff_info: string | null
+          group_id: string | null
           id: string
           install_delivery: number | null
           install_delivery_per_box: number | null
@@ -1847,6 +1851,7 @@ export type Database = {
           customer?: string | null
           disclaimer_price_validity?: string | null
           disclaimer_tariff_info?: string | null
+          group_id?: string | null
           id?: string
           install_delivery?: number | null
           install_delivery_per_box?: number | null
@@ -1884,6 +1889,7 @@ export type Database = {
           customer?: string | null
           disclaimer_price_validity?: string | null
           disclaimer_tariff_info?: string | null
+          group_id?: string | null
           id?: string
           install_delivery?: number | null
           install_delivery_per_box?: number | null

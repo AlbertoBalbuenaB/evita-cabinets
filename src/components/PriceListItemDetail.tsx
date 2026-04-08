@@ -74,7 +74,7 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
           .limit(50);
 
         if (error) throw error;
-        setHistory(data || []);
+        setHistory((data || []) as any);
       } catch (err) {
         console.error('Error loading price history:', err);
       } finally {
@@ -312,9 +312,9 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
 
           {/* Metadata */}
           <div className="flex items-center justify-center gap-3 text-xs text-slate-400 pt-1 pb-2">
-            <span>Added {formatDate(item.created_at)}</span>
+            <span>Added {formatDate(item.created_at ?? '')}</span>
             <span className="text-slate-300">·</span>
-            <span>Updated {formatDate(item.updated_at)}</span>
+            <span>Updated {formatDate(item.updated_at ?? '')}</span>
           </div>
         </div>
 

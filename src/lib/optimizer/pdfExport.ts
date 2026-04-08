@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
-import { OptimizationResult, PIECE_COLORS, generateCutSequence } from './engine';
-import { UnitSystem, fmtDim, fmtNum } from './units';
-import { EbConfig } from './types';
+import { PIECE_COLORS } from './engine';
+import { fmtDim, fmtNum } from './units';
+import { EbConfig, OptimizationResult, UnitSystem } from './types';
 
 const EB_LABELS: Record<number, string> = { 1: 'A', 2: 'B', 3: 'C' };
 
@@ -126,7 +126,7 @@ const i18n: Record<PdfLang, Record<string, string>> = {
 export async function exportOptimizerPDF(
   result: OptimizationResult,
   projectName: string,
-  clientName: string,
+  _clientName: string,
   unit: UnitSystem = 'mm',
   ebConfig?: EbConfig,
   areas?: string[],
@@ -247,9 +247,9 @@ export async function exportOptimizerPDF(
       doc.rect(startX, startY + t, t, boardH - 2 * t, 'F');
       doc.rect(startX + boardW - t, startY + t, t, boardH - 2 * t, 'F');
       doc.setGState(new (doc as any).GState({ opacity: 0.40 }));
-      doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.2); doc.setLineDash([1.5, 1.5]);
+      doc.setDrawColor(100, 116, 139); doc.setLineWidth(0.2); (doc as any).setLineDash([1.5, 1.5]);
       doc.rect(startX + t, startY + t, boardW - 2 * t, boardH - 2 * t);
-      doc.setLineDash([]);
+      (doc as any).setLineDash([]);
       doc.restoreGraphicsState();
     }
 
@@ -288,10 +288,10 @@ export async function exportOptimizerPDF(
       const drawEB = (type: number, x1: number, y1: number, x2: number, y2: number) => {
         if (!type) return;
         doc.setDrawColor(30, 30, 30); doc.setLineWidth(0.5);
-        if (type === 1) doc.setLineDash([]);
-        else if (type === 2) doc.setLineDash([1.5, 0.8]);
-        else doc.setLineDash([0.5, 0.5]);
-        doc.line(x1, y1, x2, y2); doc.setLineDash([]);
+        if (type === 1) (doc as any).setLineDash([]);
+        else if (type === 2) (doc as any).setLineDash([1.5, 0.8]);
+        else (doc as any).setLineDash([0.5, 0.5]);
+        doc.line(x1, y1, x2, y2); (doc as any).setLineDash([]);
       };
       drawEB(edges.top, px + inset, py + inset, px + pw - inset, py + inset);
       drawEB(edges.bottom, px + inset, py + ph - inset, px + pw - inset, py + ph - inset);
@@ -355,9 +355,9 @@ export async function exportOptimizerPDF(
     // Offcuts — green dashed like CAD (alpha ~0.65)
     doc.saveGraphicsState();
     doc.setGState(new (doc as any).GState({ opacity: 0.65 }));
-    doc.setDrawColor(34, 197, 94); doc.setLineWidth(0.3); doc.setLineDash([1.5, 1.5]);
+    doc.setDrawColor(34, 197, 94); doc.setLineWidth(0.3); (doc as any).setLineDash([1.5, 1.5]);
     board.offcuts.forEach((o) => doc.rect(startX + o.x * scale, startY + o.y * scale, o.w * scale, o.h * scale));
-    doc.setLineDash([]);
+    (doc as any).setLineDash([]);
     doc.restoreGraphicsState();
 
     doc.setDrawColor(60, 60, 60); doc.setLineWidth(0.2); doc.setFontSize(7); doc.setTextColor(60, 60, 60);

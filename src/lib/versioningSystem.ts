@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { fetchAllProducts } from './fetchAllProducts';
-import type { PriceListItem, Product, AreaCabinet } from '../types';
+import type { PriceListItem, Product, AreaCabinet, HardwareItem } from '../types';
 import {
   calculateBoxMaterialCost,
   calculateBoxEdgebandCost,
@@ -94,7 +94,7 @@ export async function createProjectVersion(
     .single();
 
   if (error) throw error;
-  return version;
+  return version as unknown as ProjectVersion;
 }
 
 export async function recalculateAllCabinetPrices(
@@ -192,10 +192,10 @@ export async function recalculateAllCabinetPrices(
         };
 
         updateBatch.push(
-          supabase
+          Promise.resolve(supabase
             .from('area_cabinets')
             .update(updateData)
-            .eq('id', cabinet.id)
+            .eq('id', cabinet.id))
             .then(({ error }) => {
               if (error) {
                 errors.push(`Failed to update cabinet ${cabinet.id}: ${error.message}`);
@@ -277,7 +277,7 @@ async function recalculateCabinetCosts(
     ? calculateInteriorFinishCost(product, doorsInteriorFinish, cabinet.quantity, false)
     : 0;
 
-  const hardware = Array.isArray(cabinet.hardware) ? cabinet.hardware : [];
+  const hardware = (Array.isArray(cabinet.hardware) ? cabinet.hardware : []) as unknown as HardwareItem[];
   const hardwareCost = calculateHardwareCost(hardware, cabinet.quantity, priceList);
   const accessories = Array.isArray(cabinet.accessories)
     ? cabinet.accessories as Array<{ accessory_id: string; quantity_per_cabinet: number }>
@@ -379,7 +379,7 @@ export async function getVersionHistory(projectId: string): Promise<ProjectVersi
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as unknown as ProjectVersion[];
 }
 
 export async function getVersionDetails(versionId: string): Promise<VersionDetail[]> {
@@ -390,7 +390,7 @@ export async function getVersionDetails(versionId: string): Promise<VersionDetai
     .order('area_name');
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as unknown as VersionDetail[];
 }
 
 export async function compareVersions(
@@ -411,13 +411,14 @@ export async function compareVersions(
     }>;
   };
 }> {
-  const { data: versionA, error: errorA } = await supabase
+  const { data: versionARaw, error: errorA } = await supabase
     .from('project_versions')
     .select('*')
     .eq('id', versionAId)
     .single();
 
   if (errorA) throw errorA;
+  const versionA = versionARaw as unknown as ProjectVersion;
 
   let versionB: ProjectVersion | null = null;
   let versionBData: any;
@@ -453,8 +454,8 @@ export async function compareVersions(
       .single();
 
     if (errorB) throw errorB;
-    versionB = data;
-    versionBData = data.snapshot_data;
+    versionB = data as unknown as ProjectVersion;
+    versionBData = (data as any).snapshot_data;
   }
 
   const areaComparisons: Array<{
@@ -465,11 +466,11 @@ export async function compareVersions(
     percentageChange: number;
   }> = [];
 
-  const areasA = versionA.snapshot_data?.areas || [];
-  const areasB = versionBData?.areas || [];
+  const areasA = (versionA.snapshot_data as any)?.areas || [];
+  const areasB = (versionBData as any)?.areas || [];
 
-  const areaMapA = new Map(areasA.map((a: any) => [a.area.id, a]));
-  const areaMapB = new Map(areasB.map((a: any) => [a.area.id, a]));
+  const areaMapA = new Map<string, any>(areasA.map((a: any) => [a.area.id, a]));
+  const areaMapB = new Map<string, any>(areasB.map((a: any) => [a.area.id, a]));
 
   const allAreaIds = new Set([...areaMapA.keys(), ...areaMapB.keys()]);
 

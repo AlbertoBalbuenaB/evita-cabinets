@@ -87,7 +87,7 @@ async function exportProjectToJSON(projectId: string): Promise<void> {
           cabinets: cabinetsResult.data || [],
           items: itemsResult.data || [],
           countertops: countertopsResult.data || [],
-          closetItems: (closetItemsResult.data || []) as AreaClosetItem[],
+          closetItems: (closetItemsResult.data || []) as unknown as AreaClosetItem[],
         };
       })
     );
@@ -96,7 +96,7 @@ async function exportProjectToJSON(projectId: string): Promise<void> {
       exportVersion: "1.0",
       exportDate: new Date().toISOString(),
       project,
-      areas,
+      areas: areas as unknown as ProjectExport['areas'],
       metadata: {
         totalAreas: areas.length,
         totalCabinets: areas.reduce((sum, a) => sum + a.cabinets.length, 0),
@@ -296,7 +296,7 @@ export async function performQuotationImport(
 
       if (cabinets.length > 0) {
         const cabinetInserts = cabinets.map(cabinet => {
-          const { id, area_id, created_at, updated_at, ...cabinetData } = cabinet;
+          const { id, area_id, created_at, updated_at, ...cabinetData } = cabinet as typeof cabinet & { updated_at?: string | null };
           return {
             ...cabinetData,
             area_id: newArea.id,
@@ -480,13 +480,13 @@ function extractMaterialIds(projectData: ProjectExport): Set<string> {
       if (cabinet.back_panel_material_id) ids.add(cabinet.back_panel_material_id);
 
       if (Array.isArray(cabinet.hardware)) {
-        cabinet.hardware.forEach((hw: HardwareItem) => {
+        (cabinet.hardware as unknown as HardwareItem[]).forEach((hw) => {
           if (hw.hardware_id) ids.add(hw.hardware_id);
         });
       }
 
       if (Array.isArray(cabinet.accessories)) {
-        cabinet.accessories.forEach((acc: AccessoryItem) => {
+        (cabinet.accessories as unknown as AccessoryItem[]).forEach((acc) => {
           if (acc.accessory_id) ids.add(acc.accessory_id);
         });
       }
@@ -501,16 +501,6 @@ function extractMaterialIds(projectData: ProjectExport): Set<string> {
     });
   });
 
-  return ids;
-}
-
-function extractClosetCatalogIds(projectData: ProjectExport): Set<string> {
-  const ids = new Set<string>();
-  projectData.areas.forEach(areaData => {
-    (areaData.closetItems || []).forEach(ci => {
-      if (ci.closet_catalog_id) ids.add(ci.closet_catalog_id);
-    });
-  });
   return ids;
 }
 
@@ -541,7 +531,7 @@ async function checkMaterialsAvailability(
           materialId: cabinet.box_material_id,
           materialType: 'box_material',
           cabinetSku: cabinet.product_sku || undefined,
-          cabinetDescription: cabinet.description || undefined,
+          cabinetDescription: (cabinet as { description?: string }).description || undefined,
         });
       }
 
@@ -550,7 +540,7 @@ async function checkMaterialsAvailability(
           materialId: cabinet.doors_material_id,
           materialType: 'doors_material',
           cabinetSku: cabinet.product_sku || undefined,
-          cabinetDescription: cabinet.description || undefined,
+          cabinetDescription: (cabinet as { description?: string }).description || undefined,
         });
       }
 
@@ -559,7 +549,7 @@ async function checkMaterialsAvailability(
           materialId: cabinet.box_edgeband_id,
           materialType: 'edgeband',
           cabinetSku: cabinet.product_sku || undefined,
-          cabinetDescription: cabinet.description || undefined,
+          cabinetDescription: (cabinet as { description?: string }).description || undefined,
         });
       }
 
@@ -568,7 +558,7 @@ async function checkMaterialsAvailability(
           materialId: cabinet.doors_edgeband_id,
           materialType: 'edgeband',
           cabinetSku: cabinet.product_sku || undefined,
-          cabinetDescription: cabinet.description || undefined,
+          cabinetDescription: (cabinet as { description?: string }).description || undefined,
         });
       }
 
@@ -577,7 +567,7 @@ async function checkMaterialsAvailability(
           materialId: cabinet.box_interior_finish_id,
           materialType: 'finish',
           cabinetSku: cabinet.product_sku || undefined,
-          cabinetDescription: cabinet.description || undefined,
+          cabinetDescription: (cabinet as { description?: string }).description || undefined,
         });
       }
 
@@ -586,7 +576,7 @@ async function checkMaterialsAvailability(
           materialId: cabinet.doors_interior_finish_id,
           materialType: 'finish',
           cabinetSku: cabinet.product_sku || undefined,
-          cabinetDescription: cabinet.description || undefined,
+          cabinetDescription: (cabinet as { description?: string }).description || undefined,
         });
       }
 
@@ -595,31 +585,31 @@ async function checkMaterialsAvailability(
           materialId: cabinet.back_panel_material_id,
           materialType: 'back_panel',
           cabinetSku: cabinet.product_sku || undefined,
-          cabinetDescription: cabinet.description || undefined,
+          cabinetDescription: (cabinet as { description?: string }).description || undefined,
         });
       }
 
       if (Array.isArray(cabinet.hardware)) {
-        cabinet.hardware.forEach((hw: HardwareItem) => {
+        (cabinet.hardware as unknown as HardwareItem[]).forEach((hw) => {
           if (hw.hardware_id && !existingIds.has(hw.hardware_id)) {
             warnings.push({
               materialId: hw.hardware_id,
               materialType: 'hardware',
               cabinetSku: cabinet.product_sku || undefined,
-              cabinetDescription: cabinet.description || undefined,
+              cabinetDescription: (cabinet as { description?: string }).description || undefined,
             });
           }
         });
       }
 
       if (Array.isArray(cabinet.accessories)) {
-        cabinet.accessories.forEach((acc: AccessoryItem) => {
+        (cabinet.accessories as unknown as AccessoryItem[]).forEach((acc) => {
           if (acc.accessory_id && !existingIds.has(acc.accessory_id)) {
             warnings.push({
               materialId: acc.accessory_id,
               materialType: 'accessory',
               cabinetSku: cabinet.product_sku || undefined,
-              cabinetDescription: cabinet.description || undefined,
+              cabinetDescription: (cabinet as { description?: string }).description || undefined,
             });
           }
         });
@@ -628,38 +618,6 @@ async function checkMaterialsAvailability(
   });
 
   return warnings;
-}
-
-async function generateProjectName(baseName: string, importMode: 'new' | 'version'): Promise<string> {
-  if (importMode === 'new') {
-    return `${baseName} (Imported)`;
-  }
-
-  const { data: existingProjects, error } = await supabase
-    .from('quotations')
-    .select('name')
-    .like('name', `${baseName}%`);
-
-  if (error || !existingProjects) {
-    return `${baseName} - v2`;
-  }
-
-  const versionNumbers: number[] = [];
-  const versionRegex = new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} - v(\\d+)$`);
-
-  existingProjects.forEach(project => {
-    const match = project.name.match(versionRegex);
-    if (match) {
-      versionNumbers.push(parseInt(match[1], 10));
-    }
-  });
-
-  if (versionNumbers.length === 0) {
-    return `${baseName} - v2`;
-  }
-
-  const maxVersion = Math.max(...versionNumbers);
-  return `${baseName} - v${maxVersion + 1}`;
 }
 
 function sanitizeFileName(name: string): string {

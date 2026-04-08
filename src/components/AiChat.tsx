@@ -379,10 +379,10 @@ export function AiChat() {
 
       if (data?.length) {
         const session = data[0];
-        const age = Date.now() - new Date(session.created_at).getTime();
+        const age = Date.now() - new Date(session.created_at ?? '').getTime();
         const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
         if (age < TWENTY_FOUR_HOURS && Array.isArray(session.messages) && session.messages.length > 0) {
-          setMessages(session.messages as Message[]);
+          setMessages(session.messages as unknown as Message[]);
           setCurrentSessionId(session.id);
           currentSessionIdRef.current = session.id;
         }
@@ -399,13 +399,13 @@ export function AiChat() {
 
     if (currentSessionIdRef.current) {
       await supabase.from('ai_chat_sessions')
-        .update({ messages: msgs, title })
+        .update({ messages: msgs as any, title })
         .eq('id', currentSessionIdRef.current);
     } else {
       const { data } = await supabase.from('ai_chat_sessions').insert({
         user_id: user.id,
         title,
-        messages: msgs,
+        messages: msgs as any,
       }).select('id').single();
       if (data?.id) {
         currentSessionIdRef.current = data.id;
@@ -423,7 +423,7 @@ export function AiChat() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50);
-    setHistory((data as ChatSession[]) ?? []);
+    setHistory((data as unknown as ChatSession[]) ?? []);
     setHistoryLoading(false);
   }
 

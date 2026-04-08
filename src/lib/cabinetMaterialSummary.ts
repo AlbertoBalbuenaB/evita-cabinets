@@ -1,4 +1,3 @@
-import { supabase } from './supabase';
 import type { AreaCabinet, Product, PriceListItem } from '../types';
 
 export interface CabinetMaterialSummary {
@@ -56,8 +55,8 @@ export async function calculateCabinetMaterialSummary(
   const summary: CabinetMaterialSummary = {
     hardware: [],
     accessories: [],
-    laborCost: cabinet.labor_cost,
-    totalCost: cabinet.subtotal,
+    laborCost: cabinet.labor_cost ?? 0,
+    totalCost: cabinet.subtotal ?? 0,
   };
 
   const qty = cabinet.quantity || 1;
@@ -68,7 +67,7 @@ export async function calculateCabinetMaterialSummary(
       summary.boxMaterial = {
         name: material.concept_description,
         totalSF: product.box_sf * qty,
-        cost: cabinet.box_material_cost,
+        cost: cabinet.box_material_cost ?? 0,
       };
     }
   }
@@ -79,18 +78,18 @@ export async function calculateCabinetMaterialSummary(
       summary.boxEdgeband = {
         name: edgeband.concept_description,
         totalMeters: product.box_edgeband * qty,
-        cost: cabinet.box_edgeband_cost,
+        cost: cabinet.box_edgeband_cost ?? 0,
       };
     }
   }
 
-  if (cabinet.box_interior_finish_id && cabinet.box_interior_finish_cost > 0 && product) {
+  if (cabinet.box_interior_finish_id && (cabinet.box_interior_finish_cost ?? 0) > 0 && product) {
     const finish = priceListMap.get(cabinet.box_interior_finish_id);
     if (finish) {
       summary.boxInteriorFinish = {
         name: finish.concept_description,
         totalSF: product.box_sf * qty,
-        cost: cabinet.box_interior_finish_cost,
+        cost: (cabinet.box_interior_finish_cost ?? 0),
       };
     }
   }
@@ -101,7 +100,7 @@ export async function calculateCabinetMaterialSummary(
       summary.doorsMaterial = {
         name: material.concept_description,
         totalSF: product.doors_fronts_sf * qty,
-        cost: cabinet.doors_material_cost,
+        cost: cabinet.doors_material_cost ?? 0,
       };
     }
   }
@@ -112,18 +111,18 @@ export async function calculateCabinetMaterialSummary(
       summary.doorsEdgeband = {
         name: edgeband.concept_description,
         totalMeters: product.doors_fronts_edgeband * qty,
-        cost: cabinet.doors_edgeband_cost,
+        cost: cabinet.doors_edgeband_cost ?? 0,
       };
     }
   }
 
-  if (cabinet.doors_interior_finish_id && cabinet.doors_interior_finish_cost > 0 && product) {
+  if (cabinet.doors_interior_finish_id && (cabinet.doors_interior_finish_cost ?? 0) > 0 && product) {
     const finish = priceListMap.get(cabinet.doors_interior_finish_id);
     if (finish) {
       summary.doorsInteriorFinish = {
         name: finish.concept_description,
         totalSF: product.doors_fronts_sf * qty,
-        cost: cabinet.doors_interior_finish_cost,
+        cost: (cabinet.doors_interior_finish_cost ?? 0),
       };
     }
   }

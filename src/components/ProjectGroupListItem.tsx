@@ -108,7 +108,7 @@ export function ProjectGroupListItem({
             )}
             <span
               className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(
-                primaryProject.status
+                primaryProject.status ?? ''
               )}`}
             >
               {primaryProject.status}
@@ -142,7 +142,7 @@ export function ProjectGroupListItem({
           <div className="text-right mr-2">
             <div className="text-xs text-slate-500 mb-1">Total Value</div>
             <div className="text-base sm:text-xl font-bold text-slate-900">
-              {formatCurrency(primaryProject.total_amount)}
+              {formatCurrency(primaryProject.total_amount ?? 0)}
             </div>
           </div>
 
@@ -296,13 +296,13 @@ export function ProjectGroupListItem({
                             <AlertTriangle className="h-3 w-3 text-yellow-600 flex-shrink-0" />
                           </span>
                         )}
-                        <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(project.status)}`}>
+                        <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getStatusColor(project.status ?? '')}`}>
                           {project.status}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-xs text-slate-600">
-                        <span>{format(new Date(project.created_at), 'MMM dd, yyyy')}</span>
-                        <span className="font-semibold">{formatCurrency(project.total_amount)}</span>
+                        <span>{format(new Date(project.created_at ?? ''), 'MMM dd, yyyy')}</span>
+                        <span className="font-semibold">{formatCurrency(project.total_amount ?? 0)}</span>
                       </div>
                     </div>
                     <div className="flex gap-1">

@@ -242,11 +242,11 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
           totalCost += cost;
         });
 
-        boxMaterialSheets.forEach((material, name) => {
+        boxMaterialSheets.forEach((material) => {
           material.sheetsNeeded = Math.ceil(material.totalSF / SHEET_SIZE_SF);
         });
 
-        doorsMaterialSheets.forEach((material, name) => {
+        doorsMaterialSheets.forEach((material) => {
           material.sheetsNeeded = Math.ceil(material.totalSF / SHEET_SIZE_SF);
         });
 

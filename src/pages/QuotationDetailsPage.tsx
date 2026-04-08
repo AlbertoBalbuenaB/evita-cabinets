@@ -16,7 +16,7 @@ export function QuotationDetailsPage() {
 
     async function load() {
       const [{ data: qData, error: qErr }, { data: pData }] = await Promise.all([
-        supabase.from('quotations').select('*').eq('id', quotationId).single(),
+        supabase.from('quotations').select('*').eq('id', quotationId ?? '').single(),
         projectId
           ? supabase.from('projects').select('*').eq('id', projectId).single()
           : Promise.resolve({ data: null }),

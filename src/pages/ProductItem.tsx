@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Pencil as Edit2, Tag, Package, Ruler, Box, Layers,
-  Check, X, Clock, BarChart3, Warehouse, Scissors
+  ArrowLeft, Pencil as Edit2, Package, Ruler, Box, Layers,
+  Check, X, Clock, BarChart3, Warehouse, LayoutDashboard
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Product, CutPiece } from '../types';
@@ -36,7 +36,7 @@ export function ProductItem() {
       const { data, error } = await supabase
         .from('products_catalog')
         .select('*')
-        .eq('id', id)
+        .eq('id', id ?? '')
         .single();
 
       if (error || !data) {
@@ -149,7 +149,7 @@ export function ProductItem() {
           </div>
           <div className="flex items-center gap-1.5 text-slate-400">
             <Clock className="h-3.5 w-3.5" />
-            <span className="text-xs">Updated {formatDate(product.updated_at)}</span>
+            <span className="text-xs">Updated {formatDate(product.updated_at ?? '')}</span>
           </div>
         </div>
       </div>
@@ -251,11 +251,11 @@ export function ProductItem() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Created</span>
-                <span>{formatDate(product.created_at)}</span>
+                <span>{formatDate(product.created_at ?? '')}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Updated</span>
-                <span>{formatDate(product.updated_at)}</span>
+                <span>{formatDate(product.updated_at ?? '')}</span>
               </div>
             </div>
           </div>
@@ -269,7 +269,7 @@ export function ProductItem() {
           <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Scissors className="h-4 w-4 text-slate-400" />
+                <LayoutDashboard className="h-4 w-4 text-slate-400" />
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Cut List</h3>
               </div>
               <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">

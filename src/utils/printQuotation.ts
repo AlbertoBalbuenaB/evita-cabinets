@@ -22,7 +22,7 @@ export async function printQuotation(
   const resolvedAddress = overrides.pdfAddress ?? (project.address || '');
   const resolvedBrief = overrides.pdfProjectBrief ?? filterProjectBriefForPDF(project.project_brief || '');
   const cabinetsSubtotal = areas.reduce(
-    (sum, area) => sum + area.cabinets.reduce((s, c) => s + c.subtotal, 0) * (area.quantity ?? 1),
+    (sum, area) => sum + area.cabinets.reduce((s, c) => s + (c.subtotal ?? 0), 0) * (area.quantity ?? 1),
     0
   );
 
@@ -42,10 +42,6 @@ export async function printQuotation(
   );
 
   const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal + closetItemsSubtotal;
-  const otherExpenses = project.other_expenses || 0;
-  // install_delivery stored in MXN in DB
-  const installDeliveryMxn = project.install_delivery || 0;
-  const projectTotal = materialsSubtotal + otherExpenses + installDeliveryMxn;
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -55,7 +51,7 @@ export async function printQuotation(
 
   const areaBreakdown = areas.map(area => {
     const qty = area.quantity ?? 1;
-    const areaCabinetsTotal = area.cabinets.reduce((sum, c) => sum + c.subtotal, 0);
+    const areaCabinetsTotal = area.cabinets.reduce((sum, c) => sum + (c.subtotal ?? 0), 0);
     const areaItemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
     const areaClosetTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
     const rawTotal = areaCabinetsTotal + areaItemsTotal + areaClosetTotal;
@@ -605,7 +601,7 @@ export async function printQuotationUSD(
   // First pass: calculate original prices, tariffs, and taxes (NOT inflated)
   const baseAreaData = areas.map(area => {
     const qty = area.quantity ?? 1;
-    const areaCabinetsTotal = area.cabinets.reduce((sum, c) => sum + c.subtotal, 0);
+    const areaCabinetsTotal = area.cabinets.reduce((sum, c) => sum + (c.subtotal ?? 0), 0);
     const areaItemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
     const areaClosetTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
     const areaMaterialsSubtotal = (areaCabinetsTotal + areaItemsTotal + areaClosetTotal) * qty;

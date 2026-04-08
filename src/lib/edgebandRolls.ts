@@ -43,7 +43,7 @@ export async function calculateAreaEdgebandRolls(
 
   if (productsError || !products) {
     console.error('Error loading products:', productsError);
-    return { edgebandUsages: [], cabinetCosts: [] };
+    return { edgebandUsages: [], cabinetCosts: [], cabinets: [] };
   }
 
   const { data: priceList, error: priceListError } = await supabase
@@ -52,7 +52,7 @@ export async function calculateAreaEdgebandRolls(
 
   if (priceListError || !priceList) {
     console.error('Error loading price list:', priceListError);
-    return { edgebandUsages: [], cabinetCosts: [] };
+    return { edgebandUsages: [], cabinetCosts: [], cabinets: [] };
   }
 
   // Map to aggregate total meters per edgeband finish
@@ -197,23 +197,23 @@ export async function calculateAreaEdgebandRolls(
 
 export async function recalculateAreaEdgebandCosts(areaId: string): Promise<boolean> {
   try {
-    const { edgebandUsages, cabinetCosts, cabinets } = await calculateAreaEdgebandRolls(areaId);
+    const { cabinetCosts, cabinets } = await calculateAreaEdgebandRolls(areaId);
 
     const cabinetsMap = new Map(cabinets.map(c => [c.id, c]));
     const updateResults = await Promise.all(cabinetCosts.map(cost => {
       const cabinet = cabinetsMap.get(cost.cabinetId);
       if (!cabinet) return Promise.resolve({ error: null });
       const newSubtotal =
-        cabinet.box_material_cost +
+        (cabinet.box_material_cost ?? 0) +
         cost.boxEdgebandCost +
-        cabinet.box_interior_finish_cost +
-        cabinet.doors_material_cost +
+        (cabinet.box_interior_finish_cost ?? 0) +
+        (cabinet.doors_material_cost ?? 0) +
         cost.doorsEdgebandCost +
-        cabinet.doors_interior_finish_cost +
+        (cabinet.doors_interior_finish_cost ?? 0) +
         (cabinet.back_panel_material_cost || 0) +
-        cabinet.hardware_cost +
+        (cabinet.hardware_cost ?? 0) +
         cabinet.accessories_cost +
-        cabinet.labor_cost +
+        (cabinet.labor_cost ?? 0) +
         (cabinet.door_profile_cost || 0);
       return supabase
         .from('area_cabinets')
@@ -254,7 +254,7 @@ export async function recalculateAreaEdgebandCosts(areaId: string): Promise<bool
     }
 
     const areaSubtotal =
-      updatedCabinets.reduce((sum, c) => sum + c.subtotal, 0) +
+      updatedCabinets.reduce((sum, c) => sum + (c.subtotal ?? 0), 0) +
       (items || []).reduce((sum, i) => sum + i.subtotal, 0) +
       (countertops || []).reduce((sum, ct) => sum + ct.subtotal, 0);
 

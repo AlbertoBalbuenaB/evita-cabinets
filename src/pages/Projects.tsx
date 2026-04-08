@@ -7,7 +7,7 @@ import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
 import { formatCurrency } from '../lib/calculations';
 import { format } from 'date-fns';
-import type { Quotation, QuotationInsert, ProjectType, QuotationStatus } from '../types';
+import type { Quotation, QuotationInsert, ProjectType, QuotationStatus, ProjectStatus } from '../types';
 import { getProjectsWithStalePrices } from '../lib/priceUpdateSystem';
 import { ImportProjectModal } from '../components/ImportProjectModal';
 import { groupProjectsByGroupId } from '../lib/projectGrouping';
@@ -128,9 +128,9 @@ export function Projects() {
         case 'name_desc':
           return b.name.localeCompare(a.name);
         case 'amount_desc':
-          return b.total_amount - a.total_amount;
+          return (b.total_amount ?? 0) - (a.total_amount ?? 0);
         case 'amount_asc':
-          return a.total_amount - b.total_amount;
+          return (a.total_amount ?? 0) - (b.total_amount ?? 0);
         default:
           return 0;
       }
@@ -156,9 +156,9 @@ export function Projects() {
         case 'name_desc':
           return b.primaryProject.name.localeCompare(a.primaryProject.name);
         case 'amount_desc':
-          return b.primaryProject.total_amount - a.primaryProject.total_amount;
+          return (b.primaryProject.total_amount ?? 0) - (a.primaryProject.total_amount ?? 0);
         case 'amount_asc':
-          return a.primaryProject.total_amount - b.primaryProject.total_amount;
+          return (a.primaryProject.total_amount ?? 0) - (b.primaryProject.total_amount ?? 0);
         default:
           return 0;
       }
@@ -175,16 +175,16 @@ export function Projects() {
     const disqualified = projects.filter((p) => p.status === 'Discarded').length;
     const cancelled = projects.filter((p) => p.status === 'Cancelled').length;
 
-    const totalValue = projects.reduce((sum, p) => sum + p.total_amount, 0);
+    const totalValue = projects.reduce((sum, p) => sum + (p.total_amount ?? 0), 0);
     const awardedValue = projects
       .filter((p) => p.status === 'Awarded')
-      .reduce((sum, p) => sum + p.total_amount, 0);
+      .reduce((sum, p) => sum + (p.total_amount ?? 0), 0);
     const activeValue = projects
       .filter((p) => p.status === 'Pending' || p.status === 'Estimating')
-      .reduce((sum, p) => sum + p.total_amount, 0);
+      .reduce((sum, p) => sum + (p.total_amount ?? 0), 0);
     const lostValue = projects
       .filter((p) => p.status === 'Lost' || p.status === 'Discarded' || p.status === 'Cancelled')
-      .reduce((sum, p) => sum + p.total_amount, 0);
+      .reduce((sum, p) => sum + (p.total_amount ?? 0), 0);
 
     return {
       total,
@@ -354,7 +354,7 @@ export function Projects() {
     try {
       const selectedProjects = projects.filter(p => selectedProjectIds.includes(p.id));
       const primaryProject = selectedProjects.sort((a, b) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        new Date(a.created_at ?? '').getTime() - new Date(b.created_at ?? '').getTime()
       )[0];
 
       let groupId = primaryProject.group_id;
@@ -852,7 +852,7 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
     }
   };
 
-  const statusConfig = getStatusConfig(project.status);
+  const statusConfig = getStatusConfig(project.status ?? '');
 
   return (
     <div className="group bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all duration-200 overflow-hidden relative">
@@ -1078,7 +1078,7 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
 
         <div className="pt-3 border-t border-slate-100">
           <div className="text-2xl font-bold text-slate-900 mb-3">
-            {formatCurrency(project.total_amount / exchangeRate, 'USD')}
+            {formatCurrency((project.total_amount ?? 0) / exchangeRate, 'USD')}
           </div>
 
           <div className="flex gap-2">
@@ -1123,7 +1123,7 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
 }
 
 interface ProjectFormModalProps {
-  project: Project | null;
+  project: Quotation | null;
   onSave: (project: QuotationInsert) => void;
   onClose: () => void;
 }
@@ -1134,10 +1134,11 @@ function ProjectFormModal({ project, onSave, onClose }: ProjectFormModalProps) {
     return today.toISOString().split('T')[0];
   };
 
-  const [formData, setFormData] = useState<ProjectInsert>({
+  const [formData, setFormData] = useState<QuotationInsert>({
     name: project?.name || '',
     customer: project?.customer || '',
     address: project?.address || '',
+    project_id: project?.project_id || '',
     quote_date: project?.quote_date || getTodayDate(),
     status: project?.status || 'Pending',
     project_type: project?.project_type || 'Custom',
@@ -1215,7 +1216,7 @@ function ProjectFormModal({ project, onSave, onClose }: ProjectFormModalProps) {
               Status
             </label>
             <select
-              value={formData.status}
+              value={formData.status ?? ''}
               onChange={(e) => setFormData({ ...formData, status: e.target.value as ProjectStatus })}
               className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required

@@ -2,7 +2,7 @@ import { OptimizationResult } from '../../lib/optimizer/types';
 import { useOptimizerStore } from '../../hooks/useOptimizerStore';
 import { fmtDim } from '../../lib/optimizer/units';
 import { BoardCanvas } from './BoardCanvas';
-import { Scissors } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
 
 interface Props { result: OptimizationResult | null; onSelectBoard: (idx: number) => void; }
 
@@ -11,7 +11,7 @@ export function BoardGrid({ result, onSelectBoard }: Props) {
   if (!result) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8">
-        <Scissors className="h-16 w-16 text-slate-200 mb-4" />
+        <LayoutDashboard className="h-16 w-16 text-slate-200 mb-4" />
         <p className="text-slate-500 font-medium mb-1">Add pieces and press Optimize</p>
         <p className="text-slate-400 text-xs">Engine: Maximal Rectangles + GRASP Multi-Strategy</p>
       </div>

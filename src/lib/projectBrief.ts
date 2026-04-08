@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { ProjectArea, AreaCabinet, AreaItem, AreaCountertop, PriceListItem, Product } from '../types';
+import type { AreaCabinet, AreaItem, AreaCountertop, PriceListItem, Product } from '../types';
 import { isAccessoryPanel } from './cabinetFilters';
 
 interface HardwareInfo {
@@ -167,7 +167,7 @@ export async function generateProjectBrief(projectId: string): Promise<string> {
           if (hw.hardware_id) {
             const item = priceListMap.get(hw.hardware_id);
             if (item) {
-              const category = item.category || 'Other';
+              const category = (item as { category?: string }).category || 'Other';
               if (!hardwareByCategory.has(category)) {
                 hardwareByCategory.set(category, []);
               }
@@ -241,7 +241,7 @@ export async function generateProjectBrief(projectId: string): Promise<string> {
       const sortedAccessories = Array.from(cabinetAccessories.entries())
         .sort((a, b) => b[1].totalQuantity - a[1].totalQuantity);
 
-      sortedAccessories.forEach(([id, data]) => {
+      sortedAccessories.forEach(([, data]) => {
         accessoryParts.push(`${data.name}: ${data.totalQuantity} units`);
       });
 
@@ -251,6 +251,7 @@ export async function generateProjectBrief(projectId: string): Promise<string> {
     const cabinetTypes = new Map<string, { description: string; quantity: number }>();
 
     allCabinets.forEach(cabinet => {
+      if (!cabinet.product_sku) return;
       if (!isAccessoryPanel(cabinet.product_sku)) {
         const sku = cabinet.product_sku;
         const product = productMap.get(sku);
@@ -280,6 +281,7 @@ export async function generateProjectBrief(projectId: string): Promise<string> {
     const accessoryTypes = new Map<string, { description: string; quantity: number }>();
 
     allCabinets.forEach(cabinet => {
+      if (!cabinet.product_sku) return;
       if (isAccessoryPanel(cabinet.product_sku)) {
         const sku = cabinet.product_sku;
         const product = productMap.get(sku);

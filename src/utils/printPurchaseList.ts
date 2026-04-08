@@ -32,7 +32,7 @@ export function printPurchaseList(
     return;
   }
 
-  const total = items.reduce((sum, i) => sum + (i.subtotal ?? i.quantity * i.price), 0);
+  const total = items.reduce((sum, i) => sum + (i.subtotal ?? i.quantity * (i.price ?? 0)), 0);
   const dateStr = format(new Date(), 'MMMM d, yyyy');
 
   const filterInfo = [
@@ -57,8 +57,8 @@ export function printPurchaseList(
         <td>${item.concept || '—'}</td>
         <td class="num">${item.quantity}</td>
         <td>${item.unit ?? '—'}</td>
-        <td class="num">${formatCurrency(item.price)}</td>
-        <td class="num">${formatCurrency(item.subtotal ?? item.quantity * item.price)}</td>
+        <td class="num">${formatCurrency(item.price ?? 0)}</td>
+        <td class="num">${formatCurrency(item.subtotal ?? item.quantity * (item.price ?? 0))}</td>
         <td>
           <span class="dot" style="background:${pColor}"></span>
           ${priority}

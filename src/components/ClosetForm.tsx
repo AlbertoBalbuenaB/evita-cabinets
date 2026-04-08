@@ -200,10 +200,10 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
 
     try {
       if (closetItem) {
-        const { error } = await supabase.from('area_closet_items').update(data).eq('id', closetItem.id);
+        const { error } = await supabase.from('area_closet_items').update(data as any).eq('id', closetItem.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('area_closet_items').insert(data);
+        const { error } = await supabase.from('area_closet_items').insert(data as any);
         if (error) throw error;
       }
       onClose();

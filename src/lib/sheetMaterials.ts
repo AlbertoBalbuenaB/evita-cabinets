@@ -58,7 +58,7 @@ export async function calculateAreaSheetMaterials(
 
   if (productsError || !products) {
     console.error('Error loading products:', productsError);
-    return { sheetUsages: [], cabinetCosts: [] };
+    return { sheetUsages: [], cabinetCosts: [], cabinets: [] };
   }
 
   const { data: priceList, error: priceListError } = await supabase
@@ -67,7 +67,7 @@ export async function calculateAreaSheetMaterials(
 
   if (priceListError || !priceList) {
     console.error('Error loading price list:', priceListError);
-    return { sheetUsages: [], cabinetCosts: [] };
+    return { sheetUsages: [], cabinetCosts: [], cabinets: [] };
   }
 
   const boxMaterialsMap = new Map<string, {
@@ -469,7 +469,7 @@ export async function calculateAreaSheetMaterials(
 
 export async function recalculateAreaSheetMaterialCosts(areaId: string): Promise<boolean> {
   try {
-    const { sheetUsages, cabinetCosts, cabinets } = await calculateAreaSheetMaterials(areaId);
+    const { cabinetCosts, cabinets } = await calculateAreaSheetMaterials(areaId);
 
     const cabinetsMap = new Map(cabinets.map(c => [c.id, c]));
     const updateResults = await Promise.all(cabinetCosts.map(cost => {
@@ -477,15 +477,15 @@ export async function recalculateAreaSheetMaterialCosts(areaId: string): Promise
       if (!cabinet) return Promise.resolve({ error: null });
       const newSubtotal =
         cost.boxMaterialCost +
-        cabinet.box_edgeband_cost +
+        (cabinet.box_edgeband_cost ?? 0) +
         cost.boxInteriorFinishCost +
         cost.doorsMaterialCost +
-        cabinet.doors_edgeband_cost +
+        (cabinet.doors_edgeband_cost ?? 0) +
         cost.doorsInteriorFinishCost +
         cost.backPanelMaterialCost +
-        cabinet.hardware_cost +
+        (cabinet.hardware_cost ?? 0) +
         cabinet.accessories_cost +
-        cabinet.labor_cost +
+        (cabinet.labor_cost ?? 0) +
         (cabinet.door_profile_cost || 0);
       return supabase
         .from('area_cabinets')
@@ -529,7 +529,7 @@ export async function recalculateAreaSheetMaterialCosts(areaId: string): Promise
     }
 
     const areaSubtotal =
-      updatedCabinets.reduce((sum, c) => sum + c.subtotal, 0) +
+      updatedCabinets.reduce((sum, c) => sum + (c.subtotal ?? 0), 0) +
       (items || []).reduce((sum, i) => sum + i.subtotal, 0) +
       (countertops || []).reduce((sum, ct) => sum + ct.subtotal, 0);
 
