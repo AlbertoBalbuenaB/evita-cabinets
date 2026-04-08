@@ -46,14 +46,34 @@ import { FtVsOptimizerComparisonCard } from './FtVsOptimizerComparisonCard';
 import { PerAreaBoardsBreakdown } from './PerAreaBoardsBreakdown';
 import { CutListDetailPanel } from './CutListDetailPanel';
 import { StaleBadge } from './StaleBadge';
+import { BreakdownBOM } from './BreakdownBOM';
 import type { OptimizationResult } from '../../../lib/optimizer/types';
-import type { PricingMethod } from '../../../types';
+import type {
+  PricingMethod,
+  ProjectArea,
+  AreaCabinet,
+  AreaItem,
+  AreaCountertop,
+  AreaClosetItem,
+  Quotation,
+} from '../../../types';
+
+type EnrichedArea = ProjectArea & {
+  cabinets: AreaCabinet[];
+  items: AreaItem[];
+  countertops: AreaCountertop[];
+  closetItems?: AreaClosetItem[];
+};
 
 interface Props {
   quotationId: string;
   totalCabinetsCount: number;
   /** Map of area_id → area name, so the per-area breakdown can show labels. */
   areasById: Record<string, string>;
+  /** Full area data — used by BreakdownBOM for hardware/accessories/items/countertops. */
+  areas: EnrichedArea[];
+  /** Quotation record — provides pricing multipliers and project_id for BreakdownBOM. */
+  quotation: Quotation;
   /**
    * Invoked after any action that could have changed the quotation total
    * (toggle pricing method, save a new run, set a different run active,
@@ -87,6 +107,8 @@ export function QuotationOptimizerTab({
   quotationId,
   totalCabinetsCount,
   areasById,
+  areas,
+  quotation,
   onRecomputeRollup,
 }: Props) {
   const useStore = useMemo(() => getQuotationOptimizerStore(quotationId), [quotationId]);
@@ -450,6 +472,17 @@ export function QuotationOptimizerTab({
       {loadedRun && perAreaRows.length > 0 && (
         <div className="px-4 py-4 border-t border-slate-200 bg-slate-50">
           <PerAreaBoardsBreakdown rows={perAreaRows} />
+        </div>
+      )}
+
+      {/* ── BOM + Project Cost Summary ────────────────────── */}
+      {loadedRun && (
+        <div className="px-4 py-4 border-t border-slate-200 bg-white">
+          <BreakdownBOM
+            loadedRun={loadedRun}
+            areas={areas}
+            quotation={quotation}
+          />
         </div>
       )}
 
