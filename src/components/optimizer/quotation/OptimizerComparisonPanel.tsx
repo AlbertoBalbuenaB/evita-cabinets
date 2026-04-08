@@ -76,7 +76,7 @@ export function OptimizerComparisonPanel({ isOpen, onClose, runs, activeRunId }:
 
         {runs.length < 2 ? (
           <div className="text-sm text-slate-500 py-8 text-center">
-            You need at least 2 saved runs to compare. Save another run from the Cut-list Pricing tab.
+            You need at least 2 saved runs to compare. Save another run from the Optimizer tab.
           </div>
         ) : (
           <>

@@ -288,7 +288,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     //
     // Both the mode and the active_run_id are re-fetched from DB here to
     // bypass React prop staleness (the user may have toggled the method
-    // from within the Cut-list tab without remounting ProjectDetails).
+    // from within the Optimizer tab without remounting ProjectDetails).
     let optimizerGrandTotal: number | null = null;
     let writeTotal = sqftProjectTotal;
 
@@ -1094,7 +1094,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   const tabs = [
     { id: 'info' as const, label: 'Info', icon: Receipt },
     { id: 'pricing' as const, label: 'Pricing', icon: Calculator },
-    { id: 'cutlist' as const, label: 'Cut-list Pricing', icon: LayoutDashboard },
+    { id: 'cutlist' as const, label: 'Optimizer', icon: LayoutDashboard },
     { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
     { id: 'history' as const, label: 'History', icon: History },
   ];

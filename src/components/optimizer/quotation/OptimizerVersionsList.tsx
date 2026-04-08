@@ -15,7 +15,7 @@ interface Props {
 
 /**
  * Dropdown popover showing the saved optimizer runs for the current
- * quotation. Opens from a button in the Cut-list Pricing header.
+ * quotation. Opens from a button in the Optimizer tab header.
  *
  * Each row supports:
  *  - click name: load the run into the viewer (without setting active)

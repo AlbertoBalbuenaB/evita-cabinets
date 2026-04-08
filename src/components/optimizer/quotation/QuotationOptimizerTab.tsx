@@ -1,5 +1,5 @@
 /**
- * Cut-list Pricing tab.
+ * Optimizer tab (formerly "Cut-list Pricing").
  *
  * Entry point for the optimizer-based quotation pricing path. Composes
  * the Phase 3 library + Phase 4 store factory + Phase 5/6 UI components
@@ -71,7 +71,7 @@ interface QuotationHeaderSlice {
 }
 
 /**
- * Top-level component for the "Cut-list Pricing" tab inside ProjectDetails.
+ * Top-level component for the "Optimizer" tab inside ProjectDetails.
  *
  * Phase 5 added: build/run/save workflow + 3-panel layout.
  * Phase 6 adds: versions dropdown, comparison modal, pricing-method
@@ -303,7 +303,7 @@ export function QuotationOptimizerTab({
       {/* ── Header bar ────────────────────────────────────── */}
       <div className="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center gap-2 flex-wrap">
         <LayoutDashboard className="h-5 w-5 text-blue-600 shrink-0" />
-        <span className="font-semibold text-slate-800 text-sm">Cut-list Pricing</span>
+        <span className="font-semibold text-slate-800 text-sm">Optimizer</span>
 
         <PricingMethodToggle
           value={header.pricingMethod}
