@@ -416,10 +416,21 @@ export async function buildOptimizerSetupFromQuotation(
         areaName: cab.project_areas.name,
       };
     } else if (!cabinetsSkipped.some((s) => s.id === cab.id)) {
-      cabinetsSkipped.push({
-        id: cab.id,
-        reason: 'All cut_pieces rejected (missing material links or invalid dimensions)',
-      });
+      // All cut_pieces had materials set to "Not Apply" or missing links.
+      // Still cover the cabinet so its hardware/accessories are included in the
+      // optimizer total instead of falling back to ft² pricing.
+      cabinetsCovered.add(cab.id);
+      const qty = cab.quantity ?? 1;
+      cabinetsInstanceCount += qty;
+      cabinetDetails[cab.id] = {
+        productSku: cab.product_sku,
+        quantity: qty,
+        areaId: cab.project_areas.id,
+        areaName: cab.project_areas.name,
+      };
+      warnings.push(
+        `Cabinet "${cab.product_sku ?? cab.id}" in area "${areaName}": all cut pieces have no board material (materials may be set to "Not Apply"). Covered as hardware-only — no boards generated.`,
+      );
     }
   }
 
