@@ -30,6 +30,20 @@ function partLabel(idx: number): string {
   return label;
 }
 
+/**
+ * Stable fingerprint for board deduplication. Two boards are considered
+ * identical when they have the same stock + the same placed pieces at the
+ * same coordinates (orientation included). Sort the placed pieces so the
+ * order in the engine's output doesn't affect the fingerprint.
+ */
+function boardFingerprint(b: OptimizationResult['boards'][number]): string {
+  const placed = [...b.placed]
+    .map(p => `${p.piece.id}|${p.x}|${p.y}|${p.w}|${p.h}|${p.rotated ? 1 : 0}`)
+    .sort()
+    .join(';');
+  return `${b.material}|${b.grosor}|${b.ancho}|${b.alto}|${b.stockInfo.nombre}|${placed}`;
+}
+
 export type PdfLang = 'en' | 'es';
 
 const i18n: Record<PdfLang, Record<string, string>> = {
@@ -58,6 +72,7 @@ const i18n: Record<PdfLang, Record<string, string>> = {
     area: 'Area',
     unassigned: 'Unassigned',
     name: 'Name',
+    qty: 'Qty',
     width: 'Width',
     height: 'Height',
     rot: 'Rot',
@@ -102,6 +117,7 @@ const i18n: Record<PdfLang, Record<string, string>> = {
     area: 'Área',
     unassigned: 'Sin asignar',
     name: 'Nombre',
+    qty: 'Cant',
     width: 'Ancho',
     height: 'Alto',
     rot: 'Rot',
@@ -149,12 +165,50 @@ export async function exportOptimizerPDF(
     if (cb.der > 0) totalEB += p.piece.alto + 30;
   }));
 
-  // Build global piece index → letter mapping
+  // ── Group identical boards ───────────────────────────────
+  // Boards with the same stock and same placed pieces in the same coordinates
+  // are physically interchangeable; we render one page per unique layout with
+  // a "×N" badge and a sheet range, instead of N duplicate pages.
+  interface BoardGroup {
+    board: OptimizationResult['boards'][number];
+    count: number;
+    firstIdx: number; // first ORIGINAL index in result.boards (0-based)
+  }
+  const boardGroups: BoardGroup[] = [];
+  const groupByFingerprint = new Map<string, BoardGroup>();
+  result.boards.forEach((board, idx) => {
+    const fp = boardFingerprint(board);
+    const existing = groupByFingerprint.get(fp);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      const g: BoardGroup = { board, count: 1, firstIdx: idx };
+      groupByFingerprint.set(fp, g);
+      boardGroups.push(g);
+    }
+  });
+
+  // Map from each ORIGINAL board index → the BoardGroup that represents it.
+  // Used by the cut list to translate per-piece sheet locations into the
+  // grouped sheet labels (so a piece on original sheets 1+2+3 displays as
+  // "S1-3" if those three sheets are merged into one group).
+  const groupByOriginalIdx = new Map<number, BoardGroup>();
+  result.boards.forEach((_b, idx) => {
+    const fp = boardFingerprint(result.boards[idx]);
+    groupByOriginalIdx.set(idx, groupByFingerprint.get(fp)!);
+  });
+
+  // Build global piece index → letter mapping. Iterate over UNIQUE boards
+  // only and skip already-mapped keys, so duplicate placements across
+  // identical boards don't waste letters (was a pre-existing bug where
+  // letters were skipped when boards repeated).
   const pieceLetterMap = new Map<string, string>();
   let globalPieceIdx = 0;
-  result.boards.forEach(b => b.placed.forEach(p => {
+  boardGroups.forEach(({ board }) => board.placed.forEach(p => {
     const key = `${p.piece.id}-${p.x}-${p.y}`;
-    pieceLetterMap.set(key, partLabel(globalPieceIdx++));
+    if (!pieceLetterMap.has(key)) {
+      pieceLetterMap.set(key, partLabel(globalPieceIdx++));
+    }
   }));
 
   // Load logo
@@ -179,10 +233,32 @@ export async function exportOptimizerPDF(
   doc.line(pageW / 2 - 60, curY, pageW / 2 + 60, curY);
   curY += 14;
 
-  // Project name — hero text
-  doc.setFont('Helvetica', 'bold'); doc.setFontSize(36); doc.setTextColor(15, 23, 42);
-  doc.text(projectName || t.unnamed, pageW / 2, curY, { align: 'center' });
-  curY += 10;
+  // Project name — hero text. Auto-shrink to fit, then wrap to multiple
+  // lines if still too wide at the minimum size. Available width = page
+  // minus 20mm side margins.
+  const titleText = projectName || t.unnamed;
+  const titleMaxW = pageW - 40;
+  let titleSize = 36;
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(titleSize);
+  doc.setTextColor(15, 23, 42);
+  while (titleSize > 16 && doc.getTextWidth(titleText) > titleMaxW) {
+    titleSize -= 1;
+    doc.setFontSize(titleSize);
+  }
+  // Empirical line-height factor for jsPDF Helvetica (mm per pt at the given size).
+  const titleLineH = titleSize * 0.42;
+  if (doc.getTextWidth(titleText) > titleMaxW) {
+    // Still too wide at min size — wrap to multiple lines.
+    const lines = doc.splitTextToSize(titleText, titleMaxW) as string[];
+    lines.forEach((line, i) => {
+      doc.text(line, pageW / 2, curY + i * titleLineH, { align: 'center' });
+    });
+    curY += lines.length * titleLineH;
+  } else {
+    doc.text(titleText, pageW / 2, curY, { align: 'center' });
+    curY += 10;
+  }
 
   // Subtitle
   doc.setFontSize(12); doc.setTextColor(100, 116, 139); doc.setFont('Helvetica', 'normal');
@@ -212,20 +288,24 @@ export async function exportOptimizerPDF(
   doc.text(new Date().toLocaleDateString(dateFmt, { year: 'numeric', month: 'long', day: 'numeric' }), pageW - 20, pageH - 12, { align: 'right' });
 
   // ── Board pages ───────────────────────────────────────────
-  result.boards.forEach((board, boardIdx) => {
+  boardGroups.forEach(({ board, count, firstIdx }) => {
     doc.addPage();
     doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, pageW, pageH, 'F');
 
     doc.setFontSize(16); doc.setTextColor(15, 23, 42); doc.setFont('Helvetica', 'bold');
-    doc.text(projectName || t.unnamed, 20, 20);
+    const titleSuffix = count > 1 ? `  ×${count}` : '';
+    doc.text((projectName || t.unnamed) + titleSuffix, 20, 20);
     doc.setFontSize(10); doc.setFont('Helvetica', 'normal'); doc.setTextColor(71, 85, 105);
     doc.text(`${t.material}: ${board.material} | ${t.thickness}: ${fmtDim(board.grosor, unit)} | ${t.size}: ${fmtDim(board.ancho, unit)}×${fmtDim(board.alto, unit)}`, 20, 28);
     doc.text(`${t.usage}: ${board.usage.toFixed(1)}% | ${board.placed.length} ${t.parts.toLowerCase()} | ${t.trim}: ${board.trim}mm`, 20, 35);
 
-    // Sheet number footer — bottom right
+    // Sheet number footer — bottom right. Show range when grouped.
     doc.setFontSize(8); doc.setTextColor(148, 163, 184);
-    doc.text(`${t.sheet} ${boardIdx + 1}`, pageW - 15, pageH - 8, { align: 'right' });
+    const sheetLabel = count > 1
+      ? `${t.sheet} ${firstIdx + 1}-${firstIdx + count}`
+      : `${t.sheet} ${firstIdx + 1}`;
+    doc.text(sheetLabel, pageW - 15, pageH - 8, { align: 'right' });
 
     const maxBoardW = pageW - 50, maxBoardH = pageH - 75;
     const scale = Math.min(maxBoardW / board.ancho, maxBoardH / board.alto);
@@ -374,16 +454,25 @@ export async function exportOptimizerPDF(
   });
 
   // ── Shared cut list rendering function ─────────────────────
-  const colX = [10, 22, 55, 78, 101, 120, 136, 148, 156, 164, 172, 200];
+  // 13 columns: # Name Qty W H Sheets Rot Grain T B L R Material
+  const colX = [10, 22, 52, 62, 75, 88, 110, 122, 135, 143, 151, 159, 200];
   const allPieces: { piece: typeof result.boards[0]['placed'][0]; boardIdx: number; board: typeof result.boards[0] }[] = [];
   result.boards.forEach((board, boardIdx) => board.placed.forEach(piece => allPieces.push({ piece, boardIdx, board })));
+
+  // Group physical placements by piece kind. The engine reuses the same
+  // Pieza id for every copy of the same input piece, so piece.id is the
+  // canonical kind key. We add the dimensions, material, and cubrecanto as
+  // a safety net in case the engine ever splits identical-kind pieces.
+  function pieceKindKey(p: typeof allPieces[number]['piece']): string {
+    const cb = p.piece.cubrecanto;
+    return `${p.piece.id}|${p.piece.ancho}|${p.piece.alto}|${p.piece.material}|${cb.sup}-${cb.inf}-${cb.izq}-${cb.der}`;
+  }
 
   const renderCutList = (title: string, groups: Map<string, typeof allPieces>, groupLabel: string) => {
     doc.addPage();
     doc.setFontSize(14); doc.setFont('Helvetica', 'bold'); doc.setTextColor(15, 23, 42);
     doc.text(title, 20, 20);
     let y = 30;
-    let globalIdx = 0;
 
     groups.forEach((items, groupName) => {
       if (y > pageH - 25) { doc.addPage(); y = 20; }
@@ -391,25 +480,60 @@ export async function exportOptimizerPDF(
       doc.text(`${groupLabel}: ${groupName}`, 20, y);
       y += 7;
       doc.setFontSize(7); doc.setTextColor(71, 85, 105); doc.setFont('Helvetica', 'bold');
-      ['#', t.name, t.width, t.height, t.sheet, t.rot, t.grain, 'T', 'B', 'L', 'R', t.material].forEach((h, i) => {
-        doc.text(h, colX[i], y, { align: i === 1 || i === 11 ? 'left' : 'center' });
+      ['#', t.name, t.qty, t.width, t.height, t.sheets, t.rot, t.grain, 'T', 'B', 'L', 'R', t.material].forEach((h, i) => {
+        doc.text(h, colX[i], y, { align: i === 1 || i === 12 ? 'left' : 'center' });
       });
       y += 5;
       doc.setFont('Helvetica', 'normal');
+
+      // Group items by piece kind so identical pieces collapse into one row.
+      const kindGroups = new Map<string, typeof items>();
       items.forEach((item) => {
+        const k = pieceKindKey(item.piece);
+        if (!kindGroups.has(k)) kindGroups.set(k, []);
+        kindGroups.get(k)!.push(item);
+      });
+
+      kindGroups.forEach((kindItems) => {
         if (y > pageH - 10) { doc.addPage(); y = 20; }
         doc.setTextColor(30, 41, 59);
-        const p = item.piece;
+        const first = kindItems[0];
+        const p = first.piece;
         const cb = p.piece.cubrecanto;
         const pKey = `${p.piece.id}-${p.x}-${p.y}`;
-        const letter = pieceLetterMap.get(pKey) || partLabel(globalIdx);
-        globalIdx++;
+        const letter = pieceLetterMap.get(pKey) || '';
+
+        // Build sheet list grouped by parent board group, so duplicate
+        // physical sheets that share a layout collapse with the same range
+        // shown on the board page footer (e.g. "S1-3×2" means 2 copies of
+        // the piece appear in the layout printed as sheets 1, 2 and 3).
+        // Truncate after 4 entries to keep the cell readable.
+        const groupCounts = new Map<BoardGroup, number>();
+        kindItems.forEach(it => {
+          const g = groupByOriginalIdx.get(it.boardIdx);
+          if (!g) return;
+          groupCounts.set(g, (groupCounts.get(g) ?? 0) + 1);
+        });
+        const groupEntries = Array.from(groupCounts.entries())
+          .sort(([a], [b]) => a.firstIdx - b.firstIdx);
+        let sheetText = groupEntries
+          .slice(0, 4)
+          .map(([g, c]) => {
+            const label = g.count > 1
+              ? `S${g.firstIdx + 1}-${g.firstIdx + g.count}`
+              : `S${g.firstIdx + 1}`;
+            return c > 1 ? `${label}×${c}` : label;
+          })
+          .join(',');
+        if (groupEntries.length > 4) sheetText += `,+${groupEntries.length - 4}`;
+
         [
           [letter, 'center'],
           [p.piece.nombre || t.part, 'left'],
+          [String(kindItems.length), 'center'],
           [fmtNum(p.piece.ancho, unit), 'center'],
           [fmtNum(p.piece.alto, unit), 'center'],
-          [`S${item.boardIdx + 1}`, 'center'],
+          [sheetText, 'center'],
           [p.rotated ? t.yes : '—', 'center'],
           [p.piece.veta === 'none' ? '—' : p.piece.veta === 'horizontal' ? 'H' : 'V', 'center'],
           [cb.sup > 0 ? EB_LABELS[cb.sup] : '—', 'center'],
