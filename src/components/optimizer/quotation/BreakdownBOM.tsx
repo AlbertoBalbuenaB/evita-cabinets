@@ -116,7 +116,7 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
       stockCountMap.set(board.material, (stockCountMap.get(board.material) ?? 0) + 1);
     }
     for (const [stockId, count] of stockCountMap) {
-      const stock = snapshot.stocks.find(s => s.id === stockId);
+      const stock = snapshot.stocks.find(s => s.nombre === stockId);
       if (!stock) continue;
       rows.push({
         category: 'Boards',

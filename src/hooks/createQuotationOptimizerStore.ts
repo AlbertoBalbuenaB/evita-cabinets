@@ -89,6 +89,10 @@ export interface QuotationOptimizerState {
   pendingResult: OptimizationResult | null;
   pendingBuiltAt: string | null;
 
+  // Stock / edgeband selection for the next optimize run
+  selectedStockIds: Set<string>;
+  selectedEbSlots:  Set<'a' | 'b' | 'c'>;
+
   // Engine settings
   globalSierra: number;
   minOffcut: number;
@@ -106,6 +110,8 @@ export interface QuotationOptimizerState {
   setMinOffcut: (v: number) => void;
   setBoardTrim: (v: number) => void;
   setTrimIncludesKerf: (v: boolean) => void;
+  toggleStockSelected: (id: string) => void;
+  toggleEbSlot: (slot: 'a' | 'b' | 'c') => void;
 
   // Async actions
   refreshRunsList: () => Promise<void>;
@@ -175,6 +181,9 @@ export function getQuotationOptimizerStore(
     pendingResult: null,
     pendingBuiltAt: null,
 
+    selectedStockIds: new Set<string>(),
+    selectedEbSlots:  new Set<'a' | 'b' | 'c'>(['a', 'b', 'c']),
+
     globalSierra: 3.2,
     minOffcut: 200,
     boardTrim: 5,
@@ -189,6 +198,18 @@ export function getQuotationOptimizerStore(
     setMinOffcut:        (v) => set({ minOffcut: v }),
     setBoardTrim:        (v) => set({ boardTrim: v }),
     setTrimIncludesKerf: (v) => set({ trimIncludesKerf: v }),
+
+    toggleStockSelected: (id) => set((state) => {
+      const next = new Set(state.selectedStockIds);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return { selectedStockIds: next };
+    }),
+
+    toggleEbSlot: (slot) => set((state) => {
+      const next = new Set(state.selectedEbSlots);
+      if (next.has(slot)) next.delete(slot); else next.add(slot);
+      return { selectedEbSlots: next };
+    }),
 
     // ── Refresh the runs list + active run from DB ────────────────────────
     refreshRunsList: async () => {
@@ -225,6 +246,9 @@ export function getQuotationOptimizerStore(
           pendingResult:             null,        // invalidate any stale result
           pendingBuiltAt:            new Date().toISOString(),
           isBuilding:                false,
+          // Default: all stocks and EB slots selected.
+          selectedStockIds: new Set(result.stocks.map((s) => s.id)),
+          selectedEbSlots:  new Set<'a' | 'b' | 'c'>(['a', 'b', 'c']),
         });
       } catch (err) {
         set({
@@ -249,9 +273,13 @@ export function getQuotationOptimizerStore(
         const effectiveTrim = state.trimIncludesKerf
           ? state.boardTrim + state.globalSierra
           : state.boardTrim;
+        // Only include stocks the user has selected (checkbox in sidebar).
+        const activeStocks = state.pendingStocks.filter((s) =>
+          state.selectedStockIds.has(s.id),
+        );
         const result = runOptimization(
           state.pendingPieces,
-          state.pendingStocks,
+          activeStocks,
           [], // no remnants in quotation mode for now
           state.globalSierra,
           state.minOffcut,
@@ -279,10 +307,11 @@ export function getQuotationOptimizerStore(
       set({ isSaving: true, lastError: null });
       try {
         // Compute edgeband cost (Phase 3 pure fn).
+        // Only include slots the user has selected (EB checkbox in sidebar).
         const ebPriceBySlot: Record<'a' | 'b' | 'c', number> = {
-          a: state.pendingEbConfig.a.price ?? 0,
-          b: state.pendingEbConfig.b.price ?? 0,
-          c: state.pendingEbConfig.c.price ?? 0,
+          a: state.selectedEbSlots.has('a') ? (state.pendingEbConfig.a.price ?? 0) : 0,
+          b: state.selectedEbSlots.has('b') ? (state.pendingEbConfig.b.price ?? 0) : 0,
+          c: state.selectedEbSlots.has('c') ? (state.pendingEbConfig.c.price ?? 0) : 0,
         };
         const edgeband = computeEdgebandCost(state.pendingPieces, ebPriceBySlot);
 

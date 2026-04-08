@@ -162,11 +162,13 @@ export async function buildOptimizerSetupFromQuotation(
   // 3. Collect every price_list id referenced by any cabinet (material + edgeband).
   const priceListIds = new Set<string>();
   for (const c of cabinets) {
-    if (c.box_material_id)       priceListIds.add(c.box_material_id);
-    if (c.doors_material_id)     priceListIds.add(c.doors_material_id);
-    if (c.back_panel_material_id) priceListIds.add(c.back_panel_material_id);
-    if (c.box_edgeband_id)       priceListIds.add(c.box_edgeband_id);
-    if (c.doors_edgeband_id)     priceListIds.add(c.doors_edgeband_id);
+    if (c.box_material_id)             priceListIds.add(c.box_material_id);
+    if (c.doors_material_id)           priceListIds.add(c.doors_material_id);
+    if (c.back_panel_material_id)      priceListIds.add(c.back_panel_material_id);
+    if (c.box_edgeband_id)             priceListIds.add(c.box_edgeband_id);
+    if (c.doors_edgeband_id)           priceListIds.add(c.doors_edgeband_id);
+    if (c.box_interior_finish_id)      priceListIds.add(c.box_interior_finish_id);
+    if (c.doors_interior_finish_id)    priceListIds.add(c.doors_interior_finish_id);
   }
 
   const priceListById = new Map<string, PriceListRow>();
@@ -318,6 +320,63 @@ export async function buildOptimizerSetupFromQuotation(
       });
 
       cabinetProducedAnyPiece = true;
+    }
+
+    // Interior finish pass — duplicate cuerpo/frente pieces with the
+    // surface layer material if the cabinet has one configured.
+    for (const cp of cutPieces) {
+      if (!cp.ancho || !cp.alto || !cp.cantidad || cp.cantidad <= 0) continue;
+      const role = cp.material;
+      let finishMaterialId: string | null = null;
+      if (role === 'cuerpo' && !isLegacyBackPanel(cp.nombre)) {
+        finishMaterialId = cab.box_interior_finish_id ?? null;
+      } else if (role === 'frente') {
+        finishMaterialId = cab.doors_interior_finish_id ?? null;
+      }
+      if (!finishMaterialId) continue;
+
+      const priceRow = priceListById.get(finishMaterialId);
+      if (!priceRow) continue;
+
+      const thickness = priceRow.technical_thickness_mm ?? FALLBACK_THICKNESS_MM;
+      const key = stockKey(priceRow.id, thickness);
+      if (!stocksByKey.has(key)) {
+        const hasTechDims =
+          priceRow.technical_width_mm != null &&
+          priceRow.technical_height_mm != null &&
+          priceRow.technical_width_mm > 0 &&
+          priceRow.technical_height_mm > 0;
+        stocksByKey.set(key, {
+          id: crypto.randomUUID(),
+          nombre: `${priceRow.concept_description} ${thickness}mm`,
+          ancho: hasTechDims ? Number(priceRow.technical_width_mm) : FALLBACK_BOARD_WIDTH_MM,
+          alto:  hasTechDims ? Number(priceRow.technical_height_mm) : FALLBACK_BOARD_HEIGHT_MM,
+          costo: Number(priceRow.price ?? 0),
+          sierra: DEFAULT_KERF_MM,
+          materialId: priceRow.id,
+          qty: 0,
+        });
+      }
+
+      const totalQty = cp.cantidad * (cab.quantity ?? 1);
+      if (totalQty <= 0) continue;
+
+      pieces.push({
+        id: crypto.randomUUID(),
+        nombre: `${cp.nombre} (interior finish)`,
+        material: `${priceRow.concept_description} ${thickness}mm`,
+        grosor: thickness,
+        ancho: cp.ancho,
+        alto: cp.alto,
+        cantidad: totalQty,
+        veta: 'none',
+        cubrecanto: DEFAULT_CUBRECANTO,
+        area: areaName,
+        cabinetId: cab.id,
+        areaId,
+        cutPieceRole: 'interior-finish',
+        sourceCutPieceId: cp.id,
+      });
     }
 
     if (cabinetProducedAnyPiece) {

@@ -272,16 +272,45 @@ export function QuotationOptimizerTab({
   // Reset board index when the result changes.
   useEffect(() => { setSelectedBoardIdx(0); }, [displayResult]);
 
-  // Per-area breakdown rows (from the loaded run's snapshot).
+  // Per-area breakdown rows — recomputed from result.boards + snapshot.stocks
+  // each time a run is loaded, so costs are always current (not stale zeros).
   const perAreaRows = useMemo(() => {
-    const attribution = loadedRun?.snapshot.areaAttribution ?? {};
-    return Object.entries(attribution).map(([areaId, v]) => ({
-      areaId,
-      areaName: areasById[areaId] ?? '(unknown area)',
-      m2: v.m2,
-      cost: v.cost,
-      boards: v.boards,
-    })).sort((a, b) => b.cost - a.cost);
+    if (!loadedRun) return [];
+    const { result, snapshot } = loadedRun;
+    const stockByName = new Map(snapshot.stocks.map((s) => [s.nombre, s]));
+    const attr: Record<string, { m2: number; cost: number; boards: number }> = {};
+
+    for (const board of result.boards) {
+      if (board.placed.length === 0) continue;
+      const boardCost =
+        stockByName.get(board.stockInfo.nombre)?.costo ?? board.stockInfo.costo;
+      const perAreaM2: Record<string, number> = {};
+      let totalM2 = 0;
+      for (const pp of board.placed) {
+        const areaId = pp.piece.areaId;
+        if (!areaId) continue;
+        const m2 = (pp.w * pp.h) / 1_000_000;
+        perAreaM2[areaId] = (perAreaM2[areaId] ?? 0) + m2;
+        totalM2 += m2;
+      }
+      if (totalM2 <= 0) continue;
+      for (const [areaId, m2] of Object.entries(perAreaM2)) {
+        const f = m2 / totalM2;
+        const b = (attr[areaId] ??= { m2: 0, cost: 0, boards: 0 });
+        b.m2 += m2;
+        b.cost += boardCost * f;
+        b.boards += f;
+      }
+    }
+    return Object.entries(attr)
+      .map(([areaId, v]) => ({
+        areaId,
+        areaName: areasById[areaId] ?? '(unknown area)',
+        m2: v.m2,
+        cost: v.cost,
+        boards: v.boards,
+      }))
+      .sort((a, b) => b.cost - a.cost);
   }, [loadedRun, areasById]);
 
   // Source of truth for the cut-list detail panel: prefer the pending build

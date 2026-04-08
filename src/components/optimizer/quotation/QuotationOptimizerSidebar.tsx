@@ -36,6 +36,10 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
   const setTrimIncludesKerf        = useStore((s) => s.setTrimIncludesKerf);
   const clearPending               = useStore((s) => s.clearPending);
   const refreshStocks              = useStore((s) => s.refreshStocks);
+  const selectedStockIds           = useStore((s) => s.selectedStockIds);
+  const selectedEbSlots            = useStore((s) => s.selectedEbSlots);
+  const toggleStockSelected        = useStore((s) => s.toggleStockSelected);
+  const toggleEbSlot               = useStore((s) => s.toggleEbSlot);
 
   const [refreshingStocks, setRefreshingStocks] = useState(false);
 
@@ -115,12 +119,22 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
           ) : (
             <ul className="space-y-1">
               {pendingStocks.map((s) => (
-                <li key={s.id} className="rounded border border-slate-200 px-2 py-1.5 text-xs">
-                  <div className="font-medium text-slate-800 truncate" title={s.nombre}>{s.nombre}</div>
-                  <div className="flex justify-between text-slate-500 mt-0.5">
-                    <span className="font-mono tabular-nums">{s.ancho} × {s.alto} mm</span>
-                    <span className="font-mono tabular-nums">${s.costo.toFixed(2)}</span>
-                  </div>
+                <li key={s.id} className={`rounded border px-2 py-1.5 text-xs ${selectedStockIds.has(s.id) ? 'border-slate-200' : 'border-dashed border-slate-300 opacity-60'}`}>
+                  <label className="flex items-start gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedStockIds.has(s.id)}
+                      onChange={() => toggleStockSelected(s.id)}
+                      className="mt-0.5 rounded border-slate-300 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-slate-800 truncate" title={s.nombre}>{s.nombre}</div>
+                      <div className="flex justify-between text-slate-500 mt-0.5">
+                        <span className="font-mono tabular-nums">{s.ancho}×{s.alto}mm</span>
+                        <span className="font-mono tabular-nums">${s.costo.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </label>
                 </li>
               ))}
             </ul>
@@ -137,17 +151,30 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
             {(['a', 'b', 'c'] as const).map((slot) => {
               const cfg = pendingEbConfig[slot];
               const isSet = cfg.id !== '';
+              const isSelected = selectedEbSlots.has(slot);
               return (
-                <li key={slot} className={`rounded border px-2 py-1.5 text-xs ${isSet ? 'border-slate-200' : 'border-dashed border-slate-200 bg-slate-50'}`}>
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono uppercase text-slate-400">{slot}</span>
-                    <span className="font-mono tabular-nums text-slate-500">
-                      {isSet ? `$${cfg.price.toFixed(2)}/m` : '—'}
-                    </span>
-                  </div>
-                  <div className={`mt-0.5 truncate ${isSet ? 'text-slate-800' : 'text-slate-400 italic'}`} title={cfg.name || 'not configured'}>
-                    {cfg.name || 'not configured'}
-                  </div>
+                <li key={slot} className={`rounded border px-2 py-1.5 text-xs ${isSet ? (isSelected ? 'border-slate-200' : 'border-dashed border-slate-300 opacity-60') : 'border-dashed border-slate-200 bg-slate-50'}`}>
+                  <label className="flex items-start gap-1.5 cursor-pointer">
+                    {isSet && (
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleEbSlot(slot)}
+                        className="mt-0.5 rounded border-slate-300 shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono uppercase text-slate-400">{slot}</span>
+                        <span className="font-mono tabular-nums text-slate-500">
+                          {isSet ? `$${cfg.price.toFixed(2)}/m` : '—'}
+                        </span>
+                      </div>
+                      <div className={`mt-0.5 truncate ${isSet ? 'text-slate-800' : 'text-slate-400 italic'}`} title={cfg.name || 'not configured'}>
+                        {cfg.name || 'not configured'}
+                      </div>
+                    </div>
+                  </label>
                 </li>
               );
             })}
