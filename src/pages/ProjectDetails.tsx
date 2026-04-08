@@ -13,6 +13,7 @@ import { CountertopForm } from '../components/CountertopForm';
 import { ClosetForm } from '../components/ClosetForm';
 import { CabinetCard } from '../components/CabinetCard';
 import { MaterialBreakdown } from '../components/MaterialBreakdown';
+import { QuotationBOM } from '../components/QuotationBOM';
 import { AreaMaterialBreakdown } from '../components/AreaMaterialBreakdown';
 import { ProjectCharts } from '../components/ProjectCharts';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -1873,6 +1874,12 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <MaterialBreakdown areas={areas} />
 
                 <OptimizerRunsAnalytics quotationId={project.id} />
+
+                <QuotationBOM
+                  areas={areas}
+                  projectId={project.id}
+                  quotation={project}
+                />
               </>
             ) : (
               <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
