@@ -237,42 +237,62 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
     accessoriesMap.forEach(row => { if (row.qty > 0 && row.subtotal > 0) rows.push(row); });
 
     // ── 5. Items ──────────────────────────────────────────────────────────
+    // Aggregate across areas by (price_list_item_id ?? item_name) + unit_price
+    // so the same item appearing in multiple areas shows as one row.
+    const itemsMap = new Map<string, BOMRow>();
     areas.forEach(area => {
       const areaQty = area.quantity ?? 1;
       area.items.forEach(item => {
-        const plItem = priceList.find(p => p.id === item.price_list_item_id);
         const qty = item.quantity * areaQty;
         if (qty <= 0) return;
-        rows.push({
-          category: 'Items',
-          concept: item.item_name,
-          unit: (plItem as any)?.unit || 'pcs',
-          qty,
-          price: item.unit_price,
-          subtotal: item.unit_price * qty,
-          priceListItemId: item.price_list_item_id,
-        });
+        const key = (item.price_list_item_id ?? item.item_name) + '|' + item.unit_price;
+        const plItem = priceList.find(p => p.id === item.price_list_item_id);
+        if (itemsMap.has(key)) {
+          const row = itemsMap.get(key)!;
+          row.qty += qty;
+          row.subtotal = row.qty * row.price;
+        } else {
+          itemsMap.set(key, {
+            category: 'Items',
+            concept: item.item_name,
+            unit: (plItem as any)?.unit || 'pcs',
+            qty,
+            price: item.unit_price,
+            subtotal: item.unit_price * qty,
+            priceListItemId: item.price_list_item_id,
+          });
+        }
       });
     });
+    itemsMap.forEach(row => { if (row.qty > 0) rows.push(row); });
 
     // ── 6. Countertops ────────────────────────────────────────────────────
+    const countertopsMap = new Map<string, BOMRow>();
     areas.forEach(area => {
       const areaQty = area.quantity ?? 1;
       area.countertops.forEach(ct => {
-        const plItem = priceList.find(p => p.id === ct.price_list_item_id);
         const qty = ct.quantity * areaQty;
         if (qty <= 0) return;
-        rows.push({
-          category: 'Countertops',
-          concept: ct.item_name,
-          unit: (plItem as any)?.unit || 'lft',
-          qty,
-          price: ct.unit_price,
-          subtotal: ct.unit_price * qty,
-          priceListItemId: ct.price_list_item_id,
-        });
+        const key = (ct.price_list_item_id ?? ct.item_name) + '|' + ct.unit_price;
+        const plItem = priceList.find(p => p.id === ct.price_list_item_id);
+        if (countertopsMap.has(key)) {
+          const row = countertopsMap.get(key)!;
+          row.qty += qty;
+          row.subtotal = row.qty * row.price;
+        } else {
+          countertopsMap.set(key, {
+            category: 'Countertops',
+            concept: ct.item_name,
+            unit: (plItem as any)?.unit || 'lft',
+            qty,
+            price: ct.unit_price,
+            subtotal: ct.unit_price * qty,
+            priceListItemId: ct.price_list_item_id,
+          });
+        }
       });
     });
+    countertopsMap.forEach(row => { if (row.qty > 0) rows.push(row); });
 
     return rows;
   }, [loadedRun, areas, priceList, loadingPrices]);
