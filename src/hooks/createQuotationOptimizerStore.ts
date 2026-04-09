@@ -376,11 +376,21 @@ export function getQuotationOptimizerStore(
         const runs = state.runs;
         const setActive = opts?.setActive ?? runs.length === 0;
 
+        // Strip cutTree before persisting: the recursive CutTreeNode structure can be
+        // several MB per board and would blow up the Supabase JSONB column limit.
+        // Cut sequences are re-generated on demand from board.placed coordinates.
+        const resultForDb = state.pendingResult
+          ? {
+              ...state.pendingResult,
+              boards: state.pendingResult.boards.map(({ cutTree: _ct, ...board }) => board),
+            }
+          : state.pendingResult;
+
         const runId = await createRun({
           quotationId,
           name,
           snapshot,
-          result: state.pendingResult,
+          result: resultForDb,
           kpis,
           setActive,
         });

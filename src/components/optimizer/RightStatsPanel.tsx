@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { useOptimizerStore } from '../../hooks/useOptimizerStore';
 import { OptimizationResult } from '../../lib/optimizer/types';
@@ -34,14 +34,20 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
   const boardCount = result.boards.length;
   const safeIdx    = Math.min(selectedIdx, boardCount - 1);
   const board      = result.boards[safeIdx];
-  const cuts       = generateCutSequence(board, unit);
+
+  // Compute all cut sequences once per result+unit change — avoids 3× redundant calls per render.
+  const allCuts = useMemo(
+    () => result.boards.map(b => generateCutSequence(b, unit)),
+    [result, unit],
+  );
+  const cuts = allCuts[safeIdx] ?? [];
 
   // Global totals
   const totalUsed  = result.boards.reduce((s, b) => s + b.areaUsed,  0);
   const totalWaste = result.boards.reduce((s, b) => s + b.areaWaste, 0);
-  const totalCuts  = result.boards.reduce((s, b) => s + generateCutSequence(b, unit).length, 0);
-  const totalCutLen = result.boards.reduce((s, b) => {
-    return s + generateCutSequence(b, unit).reduce((ss, c) => ss + (c.type === 'H' ? b.ancho : b.alto), 0);
+  const totalCuts    = allCuts.reduce((s, cs) => s + cs.length, 0);
+  const totalCutLen  = result.boards.reduce((s, b, i) => {
+    return s + (allCuts[i] ?? []).reduce((ss, c) => ss + (c.type === 'H' ? b.ancho : b.alto), 0);
   }, 0);
 
   // Stock sheets grouped by material name (for per-material board count)

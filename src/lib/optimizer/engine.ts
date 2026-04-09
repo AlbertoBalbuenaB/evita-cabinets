@@ -148,7 +148,8 @@ class Board {
       this.offcuts = [];
       const collect = (node: CutTreeNode | null) => {
         if (!node) return;
-        if (!node.cut && !node.piece && node.w >= minOff && node.h >= minOff) {
+        // Only true leaf nodes (no cut, no piece, no children) are actual waste space.
+        if (!node.cut && !node.piece && !node.left && !node.right && node.w >= minOff && node.h >= minOff) {
           this.offcuts.push({ x: node.x, y: node.y, w: node.w, h: node.h });
         }
         collect(node.left);
@@ -227,6 +228,9 @@ function guillotinePack(
   const hRight = hRightW >= 10 && bestIh >= 10
     ? guillotinePack(hRightX, ry, hRightW, bestIh, remaining, kerf, depth + 1)
     : { placed: [] as PlacedPiece[], tree: null };
+  // Object-reference equality is correct here: each expanded piece instance is a distinct
+  // object (created via spread in run()), so === correctly identifies which instances
+  // were placed even when multiple items share the same _idx (cantidad > 1).
   const hRemainingAfterRight = remaining.filter(it => !hRight.placed.some(pp => pp.piece === it));
   const hBot = hBotH >= 10
     ? guillotinePack(rx, hBotY, rw, hBotH, hRemainingAfterRight, kerf, depth + 1)
@@ -246,9 +250,15 @@ function guillotinePack(
     : { placed: [] as PlacedPiece[], tree: null };
   const vTotal = vTop.placed.length + vRight.placed.length;
 
-  // ── Choose winner; tie-break by less combined waste area ──
-  const hWasteArea = hRightW >= 10 ? 0 : rw - bestIw; // rough proxy
-  const vWasteArea = vTopH   >= 10 ? 0 : rh - bestIh;
+  // ── Choose winner; tie-break by actual combined waste (unoccupied) area ──
+  // H-cut waste = right-of-piece strip + full-width bottom strip minus placed pieces
+  const hWasteArea = (hRightW > 0 ? hRightW * bestIh : 0) + (hBotH > 0 ? rw * hBotH : 0)
+    - hRight.placed.reduce((s, p) => s + p.w * p.h, 0)
+    - hBot.placed.reduce((s, p) => s + p.w * p.h, 0);
+  // V-cut waste = top-of-piece strip + full-height right strip minus placed pieces
+  const vWasteArea = (vTopH > 0 ? bestIw * vTopH : 0) + (vRightW > 0 ? vRightW * rh : 0)
+    - vTop.placed.reduce((s, p) => s + p.w * p.h, 0)
+    - vRight.placed.reduce((s, p) => s + p.w * p.h, 0);
   const useH = hTotal > vTotal || (hTotal === vTotal && hWasteArea <= vWasteArea);
 
   // ── Build CutTreeNode ──
@@ -417,7 +427,10 @@ class Optimizer {
       if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP-guill(${sn})`; }
     }
 
-    if (best && best.length > 1) {
+    // Local search rebuilds boards using MaxRect semantics (Board.place()), which would
+    // erase the guillotine cut tree. Skip it when the winner is a guillotine result.
+    const isGuillotine = bestName.startsWith('guill') || bestName.startsWith('GRASP-guill');
+    if (best && best.length > 1 && !isGuillotine) {
       const improved = this._localSearch(best, mat, grs);
       if (this._score(improved) < bestScore) { best = improved; bestName += ' +local'; }
     }
