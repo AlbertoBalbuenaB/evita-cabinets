@@ -20,6 +20,13 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
   const [sheetOpen,  setSheetOpen]  = useState(true);
   const [cutsOpen,   setCutsOpen]   = useState(true);
 
+  // Compute all cut sequences once per result+unit change — avoids 3× redundant calls per render.
+  // Must be called unconditionally before any early return (Rules of Hooks).
+  const allCuts = useMemo(
+    () => result ? result.boards.map(b => generateCutSequence(b, unit)) : [],
+    [result, unit],
+  );
+
   // ── Empty state ───────────────────────────────────────────
   if (!result) {
     return (
@@ -35,11 +42,6 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
   const safeIdx    = Math.min(selectedIdx, boardCount - 1);
   const board      = result.boards[safeIdx];
 
-  // Compute all cut sequences once per result+unit change — avoids 3× redundant calls per render.
-  const allCuts = useMemo(
-    () => result.boards.map(b => generateCutSequence(b, unit)),
-    [result, unit],
-  );
   const cuts = allCuts[safeIdx] ?? [];
 
   // Global totals
