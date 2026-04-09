@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Link2, Trash2, Plus, ExternalLink } from 'lucide-react';
+import { Link2, Trash2, Plus, ExternalLink, HardDrive } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from './Button';
+import { useGooglePicker } from '../hooks/useGooglePicker';
 import type { ProjectDocument } from '../types';
 
 interface Props {
@@ -23,6 +24,7 @@ export function DocumentationSection({ projectId }: Props) {
   const [loading, setLoading] = useState(true);
   const [newLabel, setNewLabel] = useState('');
   const [newUrl, setNewUrl] = useState('');
+  const { openPicker } = useGooglePicker();
 
   useEffect(() => {
     loadDocuments();
@@ -94,6 +96,72 @@ export function DocumentationSection({ projectId }: Props) {
       console.error('Error updating document URL:', error);
       setDocuments(prev);
     }
+  }
+
+  async function updateDocument(
+    id: string,
+    changes: Partial<Pick<ProjectDocument, 'label' | 'url'>>
+  ) {
+    const prev = [...documents];
+    setDocuments((d) => d.map((x) => (x.id === id ? { ...x, ...changes } : x)));
+
+    try {
+      const { error } = await supabase
+        .from('project_documents')
+        .update(changes)
+        .eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating document:', error);
+      setDocuments(prev);
+    }
+  }
+
+  function pickForExistingRow(doc: ProjectDocument) {
+    const wasEmpty = !doc.url;
+    const isDefaultLabel = DEFAULT_DOCS.includes(doc.label);
+    openPicker((file) => {
+      const changes: Partial<Pick<ProjectDocument, 'label' | 'url'>> = { url: file.url };
+      if (wasEmpty && isDefaultLabel) {
+        changes.label = file.name;
+      }
+      updateDocument(doc.id, changes);
+    });
+  }
+
+  function pickForNewRow() {
+    openPicker(async (file) => {
+      const optimistic: ProjectDocument = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        label: file.name,
+        url: file.url,
+        display_order: documents.length,
+        created_at: new Date().toISOString(),
+      };
+
+      setDocuments((prev) => [...prev, optimistic]);
+
+      try {
+        const { data, error } = await supabase
+          .from('project_documents')
+          .insert({
+            project_id: projectId,
+            label: optimistic.label,
+            url: optimistic.url,
+            display_order: optimistic.display_order,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        setDocuments((prev) =>
+          prev.map((d) => (d.id === optimistic.id ? data : d))
+        );
+      } catch (error) {
+        console.error('Error adding document from Drive:', error);
+        setDocuments((prev) => prev.filter((d) => d.id !== optimistic.id));
+      }
+    });
   }
 
   async function addDocument() {
@@ -186,6 +254,13 @@ export function DocumentationSection({ projectId }: Props) {
                 className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
+                onClick={() => pickForExistingRow(doc)}
+                className="text-slate-400 hover:text-emerald-600 flex-shrink-0"
+                title="Pick from Google Drive"
+              >
+                <HardDrive className="h-4 w-4" />
+              </button>
+              <button
                 onClick={() => doc.url && window.open(doc.url, '_blank', 'noopener')}
                 disabled={!doc.url}
                 className="text-slate-400 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
@@ -230,6 +305,10 @@ export function DocumentationSection({ projectId }: Props) {
           <Button onClick={addDocument} disabled={!newLabel.trim()} size="sm">
             <Plus className="h-4 w-4 mr-1" />
             Add Link
+          </Button>
+          <Button onClick={pickForNewRow} variant="outline" size="sm">
+            <HardDrive className="h-4 w-4 mr-1" />
+            Link from Drive
           </Button>
         </div>
       </div>
