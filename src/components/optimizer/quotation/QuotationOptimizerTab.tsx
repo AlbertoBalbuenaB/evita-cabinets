@@ -355,7 +355,7 @@ export function QuotationOptimizerTab({
       {/* ── Header bar ────────────────────────────────────── */}
       <div className="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center gap-2 flex-wrap">
         <Layers className="h-5 w-5 text-blue-600 shrink-0" />
-        <span className="font-semibold text-slate-800 text-sm">Breakdown</span>
+        <span className="font-semibold text-slate-800 text-sm">Optimizer</span>
 
         <PricingMethodToggle
           value={header.pricingMethod}
