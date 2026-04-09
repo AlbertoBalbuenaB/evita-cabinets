@@ -179,6 +179,9 @@ export function TasksSection({ projectId, teamMembers }: Props) {
       assignee_name: resolveAssigneeName(newAssigneeId || null),
       status: 'pending',
       display_order: tasks.length,
+      bucket: null,
+      owner_member_id: null,
+      recurrence: 'none',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

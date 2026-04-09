@@ -4,7 +4,7 @@ import {
   CheckSquare, Clock, ChevronDown, ChevronRight, CheckCircle2,
   ScrollText, ArrowRightCircle, Lightbulb, AlertTriangle, Star,
   Activity, ExternalLink, Filter, X, TrendingUp, FolderOpen, ArrowRight,
-  Users, Ban, GitMerge, Search,
+  Users, Ban, GitMerge, Search, Inbox, Sun, CalendarDays, CalendarRange, Plus, Repeat,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
@@ -13,6 +13,7 @@ import type { EnhancedTask, TaskStatus, TaskPriority, TeamMember } from '../type
 import { TASK_PRIORITY_CONFIG } from '../types';
 import type { Database } from '../lib/database.types';
 import { TaskCard } from '../components/tasks/TaskCard';
+import { HomeTaskEditModal, type HomeTask, type TaskBucket, type TaskRecurrence } from '../components/tasks/HomeTaskEditModal';
 import { formatCurrency } from '../lib/calculations';
 import { useSettingsStore } from '../lib/settingsStore';
 import { useCurrentMember } from '../lib/useCurrentMember';
@@ -24,6 +25,9 @@ type ProjectLogRow  = Database['public']['Tables']['project_logs']['Row'];
 
 interface CrossProjectTask extends EnhancedTask {
   project_name: string;
+  owner_member_id: string | null;
+  bucket: TaskBucket | null;
+  recurrence: TaskRecurrence;
 }
 
 interface CrossProjectLog {
@@ -220,6 +224,81 @@ function TaskSubsection({
   );
 }
 
+// ── Sub-component: personal bucket section (Bullet Journal) ───────────────────
+
+interface PersonalBucketSectionProps {
+  bucket: TaskBucket;
+  label: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Icon: any;
+  variant: SubsectionVariant;
+  tasks: CrossProjectTask[];
+  onNavigate: (task: CrossProjectTask) => void;
+  onStatusChange: (id: string, status: TaskStatus) => void;
+}
+
+function PersonalBucketSection({
+  label, Icon, variant, tasks, onNavigate, onStatusChange,
+}: PersonalBucketSectionProps) {
+  const v = VARIANT[variant];
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <div className={`rounded-xl border ${v.bg} ${v.border} overflow-hidden`}>
+      <button
+        onClick={() => setCollapsed(p => !p)}
+        className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/30 transition-colors"
+      >
+        {collapsed
+          ? <ChevronRight className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+          : <ChevronDown className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />}
+        <Icon className={`h-3.5 w-3.5 ${v.label} flex-shrink-0`} />
+        <span className={`text-xs font-semibold uppercase tracking-wide flex-1 ${v.label}`}>{label}</span>
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${v.badge}`}>
+          {tasks.length}
+        </span>
+      </button>
+
+      {!collapsed && (
+        tasks.length === 0 ? (
+          <div className="px-4 pb-3 pt-1 text-center">
+            <p className={`text-xs font-medium ${v.emptyDot} opacity-70`}>Nothing here — add one above</p>
+          </div>
+        ) : (
+          <div className="px-3 pb-3 space-y-1.5">
+            {tasks.map(task => {
+              const isOverdue = task.due_date && new Date(task.due_date).getTime() < Date.now() && task.status !== 'done' && task.status !== 'cancelled';
+              return (
+                <div key={task.id} className="group">
+                  <TaskCard
+                    task={task}
+                    onSelect={() => onNavigate(task)}
+                    onStatusChange={onStatusChange}
+                    compact
+                  />
+                  {(task.recurrence && task.recurrence !== 'none') || isOverdue ? (
+                    <div className="flex items-center gap-2 pl-3 mt-0.5 text-[10px]">
+                      {task.recurrence && task.recurrence !== 'none' && (
+                        <span className="flex items-center gap-0.5 text-slate-500">
+                          <Repeat className="h-2.5 w-2.5" />
+                          {task.recurrence}
+                        </span>
+                      )}
+                      {isOverdue && (
+                        <span className="text-rose-600 font-medium">Overdue</span>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 const QUOTE_STATUS_COLORS: Record<string, string> = {
@@ -252,10 +331,22 @@ export function HomePage() {
   const [pipeline, setPipeline] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [taskFilters, setTaskFilters] = useState<TaskFilterState>({ priority: '', assigneeId: '', projectId: '' });
+  const [taskTab, setTaskTab] = useState<'projects' | 'personal'>(
+    () => (localStorage.getItem('homepage_task_tab') === 'personal' ? 'personal' : 'projects')
+  );
+  const [editingTask, setEditingTask] = useState<CrossProjectTask | null>(null);
+  const [personalQuickAdd, setPersonalQuickAdd] = useState('');
+  const [personalQuickBucket, setPersonalQuickBucket] = useState<TaskBucket>('inbox');
+  const [creatingPersonal, setCreatingPersonal] = useState(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [feedSearch, setFeedSearch] = useState('');
   const [feedDropdownOpen, setFeedDropdownOpen] = useState(false);
   const feedSearchRef = useRef<HTMLDivElement>(null);
+
+  function switchTaskTab(next: 'projects' | 'personal') {
+    setTaskTab(next);
+    localStorage.setItem('homepage_task_tab', next);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -361,6 +452,9 @@ export function HomePage() {
         comments: [],
         deliverables: [],
         project_name: projectsMap.get(raw.project_id ?? '') ?? '',
+        owner_member_id: raw.owner_member_id ?? null,
+        bucket: (raw.bucket ?? null) as TaskBucket | null,
+        recurrence: (raw.recurrence ?? 'none') as TaskRecurrence,
       } as CrossProjectTask;
     });
 
@@ -397,14 +491,106 @@ export function HomePage() {
     })));
   }
 
+  /**
+   * Roll a recurring personal task's due_date forward by one period.
+   * Returns the new ISO date string (or null if the task had no due date).
+   */
+  function rollDueDate(currentDueIso: string | null, recurrence: TaskRecurrence): string | null {
+    if (recurrence === 'none') return currentDueIso;
+    const base = currentDueIso ? new Date(currentDueIso) : new Date();
+    if (Number.isNaN(base.getTime())) return currentDueIso;
+    const next = new Date(base);
+    if (recurrence === 'daily')   next.setDate(next.getDate() + 1);
+    if (recurrence === 'weekly')  next.setDate(next.getDate() + 7);
+    if (recurrence === 'monthly') next.setMonth(next.getMonth() + 1);
+    return next.toISOString();
+  }
+
   async function handleStatusChange(taskId: string, status: TaskStatus) {
+    const target = tasks.find(t => t.id === taskId);
+    // Recurrence rollover: when marking a recurring task done, bump its due date
+    // and keep it pending instead of actually marking it done.
+    if (target && (status === 'done' || status === 'cancelled') && target.recurrence !== 'none') {
+      const nextDue = rollDueDate(target.due_date, target.recurrence);
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: 'pending', due_date: nextDue } : t));
+      await supabase
+        .from('project_tasks')
+        .update({ status: 'pending', due_date: nextDue, updated_at: new Date().toISOString() })
+        .eq('id', taskId);
+      return;
+    }
+
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
     await supabase.from('project_tasks').update({ status, updated_at: new Date().toISOString() }).eq('id', taskId);
   }
 
-  // Deep-link: land on the project's management tab with the specific task opened
-  const goToTask = (task: CrossProjectTask) =>
-    navigate(`/projects/${task.project_id}?tab=management&task=${task.id}`);
+  // Click a task → open edit modal in Home (primary action).
+  // The modal exposes a secondary "Open in project" link for full project context.
+  const openTaskEditor = (task: CrossProjectTask) => setEditingTask(task);
+
+  // Apply an edited task back to the tasks state
+  function applyEditedTask(updated: HomeTask) {
+    setTasks(prev => prev.map(t => t.id === updated.id ? {
+      ...t,
+      title: updated.title,
+      description: updated.description ?? null,
+      status: updated.status,
+      priority: updated.priority,
+      due_date: updated.due_date,
+      assignees: updated.assignees,
+      bucket: (updated.bucket ?? null) as TaskBucket | null,
+      recurrence: (updated.recurrence ?? 'none') as TaskRecurrence,
+    } : t));
+    setEditingTask(null);
+  }
+
+  function removeTaskFromState(id: string) {
+    setTasks(prev => prev.filter(t => t.id !== id));
+    setEditingTask(null);
+  }
+
+  async function quickAddPersonalTask(bucket: TaskBucket) {
+    const title = personalQuickAdd.trim();
+    if (!title || !member || creatingPersonal) return;
+    setCreatingPersonal(true);
+
+    const { data, error } = await supabase
+      .from('project_tasks')
+      .insert({
+        title,
+        project_id: null,
+        owner_member_id: member.id,
+        bucket,
+        status: 'pending',
+        priority: 'medium',
+        recurrence: 'none',
+        display_order: 0,
+      })
+      .select()
+      .single();
+
+    setCreatingPersonal(false);
+    if (error || !data) return;
+    setPersonalQuickAdd('');
+
+    const newTask: CrossProjectTask = {
+      ...data,
+      description: data.description ?? null,
+      priority: (data.priority ?? 'medium') as TaskPriority,
+      parent_task_id: null,
+      assignees: [],
+      tags: [],
+      subtasks: [],
+      comments: [],
+      deliverables: [],
+      project_name: '',
+      owner_member_id: data.owner_member_id ?? null,
+      bucket: (data.bucket ?? null) as TaskBucket | null,
+      recurrence: (data.recurrence ?? 'none') as TaskRecurrence,
+    } as CrossProjectTask;
+
+    setTasks(prev => [newTask, ...prev]);
+  }
 
   // ── Derived data ──────────────────────────────────────────────────────────
 
@@ -422,19 +608,29 @@ export function HomePage() {
     localStorage.setItem('homepage_tasks_filter', on ? 'mine' : 'all');
   }
 
-  // My tasks filter
-  const myTasks = useMemo(
-    () => (member ? tasks.filter(t => t.assignees.some(a => a.id === member.id)) : tasks),
+  // Split tasks into project-bound and personal (owned by current member)
+  const projectTasks = useMemo(
+    () => tasks.filter(t => !!t.project_id),
+    [tasks]
+  );
+  const personalTasks = useMemo(
+    () => (member ? tasks.filter(t => !t.project_id && t.owner_member_id === member.id) : []),
     [tasks, member]
   );
+
+  // My tasks filter (project tab only)
+  const myTasks = useMemo(
+    () => (member ? projectTasks.filter(t => t.assignees.some(a => a.id === member.id)) : projectTasks),
+    [projectTasks, member]
+  );
   const visibleTasks = useMemo(
-    () => (myTasksOnly ? myTasks : tasks),
-    [myTasksOnly, myTasks, tasks]
+    () => (myTasksOnly ? myTasks : projectTasks),
+    [myTasksOnly, myTasks, projectTasks]
   );
 
   const hasActiveFilters = !!(taskFilters.priority || taskFilters.assigneeId || taskFilters.projectId);
 
-  // Single memo for all task-derived lists (subsections + hero counts + allProjects)
+  // Single memo for project-task derived lists (subsections + hero counts + allProjects)
   const derived = useMemo(() => {
     const applyFilters = (list: CrossProjectTask[]): CrossProjectTask[] =>
       list.filter(t => {
@@ -470,7 +666,6 @@ export function HomePage() {
       overdueTasks, blockedTasks, workingOnIt, inReviewTasks,
       upcomingTasks, toDo, allDoneTasks, filteredDone,
       allProjects,
-      // Hero counts — reflect filters for consistency
       inProgressAll: workingOnIt.length,
       inReviewAll:   inReviewTasks.length,
       pendingAll:    toDo.length,
@@ -483,8 +678,67 @@ export function HomePage() {
   const {
     overdueTasks, blockedTasks, workingOnIt, inReviewTasks,
     upcomingTasks, toDo, allDoneTasks, filteredDone, allProjects,
-    inProgressAll, inReviewAll, pendingAll, doneAll, overdueAll, blockedAll,
   } = derived;
+
+  // Personal-task derivation: group by bucket + count per-status for hero
+  const personalDerived = useMemo(() => {
+    const dueTs = (t: CrossProjectTask) => (t.due_date ? new Date(t.due_date).getTime() : NaN);
+    const isActive = (t: CrossProjectTask) => t.status !== 'done' && t.status !== 'cancelled';
+
+    const priorityFilter = taskFilters.priority;
+    const passesPriority = (t: CrossProjectTask) => !priorityFilter || t.priority === priorityFilter;
+
+    const byBucket: Record<TaskBucket, CrossProjectTask[]> = { inbox: [], daily: [], weekly: [], monthly: [] };
+    const done: CrossProjectTask[] = [];
+
+    for (const t of personalTasks) {
+      if (t.status === 'done' || t.status === 'cancelled') {
+        if (passesPriority(t)) done.push(t);
+        continue;
+      }
+      if (!passesPriority(t)) continue;
+      const key = ((t.bucket ?? 'inbox') as TaskBucket);
+      byBucket[key].push(t);
+    }
+
+    // Sort each bucket: overdue first, then by due date (nulls last), then by display_order/title
+    const sortBucket = (list: CrossProjectTask[]) => list.sort((a, b) => {
+      const aHas = !!a.due_date, bHas = !!b.due_date;
+      if (aHas && bHas) return dueTs(a) - dueTs(b);
+      if (aHas) return -1;
+      if (bHas) return 1;
+      return (a.display_order ?? 0) - (b.display_order ?? 0) || a.title.localeCompare(b.title);
+    });
+    (Object.keys(byBucket) as TaskBucket[]).forEach(k => sortBucket(byBucket[k]));
+
+    // Hero counts scoped to personal tab (ignores filters to always reflect raw totals)
+    const activePersonal = personalTasks.filter(isActive);
+    return {
+      byBucket,
+      done,
+      counts: {
+        inProgressAll: activePersonal.filter(t => t.status === 'in_progress').length,
+        inReviewAll:   activePersonal.filter(t => t.status === 'in_review').length,
+        pendingAll:    activePersonal.filter(t => t.status === 'pending').length,
+        doneAll:       personalTasks.filter(t => t.status === 'done' || t.status === 'cancelled').length,
+        overdueAll:    activePersonal.filter(t => t.due_date && dueTs(t) < todayTs).length,
+        blockedAll:    activePersonal.filter(t => t.status === 'blocked').length,
+      },
+    };
+  }, [personalTasks, taskFilters, todayTs]);
+
+  // Hero counts switch between tabs
+  const heroCounts = taskTab === 'personal'
+    ? personalDerived.counts
+    : {
+        inProgressAll: derived.inProgressAll,
+        inReviewAll:   derived.inReviewAll,
+        pendingAll:    derived.pendingAll,
+        doneAll:       derived.doneAll,
+        overdueAll:    derived.overdueAll,
+        blockedAll:    derived.blockedAll,
+      };
+  const { inProgressAll, inReviewAll, pendingAll, doneAll, overdueAll, blockedAll } = heroCounts;
 
   // Team workload — based on full `tasks` (not affected by filters or myTasks toggle)
   const { workload, maxWorkload } = useMemo(() => {
@@ -492,7 +746,7 @@ export function HomePage() {
     const w = teamMembers
       .filter(m => m.is_active)
       .map((m, idx) => {
-        const mine = tasks.filter(t => isActive(t) && t.assignees.some(a => a.id === m.id));
+        const mine = projectTasks.filter(t => isActive(t) && t.assignees.some(a => a.id === m.id));
         return {
           member: m, idx,
           total:      mine.length,
@@ -504,7 +758,7 @@ export function HomePage() {
       .filter(x => x.total > 0)
       .sort((a, b) => b.total - a.total);
     return { workload: w, maxWorkload: w[0]?.total ?? 1 };
-  }, [tasks, teamMembers]);
+  }, [projectTasks, teamMembers]);
 
   // Feed — group by project (preserving insertion order for "most recent first")
   const { logsByProject, logProjectOrder, allFeedProjects } = useMemo(() => {
@@ -716,161 +970,310 @@ export function HomePage() {
 
         {/* ── Tasks column ──────────────────────────────────────────────── */}
         <div className="glass-white overflow-hidden p-0">
-          {/* Header */}
+          {/* Header + tab switcher */}
           <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100/80">
             <div className="p-1.5 rounded-lg bg-blue-100">
               <CheckSquare className="h-4 w-4 text-blue-600" />
             </div>
             <h2 className="text-base font-semibold text-slate-900">Tasks</h2>
-            {tasks.length > 0 && (
-              <span className="text-xs font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
-                {tasks.length}
-              </span>
-            )}
+
+            {/* Projects / Personal tab switcher */}
+            <div className="ml-2 flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden">
+              <button
+                onClick={() => switchTaskTab('projects')}
+                className={`px-3 py-1 text-xs font-medium transition-colors ${taskTab === 'projects' ? 'bg-blue-500 text-white' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Projects ({projectTasks.length})
+              </button>
+              <button
+                onClick={() => switchTaskTab('personal')}
+                className={`px-3 py-1 text-xs font-medium transition-colors ${taskTab === 'personal' ? 'bg-blue-500 text-white' : 'text-slate-500 hover:text-slate-700'}`}
+                disabled={!member}
+                title={!member ? 'Sign in to see personal tasks' : undefined}
+              >
+                Personal ({personalTasks.length})
+              </button>
+            </div>
           </div>
 
-          {visibleTasks.length === 0 ? (
-            <div className="py-16 text-center text-slate-400">
-              <CheckSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
-              <p className="text-sm font-medium">{myTasksOnly ? 'You have no assigned tasks at this time' : 'No tasks across any project yet'}</p>
-            </div>
-          ) : (
-            <>
-              {/* Filter bar */}
-              <div className="px-5 py-3 border-b border-slate-100/80 bg-slate-50/60 flex items-center gap-2 flex-wrap">
-                {/* My Tasks / All toggle */}
-                {member && (
-                  <div className="flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden mr-2">
-                    <button
-                      onClick={() => toggleMyTasks(true)}
-                      className={`px-3 py-1 text-xs font-medium transition-colors ${myTasksOnly ? 'bg-blue-500 text-white' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                      My Tasks ({myTasks.length})
-                    </button>
-                    <button
-                      onClick={() => toggleMyTasks(false)}
-                      className={`px-3 py-1 text-xs font-medium transition-colors ${!myTasksOnly ? 'bg-blue-500 text-white' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                      All ({tasks.length})
-                    </button>
-                  </div>
-                )}
+          {/* ── Projects tab ───────────────────────────────────────────── */}
+          {taskTab === 'projects' && (
+            visibleTasks.length === 0 ? (
+              <div className="py-16 text-center text-slate-400">
+                <CheckSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                <p className="text-sm font-medium">{myTasksOnly ? 'You have no assigned tasks at this time' : 'No tasks across any project yet'}</p>
               </div>
-              <div className="px-5 py-3 border-b border-slate-100/80 bg-slate-50/60 flex items-center gap-2 flex-wrap">
-                <Filter className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+            ) : (
+              <>
+                {/* Filter bar */}
+                <div className="px-5 py-3 border-b border-slate-100/80 bg-slate-50/60 flex items-center gap-2 flex-wrap">
+                  {/* My Tasks / All toggle */}
+                  {member && (
+                    <div className="flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden mr-2">
+                      <button
+                        onClick={() => toggleMyTasks(true)}
+                        className={`px-3 py-1 text-xs font-medium transition-colors ${myTasksOnly ? 'bg-blue-500 text-white' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        My Tasks ({myTasks.length})
+                      </button>
+                      <button
+                        onClick={() => toggleMyTasks(false)}
+                        className={`px-3 py-1 text-xs font-medium transition-colors ${!myTasksOnly ? 'bg-blue-500 text-white' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        All ({projectTasks.length})
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="px-5 py-3 border-b border-slate-100/80 bg-slate-50/60 flex items-center gap-2 flex-wrap">
+                  <Filter className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
 
-                <select
-                  value={taskFilters.priority}
-                  onChange={e => setTaskFilters(p => ({ ...p, priority: e.target.value as TaskPriority | '' }))}
-                  className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">All priorities</option>
-                  {(Object.entries(TASK_PRIORITY_CONFIG) as [TaskPriority, typeof TASK_PRIORITY_CONFIG[TaskPriority]][]).map(([val, cfg]) => (
-                    <option key={val} value={val}>{cfg.label}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={taskFilters.assigneeId}
-                  onChange={e => setTaskFilters(p => ({ ...p, assigneeId: e.target.value }))}
-                  className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">All assignees</option>
-                  {teamMembers.filter(m => m.is_active).map(m => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
-
-                {allProjects.length > 1 && (
                   <select
-                    value={taskFilters.projectId}
-                    onChange={e => setTaskFilters(p => ({ ...p, projectId: e.target.value }))}
+                    value={taskFilters.priority}
+                    onChange={e => setTaskFilters(p => ({ ...p, priority: e.target.value as TaskPriority | '' }))}
                     className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">All projects</option>
-                    {allProjects.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
+                    <option value="">All priorities</option>
+                    {(Object.entries(TASK_PRIORITY_CONFIG) as [TaskPriority, typeof TASK_PRIORITY_CONFIG[TaskPriority]][]).map(([val, cfg]) => (
+                      <option key={val} value={val}>{cfg.label}</option>
                     ))}
                   </select>
-                )}
 
-                {hasActiveFilters && (
-                  <button
-                    onClick={() => setTaskFilters({ priority: '', assigneeId: '', projectId: '' })}
-                    className="flex items-center gap-1 px-2 py-1 text-xs text-slate-400 hover:text-slate-700 transition-colors"
+                  <select
+                    value={taskFilters.assigneeId}
+                    onChange={e => setTaskFilters(p => ({ ...p, assigneeId: e.target.value }))}
+                    className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <X className="h-3 w-3" />
-                    Clear
-                  </button>
-                )}
-              </div>
+                    <option value="">All assignees</option>
+                    {teamMembers.filter(m => m.is_active).map(m => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
 
-              {/* Subsections */}
-              <div className="p-4 space-y-3">
-                {overdueTasks.length > 0 && (
-                  <TaskSubsection
-                    variant="red"
-                    title="Overdue"
-                    tasks={overdueTasks}
-                    onNavigate={goToTask}
-                    onStatusChange={handleStatusChange}
-                  />
-                )}
-                {blockedTasks.length > 0 && (
-                  <TaskSubsection
-                    variant="rose"
-                    title="Blocked"
-                    tasks={blockedTasks}
-                    onNavigate={goToTask}
-                    onStatusChange={handleStatusChange}
-                  />
-                )}
-                <TaskSubsection
-                  variant="blue"
-                  title="Working on it"
-                  tasks={workingOnIt}
-                  onNavigate={goToTask}
-                  onStatusChange={handleStatusChange}
-                />
-                {inReviewTasks.length > 0 && (
-                  <TaskSubsection
-                    variant="purple"
-                    title="In Review"
-                    tasks={inReviewTasks}
-                    onNavigate={goToTask}
-                    onStatusChange={handleStatusChange}
-                  />
-                )}
-                {upcomingTasks.length > 0 && (
-                  <TaskSubsection
-                    variant="purple"
-                    title="Due in 7 days"
-                    tasks={upcomingTasks}
-                    onNavigate={goToTask}
-                    onStatusChange={handleStatusChange}
-                  />
-                )}
-                <TaskSubsection
-                  variant="amber"
-                  title="To-do"
-                  tasks={toDo}
-                  onNavigate={goToTask}
-                  onStatusChange={handleStatusChange}
-                />
+                  {allProjects.length > 1 && (
+                    <select
+                      value={taskFilters.projectId}
+                      onChange={e => setTaskFilters(p => ({ ...p, projectId: e.target.value }))}
+                      className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">All projects</option>
+                      {allProjects.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  )}
 
-                <TaskSubsection
-                  variant="green"
-                  title="Done"
-                  tasks={filteredDone}
-                  totalCount={allDoneTasks.length}
-                  collapsible
-                  defaultCollapsed
-                  emptyMessage="No completed tasks match the current filters"
-                  onNavigate={goToTask}
-                  onStatusChange={handleStatusChange}
-                />
+                  {hasActiveFilters && (
+                    <button
+                      onClick={() => setTaskFilters({ priority: '', assigneeId: '', projectId: '' })}
+                      className="flex items-center gap-1 px-2 py-1 text-xs text-slate-400 hover:text-slate-700 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Subsections */}
+                <div className="p-4 space-y-3">
+                  {overdueTasks.length > 0 && (
+                    <TaskSubsection
+                      variant="red"
+                      title="Overdue"
+                      tasks={overdueTasks}
+                      onNavigate={openTaskEditor}
+                      onStatusChange={handleStatusChange}
+                    />
+                  )}
+                  {blockedTasks.length > 0 && (
+                    <TaskSubsection
+                      variant="rose"
+                      title="Blocked"
+                      tasks={blockedTasks}
+                      onNavigate={openTaskEditor}
+                      onStatusChange={handleStatusChange}
+                    />
+                  )}
+                  <TaskSubsection
+                    variant="blue"
+                    title="Working on it"
+                    tasks={workingOnIt}
+                    onNavigate={openTaskEditor}
+                    onStatusChange={handleStatusChange}
+                  />
+                  {inReviewTasks.length > 0 && (
+                    <TaskSubsection
+                      variant="purple"
+                      title="In Review"
+                      tasks={inReviewTasks}
+                      onNavigate={openTaskEditor}
+                      onStatusChange={handleStatusChange}
+                    />
+                  )}
+                  {upcomingTasks.length > 0 && (
+                    <TaskSubsection
+                      variant="purple"
+                      title="Due in 7 days"
+                      tasks={upcomingTasks}
+                      onNavigate={openTaskEditor}
+                      onStatusChange={handleStatusChange}
+                    />
+                  )}
+                  <TaskSubsection
+                    variant="amber"
+                    title="To-do"
+                    tasks={toDo}
+                    onNavigate={openTaskEditor}
+                    onStatusChange={handleStatusChange}
+                  />
+
+                  <TaskSubsection
+                    variant="green"
+                    title="Done"
+                    tasks={filteredDone}
+                    totalCount={allDoneTasks.length}
+                    collapsible
+                    defaultCollapsed
+                    emptyMessage="No completed tasks match the current filters"
+                    onNavigate={openTaskEditor}
+                    onStatusChange={handleStatusChange}
+                  />
+                </div>
+              </>
+            )
+          )}
+
+          {/* ── Personal tab (Bullet Journal) ──────────────────────────── */}
+          {taskTab === 'personal' && (
+            !member ? (
+              <div className="py-16 text-center text-slate-400">
+                <CheckSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                <p className="text-sm font-medium">Sign in to manage personal tasks</p>
               </div>
-            </>
+            ) : (
+              <>
+                {/* Quick-add bar */}
+                <div className="px-5 py-3 border-b border-slate-100/80 bg-slate-50/60">
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={personalQuickBucket}
+                      onChange={e => setPersonalQuickBucket(e.target.value as TaskBucket)}
+                      className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="inbox">Inbox</option>
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={personalQuickAdd}
+                        onChange={e => setPersonalQuickAdd(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') quickAddPersonalTask(personalQuickBucket); }}
+                        placeholder={`Add to ${personalQuickBucket}…  (press Enter)`}
+                        className="w-full text-xs border border-slate-200 rounded-lg pl-8 pr-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <Plus className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                    </div>
+                    <button
+                      onClick={() => quickAddPersonalTask(personalQuickBucket)}
+                      disabled={!personalQuickAdd.trim() || creatingPersonal}
+                      className="text-xs font-semibold bg-blue-500 hover:bg-blue-600 disabled:bg-slate-200 disabled:text-slate-400 text-white px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      {creatingPersonal ? 'Adding…' : 'Add'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Priority filter (only) */}
+                <div className="px-5 py-3 border-b border-slate-100/80 bg-slate-50/60 flex items-center gap-2 flex-wrap">
+                  <Filter className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                  <select
+                    value={taskFilters.priority}
+                    onChange={e => setTaskFilters(p => ({ ...p, priority: e.target.value as TaskPriority | '' }))}
+                    className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All priorities</option>
+                    {(Object.entries(TASK_PRIORITY_CONFIG) as [TaskPriority, typeof TASK_PRIORITY_CONFIG[TaskPriority]][]).map(([val, cfg]) => (
+                      <option key={val} value={val}>{cfg.label}</option>
+                    ))}
+                  </select>
+                  {taskFilters.priority && (
+                    <button
+                      onClick={() => setTaskFilters(p => ({ ...p, priority: '' }))}
+                      className="flex items-center gap-1 px-2 py-1 text-xs text-slate-400 hover:text-slate-700 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Bucket sections */}
+                <div className="p-4 space-y-3">
+                  {personalTasks.length === 0 ? (
+                    <div className="py-12 text-center text-slate-400">
+                      <Inbox className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm font-medium">Your Bullet Journal is empty</p>
+                      <p className="text-[11px] mt-0.5">Add your first task above</p>
+                    </div>
+                  ) : (
+                    <>
+                      <PersonalBucketSection
+                        bucket="inbox"
+                        label="Inbox"
+                        Icon={Inbox}
+                        variant="purple"
+                        tasks={personalDerived.byBucket.inbox}
+                        onNavigate={openTaskEditor}
+                        onStatusChange={handleStatusChange}
+                      />
+                      <PersonalBucketSection
+                        bucket="daily"
+                        label="Daily"
+                        Icon={Sun}
+                        variant="amber"
+                        tasks={personalDerived.byBucket.daily}
+                        onNavigate={openTaskEditor}
+                        onStatusChange={handleStatusChange}
+                      />
+                      <PersonalBucketSection
+                        bucket="weekly"
+                        label="Weekly"
+                        Icon={CalendarDays}
+                        variant="blue"
+                        tasks={personalDerived.byBucket.weekly}
+                        onNavigate={openTaskEditor}
+                        onStatusChange={handleStatusChange}
+                      />
+                      <PersonalBucketSection
+                        bucket="monthly"
+                        label="Monthly"
+                        Icon={CalendarRange}
+                        variant="green"
+                        tasks={personalDerived.byBucket.monthly}
+                        onNavigate={openTaskEditor}
+                        onStatusChange={handleStatusChange}
+                      />
+                      {personalDerived.done.length > 0 && (
+                        <TaskSubsection
+                          variant="green"
+                          title="Done"
+                          tasks={personalDerived.done}
+                          totalCount={personalDerived.done.length}
+                          collapsible
+                          defaultCollapsed
+                          emptyMessage="No completed personal tasks"
+                          onNavigate={openTaskEditor}
+                          onStatusChange={handleStatusChange}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+              </>
+            )
           )}
         </div>
 
@@ -1066,6 +1469,16 @@ export function HomePage() {
         onClose={() => setShowNewProjectModal(false)}
         onSuccess={(id) => navigate(`/projects/${id}`)}
       />
+
+      {editingTask && (
+        <HomeTaskEditModal
+          task={editingTask}
+          teamMembers={teamMembers}
+          onSaved={applyEditedTask}
+          onDeleted={removeTaskFromState}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
     </>
   );
 }

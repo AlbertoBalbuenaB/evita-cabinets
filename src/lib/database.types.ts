@@ -1488,45 +1488,54 @@ export type Database = {
       project_tasks: {
         Row: {
           assignee_id: string | null
+          bucket: string | null
           created_at: string | null
           description: string | null
           details: string | null
           display_order: number
           due_date: string | null
           id: string
+          owner_member_id: string | null
           parent_task_id: string | null
           priority: string
           project_id: string | null
+          recurrence: string
           status: string
           title: string
           updated_at: string | null
         }
         Insert: {
           assignee_id?: string | null
+          bucket?: string | null
           created_at?: string | null
           description?: string | null
           details?: string | null
           display_order?: number
           due_date?: string | null
           id?: string
+          owner_member_id?: string | null
           parent_task_id?: string | null
           priority?: string
           project_id?: string | null
+          recurrence?: string
           status?: string
           title: string
           updated_at?: string | null
         }
         Update: {
           assignee_id?: string | null
+          bucket?: string | null
           created_at?: string | null
           description?: string | null
           details?: string | null
           display_order?: number
           due_date?: string | null
           id?: string
+          owner_member_id?: string | null
           parent_task_id?: string | null
           priority?: string
           project_id?: string | null
+          recurrence?: string
           status?: string
           title?: string
           updated_at?: string | null
