@@ -1152,7 +1152,7 @@ Deno.serve(async (req: Request) => {
   const modMode = hasModificationIntent(messages);
   const referralRate = proj?.referral_currency_rate ?? 0;
 
-  const system = `You are Evita IA, quotation assistant for Evita Cabinets (Houston TX).
+  const system = `You are Evita AI, quotation assistant for Evita Cabinets (Houston TX).
 
 === DATA MODEL ===
 "Project" = business-level parent entity (name, customer, address).
