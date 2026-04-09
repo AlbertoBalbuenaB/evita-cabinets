@@ -30,10 +30,14 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
   const minOffcut                  = useStore((s) => s.minOffcut);
   const boardTrim                  = useStore((s) => s.boardTrim);
   const trimIncludesKerf           = useStore((s) => s.trimIncludesKerf);
+  const engineMode                 = useStore((s) => s.engineMode);
+  const objective                  = useStore((s) => s.objective);
   const setGlobalSierra            = useStore((s) => s.setGlobalSierra);
   const setMinOffcut               = useStore((s) => s.setMinOffcut);
   const setBoardTrim               = useStore((s) => s.setBoardTrim);
   const setTrimIncludesKerf        = useStore((s) => s.setTrimIncludesKerf);
+  const setEngineMode              = useStore((s) => s.setEngineMode);
+  const setObjective               = useStore((s) => s.setObjective);
   const clearPending               = useStore((s) => s.clearPending);
   const refreshStocks              = useStore((s) => s.refreshStocks);
   const selectedStockIds           = useStore((s) => s.selectedStockIds);
@@ -218,6 +222,50 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
               />
               <span>Trim includes kerf</span>
             </label>
+
+            {/* Engine mode */}
+            <div className="pt-2 border-t border-slate-100">
+              <p className="text-xs text-slate-500 mb-1.5 font-medium">Engine</p>
+              <div className="flex flex-col gap-1">
+                {(['guillotine', 'both'] as const).map((mode) => (
+                  <label key={mode} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="quotation-engine-mode"
+                      value={mode}
+                      checked={engineMode === mode}
+                      onChange={() => setEngineMode(mode)}
+                      className="border-slate-300 text-blue-600"
+                    />
+                    {mode === 'guillotine' ? 'Guillotine only (dimensionadora)' : 'Both engines (+ MaxRect)'}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Objective */}
+            <div className="pt-2 border-t border-slate-100">
+              <p className="text-xs text-slate-500 mb-1.5 font-medium">Optimize for</p>
+              <div className="flex flex-col gap-1">
+                {([
+                  ['min-boards', 'Menos tableros'],
+                  ['min-waste',  'Menos desperdicio'],
+                  ['min-cuts',   'Menos cortes'],
+                ] as const).map(([val, label]) => (
+                  <label key={val} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="quotation-objective"
+                      value={val}
+                      checked={objective === val}
+                      onChange={() => setObjective(val)}
+                      className="border-slate-300 text-blue-600"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       </div>

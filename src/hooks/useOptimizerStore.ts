@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Pieza, StockSize, Remnant, OptimizationResult, OptimizerTab, UnitSystem, EbConfig } from '../lib/optimizer/types';
+import { Pieza, StockSize, Remnant, OptimizationResult, OptimizerTab, UnitSystem, EbConfig, EngineMode, OptimizationObjective } from '../lib/optimizer/types';
 import { runOptimization } from '../lib/optimizer/engine';
 import { exportOptimizerPDF, PdfLang } from '../lib/optimizer/pdfExport';
 
@@ -21,6 +21,8 @@ interface OptimizerState {
   selectedBoardIndex: number | null;
   ebConfig: EbConfig;
   labelScale: number;
+  engineMode: EngineMode;
+  objective: OptimizationObjective;
 
   setUnit: (u: UnitSystem) => void;
   addPiece: (p: Omit<Pieza, 'id'>) => void;
@@ -45,6 +47,8 @@ interface OptimizerState {
   setTrimIncludesKerf: (v: boolean) => void;
   setEbConfig: (cfg: EbConfig) => void;
   setLabelScale: (s: number) => void;
+  setEngineMode: (v: EngineMode) => void;
+  setObjective: (v: OptimizationObjective) => void;
   runOptimize: () => Promise<void>;
   exportPDF: (lang?: PdfLang) => Promise<void>;
   saveProject: () => void;
@@ -79,6 +83,8 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
   trimIncludesKerf: false,
   ebConfig: EMPTY_EB,
   labelScale: 1.0,
+  engineMode: 'guillotine' as EngineMode,
+  objective: 'min-boards' as OptimizationObjective,
   projectName: '',
   clientName: '',
   unit: 'mm' as UnitSystem,
@@ -116,6 +122,8 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
   setTrimIncludesKerf: (v) => set({ trimIncludesKerf: v }),
   setEbConfig: (cfg) => set({ ebConfig: cfg }),
   setLabelScale: (s) => set({ labelScale: Math.min(2.0, Math.max(0.5, s)) }),
+  setEngineMode: (v) => set({ engineMode: v }),
+  setObjective:  (v) => set({ objective: v }),
 
   runOptimize: async () => {
     const state = get();
@@ -124,7 +132,7 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
     await new Promise((r) => setTimeout(r, 100));
     try {
       const effectiveTrim = state.trimIncludesKerf ? state.boardTrim + state.globalSierra : state.boardTrim;
-      const result = runOptimization(state.pieces, state.stocks, state.remnants, state.globalSierra, state.minOffcut, effectiveTrim);
+      const result = runOptimization(state.pieces, state.stocks, state.remnants, state.globalSierra, state.minOffcut, effectiveTrim, state.engineMode, state.objective);
       set({ result, isOptimizing: false, selectedBoardIndex: 0, activeTab: 'results' });
     } catch (error) {
       console.error('Optimization error:', error);

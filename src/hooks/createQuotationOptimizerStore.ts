@@ -35,6 +35,8 @@ import type {
   StockSize,
   EbConfig,
   OptimizationResult,
+  EngineMode,
+  OptimizationObjective,
 } from '../lib/optimizer/types';
 import type { QuotationOptimizerRun } from '../types';
 
@@ -98,6 +100,8 @@ export interface QuotationOptimizerState {
   minOffcut: number;
   boardTrim: number;
   trimIncludesKerf: boolean;
+  engineMode: EngineMode;
+  objective: OptimizationObjective;
 
   // Flags
   isBuilding: boolean;
@@ -110,6 +114,8 @@ export interface QuotationOptimizerState {
   setMinOffcut: (v: number) => void;
   setBoardTrim: (v: number) => void;
   setTrimIncludesKerf: (v: boolean) => void;
+  setEngineMode: (v: EngineMode) => void;
+  setObjective: (v: OptimizationObjective) => void;
   toggleStockSelected: (id: string) => void;
   toggleEbSlot: (slot: 'a' | 'b' | 'c') => void;
 
@@ -188,6 +194,8 @@ export function getQuotationOptimizerStore(
     minOffcut: 200,
     boardTrim: 5,
     trimIncludesKerf: false,
+    engineMode: 'guillotine' as EngineMode,
+    objective: 'min-boards' as OptimizationObjective,
 
     isBuilding: false,
     isOptimizing: false,
@@ -198,6 +206,8 @@ export function getQuotationOptimizerStore(
     setMinOffcut:        (v) => set({ minOffcut: v }),
     setBoardTrim:        (v) => set({ boardTrim: v }),
     setTrimIncludesKerf: (v) => set({ trimIncludesKerf: v }),
+    setEngineMode:       (v) => set({ engineMode: v }),
+    setObjective:        (v) => set({ objective: v }),
 
     toggleStockSelected: (id) => set((state) => {
       const next = new Set(state.selectedStockIds);
@@ -291,6 +301,8 @@ export function getQuotationOptimizerStore(
           state.globalSierra,
           state.minOffcut,
           effectiveTrim,
+          state.engineMode,
+          state.objective,
         );
         set({ pendingResult: result, isOptimizing: false });
       } catch (err) {

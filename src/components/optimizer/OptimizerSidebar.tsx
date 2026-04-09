@@ -372,6 +372,52 @@ export function OptimizerSidebar() {
                   <span className="text-xs text-slate-500">Include kerf in board trim</span>
                 </label>
 
+                {/* Engine mode */}
+                <div className="pt-2 border-t border-slate-100/60">
+                  <p className="text-xs font-medium text-slate-500 mb-1.5">Engine</p>
+                  <div className="flex flex-col gap-1">
+                    {(['guillotine', 'both'] as const).map((mode) => (
+                      <label key={mode} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="engine-mode"
+                          value={mode}
+                          checked={store.engineMode === mode}
+                          onChange={() => store.setEngineMode(mode)}
+                          className="border-slate-300 text-blue-600"
+                        />
+                        <span className="text-xs text-slate-500">
+                          {mode === 'guillotine' ? 'Guillotine only (dimensionadora)' : 'Both engines (+ MaxRect)'}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Objective */}
+                <div className="pt-2 border-t border-slate-100/60">
+                  <p className="text-xs font-medium text-slate-500 mb-1.5">Optimize for</p>
+                  <div className="flex flex-col gap-1">
+                    {([
+                      ['min-boards', 'Menos tableros'],
+                      ['min-waste',  'Menos desperdicio'],
+                      ['min-cuts',   'Menos cortes'],
+                    ] as const).map(([val, label]) => (
+                      <label key={val} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="objective"
+                          value={val}
+                          checked={store.objective === val}
+                          onChange={() => store.setObjective(val)}
+                          className="border-slate-300 text-blue-600"
+                        />
+                        <span className="text-xs text-slate-500">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
                 {edgebandItems.length > 0 && (
                   <div className="pt-3 border-t border-slate-100/60">
                     <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Edge Banding</div>

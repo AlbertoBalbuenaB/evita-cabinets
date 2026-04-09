@@ -141,6 +141,17 @@ export type OptimizerTab = 'setup' | 'results';
 /** Display unit system — the engine always stores and computes in mm internally */
 export type UnitSystem = 'mm' | 'in';
 
+/** Which packing engine(s) to run.
+ *  'guillotine' = only guillotine (panel-saw valid cuts, default).
+ *  'both'       = run MaxRect in parallel and pick whichever scores better. */
+export type EngineMode = 'guillotine' | 'both';
+
+/** What the optimizer score function should minimize.
+ *  'min-boards' — fewest boards used (default, lowest material cost).
+ *  'min-waste'  — lowest waste %; may accept one extra board for better efficiency.
+ *  'min-cuts'   — fewest panel-saw operations; useful when labor time is the constraint. */
+export type OptimizationObjective = 'min-boards' | 'min-waste' | 'min-cuts';
+
 export interface EbTypeConfig {
   id: string;        // price_list item ID (empty = not configured)
   name: string;      // concept_description

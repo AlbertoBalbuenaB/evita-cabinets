@@ -2,7 +2,7 @@
 // OPTIMIZATION ENGINE — Maximal Rectangles + GRASP Multi-Strategy
 // ─────────────────────────────────────────────────────────────
 
-import { Pieza, StockSize, Remnant, BoardResult, PlacedPiece, FreeRectData, OptimizationResult, CutStep, UnitSystem, GuillotineCut, CutTreeNode } from './types';
+import { Pieza, StockSize, Remnant, BoardResult, PlacedPiece, FreeRectData, OptimizationResult, CutStep, UnitSystem, GuillotineCut, CutTreeNode, EngineMode, OptimizationObjective } from './types';
 
 // Local unit formatter — avoids importing units.ts into the engine bundle
 const _fmtU = (v: number, unit: UnitSystem) =>
@@ -326,16 +326,25 @@ class Optimizer {
   private sierra: number;
   private minOff: number;
   private trim: number;
+  private engineMode: EngineMode;
+  private objective: OptimizationObjective;
   bestStrategy = '';
   iters = 0;
   time = 0;
 
-  constructor(stocks: StockSize[], remnants: Remnant[], sierra: number, minOff = MIN_OFFCUT_DEFAULT, trim = 0) {
+  constructor(
+    stocks: StockSize[], remnants: Remnant[], sierra: number,
+    minOff = MIN_OFFCUT_DEFAULT, trim = 0,
+    engineMode: EngineMode = 'guillotine',
+    objective: OptimizationObjective = 'min-boards',
+  ) {
     this.stocks = stocks;
     this.remnants = remnants.map(r => ({ ...r, _used: false }));
     this.sierra = sierra;
     this.minOff = minOff;
     this.trim = trim;
+    this.engineMode = engineMode;
+    this.objective  = objective;
   }
 
   run(pieces: Pieza[]): Board[] {
@@ -387,26 +396,28 @@ class Optimizer {
     let bestName = '';
     let totalIters = 0;
 
-    for (const [sn, sf] of sorts) {
-      const sorted = [...group].sort(sf);
-      for (const h of HEURISTICS) {
-        const bds = this._build(sorted, mat, grs, h);
-        const sc  = this._score(bds);
-        totalIters++;
-        if (sc < bestScore) { bestScore = sc; best = bds; bestName = `${sn}+${h}`; }
+    // ── MaxRect phases — only when 'both' engines are requested ──
+    if (this.engineMode === 'both') {
+      for (const [sn, sf] of sorts) {
+        const sorted = [...group].sort(sf);
+        for (const h of HEURISTICS) {
+          const bds = this._build(sorted, mat, grs, h);
+          const sc  = this._score(bds);
+          totalIters++;
+          if (sc < bestScore) { bestScore = sc; best = bds; bestName = `${sn}+${h}`; }
+        }
       }
-    }
-
-    for (let g = 0; g < GRASP_ITERS; g++) {
-      const si = Math.floor(rng() * sorts.length);
-      const hi = Math.floor(rng() * HEURISTICS.length);
-      const [sn, sf] = sorts[si];
-      const sorted  = [...group].sort(sf);
-      const shuffled = this._shuffleWin(sorted, rng);
-      const bds  = this._build(shuffled, mat, grs, HEURISTICS[hi]);
-      const sc   = this._score(bds);
-      totalIters++;
-      if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP(${sn}+${HEURISTICS[hi]})`; }
+      for (let g = 0; g < GRASP_ITERS; g++) {
+        const si = Math.floor(rng() * sorts.length);
+        const hi = Math.floor(rng() * HEURISTICS.length);
+        const [sn, sf] = sorts[si];
+        const sorted  = [...group].sort(sf);
+        const shuffled = this._shuffleWin(sorted, rng);
+        const bds  = this._build(shuffled, mat, grs, HEURISTICS[hi]);
+        const sc   = this._score(bds);
+        totalIters++;
+        if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP(${sn}+${HEURISTICS[hi]})`; }
+      }
     }
 
     // ── Guillotine passes: 8 deterministic + GUILLOTINE_ITERS GRASP ──
@@ -605,8 +616,19 @@ class Optimizer {
 
   private _score(bds: Board[] | null): number {
     if (!bds || !bds.length) return Infinity;
-    const cost  = bds.reduce((s, b) => s + (b.stockInfo ? b.stockInfo.costo : 0), 0);
+    const cost  = bds.reduce((s, b) => s + (b.stockInfo?.costo ?? 0), 0);
     const waste = bds.reduce((s, b) => s + b.areaWaste, 0);
+    if (this.objective === 'min-waste') {
+      // Waste area is primary; board count and cost are tie-breakers.
+      return waste * 1e6 + bds.length * 1e3 + cost * 100;
+    }
+    if (this.objective === 'min-cuts') {
+      // Proxy: a guillotine tree with P leaves has P-1 internal cuts.
+      // Fewer cuts per board = simpler panel-saw sequence = less operator time.
+      const cuts = bds.reduce((s, b) => s + Math.max(0, b.placed.length - 1), 0);
+      return cuts * 1e6 + bds.length * 1e3 + waste * 100;
+    }
+    // 'min-boards' (default): fewest boards → lowest material cost.
     return bds.length * 1e6 + cost * 1e3 + waste * 100;
   }
 
@@ -704,8 +726,10 @@ export function runOptimization(
   globalSierra = 3.2,
   minOffcut = 200,
   boardTrim = 0,
+  engineMode: EngineMode = 'guillotine',
+  objective: OptimizationObjective = 'min-boards',
 ): OptimizationResult {
-  const opt = new Optimizer(stocks, remnants, globalSierra, minOffcut, boardTrim);
+  const opt = new Optimizer(stocks, remnants, globalSierra, minOffcut, boardTrim, engineMode, objective);
   const boards = opt.run(pieces);
   const boardResults = boards.map(b => b.toResult());
 
