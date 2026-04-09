@@ -20,7 +20,16 @@ function hasModificationIntent(messages: {role:string;content:string}[]): boolea
     'reemplaza','reemplazar','aplica','aplicar',
     'hardware','pull','pulls','jaladera','jaladora','jaladores','jaladeras',
     'bisagra','bisagras','hinge','hinges','slide','slides','correderas',
-    'sink tray','tray','herraje','herrajes','manija','manijas'];
+    'sink tray','tray','herraje','herrajes','manija','manijas',
+    // Purchases / inventory / suppliers
+    'compra','compras','pedido','pedidos','proveedor','proveedores',
+    'almacén','almacen','inventario','stock','movimiento','movimientos',
+    'llegó','llego','llegaron','recibido','recibida','recibidos',
+    'purchase','purchases','order','orders','supplier','suppliers','vendor',
+    'inventory','warehouse','movement','received','arrived',
+    // Optimizer runs / pricing method
+    'ejecutar','corrida','corridas','optimizador','método','metodo','activar','activa',
+    'run','runs','optimizer','method','activate','toggle'];
   return kw.some(k => last.toLowerCase().includes(k));
 }
 
@@ -178,6 +187,128 @@ const MODIFICATION_TOOLS = [
       },
       required: ['hardware_id','price','qty_rule']
     }
+  },
+  {
+    name: 'update_purchase_item_status',
+    description: 'Change the status of a project purchase item. DB trigger auto-creates an IN inventory movement when status becomes "In Warehouse", and a RETURN movement when status becomes "Return". Always confirm before calling.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        purchase_item_id: { type: 'string', description: 'UUID of the project_purchase_items row' },
+        new_status:       { type: 'string', enum: ['Ordered','Paid','In Transit','In Warehouse','Return'], description: 'New status value' }
+      },
+      required: ['purchase_item_id','new_status']
+    }
+  },
+  {
+    name: 'set_active_optimizer_run',
+    description: 'Mark a saved optimizer run as active for the open quotation. Also writes quotations.active_optimizer_run_id and refreshes optimizer_total_amount from the run total_cost. Confirm before calling.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        run_id: { type: 'string', description: 'UUID of the quotation_optimizer_runs row' }
+      },
+      required: ['run_id']
+    }
+  },
+  {
+    name: 'set_pricing_method',
+    description: 'Toggle the open quotation between "sqft" (ft²) and "optimizer" pricing. When switching to optimizer, mirrors optimizer_total_amount into total_amount so the rollup matches. Confirm before calling.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        method: { type: 'string', enum: ['sqft','optimizer'], description: 'Target pricing method' }
+      },
+      required: ['method']
+    }
+  }
+];
+
+// ────────────────────────────────────────────────────────────────
+// Read-only tools for inventory, suppliers, purchases, optimizer
+// Always available (no modification intent required).
+// ────────────────────────────────────────────────────────────────
+const INVENTORY_TOOLS = [
+  {
+    name: 'get_inventory_stock',
+    description: 'Look up current stock level, WAC (average_cost), last purchase cost, min stock level, location, and primary supplier for price_list items. Pass a query to search by name, or an item_id for a direct lookup.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query:          { type: 'string', description: 'Search term for concept_description e.g. "MDF 3/4", "Blum", "Oval Rod"' },
+        item_id:        { type: 'string', description: 'Optional: exact price_list UUID' },
+        only_below_min: { type: 'boolean', description: 'If true, only return items where stock_quantity < min_stock_level' }
+      },
+      required: []
+    }
+  },
+  {
+    name: 'get_low_stock_items',
+    description: 'List price_list items where stock_quantity < min_stock_level and min_stock_level > 0 (items that need to be reordered). Limited to 25 results.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        type: { type: 'string', description: 'Optional type filter e.g. "Melamine", "Hardware"' }
+      },
+      required: []
+    }
+  },
+  {
+    name: 'get_inventory_movements',
+    description: 'Get the inventory movement ledger (IN/OUT/ADJUSTMENT/RETURN) for a specific item or project. Returns recent movements with running WAC.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        item_id:       { type: 'string', description: 'Optional: price_list UUID to filter by item' },
+        project_id:    { type: 'string', description: 'Optional: projects.id (business-level) to filter by project' },
+        movement_type: { type: 'string', enum: ['IN','OUT','ADJUSTMENT','RETURN'], description: 'Optional movement type filter' },
+        limit:         { type: 'number', description: 'Max rows (default 20)' }
+      },
+      required: []
+    }
+  },
+  {
+    name: 'search_suppliers',
+    description: 'Search suppliers by name or contact. Returns name, contact, phone, email, lead_time_days, payment_terms.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search term e.g. "Rehau", "Blum"' }
+      },
+      required: ['query']
+    }
+  }
+];
+
+const PURCHASE_READ_TOOLS = [
+  {
+    name: 'get_purchase_items',
+    description: 'Get project purchase items for the business project that owns the open quotation. Resolves projects.id automatically from the open quotation via quotations.project_id. Supports filtering by status, priority, or supplier name. Use when user asks about purchases, pedidos, orders for the current project.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        status:         { type: 'string', enum: ['Ordered','Paid','In Transit','In Warehouse','Return','Pending','Delay'], description: 'Optional status filter' },
+        priority:       { type: 'string', enum: ['Urgent','High','Medium','Low'], description: 'Optional priority filter' },
+        supplier_query: { type: 'string', description: 'Optional ILIKE on supplier name' }
+      },
+      required: []
+    }
+  }
+];
+
+const OPTIMIZER_TOOLS = [
+  {
+    name: 'get_optimizer_runs',
+    description: 'List saved optimizer runs for the open quotation, with KPIs (total_cost, material_cost, waste_pct, board_count, cost_per_m2) and active/stale flags. Use for comparison, version history, or to answer "which run is active" questions.',
+    input_schema: { type: 'object', properties: {}, required: [] }
+  }
+];
+
+const BOM_TOOLS = [
+  {
+    name: 'get_quotation_bom',
+    description: 'Get the Bill of Materials (BOM) for the open quotation, aggregated by category (Box Construction, Doors & Fronts, Edgeband, Hardware, Accessories, Items, Countertops). Returns concept, quantity, unit, price, and subtotal per row. Use when user asks for the BOM, despiece, or material list of the open quotation.',
+    input_schema: { type: 'object', properties: {}, required: [] }
   }
 ];
 
@@ -431,6 +562,408 @@ async function executeTool(name: string, input: any, sb: any, projectId: string 
         });
       }
 
+      // ─── Inventory / suppliers ──────────────────────────────────────────
+      case 'get_inventory_stock': {
+        let q = sb.from('price_list')
+          .select('id, concept_description, type, unit, price, stock_quantity, min_stock_level, stock_location, average_cost, last_purchase_cost, price_list_suppliers(supplier_price, is_primary, suppliers(name))')
+          .eq('is_active', true)
+          .limit(10);
+        if (input.item_id) {
+          q = q.eq('id', input.item_id);
+        } else if (input.query) {
+          q = q.ilike('concept_description', `%${input.query}%`);
+        }
+        const { data, error } = await q;
+        if (error) return JSON.stringify({ error: error.message });
+        let rows = (data ?? []) as any[];
+        if (input.only_below_min) {
+          rows = rows.filter((r: any) =>
+            Number(r.min_stock_level) > 0 && Number(r.stock_quantity) < Number(r.min_stock_level)
+          );
+        }
+        return JSON.stringify({
+          count: rows.length,
+          results: rows.map((r: any) => {
+            const primary = (r.price_list_suppliers ?? []).find((ps: any) => ps.is_primary);
+            return {
+              id: r.id,
+              concept: r.concept_description,
+              type: r.type,
+              unit: r.unit,
+              price: r.price,
+              stock_quantity: r.stock_quantity,
+              min_stock_level: r.min_stock_level,
+              stock_location: r.stock_location,
+              average_cost_wac: r.average_cost,
+              last_purchase_cost: r.last_purchase_cost,
+              primary_supplier: primary?.suppliers?.name ?? null,
+              primary_supplier_price: primary?.supplier_price ?? null,
+              below_min: Number(r.min_stock_level) > 0 && Number(r.stock_quantity) < Number(r.min_stock_level),
+            };
+          })
+        });
+      }
+
+      case 'get_low_stock_items': {
+        let q = sb.from('price_list')
+          .select('id, concept_description, type, unit, stock_quantity, min_stock_level, stock_location, last_purchase_cost')
+          .eq('is_active', true)
+          .gt('min_stock_level', 0)
+          .limit(25);
+        if (input.type) q = q.eq('type', input.type);
+        const { data, error } = await q;
+        if (error) return JSON.stringify({ error: error.message });
+        const low = (data ?? []).filter((r: any) => Number(r.stock_quantity) < Number(r.min_stock_level));
+        return JSON.stringify({
+          count: low.length,
+          results: low.map((r: any) => ({
+            id: r.id,
+            concept: r.concept_description,
+            type: r.type,
+            unit: r.unit,
+            stock_quantity: r.stock_quantity,
+            min_stock_level: r.min_stock_level,
+            missing: Number(r.min_stock_level) - Number(r.stock_quantity),
+            stock_location: r.stock_location,
+            last_purchase_cost: r.last_purchase_cost,
+          }))
+        });
+      }
+
+      case 'get_inventory_movements': {
+        const limit = Math.min(Number(input.limit) || 20, 100);
+        let q = sb.from('inventory_movements')
+          .select('id, price_list_item_id, movement_type, quantity, reference_type, reference_id, unit_cost, running_average_cost, notes, created_at, price_list:price_list(concept_description, unit)')
+          .order('created_at', { ascending: false })
+          .limit(limit);
+        if (input.item_id)       q = q.eq('price_list_item_id', input.item_id);
+        if (input.movement_type) q = q.eq('movement_type', input.movement_type);
+        if (input.project_id) {
+          // project_id filter: match purchase item rows belonging to that project.
+          const { data: items } = await sb.from('project_purchase_items')
+            .select('id').eq('project_id', input.project_id);
+          const ids = (items ?? []).map((i: any) => i.id);
+          if (ids.length === 0) return JSON.stringify({ count: 0, results: [] });
+          q = q.in('reference_id', ids);
+        }
+        const { data, error } = await q;
+        if (error) return JSON.stringify({ error: error.message });
+        return JSON.stringify({
+          count: data?.length ?? 0,
+          results: (data ?? []).map((m: any) => ({
+            id: m.id,
+            item: m.price_list?.concept_description ?? m.price_list_item_id,
+            unit: m.price_list?.unit,
+            type: m.movement_type,
+            qty: m.quantity,
+            unit_cost: m.unit_cost,
+            running_wac: m.running_average_cost,
+            ref_type: m.reference_type,
+            ref_id: m.reference_id,
+            notes: m.notes,
+            created_at: m.created_at,
+          }))
+        });
+      }
+
+      case 'search_suppliers': {
+        const { data, error } = await sb.from('suppliers')
+          .select('id, name, contact_name, phone, email, website, payment_terms, lead_time_days, is_active')
+          .eq('is_active', true)
+          .or(`name.ilike.%${input.query}%,contact_name.ilike.%${input.query}%,email.ilike.%${input.query}%`)
+          .limit(10);
+        if (error) return JSON.stringify({ error: error.message });
+        return JSON.stringify({ count: data?.length ?? 0, results: data ?? [] });
+      }
+
+      // ─── Purchase items (project-scoped) ────────────────────────────────
+      case 'get_purchase_items': {
+        if (!projectId) return JSON.stringify({ error: 'No quotation open. Open a quotation or project first.' });
+        // Resolve business project id from the open quotation.
+        const { data: q } = await sb.from('quotations').select('project_id').eq('id', projectId).single();
+        const pid = q?.project_id ?? projectId;
+        let query = sb.from('project_purchase_items')
+          .select('id, concept, quantity, unit, price, subtotal, priority, status, deadline, notes, supplier:suppliers(name), assigned_member:team_members!assigned_to_member_id(name), price_list_item:price_list(concept_description)')
+          .eq('project_id', pid)
+          .order('display_order')
+          .limit(50);
+        if (input.status)   query = query.eq('status', input.status);
+        if (input.priority) query = query.eq('priority', input.priority);
+        const { data, error } = await query;
+        if (error) return JSON.stringify({ error: error.message });
+        let rows = (data ?? []) as any[];
+        if (input.supplier_query) {
+          const term = String(input.supplier_query).toLowerCase();
+          rows = rows.filter((r: any) => r.supplier?.name?.toLowerCase()?.includes(term));
+        }
+        // Rollup counts by status and priority.
+        const byStatus: Record<string, number> = {};
+        const byPriority: Record<string, number> = {};
+        for (const r of rows) {
+          byStatus[r.status] = (byStatus[r.status] ?? 0) + 1;
+          byPriority[r.priority] = (byPriority[r.priority] ?? 0) + 1;
+        }
+        return JSON.stringify({
+          project_id: pid,
+          count: rows.length,
+          by_status: byStatus,
+          by_priority: byPriority,
+          items: rows.map((r: any) => ({
+            id: r.id,
+            concept: r.concept,
+            qty: r.quantity,
+            unit: r.unit,
+            price: r.price,
+            subtotal: r.subtotal,
+            status: r.status,
+            priority: r.priority,
+            deadline: r.deadline,
+            supplier: r.supplier?.name ?? null,
+            assigned_to: r.assigned_member?.name ?? null,
+            linked_item: r.price_list_item?.concept_description ?? null,
+          }))
+        });
+      }
+
+      case 'update_purchase_item_status': {
+        if (!input.purchase_item_id || !input.new_status) {
+          return JSON.stringify({ error: 'purchase_item_id and new_status are required.' });
+        }
+        const { data, error } = await sb.from('project_purchase_items')
+          .update({ status: input.new_status })
+          .eq('id', input.purchase_item_id)
+          .select('id, concept, status, price_list_item_id')
+          .single();
+        if (error) return JSON.stringify({ error: error.message });
+        const triggerNote = input.new_status === 'In Warehouse'
+          ? ' DB trigger created an IN inventory movement (stock updated, WAC recalculated).'
+          : input.new_status === 'Return'
+            ? ' DB trigger created a RETURN inventory movement.'
+            : '';
+        return JSON.stringify({
+          success: true,
+          message: `Purchase item "${data?.concept}" status updated to "${input.new_status}".${triggerNote}`,
+          item: data,
+        });
+      }
+
+      // ─── Optimizer runs ─────────────────────────────────────────────────
+      case 'get_optimizer_runs': {
+        if (!projectId) return JSON.stringify({ error: 'No quotation open.' });
+        const [runsRes, qRes] = await Promise.all([
+          sb.from('quotation_optimizer_runs')
+            .select('id, name, is_active, is_stale, total_cost, material_cost, edgeband_cost, waste_pct, board_count, total_piece_m2, cost_per_m2, notes, created_at')
+            .eq('quotation_id', projectId)
+            .order('created_at', { ascending: false }),
+          sb.from('quotations')
+            .select('pricing_method, active_optimizer_run_id, optimizer_total_amount, optimizer_is_stale, total_amount')
+            .eq('id', projectId).single(),
+        ]);
+        if (runsRes.error) return JSON.stringify({ error: runsRes.error.message });
+        return JSON.stringify({
+          quotation_id: projectId,
+          pricing_method: qRes.data?.pricing_method ?? 'sqft',
+          optimizer_total_amount: qRes.data?.optimizer_total_amount ?? null,
+          optimizer_is_stale: qRes.data?.optimizer_is_stale ?? false,
+          active_run_id: qRes.data?.active_optimizer_run_id ?? null,
+          quotation_total_amount: qRes.data?.total_amount ?? null,
+          run_count: runsRes.data?.length ?? 0,
+          runs: (runsRes.data ?? []).map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            is_active: r.is_active,
+            is_stale: r.is_stale,
+            total_cost: r.total_cost,
+            material_cost: r.material_cost,
+            edgeband_cost: r.edgeband_cost,
+            waste_pct: r.waste_pct,
+            board_count: r.board_count,
+            total_piece_m2: r.total_piece_m2,
+            cost_per_m2: r.cost_per_m2,
+            notes: r.notes,
+            created_at: r.created_at,
+          }))
+        });
+      }
+
+      case 'set_active_optimizer_run': {
+        if (!projectId) return JSON.stringify({ error: 'No quotation open.' });
+        if (!input.run_id) return JSON.stringify({ error: 'run_id is required.' });
+        // Fetch the target run (must belong to the open quotation)
+        const { data: target, error: tErr } = await sb.from('quotation_optimizer_runs')
+          .select('id, quotation_id, name, total_cost, is_stale')
+          .eq('id', input.run_id).single();
+        if (tErr || !target) return JSON.stringify({ error: tErr?.message ?? 'Run not found.' });
+        if (target.quotation_id !== projectId) {
+          return JSON.stringify({ error: 'That run belongs to a different quotation.' });
+        }
+        // Clear siblings, then set target active (unique partial index enforces single active).
+        const { error: clearErr } = await sb.from('quotation_optimizer_runs')
+          .update({ is_active: false })
+          .eq('quotation_id', projectId)
+          .neq('id', input.run_id);
+        if (clearErr) return JSON.stringify({ error: clearErr.message });
+        const { error: actErr } = await sb.from('quotation_optimizer_runs')
+          .update({ is_active: true })
+          .eq('id', input.run_id);
+        if (actErr) return JSON.stringify({ error: actErr.message });
+        // Reflect on quotations row.
+        const { error: qErr } = await sb.from('quotations')
+          .update({
+            active_optimizer_run_id: input.run_id,
+            optimizer_total_amount: target.total_cost,
+            optimizer_is_stale: target.is_stale,
+          })
+          .eq('id', projectId);
+        if (qErr) return JSON.stringify({ error: qErr.message });
+        return JSON.stringify({
+          success: true,
+          message: `Active run set to "${target.name}". Optimizer total: $${Number(target.total_cost).toLocaleString('en-US', { maximumFractionDigits: 2 })} MXN. Refresh the Breakdown tab to see changes.`
+        });
+      }
+
+      case 'set_pricing_method': {
+        if (!projectId) return JSON.stringify({ error: 'No quotation open.' });
+        const method = input.method;
+        if (method !== 'sqft' && method !== 'optimizer') {
+          return JSON.stringify({ error: 'method must be "sqft" or "optimizer".' });
+        }
+        // Load current quotation so we know the optimizer total.
+        const { data: q, error: qErr } = await sb.from('quotations')
+          .select('id, total_amount, optimizer_total_amount, active_optimizer_run_id')
+          .eq('id', projectId).single();
+        if (qErr || !q) return JSON.stringify({ error: qErr?.message ?? 'Quotation not found.' });
+        if (method === 'optimizer' && !q.active_optimizer_run_id) {
+          return JSON.stringify({ error: 'Cannot switch to optimizer: no active run. Save and activate a run first in the Breakdown tab.' });
+        }
+        const updatePayload: Record<string, any> = { pricing_method: method };
+        if (method === 'optimizer' && q.optimizer_total_amount != null) {
+          // Mirror to total_amount to match the rollup contract.
+          updatePayload.total_amount = q.optimizer_total_amount;
+        }
+        const { error: uErr } = await sb.from('quotations').update(updatePayload).eq('id', projectId);
+        if (uErr) return JSON.stringify({ error: uErr.message });
+        return JSON.stringify({
+          success: true,
+          message: `Pricing method switched to "${method}".${method === 'optimizer' ? ' Quotation total now reflects the optimizer run.' : ' Quotation total now reflects the ft² calculation.'} Refresh to see the new total.`
+        });
+      }
+
+      // ─── BOM ────────────────────────────────────────────────────────────
+      case 'get_quotation_bom': {
+        if (!projectId) return JSON.stringify({ error: 'No quotation open.' });
+        // Compute a simplified BOM by reading cost fields directly from area_cabinets.
+        // Hardware and accessories are aggregated from JSONB hardware and accessories columns.
+        const { data: areas, error: aErr } = await sb.from('project_areas')
+          .select('id, name').eq('project_id', projectId);
+        if (aErr) return JSON.stringify({ error: aErr.message });
+        const areaIds = (areas ?? []).map((a: any) => a.id);
+        if (areaIds.length === 0) {
+          return JSON.stringify({ count: 0, categories: {}, totals: { materials: 0, hardware: 0, accessories: 0, grand_total: 0 } });
+        }
+        const { data: cabs, error: cErr } = await sb.from('area_cabinets')
+          .select('id, product_sku, quantity, hardware, accessories, box_material_id, box_material_cost, doors_material_id, doors_material_cost, box_edgeband_id, box_edgeband_cost, doors_edgeband_id, doors_edgeband_cost, back_panel_material_id, back_panel_material_cost, labor_cost')
+          .in('area_id', areaIds);
+        if (cErr) return JSON.stringify({ error: cErr.message });
+        // Pre-load material names.
+        const matIds = new Set<string>();
+        for (const c of cabs ?? []) {
+          if (c.box_material_id)        matIds.add(c.box_material_id);
+          if (c.doors_material_id)      matIds.add(c.doors_material_id);
+          if (c.box_edgeband_id)        matIds.add(c.box_edgeband_id);
+          if (c.doors_edgeband_id)      matIds.add(c.doors_edgeband_id);
+          if (c.back_panel_material_id) matIds.add(c.back_panel_material_id);
+        }
+        const matNames: Record<string, string> = {};
+        if (matIds.size > 0) {
+          const { data: mats } = await sb.from('price_list')
+            .select('id, concept_description')
+            .in('id', Array.from(matIds));
+          mats?.forEach((m: any) => { matNames[m.id] = m.concept_description; });
+        }
+        type Row = { concept: string; qty: number; subtotal: number };
+        const categories: Record<string, Row[]> = {
+          'Box Construction': [],
+          'Doors & Fronts': [],
+          'Edgeband': [],
+          'Hardware': [],
+          'Accessories': [],
+        };
+        const acc = (cat: string, concept: string, qty: number, cost: number) => {
+          if (!concept || cost <= 0) return;
+          const existing = categories[cat].find((r: Row) => r.concept === concept);
+          if (existing) {
+            existing.qty += qty;
+            existing.subtotal += cost * qty;
+          } else {
+            categories[cat].push({ concept, qty, subtotal: cost * qty });
+          }
+        };
+        let totalMaterials = 0, totalHardware = 0, totalAccessories = 0;
+        for (const c of cabs ?? []) {
+          const qty = Number(c.quantity) || 1;
+          // Box
+          if (c.box_material_id && Number(c.box_material_cost) > 0) {
+            acc('Box Construction', matNames[c.box_material_id] ?? c.box_material_id, qty, Number(c.box_material_cost));
+            totalMaterials += Number(c.box_material_cost) * qty;
+          }
+          if (c.back_panel_material_id && Number(c.back_panel_material_cost) > 0) {
+            acc('Box Construction', matNames[c.back_panel_material_id] ?? c.back_panel_material_id, qty, Number(c.back_panel_material_cost));
+            totalMaterials += Number(c.back_panel_material_cost) * qty;
+          }
+          // Doors
+          if (c.doors_material_id && Number(c.doors_material_cost) > 0) {
+            acc('Doors & Fronts', matNames[c.doors_material_id] ?? c.doors_material_id, qty, Number(c.doors_material_cost));
+            totalMaterials += Number(c.doors_material_cost) * qty;
+          }
+          // Edgeband
+          if (c.box_edgeband_id && Number(c.box_edgeband_cost) > 0) {
+            acc('Edgeband', matNames[c.box_edgeband_id] ?? c.box_edgeband_id, qty, Number(c.box_edgeband_cost));
+            totalMaterials += Number(c.box_edgeband_cost) * qty;
+          }
+          if (c.doors_edgeband_id && Number(c.doors_edgeband_cost) > 0) {
+            acc('Edgeband', matNames[c.doors_edgeband_id] ?? c.doors_edgeband_id, qty, Number(c.doors_edgeband_cost));
+            totalMaterials += Number(c.doors_edgeband_cost) * qty;
+          }
+          // Hardware (JSONB)
+          const hw = c.hardware as Record<string, any> | null;
+          if (hw) {
+            for (const [, hwData] of Object.entries(hw)) {
+              if (!hwData || typeof hwData !== 'object') continue;
+              const name = (hwData as any).name ?? 'Hardware';
+              const hwQty = Number((hwData as any).qty ?? 0);
+              const price = Number((hwData as any).price ?? 0);
+              acc('Hardware', name, hwQty * qty, price);
+              totalHardware += price * hwQty * qty;
+            }
+          }
+          // Accessories (JSONB)
+          const accs = c.accessories as Record<string, any> | null;
+          if (accs) {
+            for (const [, accData] of Object.entries(accs)) {
+              if (!accData || typeof accData !== 'object') continue;
+              const name = (accData as any).name ?? 'Accessory';
+              const accQty = Number((accData as any).qty ?? 0);
+              const price = Number((accData as any).price ?? 0);
+              acc('Accessories', name, accQty * qty, price);
+              totalAccessories += price * accQty * qty;
+            }
+          }
+        }
+        return JSON.stringify({
+          quotation_id: projectId,
+          area_count: areas?.length ?? 0,
+          cabinet_line_count: cabs?.length ?? 0,
+          categories,
+          totals: {
+            materials_mxn: Math.round(totalMaterials),
+            hardware_mxn: Math.round(totalHardware),
+            accessories_mxn: Math.round(totalAccessories),
+            grand_total_mxn: Math.round(totalMaterials + totalHardware + totalAccessories),
+          }
+        });
+      }
+
       default:
         return JSON.stringify({ error: `Unknown tool: ${name}` });
     }
@@ -451,10 +984,14 @@ Deno.serve(async (req: Request) => {
   const { messages = [], projectId = null, pageKey = 'dashboard' } = body;
   const sb = createClient(SB_URL, SB_SERVICE);
 
-  const [settingsRes, recentRes, matPricesRes] = await Promise.all([
+  const [settingsRes, recentRes, matPricesRes, lowStockRes] = await Promise.all([
     sb.from('settings').select('key, value'),
     sb.from('quotations').select('id, project_id, name, customer, status, total_amount').order('updated_at', { ascending: false }).limit(5),
     sb.from('price_list').select('id, unit_price_mxn').or('id.like.f4953b9f%,id.like.d0eb99a2%,id.like.6d877ed9%,id.like.e3e9c098%'),
+    // Low stock: items active, with min > 0 AND stock < min. Fetched client-side because
+    // PostgREST does not support column-vs-column filters directly.
+    sb.from('price_list').select('id, concept_description, stock_quantity, min_stock_level')
+      .eq('is_active', true).gt('min_stock_level', 0),
   ]);
 
   const sData = settingsRes.data ?? [];
@@ -480,10 +1017,18 @@ Deno.serve(async (req: Request) => {
     ).join(' | ');
   }
 
+  // Low stock alert — always emitted (cheap, helps Evita proactively mention it).
+  const lowStockItems = (lowStockRes.data ?? []).filter((r: any) =>
+    Number(r.stock_quantity) < Number(r.min_stock_level)
+  );
+  if (lowStockItems.length > 0) {
+    liveData += `\nLow stock alerts: ${lowStockItems.length} item(s) below min level (use get_low_stock_items for details)`;
+  }
+
   let proj: any = null;
   if (projectId) {
     const { data: projData } = await sb.from('quotations')
-      .select('name, status, total_amount, profit_multiplier, tax_percentage, tariff_multiplier, install_delivery, install_delivery_usd, install_delivery_per_box_usd, referral_currency_rate, project_id')
+      .select('name, status, total_amount, profit_multiplier, tax_percentage, tariff_multiplier, install_delivery, install_delivery_usd, install_delivery_per_box_usd, referral_currency_rate, project_id, pricing_method, active_optimizer_run_id, optimizer_total_amount, optimizer_is_stale')
       .eq('id', projectId).single();
     proj = projData;
     if (proj) {
@@ -534,6 +1079,44 @@ Deno.serve(async (req: Request) => {
       liveData += `\n  MATERIALS ONLY (no labor/hardware): ${fmt(totalMaterials)} MXN`;
       liveData += `\n  CABINET SUBTOTAL (mat+labor+hardware): ${fmt(totalCabSubtotal)} MXN`;
       liveData += `\n  NOTE: "area subtotal" in project = cabinet subtotal = raw cost BEFORE profit. area.subtotal is NOT price.`;
+
+      // Pricing method + optimizer runs summary.
+      const pmethod = proj.pricing_method ?? 'sqft';
+      const { data: runsAgg } = await sb.from('quotation_optimizer_runs')
+        .select('id, name, is_active, is_stale').eq('quotation_id', projectId);
+      const runCount = runsAgg?.length ?? 0;
+      const activeRun = (runsAgg ?? []).find((r: any) => r.is_active) ?? null;
+      liveData += `\nPricing method: ${pmethod} | Optimizer runs: ${runCount} saved`;
+      if (pmethod === 'optimizer' || activeRun) {
+        const optTotal = proj.optimizer_total_amount != null ? fmt(Number(proj.optimizer_total_amount)) : 'n/a';
+        const stale = proj.optimizer_is_stale || activeRun?.is_stale;
+        liveData += ` | Optimizer total: ${optTotal} MXN | active_run=${activeRun?.name ?? 'none'} | stale=${stale ? 'yes' : 'no'}`;
+      }
+
+      // Purchase items rollup for the business project that owns this quotation.
+      if (proj.project_id) {
+        const { data: pItems } = await sb.from('project_purchase_items')
+          .select('id, concept, status, priority, subtotal').eq('project_id', proj.project_id);
+        if (pItems && pItems.length > 0) {
+          const byStatus: Record<string, number> = {};
+          const byPriority: Record<string, number> = {};
+          for (const it of pItems) {
+            byStatus[it.status] = (byStatus[it.status] ?? 0) + 1;
+            byPriority[it.priority] = (byPriority[it.priority] ?? 0) + 1;
+          }
+          const statusSummary = Object.entries(byStatus).map(([k,v]) => `${k}: ${v}`).join(' | ');
+          liveData += `\nPurchase items: ${pItems.length} total | ${statusSummary}`;
+          // Highlight pending attention.
+          const openStatuses = new Set(['Ordered','Paid','In Transit','Delay','Pending']);
+          const openItems = pItems.filter((it: any) => openStatuses.has(it.status));
+          if (openItems.length > 0) {
+            const priorityRank: Record<string, number> = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
+            openItems.sort((a: any, b: any) => (priorityRank[a.priority] ?? 9) - (priorityRank[b.priority] ?? 9));
+            const top3 = openItems.slice(0, 3).map((it: any) => `${it.concept} (${it.priority}/${it.status})`).join(', ');
+            liveData += `\nOpen purchase items (needs attention): ${openItems.length} — top: ${top3}`;
+          }
+        }
+      }
     }
   }
 
@@ -578,10 +1161,24 @@ A project has multiple quotations (e.g., "Plus", "Premium", "v2", "v3").
 The projectId you receive is a QUOTATION ID. project_areas and area_cabinets belong to quotations.
 When the user says "project" they usually mean the quotation they are currently viewing.
 
+Quotations now carry a pricing_method ('sqft' default or 'optimizer'). When 'optimizer',
+total_amount is mirrored from the active quotation_optimizer_runs row (optimizer_total_amount).
+LIVE DATA tells you the current method, total, active run name, and stale flag.
+
+Purchases, Inventory stock, Suppliers, and inventory movements are PROJECT-LEVEL (not quotation-level):
+they key off projects.id, not the projectId you receive (which is a quotation id). To reach them
+you must resolve the business project via quotations.project_id. The get_purchase_items tool does
+this for you automatically.
+
 === CAPABILITIES ===
-- Quick estimates with full USD pricing breakdown
-- Price and material lookups (use search_materials for ANY price question)
-- Quotation modifications (materials, quantities, settings)
+- Quick estimates (ft²) with full USD pricing breakdown
+- Price, material, and stock lookups (search_materials for prices; get_inventory_stock for stock/WAC/location)
+- Inventory queries: low-stock alerts, movement ledger, supplier lookup
+- Purchase tracking: list items by status/priority, mark arrivals (triggers auto-inventory movements)
+- Optimizer run review: KPIs, compare versions, set active run, toggle pricing method (sqft ↔ optimizer)
+- Quotation BOM (bill of materials) by category — Box / Doors / Edgeband / Hardware / Accessories
+- Quotation modifications (materials, quantities, quotation-level settings, hardware bulk updates)
+- Project management: tasks, documents, logs (get_project_management)
 
 === MATERIAL COST FORMULA — CRITICAL ===
 NEVER guess SF values. Use ONLY values from the database section.
@@ -706,6 +1303,10 @@ PRICING BREAKDOWN
 
 Note at end: "Este estimado incluye materiales, mano de obra, hardware, profit, tariff, install y tax."
 
+If the open quotation has pricing_method='optimizer', also show the optimizer total from
+LIVE DATA next to the ft² total (e.g., "Optimizer total: $X MXN | run: <name> | stale: yes/no"),
+and suggest re-running the optimizer in the Breakdown tab if stale.
+
 ${modMode ? `=== MODIFICATION MODE ===
 - Price lookups: use search_materials
 - Read cabinets: use get_area_cabinets first
@@ -788,7 +1389,11 @@ These tools are always available regardless of which page the user is on.
 === APP GUIDE — HOW TO USE THE APP ===
 When users ask HOW to do something in the app, give step-by-step instructions referencing specific UI elements (buttons, tabs, sections).
 
-DASHBOARD (/)
+NAVIGATION (top bar): Home, Dashboard, Projects, Cabinets, Inventory, Optimizer.
+Templates and Suppliers are NOT top-level anymore. Templates are accessed from the Pricing tab
+"Apply Template" button on any cabinet row. Suppliers live inside Inventory → Suppliers tab.
+
+DASHBOARD (/dashboard)
 - Shows: project counts by status, pipeline value, won value, conversion rate
 - Monthly trends (last 6 months), project type breakdown with win rates
 - Top quoted cabinet SKUs, most used box/door materials and hardware
@@ -796,63 +1401,136 @@ DASHBOARD (/)
 
 PROJECTS HUB (/projects)
 - Lists all projects with status, customer, total amount
-- Click "+ New Project" button (top right) to create a project — enter name, customer, address, project type
-- Click any project row to open it and see its quotations
-- Status workflow: Pending → Estimating → Sent → Awarded | Lost | Cancelled | Disqualified
+- Click "+ New Project" button (top right) to create a project — name, customer, address, project type
+- Click any project row to open the Project Page
+- Status workflow: Pending → Estimating → Sent → Awarded | Lost | Cancelled | Discarded
+  (NOTE: "Disqualified" was renamed to "Discarded".)
 
-PROJECT PAGE (/projects/:id)
-- Shows project info (name, customer, address) and all quotation versions
-- Create new quotation version with "+ New Quotation" button
-- Click a quotation card to open Quotation Details
+PROJECT PAGE (/projects/:id) — BUSINESS-LEVEL, has 7 tabs
+- Overview: project info, latest quotation, status, pipeline value
+- Quotations: all quotation versions for this project; create new with "+ New Quotation"
+- Purchases: purchase items for the project (see PURCHASES below)
+- Management: tasks, schedule/Gantt, team assignments (Management lives HERE at project level, NOT inside a quotation)
+- Documents: uploaded files and URLs
+- Logs: activity log / bitácora with typed entries, authors, and replies
+- Analytics: project-level charts and comparisons
 
-QUOTATION DETAILS (/projects/:id/quotations/:qid)
-- 5 tabs: Info, Pricing, Analytics, History, Management
-- INFO TAB: Edit customer info, project brief, financial settings (profit %, tax %, tariff %, install cost, referral rate)
-- PRICING TAB (main workspace):
-  * Add areas: Click "+ Add Area" → name it (Kitchen, Master Closet, etc.)
-  * Add cabinets: Click "+ Add Cabinet" in an area → search by SKU or browse catalog
-  * Configure each cabinet: select box material, door material, edgebands from dropdowns
-  * Hardware: Click hardware section on a cabinet → add hinges, slides, pulls
-  * Accessories: Add items like sink trays, lazy susans
-  * Closet items: In closet areas, add prefab closet catalog items
-  * Templates: Click "Apply Template" to quickly configure a cabinet from saved template
-  * Totals auto-calculate at area level and quotation level
-- ANALYTICS TAB: Cost breakdown charts, area comparison, material distribution
-- HISTORY TAB: Version comparison — see what changed between quotation versions
-- MANAGEMENT TAB: Documents, tasks, activity log, schedule/Gantt
+PURCHASES TAB (inside Project Page)
+- List of materials / hardware / items to buy for the project, backed by project_purchase_items
+- Columns: concept, qty, stock on hand, "to buy", unit, price, subtotal, priority, status, deadline
+- Statuses: Ordered (default), Paid, In Transit, In Warehouse, Return, Pending, Delay
+- Priorities: Urgent, High, Medium, Low
+- Group by: none / provider / status / priority
+- A purchase item can be manual or linked to a price_list item
+- KEY AUTOMATIONS (DB triggers, not UI actions):
+  * When status → "In Warehouse": an IN inventory_movement is auto-created,
+    price_list.stock_quantity goes up, and average_cost (WAC) is recalculated.
+  * When status → "Return": a RETURN inventory_movement is auto-created.
+  * When the project status → "Awarded": all uncommitted purchase items get
+    OUT inventory_movements (commit_project_inventory RPC), marking stock as used.
+- Purchase items are created manually OR via "Export to Purchases" from a quotation BOM
+  (Breakdown tab on a quotation → BOM section → Export to Purchases).
+- Use the tool update_purchase_item_status to change status (user can say "mark X as arrived").
 
-PRODUCTS CATALOG (/products)
-- Browse all cabinet SKU codes with dimensions, square footage, edgeband specs
-- Search by SKU code or description using the search bar at top
-- Click any product to see full details
+QUOTATION DETAILS (/projects/:pid/quotations/:qid) — 5 tabs
+- Info, Pricing, Breakdown, Analytics, History
+  (IMPORTANT: Management is NOT a tab here anymore — it moved to the Project Page.)
 
-PRICE LIST (/prices)
-- All materials, hardware, accessories with current prices
-- Types: Melamine, Edgeband, Hinges, Slides, Special Hardware, Laminate, Accessories
-- Search and filter by type using the tabs at top
-- Click any item to see details including notes and product URL
-- Prices stored in MXN, converted to USD using the exchange rate in Settings
+INFO TAB
+- Edit customer info, project brief, financial settings
+  (profit %, tax %, tariff %, install cost, referral rate)
 
-TEMPLATES (/templates)
-- Saved cabinet configurations for quick reuse across projects
-- To save a template: In Pricing tab, fully configure a cabinet → click "Save as Template" → give it a name
-- To apply a template: In Pricing tab, click "Apply Template" button on any cabinet row → select template
-- Templates store: SKU, materials, edgebands, hardware, accessories, back panel config
+PRICING TAB (main workspace — ft² method)
+- Add areas: "+ Add Area" → name (Kitchen, Master Closet, etc.)
+- Add cabinets: "+ Add Cabinet" in an area → search by SKU or browse catalog
+- Configure each cabinet: select box material, door material, edgebands from dropdowns
+- Hardware: click hardware on a cabinet → add hinges, slides, pulls
+- Accessories: sink trays, lazy susans, etc.
+- Closet items: in closet areas, add prefab closet catalog items
+- Templates: "Apply Template" button on any cabinet row applies a saved template
+- Area sections and interior finish materials supported
+- Totals auto-calculate at area level and quotation level
+
+BREAKDOWN TAB (optimizer-based pricing — new)
+- Alternative pricing flow: instead of ft² multiplication, nest cabinet parts onto
+  real boards with a cut-list optimizer and price from the resulting board usage.
+- Engine modes:
+  * "Guillotine only (panel saw)" — simulates a panel saw with guillotine cuts
+  * "Both engines (+ MaxRect)" — runs guillotine and MaxRect in parallel, keeps best
+- Optimization objectives:
+  * Fewer boards (min-boards) — default, minimizes board count
+  * Less waste (min-waste)     — minimizes scrap area
+  * Fewer cuts (min-cuts)      — minimizes total cuts
+- Workflow: adjust stocks/edgebands/settings in the sidebar → click "Run" → inspect
+  result → "Save" to persist as a quotation_optimizer_run (a frozen version).
+- Versions list shows all runs for this quotation with KPIs (total cost, material cost,
+  edgeband cost, waste %, board count, cost per m²). Set any run active.
+- Comparison panel compares 2+ runs side by side.
+- ft² vs Optimizer comparison card shows both totals at a glance.
+- Pricing method toggle (sqft ↔ optimizer): flips quotations.pricing_method. When
+  switched to optimizer, the quotation total_amount is mirrored from the active run's
+  total_cost (so PDFs, dashboards, and rollups use the optimizer number).
+- Stale badge: any edit to area_cabinets marks the active run stale. User must re-run.
+- BOM section (BreakdownBOM): aggregates materials across all areas into 7 categories
+  (Box Construction, Doors & Fronts, Edgeband, Hardware, Accessories, Items, Countertops).
+  "Export to Purchases" button creates project_purchase_items rows from the BOM.
+- Use the tools get_optimizer_runs, set_active_optimizer_run, set_pricing_method,
+  get_quotation_bom to help users here.
+
+ANALYTICS TAB
+- Cost breakdown charts, area comparison, material distribution
+
+HISTORY TAB
+- Version comparison — what changed between this quotation and a previous one
+
+CABINETS (/products) — renamed from "Products"
+- Browse all cabinet SKU codes with dimensions, square footage, edgeband specs, cut_pieces
+- Search by SKU code or description
+- Click any cabinet to see full details
+
+INVENTORY (/prices) — renamed from "Price List", Warehouse icon — 4 internal tabs
+- CATALOG: the classic price list (Melamine, Edgeband, Hinges, Slides, Special Hardware,
+  Laminate, Accessories). Now with extra fields: stock_quantity, min_stock_level,
+  stock_location, average_cost (WAC), last_purchase_cost, plus technical info
+  (width/height/depth/thickness mm, weight, material, finish).
+- STOCK: at-a-glance current stock per item vs min level; highlights items below min.
+- MOVEMENTS: ledger of every IN / OUT / ADJUSTMENT / RETURN with running WAC.
+- SUPPLIERS: supplier directory (name, contact, phone, email, lead time, payment terms).
+  Items link to suppliers via price_list_suppliers (one supplier can be marked primary).
+- Use get_inventory_stock, get_low_stock_items, get_inventory_movements, search_suppliers.
+
+OPTIMIZER (/optimizer) — standalone cut-list optimizer
+- Independent version of the Breakdown engine for ad-hoc cut lists
+- Supports Import Cabinets modal (pulls pieces from cabinets in the catalog)
+- 3-state veta field per piece (none / horizontal / vertical)
+- PDF export with board layouts and piece labels
 
 SETTINGS (/settings)
 - Labor costs: cost per cabinet with/without drawers (MXN)
 - Waste percentages: box waste % and doors waste %
-- Exchange rate: USD to MXN conversion rate
-- Tax configuration: tax percentage for quotations
-- Team members: Add/edit team members (name, role, email) for task assignment
+- Exchange rate: USD to MXN
+- Tax configuration
+- Team members with departments and roles; notifications
 
 COMMON WORKFLOWS:
 1. Create a quotation from scratch:
-   Projects → + New Project → fill info → + New Quotation → Pricing tab → + Add Area → + Add Cabinet → configure materials → review totals
+   Projects → + New Project → + New Quotation → Pricing tab → + Add Area → + Add Cabinet → configure → review totals
 2. Change materials across an area:
-   Open quotation → Pricing tab → select area → use bulk material change (or ask me to do it!)
+   Open quotation → Pricing tab → select area → bulk material change (or ask me)
 3. Compare quotation versions:
-   Open project → click two quotation cards → Analytics or History tab shows differences
+   Open project → pick two quotations → Analytics or History tab shows differences
+4. Run optimizer pricing on a quotation:
+   Open quotation → Breakdown tab → pick engine & objective → Run → Save → flip Pricing Method to Optimizer
+5. Mark a purchase as arrived:
+   Project Page → Purchases → change status to "In Warehouse" (DB auto-updates stock + WAC),
+   or ask me ("marca la compra X como recibida")
+6. Check low stock:
+   Inventory → Stock tab, or ask me ("qué items tengo bajo stock")
+7. Toggle a quotation from ft² to optimizer pricing:
+   Breakdown tab → PricingMethodToggle (ft²/Optimizer) — requires at least one active run
+8. Export a BOM to purchases:
+   Open quotation → Breakdown tab → BOM section → Export to Purchases → items appear
+   in the project's Purchases tab with status Ordered
 
 === LIVE DATA ===
 ${liveData}${skuContext}
@@ -863,7 +1541,14 @@ Style: Auto-detect EN/ES. Always show the full breakdown table. Say explicitly i
   try {
     const hasMissingSkus = candidateSkus.length === 0 ||
       skuContext.includes('NOT FOUND');
-    const alwaysTools = [...SEARCH_TOOLS, ...KNOWLEDGE_TOOLS];
+    const alwaysTools = [
+      ...SEARCH_TOOLS,
+      ...KNOWLEDGE_TOOLS,
+      ...INVENTORY_TOOLS,
+      ...PURCHASE_READ_TOOLS,
+      ...OPTIMIZER_TOOLS,
+      ...BOM_TOOLS,
+    ];
     const tools = modMode
       ? [...alwaysTools, ...CATALOG_SEARCH_TOOL, ...MODIFICATION_TOOLS]
       : hasMissingSkus

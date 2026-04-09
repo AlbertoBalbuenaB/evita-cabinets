@@ -273,8 +273,6 @@ function formatRelativeDate(iso: string): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-const EVITA_IA_PASSWORD = import.meta.env.VITE_EVITA_IA_PASSWORD || 'EvitaCabinets';
-
 function derivePageContext(pathname: string): { currentPage: string; projectId: string | null } {
   if (pathname.startsWith('/projects/')) {
     const id = pathname.split('/')[2];
@@ -295,9 +293,6 @@ export function AiChat() {
   const { currentPage, projectId } = derivePageContext(pathname);
   const activeProjectTab = useAiChatContext(s => s.activeProjectTab);
   const [isOpen, setIsOpen] = useState(false);
-  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('evita-ia-unlocked') === '1');
-  const [passwordInput, setPasswordInput] = useState('');
-  const [passwordError, setPasswordError] = useState(false);
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
       const saved = sessionStorage.getItem('evita-ia-messages');
@@ -365,7 +360,7 @@ export function AiChat() {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!unlocked || !user) return;
+    if (!user) return;
     const saved = sessionStorage.getItem('evita-ia-messages');
     if (saved) return;
 
@@ -388,7 +383,7 @@ export function AiChat() {
         }
       }
     })();
-  }, [unlocked, user]);
+  }, [user]);
 
   async function saveSession(msgs: Message[]) {
     if (msgs.length === 0 || !user) return;
@@ -494,17 +489,6 @@ export function AiChat() {
     currentSessionIdRef.current = null;
     setCurrentSessionId(null);
     try { sessionStorage.removeItem('evita-ia-messages'); } catch {}
-  }
-
-  function handleUnlock() {
-    if (passwordInput === EVITA_IA_PASSWORD) {
-      sessionStorage.setItem('evita-ia-unlocked', '1');
-      setUnlocked(true);
-      setPasswordError(false);
-      setPasswordInput('');
-    } else {
-      setPasswordError(true);
-    }
   }
 
   async function handleShowHistory() {
@@ -658,58 +642,8 @@ export function AiChat() {
             </div>
           </div>
 
-          {/* Password Gate */}
-          {!unlocked && (
-            <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 gap-5">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(99,102,241,0.12) 100%)',
-                  border: '1px solid rgba(99,102,241,0.2)',
-                }}
-              >
-                <Sparkles size={24} style={{ color: '#6366f1' }} />
-              </div>
-              <div className="text-center">
-                <p className="text-slate-900 font-semibold text-base mb-1">Evita IA</p>
-                <p className="text-xs text-slate-500">
-                  Enter your access password to continue
-                </p>
-              </div>
-              <div className="w-full space-y-3">
-                <input
-                  type="password"
-                  value={passwordInput}
-                  onChange={e => { setPasswordInput(e.target.value); setPasswordError(false); }}
-                  onKeyDown={e => e.key === 'Enter' && handleUnlock()}
-                  placeholder="Password"
-                  autoFocus
-                  className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none text-slate-800 placeholder-slate-400"
-                  style={{
-                    background: 'rgba(255,255,255,0.8)',
-                    border: `1px solid ${passwordError ? 'rgba(239,68,68,0.6)' : 'rgba(0,0,0,0.12)'}`,
-                  }}
-                />
-                {passwordError && (
-                  <p className="text-xs text-center text-red-500">
-                    Incorrect password. Please try again.
-                  </p>
-                )}
-                <button
-                  onClick={handleUnlock}
-                  className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-opacity"
-                  style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}
-                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
-                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                >
-                  Unlock
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* History View */}
-          {unlocked && view === 'history' && (
+          {view === 'history' && (
             <div
               className="flex-1 overflow-y-auto flex flex-col"
               style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,0,0,0.1) transparent' }}
@@ -885,7 +819,7 @@ export function AiChat() {
           )}
 
           {/* Chat View */}
-          {unlocked && view === 'chat' && (
+          {view === 'chat' && (
             <>
               <div
                 className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
