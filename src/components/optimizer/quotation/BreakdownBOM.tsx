@@ -373,7 +373,6 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
           quantity:             r.qty,
           unit:                 r.unit,
           price:                r.price,
-          subtotal:             r.subtotal,
           price_list_item_id:   r.priceListItemId,
           status:               'Ordered' as const,
           display_order:        maxOrder + 1 + i,
