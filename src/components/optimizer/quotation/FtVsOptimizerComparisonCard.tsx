@@ -79,7 +79,7 @@ export function FtVsOptimizerComparisonCard({ sqftTotal, optimizerTotal, activeM
         activeMethod === 'optimizer' ? 'border-blue-300 bg-blue-50' : 'border-slate-200 bg-white'
       }`}>
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Breakdown</span>
+          <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Optimizer</span>
           {activeMethod === 'optimizer' && (
             <span className="text-[10px] font-semibold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">ACTIVE</span>
           )}
@@ -88,7 +88,7 @@ export function FtVsOptimizerComparisonCard({ sqftTotal, optimizerTotal, activeM
           {hasOptimizer ? formatCurrency(optimizerTotal as number) : '—'}
         </div>
         <div className="text-xs text-slate-400 mt-0.5">
-          {hasOptimizer ? 'From active breakdown run' : 'No active run yet'}
+          {hasOptimizer ? 'From active optimizer run' : 'No active run yet'}
         </div>
       </div>
     </div>

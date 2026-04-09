@@ -387,7 +387,7 @@ export function OptimizerSidebar() {
                           className="border-slate-300 text-blue-600"
                         />
                         <span className="text-xs text-slate-500">
-                          {mode === 'guillotine' ? 'Guillotine only (dimensionadora)' : 'Both engines (+ MaxRect)'}
+                          {mode === 'guillotine' ? 'Guillotine only (panel saw)' : 'Both engines (+ MaxRect)'}
                         </span>
                       </label>
                     ))}
@@ -399,9 +399,9 @@ export function OptimizerSidebar() {
                   <p className="text-xs font-medium text-slate-500 mb-1.5">Optimize for</p>
                   <div className="flex flex-col gap-1">
                     {([
-                      ['min-boards', 'Menos tableros'],
-                      ['min-waste',  'Menos desperdicio'],
-                      ['min-cuts',   'Menos cortes'],
+                      ['min-boards', 'Fewer boards'],
+                      ['min-waste',  'Less waste'],
+                      ['min-cuts',   'Fewer cuts'],
                     ] as const).map(([val, label]) => (
                       <label key={val} className="flex items-center gap-2 cursor-pointer">
                         <input

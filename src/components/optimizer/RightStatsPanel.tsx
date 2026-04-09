@@ -18,7 +18,7 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
 
   const [globalOpen, setGlobalOpen] = useState(true);
   const [sheetOpen,  setSheetOpen]  = useState(true);
-  const [cutsOpen,   setCutsOpen]   = useState(true);
+  const [cutsOpen,   setCutsOpen]   = useState(false);
 
   // Compute all cut sequences once per result+unit change — avoids 3× redundant calls per render.
   // Must be called unconditionally before any early return (Rules of Hooks).

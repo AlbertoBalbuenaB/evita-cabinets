@@ -237,7 +237,7 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
                       onChange={() => setEngineMode(mode)}
                       className="border-slate-300 text-blue-600"
                     />
-                    {mode === 'guillotine' ? 'Guillotine only (dimensionadora)' : 'Both engines (+ MaxRect)'}
+                    {mode === 'guillotine' ? 'Guillotine only (panel saw)' : 'Both engines (+ MaxRect)'}
                   </label>
                 ))}
               </div>
@@ -248,9 +248,9 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
               <p className="text-xs text-slate-500 mb-1.5 font-medium">Optimize for</p>
               <div className="flex flex-col gap-1">
                 {([
-                  ['min-boards', 'Menos tableros'],
-                  ['min-waste',  'Menos desperdicio'],
-                  ['min-cuts',   'Menos cortes'],
+                  ['min-boards', 'Fewer boards'],
+                  ['min-waste',  'Less waste'],
+                  ['min-cuts',   'Fewer cuts'],
                 ] as const).map(([val, label]) => (
                   <label key={val} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
                     <input
