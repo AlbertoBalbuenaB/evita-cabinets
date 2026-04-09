@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Pencil as Edit2, FileText, FolderOpen, BarChart3,
   Plus, Calendar, Save, X, Copy, Trash2,
@@ -35,18 +35,29 @@ function formatRelativeDate(iso: string): string {
   return `${Math.floor(days / 365)} year${Math.floor(days / 365) > 1 ? 's' : ''} ago`;
 }
 
+const VALID_TABS = ['overview', 'quotations', 'purchases', 'management', 'documents', 'logs', 'analytics'] as const;
+type TabKey = typeof VALID_TABS[number];
+
 export function ProjectPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { member: currentMember } = useCurrentMember();
   const exchangeRate = useSettingsStore(s => s.settings.exchangeRateUsdToMxn);
   const fetchSettings = useSettingsStore(s => s.fetchSettings);
+
+  // Initial tab/task come from ?tab=…&task=… (e.g. deep-link from Home)
+  const initialTab = (() => {
+    const t = searchParams.get('tab');
+    return (t && (VALID_TABS as readonly string[]).includes(t)) ? (t as TabKey) : 'overview';
+  })();
+  const initialTaskId = searchParams.get('task');
 
   const [project, setProject] = useState<Project | null>(null);
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [quotationAreas, setQuotationAreas] = useState<Record<string, { name: string; subtotal: number }[]>>({});
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'quotations' | 'purchases' | 'management' | 'documents' | 'logs' | 'analytics'>('overview');
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
 
   // Overview editing
   const [editing, setEditing] = useState(false);
@@ -617,7 +628,7 @@ export function ProjectPage() {
 
       {/* Management tab — Tasks */}
       {activeTab === 'management' && (
-        <TasksSection projectId={project.id} teamMembers={teamMembers} />
+        <TasksSection projectId={project.id} teamMembers={teamMembers} initialTaskId={initialTaskId} />
       )}
 
       {/* Documents tab */}

@@ -20,6 +20,8 @@ import { TaskFormModal } from './TaskFormModal';
 interface Props {
   projectId: string;
   teamMembers: TeamMember[];
+  /** Optional deep-link task id — opens the task detail panel when provided. */
+  initialTaskId?: string | null;
 }
 
 export interface TaskFilterState {
@@ -29,7 +31,7 @@ export interface TaskFilterState {
   tagId: string;
 }
 
-export function TasksSection({ projectId, teamMembers }: Props) {
+export function TasksSection({ projectId, teamMembers, initialTaskId }: Props) {
   const { member: currentMember } = useCurrentMember();
   const [tasks, setTasks] = useState<EnhancedTask[]>([]);
   const [tags, setTags] = useState<TaskTag[]>([]);
@@ -42,6 +44,14 @@ export function TasksSection({ projectId, teamMembers }: Props) {
   useEffect(() => {
     loadAll();
   }, [projectId]);
+
+  // Open the deep-linked task once tasks have loaded and the id matches a loaded task
+  useEffect(() => {
+    if (!initialTaskId) return;
+    if (tasks.some(t => t.id === initialTaskId)) {
+      setSelectedTaskId(initialTaskId);
+    }
+  }, [initialTaskId, tasks]);
 
   async function loadAll() {
     setLoading(true);

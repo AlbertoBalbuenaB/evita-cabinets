@@ -11,12 +11,16 @@ import { format } from 'date-fns';
 import { NewProjectModal } from '../components/NewProjectModal';
 import type { EnhancedTask, TaskStatus, TaskPriority, TeamMember } from '../types';
 import { TASK_PRIORITY_CONFIG } from '../types';
+import type { Database } from '../lib/database.types';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { formatCurrency } from '../lib/calculations';
 import { useSettingsStore } from '../lib/settingsStore';
 import { useCurrentMember } from '../lib/useCurrentMember';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+type ProjectTaskRow = Database['public']['Tables']['project_tasks']['Row'];
+type ProjectLogRow  = Database['public']['Tables']['project_logs']['Row'];
 
 interface CrossProjectTask extends EnhancedTask {
   project_name: string;
@@ -142,12 +146,14 @@ interface TaskSubsectionProps {
   totalCount?: number; // if different from tasks.length (filtered vs all)
   collapsible?: boolean;
   defaultCollapsed?: boolean;
+  emptyMessage?: string;
   onNavigate: (task: CrossProjectTask) => void;
   onStatusChange: (id: string, status: TaskStatus) => void;
 }
 
 function TaskSubsection({
   variant, title, tasks, totalCount, collapsible = false, defaultCollapsed = false,
+  emptyMessage = 'No tasks here',
   onNavigate, onStatusChange,
 }: TaskSubsectionProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
@@ -186,7 +192,7 @@ function TaskSubsection({
       {!collapsed && (
         tasks.length === 0 ? (
           <div className="px-4 pb-3 pt-1 text-center">
-            <p className={`text-xs font-medium ${v.emptyDot} opacity-70`}>No tasks here</p>
+            <p className={`text-xs font-medium ${v.emptyDot} opacity-70`}>{emptyMessage}</p>
           </div>
         ) : (
           <div className="px-3 pb-3 space-y-1.5">
@@ -246,7 +252,6 @@ export function HomePage() {
   const [pipeline, setPipeline] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [taskFilters, setTaskFilters] = useState<TaskFilterState>({ priority: '', assigneeId: '', projectId: '' });
-  const [doneExpanded, setDoneExpanded] = useState(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [feedSearch, setFeedSearch] = useState('');
   const [feedDropdownOpen, setFeedDropdownOpen] = useState(false);
@@ -261,7 +266,8 @@ export function HomePage() {
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, []);
+    // load functions only close over stable setState setters; fetchSettings is stable from zustand
+  }, [fetchSettings]);
 
   async function loadQuotesData() {
     const [recentRes, pipelineRes] = await Promise.all([
@@ -272,9 +278,9 @@ export function HomePage() {
         .limit(5),
       supabase.from('quotations').select('status'),
     ]);
-    setRecentQuotes((recentRes.data || []) as any);
+    setRecentQuotes((recentRes.data ?? []) as RecentQuote[]);
     const counts: Record<string, number> = {};
-    (pipelineRes.data || []).forEach(q => {
+    (pipelineRes.data ?? []).forEach(q => {
       const status = q.status ?? 'unknown';
       counts[status] = (counts[status] || 0) + 1;
     });
@@ -291,48 +297,71 @@ export function HomePage() {
     if (!rawTasks || rawTasks.length === 0) { setTasks([]); return; }
 
     const taskIds = rawTasks.map(t => t.id);
-    const projectIds = [...new Set(rawTasks.map(t => t.project_id))];
+    const projectIds = [...new Set(rawTasks.map(t => t.project_id).filter((id): id is string => !!id))];
 
     const [assigneesRes, membersRes, projectsRes, subtasksRes] = await Promise.all([
       supabase.from('task_assignees').select('task_id, member_id').in('task_id', taskIds),
       supabase.from('team_members').select('*'),
-      supabase.from('projects').select('id, name').in('id', projectIds.filter((id): id is string => !!id)),
+      supabase.from('projects').select('id, name').in('id', projectIds),
       supabase.from('project_tasks').select('*').in('parent_task_id', taskIds).order('display_order'),
     ]);
 
-    const membersMap = new Map((membersRes.data || []).map(m => [m.id, m]));
-    const projectsMap = new Map((projectsRes.data || []).map(p => [p.id, p.name as string]));
-    const assigneeRows = assigneesRes.data || [];
-    const subtasksRaw = subtasksRes.data || [];
+    const members = membersRes.data ?? [];
+    const membersMap = new Map<string, TeamMember>(members.map(m => [m.id, m as TeamMember]));
+    const projectsMap = new Map<string, string>(
+      (projectsRes.data ?? []).map(p => [p.id, p.name as string])
+    );
+    const assigneeRows = assigneesRes.data ?? [];
+    const subtasksRaw: ProjectTaskRow[] = subtasksRes.data ?? [];
 
-    setTeamMembers((membersRes.data || []) as any);
+    setTeamMembers(members as TeamMember[]);
 
-    const enhanced: CrossProjectTask[] = rawTasks.map((raw): CrossProjectTask => {
-      const taskAssignees = assigneeRows
-        .filter(r => r.task_id === raw.id)
-        .map(r => membersMap.get(r.member_id))
-        .filter(Boolean) as TeamMember[];
+    // Pre-group assignees by task_id — O(n) instead of O(n·m)
+    const assigneesByTaskId = new Map<string, TeamMember[]>();
+    for (const row of assigneeRows) {
+      const member = membersMap.get(row.member_id);
+      if (!member) continue;
+      const list = assigneesByTaskId.get(row.task_id) ?? [];
+      list.push(member);
+      assigneesByTaskId.set(row.task_id, list);
+    }
 
-      const taskSubtasks = subtasksRaw
-        .filter(s => s.parent_task_id === raw.id)
-        .map(s => ({
-          ...s,
-          description: (s as Record<string, unknown>).description as string ?? null,
-          priority: ((s as Record<string, unknown>).priority as TaskPriority) ?? 'medium',
-          parent_task_id: s.parent_task_id ?? null,
-          assignees: [], tags: [], subtasks: [], comments: [], deliverables: [],
-          project_name: projectsMap.get(s.project_id ?? '') ?? '',
-        })) as unknown as EnhancedTask[];
+    // Pre-group subtasks by parent_task_id — O(n) instead of O(n·m)
+    const subtasksByParentId = new Map<string, ProjectTaskRow[]>();
+    for (const st of subtasksRaw) {
+      if (!st.parent_task_id) continue;
+      const list = subtasksByParentId.get(st.parent_task_id) ?? [];
+      list.push(st);
+      subtasksByParentId.set(st.parent_task_id, list);
+    }
+
+    const enhanced: CrossProjectTask[] = (rawTasks as ProjectTaskRow[]).map((raw): CrossProjectTask => {
+      const taskAssignees = assigneesByTaskId.get(raw.id) ?? [];
+
+      const taskSubtasks: EnhancedTask[] = (subtasksByParentId.get(raw.id) ?? []).map(s => ({
+        ...s,
+        description: s.description ?? null,
+        priority: (s.priority ?? 'medium') as TaskPriority,
+        parent_task_id: s.parent_task_id ?? null,
+        assignees: [],
+        tags: [],
+        subtasks: [],
+        comments: [],
+        deliverables: [],
+      } as EnhancedTask));
 
       return {
         ...raw,
-        description: (raw as Record<string, unknown>).description as string ?? null,
-        priority: ((raw as Record<string, unknown>).priority as TaskPriority) ?? 'medium',
+        description: raw.description ?? null,
+        priority: (raw.priority ?? 'medium') as TaskPriority,
         parent_task_id: null,
         assignees: taskAssignees,
-        tags: [], subtasks: taskSubtasks, comments: [], deliverables: [],
+        tags: [],
+        subtasks: taskSubtasks,
+        comments: [],
+        deliverables: [],
         project_name: projectsMap.get(raw.project_id ?? '') ?? '',
-      } as unknown as CrossProjectTask;
+      } as CrossProjectTask;
     });
 
     setTasks(enhanced);
@@ -342,16 +371,30 @@ export function HomePage() {
     const { data: logsData } = await supabase
       .from('project_logs')
       .select('id, project_id, log_type, comment, author_name, created_at')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(100);
 
     if (!logsData || logsData.length === 0) { setLogs([]); return; }
 
-    const projectIds = [...new Set(logsData.map(l => l.project_id))].filter((id): id is string => !!id);
+    type LogRow = Pick<ProjectLogRow, 'id' | 'project_id' | 'log_type' | 'comment' | 'author_name' | 'created_at'>;
+    const rows = logsData as LogRow[];
+
+    const projectIds = [...new Set(rows.map(l => l.project_id).filter((id): id is string => !!id))];
     const { data: projectsData } = await supabase
       .from('projects').select('id, name').in('id', projectIds);
 
-    const projectsMap = new Map((projectsData || []).map(p => [p.id, p.name as string]));
-    setLogs(logsData.map(l => ({ ...l, project_name: projectsMap.get(l.project_id ?? '') ?? 'Unknown Project' })) as unknown as CrossProjectLog[]);
+    const projectsMap = new Map<string, string>(
+      (projectsData ?? []).map(p => [p.id, p.name as string])
+    );
+    setLogs(rows.map(l => ({
+      id: l.id,
+      project_id: l.project_id ?? '',
+      project_name: projectsMap.get(l.project_id ?? '') ?? 'Unknown Project',
+      log_type: l.log_type,
+      comment: l.comment,
+      author_name: l.author_name,
+      created_at: l.created_at ?? '',
+    })));
   }
 
   async function handleStatusChange(taskId: string, status: TaskStatus) {
@@ -359,98 +402,134 @@ export function HomePage() {
     await supabase.from('project_tasks').update({ status, updated_at: new Date().toISOString() }).eq('id', taskId);
   }
 
+  // Deep-link: land on the project's management tab with the specific task opened
+  const goToTask = (task: CrossProjectTask) =>
+    navigate(`/projects/${task.project_id}?tab=management&task=${task.id}`);
+
   // ── Derived data ──────────────────────────────────────────────────────────
 
-  // My tasks filter
-  const myTasks = member ? tasks.filter(t => t.assignees.some(a => a.id === member.id)) : tasks;
-  const visibleTasks = myTasksOnly ? myTasks : tasks;
+  // Day boundaries computed once per mount (stable for session; a medianoche crossing requires reload)
+  const { todayTs, sevenDaysOutTs } = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    const seven = new Date(d);
+    seven.setDate(seven.getDate() + 7);
+    return { todayTs: d.getTime(), sevenDaysOutTs: seven.getTime() };
+  }, []);
 
   function toggleMyTasks(on: boolean) {
     setMyTasksOnly(on);
     localStorage.setItem('homepage_tasks_filter', on ? 'mine' : 'all');
   }
 
-  function applyFilters(list: CrossProjectTask[]): CrossProjectTask[] {
-    return list.filter(t => {
-      if (taskFilters.priority && t.priority !== taskFilters.priority) return false;
-      if (taskFilters.assigneeId && !t.assignees.some(a => a.id === taskFilters.assigneeId)) return false;
-      if (taskFilters.projectId && t.project_id !== taskFilters.projectId) return false;
-      return true;
-    });
-  }
+  // My tasks filter
+  const myTasks = useMemo(
+    () => (member ? tasks.filter(t => t.assignees.some(a => a.id === member.id)) : tasks),
+    [tasks, member]
+  );
+  const visibleTasks = useMemo(
+    () => (myTasksOnly ? myTasks : tasks),
+    [myTasksOnly, myTasks, tasks]
+  );
 
-  // Raw counts (hero stats — reflect myTasks toggle)
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const sevenDaysOut = new Date(today); sevenDaysOut.setDate(sevenDaysOut.getDate() + 7);
+  const hasActiveFilters = !!(taskFilters.priority || taskFilters.assigneeId || taskFilters.projectId);
 
-  const inProgressAll = visibleTasks.filter(t => t.status === 'in_progress').length;
-  const inReviewAll   = visibleTasks.filter(t => t.status === 'in_review').length;
-  const pendingAll    = visibleTasks.filter(t => t.status === 'pending').length;
-  const doneAll       = visibleTasks.filter(t => t.status === 'done' || t.status === 'cancelled').length;
-  const overdueAll    = visibleTasks.filter(t => t.due_date && new Date(t.due_date) < today && t.status !== 'done' && t.status !== 'cancelled').length;
-  const blockedAll    = visibleTasks.filter(t => t.status === 'blocked').length;
+  // Single memo for all task-derived lists (subsections + hero counts + allProjects)
+  const derived = useMemo(() => {
+    const applyFilters = (list: CrossProjectTask[]): CrossProjectTask[] =>
+      list.filter(t => {
+        if (taskFilters.priority && t.priority !== taskFilters.priority) return false;
+        if (taskFilters.assigneeId && !t.assignees.some(a => a.id === taskFilters.assigneeId)) return false;
+        if (taskFilters.projectId && t.project_id !== taskFilters.projectId) return false;
+        return true;
+      });
 
-  // Filtered task lists (subsections)
-  const isActive = (t: CrossProjectTask) => t.status !== 'done' && t.status !== 'cancelled';
+    const isActive = (t: CrossProjectTask) => t.status !== 'done' && t.status !== 'cancelled';
+    const dueTs = (t: CrossProjectTask) => (t.due_date ? new Date(t.due_date).getTime() : NaN);
 
-  const overdueTasks  = applyFilters(visibleTasks.filter(t => t.due_date && new Date(t.due_date) < today && isActive(t)));
-  const blockedTasks  = applyFilters(visibleTasks.filter(t => t.status === 'blocked'));
-  const workingOnIt   = applyFilters(visibleTasks.filter(t => t.status === 'in_progress'));
-  const inReviewTasks = applyFilters(visibleTasks.filter(t => t.status === 'in_review'));
-  const upcomingTasks = applyFilters(
-    visibleTasks.filter(t => t.due_date && new Date(t.due_date) >= today && new Date(t.due_date) <= sevenDaysOut && isActive(t))
-  ).sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
-  const toDo          = applyFilters(visibleTasks.filter(t => t.status === 'pending'));
-  const allDoneTasks  = visibleTasks.filter(t => t.status === 'done' || t.status === 'cancelled');
-  const filteredDone  = applyFilters(allDoneTasks);
+    // Hero counts reflect BOTH myTasks toggle AND filter bar (consistent with subsections below)
+    const filteredVisible = applyFilters(visibleTasks);
 
-  const allProjects = [
-    ...new Map(visibleTasks.map(t => [t.project_id, { id: t.project_id, name: t.project_name }])).values(),
-  ];
+    const overdueTasks  = filteredVisible.filter(t => t.due_date && dueTs(t) < todayTs && isActive(t));
+    const blockedTasks  = filteredVisible.filter(t => t.status === 'blocked');
+    const workingOnIt   = filteredVisible.filter(t => t.status === 'in_progress');
+    const inReviewTasks = filteredVisible.filter(t => t.status === 'in_review');
+    const upcomingTasks = filteredVisible
+      .filter(t => t.due_date && dueTs(t) >= todayTs && dueTs(t) <= sevenDaysOutTs && isActive(t))
+      .sort((a, b) => dueTs(a) - dueTs(b));
+    const toDo         = filteredVisible.filter(t => t.status === 'pending');
+    const allDoneTasks = visibleTasks.filter(t => t.status === 'done' || t.status === 'cancelled');
+    const filteredDone = applyFilters(allDoneTasks);
 
-  const hasActiveFilters = taskFilters.priority || taskFilters.assigneeId || taskFilters.projectId;
+    const allProjects = [
+      ...new Map(visibleTasks.map(t => [t.project_id, { id: t.project_id, name: t.project_name }])).values(),
+    ];
 
-  // Team workload — active tasks per member
-  const workload = teamMembers
-    .filter(m => m.is_active)
-    .map((m, idx) => {
-      const mine = tasks.filter(t => isActive(t) && t.assignees.some(a => a.id === m.id));
-      return {
-        member: m, idx,
-        total:      mine.length,
-        inProgress: mine.filter(t => t.status === 'in_progress').length,
-        pending:    mine.filter(t => t.status === 'pending').length,
-        blocked:    mine.filter(t => t.status === 'blocked').length,
-      };
-    })
-    .filter(w => w.total > 0)
-    .sort((a, b) => b.total - a.total);
+    return {
+      filteredVisible,
+      overdueTasks, blockedTasks, workingOnIt, inReviewTasks,
+      upcomingTasks, toDo, allDoneTasks, filteredDone,
+      allProjects,
+      // Hero counts — reflect filters for consistency
+      inProgressAll: workingOnIt.length,
+      inReviewAll:   inReviewTasks.length,
+      pendingAll:    toDo.length,
+      doneAll:       filteredDone.length,
+      overdueAll:    overdueTasks.length,
+      blockedAll:    blockedTasks.length,
+    };
+  }, [visibleTasks, taskFilters, todayTs, sevenDaysOutTs]);
 
-  const maxWorkload = workload[0]?.total ?? 1;
+  const {
+    overdueTasks, blockedTasks, workingOnIt, inReviewTasks,
+    upcomingTasks, toDo, allDoneTasks, filteredDone, allProjects,
+    inProgressAll, inReviewAll, pendingAll, doneAll, overdueAll, blockedAll,
+  } = derived;
 
-  // Feed — group by project, 3 entries max per project
-  const logsByProject = new Map<string, CrossProjectLog[]>();
-  for (const log of logs) {
-    if (!logsByProject.has(log.project_id)) logsByProject.set(log.project_id, []);
-    logsByProject.get(log.project_id)!.push(log);
-  }
-  const logProjectOrder = [...logsByProject.keys()];
+  // Team workload — based on full `tasks` (not affected by filters or myTasks toggle)
+  const { workload, maxWorkload } = useMemo(() => {
+    const isActive = (t: CrossProjectTask) => t.status !== 'done' && t.status !== 'cancelled';
+    const w = teamMembers
+      .filter(m => m.is_active)
+      .map((m, idx) => {
+        const mine = tasks.filter(t => isActive(t) && t.assignees.some(a => a.id === m.id));
+        return {
+          member: m, idx,
+          total:      mine.length,
+          inProgress: mine.filter(t => t.status === 'in_progress').length,
+          pending:    mine.filter(t => t.status === 'pending').length,
+          blocked:    mine.filter(t => t.status === 'blocked').length,
+        };
+      })
+      .filter(x => x.total > 0)
+      .sort((a, b) => b.total - a.total);
+    return { workload: w, maxWorkload: w[0]?.total ?? 1 };
+  }, [tasks, teamMembers]);
+
+  // Feed — group by project (preserving insertion order for "most recent first")
+  const { logsByProject, logProjectOrder, allFeedProjects } = useMemo(() => {
+    const byProject = new Map<string, CrossProjectLog[]>();
+    for (const log of logs) {
+      const list = byProject.get(log.project_id);
+      if (list) list.push(log);
+      else byProject.set(log.project_id, [log]);
+    }
+    const order = [...byProject.keys()];
+    const feedProjects = order.map(id => ({ id, name: byProject.get(id)![0].project_name }));
+    return { logsByProject: byProject, logProjectOrder: order, allFeedProjects: feedProjects };
+  }, [logs]);
 
   // Feed search
-  const allFeedProjectNames = useMemo(
-    () => logProjectOrder.map(id => logsByProject.get(id)![0].project_name),
-    [logs]
-  );
   const feedSuggestions = useMemo(() => {
     if (!feedSearch.trim()) return [];
     const q = feedSearch.toLowerCase();
-    return allFeedProjectNames.filter(n => n.toLowerCase().includes(q));
-  }, [feedSearch, allFeedProjectNames]);
+    return allFeedProjects.filter(p => p.name.toLowerCase().includes(q));
+  }, [feedSearch, allFeedProjects]);
   const filteredLogProjectOrder = useMemo(() => {
     if (!feedSearch.trim()) return logProjectOrder;
     const q = feedSearch.toLowerCase();
     return logProjectOrder.filter(id => logsByProject.get(id)![0].project_name.toLowerCase().includes(q));
-  }, [feedSearch, logProjectOrder]);
+  }, [feedSearch, logProjectOrder, logsByProject]);
 
   // ── Loading skeleton ──────────────────────────────────────────────────────
 
@@ -623,7 +702,7 @@ export function HomePage() {
                     {new Date(q.quote_date).toLocaleDateString()}
                   </span>
                   <span className="text-sm font-bold text-slate-900">
-                    {formatCurrency(q.total_amount / (exchangeRate || 1), 'USD')}
+                    {formatCurrency((q.total_amount ?? 0) / exchangeRate, 'USD')}
                   </span>
                 </div>
               </div>
@@ -733,7 +812,7 @@ export function HomePage() {
                     variant="red"
                     title="Overdue"
                     tasks={overdueTasks}
-                    onNavigate={task => navigate(`/projects/${task.project_id}`)}
+                    onNavigate={goToTask}
                     onStatusChange={handleStatusChange}
                   />
                 )}
@@ -742,7 +821,7 @@ export function HomePage() {
                     variant="rose"
                     title="Blocked"
                     tasks={blockedTasks}
-                    onNavigate={task => navigate(`/projects/${task.project_id}`)}
+                    onNavigate={goToTask}
                     onStatusChange={handleStatusChange}
                   />
                 )}
@@ -750,7 +829,7 @@ export function HomePage() {
                   variant="blue"
                   title="Working on it"
                   tasks={workingOnIt}
-                  onNavigate={task => navigate(`/projects/${task.project_id}`)}
+                  onNavigate={goToTask}
                   onStatusChange={handleStatusChange}
                 />
                 {inReviewTasks.length > 0 && (
@@ -758,7 +837,7 @@ export function HomePage() {
                     variant="purple"
                     title="In Review"
                     tasks={inReviewTasks}
-                    onNavigate={task => navigate(`/projects/${task.project_id}`)}
+                    onNavigate={goToTask}
                     onStatusChange={handleStatusChange}
                   />
                 )}
@@ -767,7 +846,7 @@ export function HomePage() {
                     variant="purple"
                     title="Due in 7 days"
                     tasks={upcomingTasks}
-                    onNavigate={task => navigate(`/projects/${task.project_id}`)}
+                    onNavigate={goToTask}
                     onStatusChange={handleStatusChange}
                   />
                 )}
@@ -775,57 +854,21 @@ export function HomePage() {
                   variant="amber"
                   title="To-do"
                   tasks={toDo}
-                  onNavigate={task => navigate(`/projects/${task.project_id}`)}
+                  onNavigate={goToTask}
                   onStatusChange={handleStatusChange}
                 />
 
-                {/* Done — collapsible */}
-                <div className="rounded-xl border bg-emerald-50/50 border-emerald-100/80 overflow-hidden">
-                  <button
-                    onClick={() => setDoneExpanded(p => !p)}
-                    className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/30 transition-colors"
-                  >
-                    {doneExpanded
-                      ? <ChevronDown className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                      : <ChevronRight className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                    }
-                    <span className="w-2 h-2 rounded-full flex-shrink-0 bg-emerald-500" />
-                    <span className="text-xs font-semibold uppercase tracking-wide flex-1 text-emerald-800">Done</span>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                      {hasActiveFilters && filteredDone.length !== allDoneTasks.length
-                        ? `${filteredDone.length} / ${allDoneTasks.length}`
-                        : allDoneTasks.length}
-                    </span>
-                  </button>
-
-                  {doneExpanded && (
-                    filteredDone.length === 0 ? (
-                      <div className="px-4 pb-3 pt-1 text-center">
-                        <p className="text-xs font-medium text-emerald-300 opacity-70">No completed tasks match the current filters</p>
-                      </div>
-                    ) : (
-                      <div className="px-3 pb-3 space-y-1.5">
-                        {filteredDone.map(task => (
-                          <div key={task.id}>
-                            <TaskCard
-                              task={task}
-                              onSelect={() => navigate(`/projects/${task.project_id}`)}
-                              onStatusChange={handleStatusChange}
-                              compact
-                            />
-                            <Link
-                              to={`/projects/${task.project_id}`}
-                              onClick={e => e.stopPropagation()}
-                              className="block text-[10px] text-slate-400 hover:text-blue-500 transition-colors pl-3 mt-0.5 truncate"
-                            >
-                              {task.project_name}
-                            </Link>
-                          </div>
-                        ))}
-                      </div>
-                    )
-                  )}
-                </div>
+                <TaskSubsection
+                  variant="green"
+                  title="Done"
+                  tasks={filteredDone}
+                  totalCount={allDoneTasks.length}
+                  collapsible
+                  defaultCollapsed
+                  emptyMessage="No completed tasks match the current filters"
+                  onNavigate={goToTask}
+                  onStatusChange={handleStatusChange}
+                />
               </div>
             </>
           )}
@@ -913,9 +956,9 @@ export function HomePage() {
                 )}
                 {feedDropdownOpen && feedSuggestions.length > 0 && (
                   <div className="absolute top-full mt-1 left-0 right-0 z-20 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
-                    {feedSuggestions.map(name => (
+                    {feedSuggestions.map(({ id, name }) => (
                       <button
-                        key={name}
+                        key={id}
                         onMouseDown={e => { e.preventDefault(); setFeedSearch(name); setFeedDropdownOpen(false); }}
                         className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-violet-50 hover:text-violet-700 transition-colors truncate"
                       >
@@ -979,9 +1022,9 @@ export function HomePage() {
                                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${cfg.badgeBg} ${cfg.color}`}>
                                   {cfg.label}
                                 </span>
-                                {(log.author_name || true) && (
-                                  <span className="text-[10px] text-slate-500 font-medium truncate">{log.author_name || 'Previous user'}</span>
-                                )}
+                                <span className="text-[10px] text-slate-500 font-medium truncate">
+                                  {log.author_name ?? 'Previous user'}
+                                </span>
                                 <span className="text-[10px] text-slate-400 flex items-center gap-0.5 ml-auto flex-shrink-0">
                                   <Clock className="h-2.5 w-2.5" />
                                   {format(new Date(log.created_at), 'MMM d, HH:mm')}
