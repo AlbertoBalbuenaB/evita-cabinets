@@ -91,6 +91,31 @@ export interface BoardResult {
   areaWaste: number;   // m²
   usage: number;       // 0-100
   trim: number;        // trim de bordes aplicado (mm)
+  /** Guillotine cut tree — present only when the guillotine engine produced this board.
+   *  Used by generateCutSequence() to emit valid panel-saw cut sequences.
+   *  Undefined for boards produced by the MaxRect engine. */
+  cutTree?: CutTreeNode;
+}
+
+/** A single guillotine cut separating two sub-rectangles. */
+export interface GuillotineCut {
+  type: 'H' | 'V';
+  /** Absolute position of the cut line on the board (mm). */
+  pos: number;
+  /** true = this cut separates the piece from remaining space. */
+  isPieceCut: boolean;
+}
+
+/** Node in a guillotine cut tree.
+ *  Leaf nodes: piece !== null, cut/left/right are null.
+ *  Internal nodes: cut !== null, left/right are child subtrees.
+ *  Convention: left = piece-containing / denser subtree; right = free remainder. */
+export interface CutTreeNode {
+  x: number; y: number; w: number; h: number; // absolute rect on the board (mm)
+  piece: PlacedPiece | null;
+  cut: GuillotineCut | null;
+  left: CutTreeNode | null;
+  right: CutTreeNode | null;
 }
 
 export interface OptimizationResult {

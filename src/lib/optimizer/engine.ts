@@ -2,7 +2,7 @@
 // OPTIMIZATION ENGINE — Maximal Rectangles + GRASP Multi-Strategy
 // ─────────────────────────────────────────────────────────────
 
-import { Pieza, StockSize, Remnant, BoardResult, PlacedPiece, FreeRectData, OptimizationResult, CutStep, UnitSystem } from './types';
+import { Pieza, StockSize, Remnant, BoardResult, PlacedPiece, FreeRectData, OptimizationResult, CutStep, UnitSystem, GuillotineCut, CutTreeNode } from './types';
 
 // Local unit formatter — avoids importing units.ts into the engine bundle
 const _fmtU = (v: number, unit: UnitSystem) =>
@@ -17,7 +17,9 @@ export const PIECE_COLORS = [
 const HEURISTICS = ['bssf','baf','blsf','bl','lc'] as const;
 type Heuristic = typeof HEURISTICS[number];
 const GRASP_ITERS = 40;
+const GUILLOTINE_ITERS = 20;
 const MIN_OFFCUT_DEFAULT = 200;
+const MIN_USEFUL_STRIP = 80; // mm — thin-strip penalty threshold for guillotine scoring
 
 // ─────────────────────────────────────────────────────────────
 // FREE RECT
@@ -41,6 +43,7 @@ class Board {
   placed: PlacedPiece[];
   freeRects: FreeRect[];
   offcuts: FreeRectData[];
+  cutTree?: CutTreeNode;
 
   constructor(
     ancho: number, alto: number, sierra: number,
@@ -74,6 +77,7 @@ class Board {
       areaTotal: this.areaTotal, areaUsed: this.areaUsed,
       areaWaste: this.areaWaste, usage: this.usage,
       trim: this.trim,
+      ...(this.cutTree ? { cutTree: this.cutTree } : {}),
     };
   }
 
@@ -139,10 +143,177 @@ class Board {
   }
 
   calcOffcuts(minOff = MIN_OFFCUT_DEFAULT): FreeRectData[] {
+    if (this.cutTree) {
+      // Collect usable waste leaf nodes from the guillotine tree
+      this.offcuts = [];
+      const collect = (node: CutTreeNode | null) => {
+        if (!node) return;
+        // Only true leaf nodes (no cut, no piece, no children) are actual waste space.
+        if (!node.cut && !node.piece && !node.left && !node.right && node.w >= minOff && node.h >= minOff) {
+          this.offcuts.push({ x: node.x, y: node.y, w: node.w, h: node.h });
+        }
+        collect(node.left);
+        collect(node.right);
+      };
+      collect(this.cutTree);
+      return this.offcuts;
+    }
     this.offcuts = this.freeRects
       .filter(r => r.w >= minOff && r.h >= minOff)
       .map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h }));
     return this.offcuts;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// GUILLOTINE ENGINE — Recursive Best-Fit Partitioning
+// Reference: Wäscher et al. (2007) 2D-MSSCSP with guillotine cuts
+// ─────────────────────────────────────────────────────────────
+
+/** Score how well a piece of size (iw × ih) fits into a rectangle (rw × rh).
+ *  Higher = better. Favors high area utilization, exact-dimension fits,
+ *  and penalizes leaving thin unusable strips. */
+function scoreFit(rw: number, rh: number, iw: number, ih: number): number {
+  const areaRatio   = (iw * ih) / (rw * rh);
+  const exactBonus  = (iw === rw ? 0.2 : 0) + (ih === rh ? 0.2 : 0);
+  const thinPenalty =
+    (rw - iw > 0 && rw - iw < MIN_USEFUL_STRIP ? -0.15 : 0) +
+    (rh - ih > 0 && rh - ih < MIN_USEFUL_STRIP ? -0.15 : 0);
+  return areaRatio + exactBonus + thinPenalty;
+}
+
+/** Recursively pack items into rectangle (rx, ry, rw, rh) using guillotine cuts.
+ *  Returns placed pieces and a CutTreeNode for exact panel-saw sequencing.
+ *  Items must already be expanded by quantity (one entry per physical piece). */
+function guillotinePack(
+  rx: number, ry: number, rw: number, rh: number,
+  items: (Pieza & { _idx: number })[],
+  kerf: number,
+  depth = 0,
+): { placed: PlacedPiece[]; tree: CutTreeNode | null } {
+  if (!items.length || rw < 10 || rh < 10 || depth > 40) {
+    return { placed: [], tree: null };
+  }
+
+  // ── Find best-fitting item (all orientations, all items) ──
+  let bestItem: (Pieza & { _idx: number }) | null = null;
+  let bestIw = 0, bestIh = 0, bestScore = -Infinity;
+
+  for (const item of items) {
+    if (item.veta !== 'vertical' && item.ancho <= rw && item.alto <= rh) {
+      const s = scoreFit(rw, rh, item.ancho, item.alto);
+      if (s > bestScore) { bestScore = s; bestItem = item; bestIw = item.ancho; bestIh = item.alto; }
+    }
+    if (item.veta !== 'horizontal' && item.alto <= rw && item.ancho <= rh) {
+      const s = scoreFit(rw, rh, item.alto, item.ancho);
+      if (s > bestScore) { bestScore = s; bestItem = item; bestIw = item.alto; bestIh = item.ancho; }
+    }
+  }
+
+  if (!bestItem) return { placed: [], tree: null };
+
+  const pp: PlacedPiece = {
+    piece: bestItem,
+    x: rx, y: ry,
+    w: bestIw, h: bestIh,
+    rotated: bestIw !== bestItem.ancho,
+    idx: bestItem._idx,
+  };
+  const remaining = items.filter(it => it !== bestItem);
+
+  // ── H-cut option: right remainder (beside piece) + bottom remainder ──
+  const hRightX = rx + bestIw + kerf, hRightW = rw - bestIw - kerf;
+  const hBotY   = ry + bestIh + kerf, hBotH   = rh - bestIh - kerf;
+
+  const hRight = hRightW >= 10 && bestIh >= 10
+    ? guillotinePack(hRightX, ry, hRightW, bestIh, remaining, kerf, depth + 1)
+    : { placed: [] as PlacedPiece[], tree: null };
+  // Object-reference equality is correct here: each expanded piece instance is a distinct
+  // object (created via spread in run()), so === correctly identifies which instances
+  // were placed even when multiple items share the same _idx (cantidad > 1).
+  const hRemainingAfterRight = remaining.filter(it => !hRight.placed.some(pp => pp.piece === it));
+  const hBot = hBotH >= 10
+    ? guillotinePack(rx, hBotY, rw, hBotH, hRemainingAfterRight, kerf, depth + 1)
+    : { placed: [] as PlacedPiece[], tree: null };
+  const hTotal = hRight.placed.length + hBot.placed.length;
+
+  // ── V-cut option: top remainder (above remainder) + right remainder ──
+  const vTopH   = rh - bestIh - kerf;
+  const vRightX = rx + bestIw + kerf, vRightW = rw - bestIw - kerf;
+
+  const vTop = vTopH >= 10 && bestIw >= 10
+    ? guillotinePack(rx, ry + bestIh + kerf, bestIw, vTopH, remaining, kerf, depth + 1)
+    : { placed: [] as PlacedPiece[], tree: null };
+  const vRemainingAfterTop = remaining.filter(it => !vTop.placed.some(pp => pp.piece === it));
+  const vRight = vRightW >= 10
+    ? guillotinePack(vRightX, ry, vRightW, rh, vRemainingAfterTop, kerf, depth + 1)
+    : { placed: [] as PlacedPiece[], tree: null };
+  const vTotal = vTop.placed.length + vRight.placed.length;
+
+  // ── Choose winner; tie-break by actual combined waste (unoccupied) area ──
+  // H-cut waste = right-of-piece strip + full-width bottom strip minus placed pieces
+  const hWasteArea = (hRightW > 0 ? hRightW * bestIh : 0) + (hBotH > 0 ? rw * hBotH : 0)
+    - hRight.placed.reduce((s, p) => s + p.w * p.h, 0)
+    - hBot.placed.reduce((s, p) => s + p.w * p.h, 0);
+  // V-cut waste = top-of-piece strip + full-height right strip minus placed pieces
+  const vWasteArea = (vTopH > 0 ? bestIw * vTopH : 0) + (vRightW > 0 ? vRightW * rh : 0)
+    - vTop.placed.reduce((s, p) => s + p.w * p.h, 0)
+    - vRight.placed.reduce((s, p) => s + p.w * p.h, 0);
+  const useH = hTotal > vTotal || (hTotal === vTotal && hWasteArea <= vWasteArea);
+
+  // ── Build CutTreeNode ──
+  const pieceLeaf: CutTreeNode = { x: rx, y: ry, w: bestIw, h: bestIh, piece: pp, cut: null, left: null, right: null };
+
+  if (useH) {
+    // Structure: H-cut at ry+bestIh+kerf/2 (full width)
+    //   left child:  V-cut at rx+bestIw+kerf/2 (height=bestIh)
+    //                  left=pieceLeaf  right=rightRemainder
+    //   right child: bottomRemainder (full width, below)
+    const vCutPos = rx + bestIw + kerf / 2;
+    const hCutPos = ry + bestIh + kerf / 2;
+
+    const rightNode = hRight.tree ?? (hRightW >= 10 && bestIh >= 10
+      ? { x: hRightX, y: ry, w: hRightW, h: bestIh, piece: null, cut: null, left: null, right: null }
+      : null);
+    const vCut: GuillotineCut = { type: 'V', pos: vCutPos, isPieceCut: true };
+    const innerNode: CutTreeNode = rightNode
+      ? { x: rx, y: ry, w: rw, h: bestIh, piece: null, cut: vCut, left: pieceLeaf, right: rightNode }
+      : { x: rx, y: ry, w: bestIw, h: bestIh, piece: null, cut: null, left: pieceLeaf, right: null };
+
+    const botNode = hBot.tree ?? (hBotH >= 10
+      ? { x: rx, y: hBotY, w: rw, h: hBotH, piece: null, cut: null, left: null, right: null }
+      : null);
+    const hCut: GuillotineCut = { type: 'H', pos: hCutPos, isPieceCut: true };
+    const rootTree: CutTreeNode = botNode
+      ? { x: rx, y: ry, w: rw, h: rh, piece: null, cut: hCut, left: innerNode, right: botNode }
+      : { x: rx, y: ry, w: rw, h: rh, piece: null, cut: null, left: innerNode, right: null };
+
+    return { placed: [pp, ...hRight.placed, ...hBot.placed], tree: rootTree };
+  } else {
+    // Structure: V-cut at rx+bestIw+kerf/2 (full height)
+    //   left child:  H-cut at ry+bestIh+kerf/2 (width=bestIw)
+    //                  left=pieceLeaf  right=topRemainder
+    //   right child: rightRemainder (full height, to the right)
+    const hCutPos = ry + bestIh + kerf / 2;
+    const vCutPos = rx + bestIw + kerf / 2;
+
+    const topNode = vTop.tree ?? (vTopH >= 10 && bestIw >= 10
+      ? { x: rx, y: ry + bestIh + kerf, w: bestIw, h: vTopH, piece: null, cut: null, left: null, right: null }
+      : null);
+    const hCut: GuillotineCut = { type: 'H', pos: hCutPos, isPieceCut: true };
+    const innerNode: CutTreeNode = topNode
+      ? { x: rx, y: ry, w: bestIw, h: rh, piece: null, cut: hCut, left: pieceLeaf, right: topNode }
+      : { x: rx, y: ry, w: bestIw, h: rh, piece: null, cut: null, left: pieceLeaf, right: null };
+
+    const rightNode = vRight.tree ?? (vRightW >= 10
+      ? { x: vRightX, y: ry, w: vRightW, h: rh, piece: null, cut: null, left: null, right: null }
+      : null);
+    const vCut: GuillotineCut = { type: 'V', pos: vCutPos, isPieceCut: false };
+    const rootTree: CutTreeNode = rightNode
+      ? { x: rx, y: ry, w: rw, h: rh, piece: null, cut: vCut, left: innerNode, right: rightNode }
+      : { x: rx, y: ry, w: rw, h: rh, piece: null, cut: null, left: innerNode, right: null };
+
+    return { placed: [pp, ...vTop.placed, ...vRight.placed], tree: rootTree };
   }
 }
 
@@ -238,7 +409,28 @@ class Optimizer {
       if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP(${sn}+${HEURISTICS[hi]})`; }
     }
 
-    if (best && best.length > 1) {
+    // ── Guillotine passes: 8 deterministic + GUILLOTINE_ITERS GRASP ──
+    for (const [sn, sf] of sorts) {
+      const sorted = [...group].sort(sf);
+      const bds = this._buildGuillotine(sorted, mat, grs);
+      const sc  = this._score(bds);
+      totalIters++;
+      if (sc < bestScore) { bestScore = sc; best = bds; bestName = `guill-${sn}`; }
+    }
+    for (let g = 0; g < GUILLOTINE_ITERS; g++) {
+      const si = Math.floor(rng() * sorts.length);
+      const [sn, sf] = sorts[si];
+      const shuffled = this._shuffleWin([...group].sort(sf), rng);
+      const bds = this._buildGuillotine(shuffled, mat, grs);
+      const sc  = this._score(bds);
+      totalIters++;
+      if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP-guill(${sn})`; }
+    }
+
+    // Local search rebuilds boards using MaxRect semantics (Board.place()), which would
+    // erase the guillotine cut tree. Skip it when the winner is a guillotine result.
+    const isGuillotine = bestName.startsWith('guill') || bestName.startsWith('GRASP-guill');
+    if (best && best.length > 1 && !isGuillotine) {
       const improved = this._localSearch(best, mat, grs);
       if (this._score(improved) < bestScore) { best = improved; bestName += ' +local'; }
     }
@@ -336,6 +528,69 @@ class Optimizer {
         console.warn(`Piece ${p.nombre || p.ancho + 'x' + p.alto} does not fit any stock size`);
       }
     }
+    return boards;
+  }
+
+  /** Guillotine-based build: packs pieces via recursive guillotine partitioning.
+   *  Returns Board[] (same type as _build) so _score can compare across algorithms. */
+  private _buildGuillotine(pcs: (Pieza & { _idx: number })[], mat: string, grs: number): Board[] {
+    const boards: Board[] = [];
+    const availStocks = this._getStocksFor(mat, grs);
+    if (!availStocks.length) return [];
+
+    const usageCount: Record<string, number> = {};
+    let remaining = [...pcs];
+
+    while (remaining.length > 0) {
+      let placed = false;
+
+      for (const st of availStocks) {
+        if (st.isRemnant && st._used) continue;
+        if (st.stockId && st.qty && st.qty > 0) {
+          if ((usageCount[st.stockId] || 0) >= st.qty) continue;
+        }
+
+        const sierra = st.sierra || this.sierra;
+        const t = this.trim;
+        // Effective packing area: board minus trim on all sides, minus one kerf for edge
+        const packW = st.ancho - 2 * t;
+        const packH = st.alto  - 2 * t;
+
+        if (packW < 10 || packH < 10) continue;
+
+        // Check if at least one remaining piece can fit (any orientation)
+        const anyFits = remaining.some(p =>
+          (p.veta !== 'vertical'   && p.ancho <= packW && p.alto  <= packH) ||
+          (p.veta !== 'horizontal' && p.alto  <= packW && p.ancho <= packH)
+        );
+        if (!anyFits) continue;
+
+        const result = guillotinePack(t, t, packW, packH, remaining, sierra);
+        if (!result.placed.length) continue;
+
+        const nb = new Board(st.ancho, st.alto, sierra, mat, grs, {
+          nombre: st.nombre, costo: st.costo, isRemnant: !!st.isRemnant,
+        }, t);
+        nb.placed   = result.placed;
+        nb.cutTree  = result.tree ?? undefined;
+        boards.push(nb);
+
+        if (st.isRemnant) st._used = true;
+        if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
+
+        const placedSet = new Set(result.placed.map(pp => pp.piece));
+        remaining = remaining.filter(p => !placedSet.has(p));
+        placed = true;
+        break;
+      }
+
+      if (!placed) {
+        // No stock can fit any remaining piece
+        remaining.forEach(p => console.warn(`[guillotine] Piece ${p.nombre || p.ancho + 'x' + p.alto} does not fit any stock`));
+        break;
+      }
+    }
+
     return boards;
   }
 
@@ -474,6 +729,28 @@ export function runOptimization(
 // ─────────────────────────────────────────────────────────────
 // GUILLOTINE CUT SEQUENCE
 // ─────────────────────────────────────────────────────────────
+/** Traverse a guillotine cut tree in pre-order and emit cut steps.
+ *  Each internal node with a cut emits one CutStep; leaf nodes are skipped. */
+function traverseGuillotineTree(
+  node: CutTreeNode | null,
+  steps: CutStep[],
+  cutN: number,
+  unit: UnitSystem,
+): number {
+  if (!node || !node.cut) return cutN;
+  const dir = node.cut.type === 'H' ? 'Horizontal' : 'Vertical';
+  const label = node.cut.isPieceCut ? 'corte pieza' : 'separación';
+  steps.push({
+    n: cutN++,
+    type: node.cut.type,
+    pos: node.cut.pos,
+    desc: `${dir} ${label} @ ${_fmtU(node.cut.pos, unit)}`,
+  });
+  cutN = traverseGuillotineTree(node.left, steps, cutN, unit);
+  cutN = traverseGuillotineTree(node.right, steps, cutN, unit);
+  return cutN;
+}
+
 export function generateCutSequence(board: BoardResult, unit: UnitSystem = 'mm'): CutStep[] {
   const cuts: CutStep[] = [];
   let cutN = 1;
@@ -487,7 +764,13 @@ export function generateCutSequence(board: BoardResult, unit: UnitSystem = 'mm')
     cuts.push({ n: cutN++, type: 'V', pos: board.ancho - t, desc: `x=${_fmtU(board.ancho - t, unit)} — right trim`, isTrim: true });
   }
 
-  // ── Piece cuts ──
+  // ── Guillotine tree path: exact panel-saw sequence ──
+  if (board.cutTree) {
+    traverseGuillotineTree(board.cutTree, cuts, cutN, unit);
+    return cuts;
+  }
+
+  // ── Fallback: grid-based heuristic (for MaxRect boards) ──
   const pcs = [...board.placed].sort((a, b) => a.y - b.y || a.x - b.x);
   if (!pcs.length) return cuts;
 
