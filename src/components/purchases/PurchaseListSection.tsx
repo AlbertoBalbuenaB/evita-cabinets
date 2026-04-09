@@ -138,6 +138,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
         concept: '',
         quantity: 1,
         price: 0,
+        status: 'Pending',
         display_order: maxOrder + 1,
         assigned_to_member_id: estelaId,
       })

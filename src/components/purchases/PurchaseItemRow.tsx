@@ -348,9 +348,9 @@ export function PurchaseItemRow({
       {/* Status */}
       <td className="px-2 py-2 w-[124px]">
         <select
-          value={item.status ?? 'Ordered'}
+          value={item.status ?? 'Pending'}
           onChange={(e) => handleImmediateUpdate({ status: e.target.value })}
-          className={`w-full appearance-none px-2 py-1.5 text-[11px] font-medium rounded-full cursor-pointer outline-none transition ${STATUS_STYLES[item.status ?? 'Ordered']}`}
+          className={`w-full appearance-none px-2 py-1.5 text-[11px] font-medium rounded-full cursor-pointer outline-none transition ${STATUS_STYLES[item.status ?? 'Pending']}`}
         >
           <option value="Ordered">Ordered</option>
           <option value="Pending">Pending</option>
