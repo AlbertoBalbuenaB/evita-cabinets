@@ -52,7 +52,7 @@ export function PricingMethodToggle({ value, onChange, canSelectOptimizer, size 
         title={canSelectOptimizer ? undefined : 'Save and activate a run first to enable breakdown pricing.'}
       >
         <Layers className="h-3.5 w-3.5" />
-        Breakdown
+        Optimizer
       </button>
     </div>
   );
