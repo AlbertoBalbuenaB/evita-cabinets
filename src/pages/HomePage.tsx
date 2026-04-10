@@ -348,6 +348,7 @@ export function HomePage() {
   const [personalQuickAdd, setPersonalQuickAdd] = useState('');
   const [personalQuickBucket, setPersonalQuickBucket] = useState<TaskBucket>('inbox');
   const [creatingPersonal, setCreatingPersonal] = useState(false);
+  const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [showNewLogModal, setShowNewLogModal] = useState(false);
   const [viewingLog, setViewingLog] = useState<CrossProjectLog | null>(null);
@@ -782,25 +783,33 @@ export function HomePage() {
       };
   const { inProgressAll, inReviewAll, pendingAll, doneAll, overdueAll, blockedAll } = heroCounts;
 
-  // Team workload — based on full `tasks` (not affected by filters or myTasks toggle)
-  const { workload, maxWorkload } = useMemo(() => {
+  // Team workload — based on full `projectTasks` (not affected by filters or myTasks toggle)
+  const workload = useMemo(() => {
     const isActive = (t: CrossProjectTask) => t.status !== 'done' && t.status !== 'cancelled';
+    const dueTs = (t: CrossProjectTask) => (t.due_date ? new Date(t.due_date).getTime() : NaN);
+
     const w = teamMembers
       .filter(m => m.is_active)
       .map((m, idx) => {
         const mine = projectTasks.filter(t => isActive(t) && t.assignees.some(a => a.id === m.id));
         return {
           member: m, idx,
+          tasks: mine,
           total:      mine.length,
+          overdue:    mine.filter(t => t.due_date && dueTs(t) < todayTs).length,
           inProgress: mine.filter(t => t.status === 'in_progress').length,
           pending:    mine.filter(t => t.status === 'pending').length,
           blocked:    mine.filter(t => t.status === 'blocked').length,
         };
       })
       .filter(x => x.total > 0)
-      .sort((a, b) => b.total - a.total);
-    return { workload: w, maxWorkload: w[0]?.total ?? 1 };
-  }, [projectTasks, teamMembers]);
+      // Risk-weighted sort: overdue → blocked → in-progress → pending
+      .sort((a, b) => {
+        const risk = (w: typeof a) => w.overdue * 1000 + w.blocked * 100 + w.inProgress * 10 + w.pending;
+        return risk(b) - risk(a);
+      });
+    return w;
+  }, [projectTasks, teamMembers, todayTs]);
 
   // Feed — group by project (preserving insertion order for "most recent first")
   const { logsByProject, logProjectOrder, allFeedProjects } = useMemo(() => {
@@ -1385,31 +1394,105 @@ export function HomePage() {
               <p className="text-sm font-medium">No active tasks assigned</p>
             </div>
           ) : (
-            <div className="p-4 space-y-3">
-              {workload.map(({ member, idx, total, inProgress, pending, blocked: bk }) => (
-                <div key={member.id} className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${AVATAR_COLORS[idx % AVATAR_COLORS.length]}`}>
-                    {getInitials(member.name)}
+            <div className="p-4 space-y-1">
+              {workload.map((w) => {
+                const { member, idx, tasks: memberTasks, total, overdue, inProgress, pending, blocked: bk } = w;
+                const isExpanded = expandedMemberId === member.id;
+                const pct = (n: number) => total > 0 ? `${(n / total) * 100}%` : '0%';
+
+                function handleMemberClick() {
+                  if (isExpanded) {
+                    // Collapse + clear filter
+                    setExpandedMemberId(null);
+                    setTaskFilters(prev => ({ ...prev, assigneeId: '' }));
+                  } else {
+                    // Expand + filter to this member + switch to Projects tab
+                    setExpandedMemberId(member.id);
+                    setTaskFilters(prev => ({ ...prev, assigneeId: member.id }));
+                    switchTaskTab('projects');
+                  }
+                }
+
+                return (
+                  <div key={member.id}>
+                    <div
+                      onClick={handleMemberClick}
+                      className={`flex items-center gap-3 px-2 py-2.5 -mx-2 rounded-xl cursor-pointer transition-all ${
+                        isExpanded
+                          ? 'bg-blue-50/60 ring-1 ring-blue-200/50'
+                          : 'hover:bg-slate-50/80'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${AVATAR_COLORS[idx % AVATAR_COLORS.length]}`}>
+                        {getInitials(member.name)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-medium text-slate-700 truncate">{member.name.split(' ')[0]}</span>
+                            {overdue > 0 && (
+                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded-full animate-pulse">
+                                <AlertTriangle className="h-2.5 w-2.5" />
+                                {overdue} overdue
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs font-bold text-slate-500 tabular-nums ml-2 flex-shrink-0">{total}</span>
+                        </div>
+                        {/* Proportional stacked bar — segments show composition of member's work */}
+                        <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden flex">
+                          {overdue > 0    && <div className="bg-red-500 transition-all"  style={{ width: pct(overdue) }} />}
+                          {bk > 0         && <div className="bg-rose-400 transition-all" style={{ width: pct(bk) }} />}
+                          {inProgress > 0 && <div className="bg-blue-500 transition-all" style={{ width: pct(inProgress) }} />}
+                          {pending > 0    && <div className="bg-amber-400 transition-all" style={{ width: pct(pending) }} />}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1">
+                          {overdue > 0    && <span className="text-[10px] text-red-600 font-medium">{overdue} overdue</span>}
+                          {bk > 0         && <span className="text-[10px] text-rose-600 font-medium">{bk} blocked</span>}
+                          {inProgress > 0 && <span className="text-[10px] text-blue-600 font-medium">{inProgress} in progress</span>}
+                          {pending > 0    && <span className="text-[10px] text-amber-600 font-medium">{pending} pending</span>}
+                        </div>
+                      </div>
+                      <ChevronDown className={`h-3.5 w-3.5 text-slate-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </div>
+
+                    {/* Expanded task list */}
+                    {isExpanded && (
+                      <div className="ml-11 mr-1 mt-1 mb-2 space-y-0.5">
+                        {memberTasks.slice(0, 8).map(task => {
+                          const taskOverdue = task.due_date && new Date(task.due_date).getTime() < todayTs;
+                          return (
+                            <div
+                              key={task.id}
+                              onClick={e => { e.stopPropagation(); openTaskEditor(task); }}
+                              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer hover:bg-white/80 hover:shadow-sm transition-all group"
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                taskOverdue ? 'bg-red-500' :
+                                task.status === 'blocked' ? 'bg-rose-500' :
+                                task.status === 'in_progress' ? 'bg-blue-500' :
+                                task.status === 'in_review' ? 'bg-purple-500' :
+                                'bg-amber-400'
+                              }`} />
+                              <span className="text-slate-700 truncate flex-1 group-hover:text-blue-700 transition-colors">{task.title}</span>
+                              {task.due_date && (
+                                <span className={`text-[10px] tabular-nums flex-shrink-0 ${taskOverdue ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
+                                  {format(new Date(task.due_date), 'MMM d')}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {memberTasks.length > 8 && (
+                          <span className="block text-[10px] text-slate-400 px-2.5 py-1">
+                            +{memberTasks.length - 8} more
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm font-medium text-slate-700 truncate">{member.name.split(' ')[0]}</span>
-                      <span className="text-xs font-bold text-slate-500 tabular-nums ml-2 flex-shrink-0">{total}</span>
-                    </div>
-                    {/* Stacked mini bar */}
-                    <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden flex">
-                      <div className="bg-blue-500 transition-all" style={{ width: `${(inProgress / maxWorkload) * 100}%` }} />
-                      <div className="bg-amber-400 transition-all" style={{ width: `${(pending / maxWorkload) * 100}%` }} />
-                      {bk > 0 && <div className="bg-rose-500 transition-all" style={{ width: `${(bk / maxWorkload) * 100}%` }} />}
-                    </div>
-                    <div className="flex items-center gap-3 mt-1">
-                      {inProgress > 0 && <span className="text-[10px] text-blue-600 font-medium">{inProgress} in progress</span>}
-                      {pending > 0   && <span className="text-[10px] text-amber-600 font-medium">{pending} pending</span>}
-                      {bk > 0        && <span className="text-[10px] text-rose-600 font-medium">{bk} blocked</span>}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
