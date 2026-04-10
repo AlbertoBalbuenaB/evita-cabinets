@@ -1464,17 +1464,38 @@ export function renderBoardCAD(
 
   // ── Kerf lines ────────────────────────────────────────────
   if (showKerf) {
-    const cuts = generateCutSequence(board, unit);
     ctx.strokeStyle = 'rgba(239,68,68,0.65)';
     ctx.lineWidth = Math.max(1, board.sierra * zoom);
     ctx.setLineDash([]);
-    cuts.forEach((cut) => {
-      if (cut.isTrim) return;
-      ctx.beginPath();
-      if (cut.type === 'H') { ctx.moveTo(ox, oy + cut.pos * zoom); ctx.lineTo(ox + scaledW, oy + cut.pos * zoom); }
-      else { ctx.moveTo(ox + cut.pos * zoom, oy); ctx.lineTo(ox + cut.pos * zoom, oy + scaledH); }
-      ctx.stroke();
-    });
+    // Draw from CutTreeNode when available — bounds each cut to its node rectangle
+    // so V-cuts inside a shelf don't extend through other shelves.
+    if (board.cutTree) {
+      const drawTree = (node: CutTreeNode | null) => {
+        if (!node || !node.cut) return;
+        ctx.beginPath();
+        if (node.cut.type === 'H') {
+          ctx.moveTo(ox + node.x * zoom, oy + node.cut.pos * zoom);
+          ctx.lineTo(ox + (node.x + node.w) * zoom, oy + node.cut.pos * zoom);
+        } else {
+          ctx.moveTo(ox + node.cut.pos * zoom, oy + node.y * zoom);
+          ctx.lineTo(ox + node.cut.pos * zoom, oy + (node.y + node.h) * zoom);
+        }
+        ctx.stroke();
+        drawTree(node.left);
+        drawTree(node.right);
+      };
+      drawTree(board.cutTree);
+    } else {
+      // Fallback for MaxRect boards (no cutTree): use flat cut sequence
+      const cuts = generateCutSequence(board, unit);
+      cuts.forEach((cut) => {
+        if (cut.isTrim) return;
+        ctx.beginPath();
+        if (cut.type === 'H') { ctx.moveTo(ox, oy + cut.pos * zoom); ctx.lineTo(ox + scaledW, oy + cut.pos * zoom); }
+        else { ctx.moveTo(ox + cut.pos * zoom, oy); ctx.lineTo(ox + cut.pos * zoom, oy + scaledH); }
+        ctx.stroke();
+      });
+    }
   }
 
   ctx.restore(); // end clip
