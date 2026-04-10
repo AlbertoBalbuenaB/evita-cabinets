@@ -168,8 +168,8 @@ export function HomeTaskFormModal({
         );
       }
 
-      // Notify assignees — only for project tasks (planner tasks are personal)
-      if (createDefaults?.kind === 'project' && assigneeIds.length) {
+      // Notify assignees (both project and planner tasks)
+      if (assigneeIds.length) {
         const priorityLabel = TASK_PRIORITY_CONFIG[priority]?.label ?? priority;
         createNotifications({
           recipientIds: assigneeIds,
@@ -240,11 +240,29 @@ export function HomeTaskFormModal({
     }
 
     // Sync assignees: delete all then re-insert
+    const previousAssigneeIds = new Set(task.assignees.map(a => a.id));
     await supabase.from('task_assignees').delete().eq('task_id', task.id);
     if (assigneeIds.length) {
       await supabase.from('task_assignees').insert(
         assigneeIds.map(mid => ({ task_id: task.id, member_id: mid }))
       );
+    }
+
+    // Notify newly added assignees (not those who were already assigned)
+    const newlyAdded = assigneeIds.filter(id => !previousAssigneeIds.has(id));
+    if (newlyAdded.length) {
+      const priorityLabel = TASK_PRIORITY_CONFIG[updated.priority as TaskPriority]?.label ?? updated.priority;
+      createNotifications({
+        recipientIds: newlyAdded,
+        actorId: currentMemberId ?? null,
+        actorName: null,
+        type: 'task_assigned',
+        title: `Assigned to: ${updated.title}`,
+        body: `${updated.status === 'pending' ? 'Pending' : updated.status} · ${priorityLabel}${updated.due_date ? ` · Due: ${new Date(updated.due_date).toLocaleDateString()}` : ''}`,
+        projectId: updated.project_id,
+        referenceType: 'project_task',
+        referenceId: task.id,
+      }).catch(console.error);
     }
 
     const membersById = new Map(teamMembers.map(m => [m.id, m]));

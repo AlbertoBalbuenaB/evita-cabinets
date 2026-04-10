@@ -36,6 +36,7 @@ export interface CreatedLog {
   project_name: string;
   log_type: string;
   comment: string;
+  author_id: string | null;
   author_name: string | null;
   created_at: string;
 }
@@ -94,6 +95,7 @@ export function HomeLogCreateModal({
       project_name: projectName,
       log_type: data.log_type,
       comment: data.comment,
+      author_id: data.author_id ?? null,
       author_name: data.author_name,
       created_at: data.created_at ?? new Date().toISOString(),
     });

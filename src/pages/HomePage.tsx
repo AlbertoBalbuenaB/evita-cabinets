@@ -39,6 +39,7 @@ interface CrossProjectLog {
   project_name: string;
   log_type: string;
   comment: string;
+  author_id: string | null;
   author_name: string | null;
   created_at: string;
 }
@@ -485,13 +486,13 @@ export function HomePage() {
   async function loadLogs() {
     const { data: logsData } = await supabase
       .from('project_logs')
-      .select('id, project_id, log_type, comment, author_name, created_at')
+      .select('id, project_id, log_type, comment, author_id, author_name, created_at')
       .order('created_at', { ascending: false })
       .limit(100);
 
     if (!logsData || logsData.length === 0) { setLogs([]); return; }
 
-    type LogRow = Pick<ProjectLogRow, 'id' | 'project_id' | 'log_type' | 'comment' | 'author_name' | 'created_at'>;
+    type LogRow = Pick<ProjectLogRow, 'id' | 'project_id' | 'log_type' | 'comment' | 'author_id' | 'author_name' | 'created_at'>;
     const rows = logsData as LogRow[];
 
     const projectIds = [...new Set(rows.map(l => l.project_id).filter((id): id is string => !!id))];
@@ -507,6 +508,7 @@ export function HomePage() {
       project_name: projectsMap.get(l.project_id ?? '') ?? 'Unknown Project',
       log_type: l.log_type,
       comment: l.comment,
+      author_id: l.author_id ?? null,
       author_name: l.author_name,
       created_at: l.created_at ?? '',
     })));

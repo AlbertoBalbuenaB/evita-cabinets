@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
+import { createNotifications } from '../lib/notifications';
 import {
   X, ExternalLink, Clock, Send,
   FileText, RefreshCw, CheckCircle, AlertTriangle, XCircle, Trophy, Radio,
@@ -62,6 +63,7 @@ interface LogEntry {
   project_name: string;
   log_type: string;
   comment: string;
+  author_id: string | null;
   author_name: string | null;
   created_at: string;
 }
@@ -154,6 +156,22 @@ export function HomeLogDetailModal({ log, currentMemberId, currentMemberName, on
     if (error || !data) return;
     setReplies(prev => [...prev, data as Reply]);
     setReplyText('');
+
+    // Notify the original log author that someone replied (skip if replying to own log)
+    if (log.author_id && log.author_id !== currentMemberId) {
+      const preview = text.length > 120 ? text.slice(0, 117) + '…' : text;
+      createNotifications({
+        recipientIds: [log.author_id],
+        actorId: currentMemberId,
+        actorName: currentMemberName,
+        type: 'log_reply',
+        title: `Replied to your ${(LOG_TYPES[(log.log_type as LogType)] ?? LOG_TYPES.note).label.toLowerCase()} entry`,
+        body: preview,
+        projectId: log.project_id,
+        referenceType: 'project_log',
+        referenceId: log.id,
+      }).catch(console.error);
+    }
   }
 
   return createPortal(
