@@ -2,10 +2,10 @@ import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   BarChart3,
-  LayoutDashboard,
   FolderOpen,
   Package,
   Warehouse,
+  Wrench,
   Settings as SettingsIcon,
   LogOut,
   Bell,
@@ -54,7 +54,7 @@ export function Layout({ children, onLogout }: LayoutProps) {
     { path: '/projects', label: 'Projects', icon: FolderOpen },
     { path: '/products', label: 'Cabinets', icon: Package },
     { path: '/prices', label: 'Inventory', icon: Warehouse },
-    { path: '/optimizer', label: 'Optimizer', icon: LayoutDashboard },
+    { path: '/tools', label: 'Tools', icon: Wrench },
   ];
 
   function isActive(path: string) {
@@ -237,7 +237,7 @@ export function Layout({ children, onLogout }: LayoutProps) {
         )}
       </nav>
 
-      <main className={pathname.startsWith('/optimizer') ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'}>
+      <main className={pathname.startsWith('/optimizer') || pathname.startsWith('/tools/plan-viewer') ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'}>
         {children}
       </main>
 
