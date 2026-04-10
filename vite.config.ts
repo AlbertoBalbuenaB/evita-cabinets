@@ -16,6 +16,7 @@ export default defineConfig({
           'vendor-xlsx': ['xlsx'],
           'vendor-pdf': ['jspdf'],
           'vendor-zip': ['jszip'],
+          'vendor-pdfjs': ['pdfjs-dist'],
           'vendor-tiptap': [
             '@tiptap/react',
             '@tiptap/starter-kit',

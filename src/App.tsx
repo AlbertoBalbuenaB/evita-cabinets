@@ -20,6 +20,8 @@ const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.S
 const OptimizerPage = lazy(() => import('./pages/OptimizerPage').then(m => ({ default: m.OptimizerPage })));
 const AiChat = lazy(() => import('./components/AiChat').then(m => ({ default: m.AiChat })));
 const Suppliers = lazy(() => import('./pages/Suppliers').then(m => ({ default: m.Suppliers })));
+const ToolsHub = lazy(() => import('./pages/ToolsHub').then(m => ({ default: m.ToolsHub })));
+const PlanViewerPage = lazy(() => import('./pages/PlanViewerPage').then(m => ({ default: m.PlanViewerPage })));
 
 function AdminRoute({ children }: { children: ReactNode }) {
   const { member, loading } = useCurrentMember();
@@ -70,6 +72,8 @@ function App() {
             <Route path="/templates" element={<Templates />} />
             <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
             <Route path="/optimizer" element={<OptimizerPage />} />
+            <Route path="/tools" element={<ToolsHub />} />
+            <Route path="/tools/plan-viewer" element={<PlanViewerPage />} />
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
