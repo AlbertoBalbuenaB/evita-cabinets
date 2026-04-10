@@ -1240,6 +1240,7 @@ export type Database = {
         Row: {
           created_at: string | null
           display_order: number
+          file_name: string | null
           id: string
           label: string
           project_id: string | null
@@ -1248,6 +1249,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           display_order?: number
+          file_name?: string | null
           id?: string
           label: string
           project_id?: string | null
@@ -1256,6 +1258,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           display_order?: number
+          file_name?: string | null
           id?: string
           label?: string
           project_id?: string | null

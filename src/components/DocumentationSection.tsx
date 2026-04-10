@@ -1,9 +1,57 @@
 import { useState, useEffect } from 'react';
-import { Link2, Trash2, Plus, ExternalLink, HardDrive } from 'lucide-react';
+import {
+  Link2,
+  Trash2,
+  Plus,
+  HardDrive,
+  Pencil,
+  FileText,
+  Sheet,
+  Presentation,
+  ClipboardList,
+  Folder,
+  File,
+  type LucideIcon,
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from './Button';
 import { useGooglePicker } from '../hooks/useGooglePicker';
 import type { ProjectDocument } from '../types';
+
+interface UrlMeta {
+  Icon: LucideIcon;
+  iconTileClass: string;
+  typeLabel: string;
+}
+
+function getUrlMeta(url: string): UrlMeta {
+  const u = url.toLowerCase();
+
+  if (u.includes('docs.google.com/document/'))
+    return { Icon: FileText, iconTileClass: 'bg-blue-50 text-blue-600', typeLabel: 'Google Docs' };
+  if (u.includes('docs.google.com/spreadsheets/'))
+    return { Icon: Sheet, iconTileClass: 'bg-emerald-50 text-emerald-600', typeLabel: 'Google Sheets' };
+  if (u.includes('docs.google.com/presentation/'))
+    return { Icon: Presentation, iconTileClass: 'bg-amber-50 text-amber-600', typeLabel: 'Google Slides' };
+  if (u.includes('docs.google.com/forms/'))
+    return { Icon: ClipboardList, iconTileClass: 'bg-purple-50 text-purple-600', typeLabel: 'Google Forms' };
+  if (u.includes('drive.google.com/drive/folders/'))
+    return { Icon: Folder, iconTileClass: 'bg-yellow-50 text-yellow-700', typeLabel: 'Drive Folder' };
+  if (u.includes('drive.google.com/file/') || u.includes('drive.google.com/open'))
+    return { Icon: File, iconTileClass: 'bg-slate-100 text-slate-600', typeLabel: 'Drive File' };
+  if (u.endsWith('.pdf'))
+    return { Icon: FileText, iconTileClass: 'bg-red-50 text-red-600', typeLabel: 'PDF' };
+
+  return { Icon: Link2, iconTileClass: 'bg-slate-100 text-slate-500', typeLabel: 'Link' };
+}
+
+function getUrlHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+}
 
 interface Props {
   projectId: string;
@@ -24,6 +72,7 @@ export function DocumentationSection({ projectId }: Props) {
   const [loading, setLoading] = useState(true);
   const [newLabel, setNewLabel] = useState('');
   const [newUrl, setNewUrl] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const { openPicker } = useGooglePicker();
 
   useEffect(() => {
@@ -82,25 +131,9 @@ export function DocumentationSection({ projectId }: Props) {
     }
   }
 
-  async function updateUrl(id: string, url: string) {
-    const prev = [...documents];
-    setDocuments((d) => d.map((x) => (x.id === id ? { ...x, url } : x)));
-
-    try {
-      const { error } = await supabase
-        .from('project_documents')
-        .update({ url })
-        .eq('id', id);
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error updating document URL:', error);
-      setDocuments(prev);
-    }
-  }
-
   async function updateDocument(
     id: string,
-    changes: Partial<Pick<ProjectDocument, 'label' | 'url'>>
+    changes: Partial<Pick<ProjectDocument, 'label' | 'url' | 'file_name'>>
   ) {
     const prev = [...documents];
     setDocuments((d) => d.map((x) => (x.id === id ? { ...x, ...changes } : x)));
@@ -117,15 +150,25 @@ export function DocumentationSection({ projectId }: Props) {
     }
   }
 
+  function saveManualUrl(doc: ProjectDocument, newUrlValue: string) {
+    setEditingId(null);
+    if (newUrlValue === doc.url) return;
+    updateDocument(doc.id, { url: newUrlValue, file_name: null });
+  }
+
   function pickForExistingRow(doc: ProjectDocument) {
     const wasEmpty = !doc.url;
     const isDefaultLabel = DEFAULT_DOCS.includes(doc.label);
     openPicker((file) => {
-      const changes: Partial<Pick<ProjectDocument, 'label' | 'url'>> = { url: file.url };
+      const changes: Partial<Pick<ProjectDocument, 'label' | 'url' | 'file_name'>> = {
+        url: file.url,
+        file_name: file.name,
+      };
       if (wasEmpty && isDefaultLabel) {
         changes.label = file.name;
       }
       updateDocument(doc.id, changes);
+      setEditingId(null);
     });
   }
 
@@ -136,6 +179,7 @@ export function DocumentationSection({ projectId }: Props) {
         project_id: projectId,
         label: file.name,
         url: file.url,
+        file_name: file.name,
         display_order: documents.length,
         created_at: new Date().toISOString(),
       };
@@ -149,6 +193,7 @@ export function DocumentationSection({ projectId }: Props) {
             project_id: projectId,
             label: optimistic.label,
             url: optimistic.url,
+            file_name: optimistic.file_name,
             display_order: optimistic.display_order,
           })
           .select()
@@ -172,6 +217,7 @@ export function DocumentationSection({ projectId }: Props) {
       project_id: projectId,
       label: newLabel,
       url: newUrl,
+      file_name: null,
       display_order: documents.length,
       created_at: new Date().toISOString(),
     };
@@ -236,46 +282,91 @@ export function DocumentationSection({ projectId }: Props) {
         </div>
       ) : (
         <div className="space-y-2 mb-4">
-          {documents.map((doc) => (
-            <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center gap-2 group">
-              <span className="text-sm font-medium text-slate-700 w-full sm:w-44 sm:flex-shrink-0 truncate">
-                {doc.label}
-              </span>
-              <input
-                type="url"
-                value={doc.url}
-                onChange={(e) =>
-                  setDocuments((d) =>
-                    d.map((x) => (x.id === doc.id ? { ...x, url: e.target.value } : x))
-                  )
-                }
-                onBlur={(e) => updateUrl(doc.id, e.target.value)}
-                placeholder="Paste link here..."
-                className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                onClick={() => pickForExistingRow(doc)}
-                className="text-slate-400 hover:text-emerald-600 flex-shrink-0"
-                title="Pick from Google Drive"
-              >
-                <HardDrive className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => doc.url && window.open(doc.url, '_blank', 'noopener')}
-                disabled={!doc.url}
-                className="text-slate-400 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
-                title="Open link"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => deleteDocument(doc.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500 flex-shrink-0"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
+          {documents.map((doc) => {
+            const isEditing = editingId === doc.id;
+            const showCard = !!doc.url && !isEditing;
+            const meta = showCard ? getUrlMeta(doc.url) : null;
+            const host = showCard ? getUrlHost(doc.url) : '';
+            const primary = doc.file_name || doc.label;
+
+            return (
+              <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center gap-2 group">
+                <span className="text-sm font-medium text-slate-700 w-full sm:w-44 sm:flex-shrink-0 truncate">
+                  {doc.label}
+                </span>
+
+                {showCard && meta ? (
+                  <a
+                    href={doc.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center gap-3 px-3 py-2 border border-slate-200 rounded-lg hover:border-slate-300 hover:bg-slate-50 transition min-w-0"
+                  >
+                    <div className={`flex-shrink-0 h-9 w-9 rounded-md flex items-center justify-center ${meta.iconTileClass}`}>
+                      <meta.Icon className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-slate-900 truncate">{primary}</div>
+                      <div className="text-xs text-slate-500 truncate">
+                        {meta.typeLabel}
+                        {host && ` · ${host}`}
+                      </div>
+                    </div>
+                  </a>
+                ) : isEditing ? (
+                  <input
+                    type="url"
+                    autoFocus
+                    defaultValue={doc.url}
+                    placeholder="Paste link here..."
+                    onBlur={(e) => saveManualUrl(doc, e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                      if (e.key === 'Escape') setEditingId(null);
+                    }}
+                    className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <input
+                    type="url"
+                    value={doc.url}
+                    onChange={(e) =>
+                      setDocuments((d) =>
+                        d.map((x) => (x.id === doc.id ? { ...x, url: e.target.value } : x))
+                      )
+                    }
+                    onBlur={(e) => saveManualUrl(doc, e.target.value)}
+                    placeholder="Paste link here..."
+                    className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                )}
+
+                <button
+                  onClick={() => pickForExistingRow(doc)}
+                  className="text-slate-400 hover:text-emerald-600 flex-shrink-0"
+                  title="Pick from Google Drive"
+                >
+                  <HardDrive className="h-4 w-4" />
+                </button>
+                {showCard && (
+                  <button
+                    onClick={() => setEditingId(doc.id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-blue-600 flex-shrink-0"
+                    title="Edit URL"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
+                <button
+                  onClick={() => deleteDocument(doc.id)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500 flex-shrink-0"
+                  title="Delete"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
 
