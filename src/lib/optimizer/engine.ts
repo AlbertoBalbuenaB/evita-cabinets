@@ -542,6 +542,25 @@ function shelfGuillotinePack(
   return { placed: allPlaced, tree };
 }
 
+/** Transpose a CutTreeNode hierarchy: swap x↔y, w↔h, H↔V.
+ *  Used after packing in a transposed coordinate system (landscape → portrait)
+ *  to convert the result back to the board's actual orientation. */
+function transposeCutTree(node: CutTreeNode | null): void {
+  if (!node) return;
+  [node.x, node.y] = [node.y, node.x];
+  [node.w, node.h] = [node.h, node.w];
+  if (node.cut) {
+    node.cut.type = node.cut.type === 'H' ? 'V' : 'H';
+  }
+  if (node.piece) {
+    [node.piece.x, node.piece.y] = [node.piece.y, node.piece.x];
+    [node.piece.w, node.piece.h] = [node.piece.h, node.piece.w];
+    node.piece.rotated = node.piece.w !== node.piece.piece.ancho;
+  }
+  transposeCutTree(node.left);
+  transposeCutTree(node.right);
+}
+
 // ─────────────────────────────────────────────────────────────
 // OPTIMIZER
 // ─────────────────────────────────────────────────────────────
@@ -832,6 +851,12 @@ class Optimizer {
 
   /** Shelf-first guillotine: same loop as _buildGuillotine but uses shelfGuillotinePack
    *  to guarantee H-cuts at the top level (compatible with HongYe panel saws). */
+  /** Shelf-first guillotine: same loop as _buildGuillotine but uses shelfGuillotinePack
+   *  to guarantee H-cuts at the top level (compatible with HongYe panel saws).
+   *  When the board is in landscape (width > height), the coordinate system is
+   *  transposed so shelves span the SHORT dimension and stack along the LONG
+   *  dimension — matching the HongYe convention where shelves span the full
+   *  board width (1220mm) and stack along the board length (2440mm). */
   private _buildShelfGuillotine(pcs: (Pieza & { _idx: number })[], mat: string, grs: number): Board[] {
     const boards: Board[] = [];
     const availStocks = this._getStocksFor(mat, grs);
@@ -862,8 +887,25 @@ class Optimizer {
         );
         if (!anyFits) continue;
 
-        const result = shelfGuillotinePack(t, t, packW, packH, remaining, sierra);
+        // HongYe shelf convention: shelves span the SHORT side, stack along the LONG side.
+        // If the board is landscape (packW > packH), transpose so the algorithm's
+        // internal Y becomes the long dimension.
+        const needTranspose = packW > packH;
+        const sW = needTranspose ? packH : packW;
+        const sH = needTranspose ? packW : packH;
+
+        const result = shelfGuillotinePack(t, t, sW, sH, remaining, sierra);
         if (!result.placed.length) continue;
+
+        // Transpose coordinates back to the board's actual orientation
+        if (needTranspose) {
+          for (const pp of result.placed) {
+            [pp.x, pp.y] = [pp.y, pp.x];
+            [pp.w, pp.h] = [pp.h, pp.w];
+            pp.rotated = pp.w !== pp.piece.ancho;
+          }
+          if (result.tree) transposeCutTree(result.tree);
+        }
 
         const nb = new Board(st.ancho, st.alto, sierra, mat, grs, {
           nombre: st.nombre, costo: st.costo, isRemnant: !!st.isRemnant,
@@ -1464,17 +1506,38 @@ export function renderBoardCAD(
 
   // ── Kerf lines ────────────────────────────────────────────
   if (showKerf) {
-    const cuts = generateCutSequence(board, unit);
     ctx.strokeStyle = 'rgba(239,68,68,0.65)';
     ctx.lineWidth = Math.max(1, board.sierra * zoom);
     ctx.setLineDash([]);
-    cuts.forEach((cut) => {
-      if (cut.isTrim) return;
-      ctx.beginPath();
-      if (cut.type === 'H') { ctx.moveTo(ox, oy + cut.pos * zoom); ctx.lineTo(ox + scaledW, oy + cut.pos * zoom); }
-      else { ctx.moveTo(ox + cut.pos * zoom, oy); ctx.lineTo(ox + cut.pos * zoom, oy + scaledH); }
-      ctx.stroke();
-    });
+    // Draw from CutTreeNode when available — bounds each cut to its node rectangle
+    // so V-cuts inside a shelf don't extend through other shelves.
+    if (board.cutTree) {
+      const drawTree = (node: CutTreeNode | null) => {
+        if (!node || !node.cut) return;
+        ctx.beginPath();
+        if (node.cut.type === 'H') {
+          ctx.moveTo(ox + node.x * zoom, oy + node.cut.pos * zoom);
+          ctx.lineTo(ox + (node.x + node.w) * zoom, oy + node.cut.pos * zoom);
+        } else {
+          ctx.moveTo(ox + node.cut.pos * zoom, oy + node.y * zoom);
+          ctx.lineTo(ox + node.cut.pos * zoom, oy + (node.y + node.h) * zoom);
+        }
+        ctx.stroke();
+        drawTree(node.left);
+        drawTree(node.right);
+      };
+      drawTree(board.cutTree);
+    } else {
+      // Fallback for MaxRect boards (no cutTree): use flat cut sequence
+      const cuts = generateCutSequence(board, unit);
+      cuts.forEach((cut) => {
+        if (cut.isTrim) return;
+        ctx.beginPath();
+        if (cut.type === 'H') { ctx.moveTo(ox, oy + cut.pos * zoom); ctx.lineTo(ox + scaledW, oy + cut.pos * zoom); }
+        else { ctx.moveTo(ox + cut.pos * zoom, oy); ctx.lineTo(ox + cut.pos * zoom, oy + scaledH); }
+        ctx.stroke();
+      });
+    }
   }
 
   ctx.restore(); // end clip
