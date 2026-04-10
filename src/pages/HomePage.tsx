@@ -15,6 +15,7 @@ import { TASK_PRIORITY_CONFIG } from '../types';
 import type { Database } from '../lib/database.types';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { HomeTaskFormModal, type HomeTask, type TaskBucket, type TaskRecurrence } from '../components/tasks/HomeTaskFormModal';
+import { HomeLogCreateModal, type CreatedLog } from '../components/HomeLogCreateModal';
 import { formatCurrency } from '../lib/calculations';
 import { useSettingsStore } from '../lib/settingsStore';
 import { useCurrentMember } from '../lib/useCurrentMember';
@@ -89,18 +90,19 @@ const VARIANT = {
   },
 } satisfies Record<SubsectionVariant, object>;
 
-// ── Log type config (mirrors BitacoraSection) ─────────────────────────────────
+// ── Log type config (aligned with BitacoraSection + real DB data) ─────────────
 
-type LogType = 'note' | 'change_request' | 'approved_change' | 'decision' | 'error' | 'achievement';
+type LogType = 'note' | 'change' | 'decision' | 'risk' | 'issue' | 'milestone' | 'update';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const LOG_TYPES: Record<LogType, { label: string; Icon: any; color: string; bg: string; border: string; badgeBg: string }> = {
-  note:            { label: 'Note',            Icon: ScrollText,       color: 'text-slate-500',   bg: 'bg-slate-50/70',    border: 'border-l-slate-300',   badgeBg: 'bg-slate-100'   },
-  change_request:  { label: 'Change Request',  Icon: ArrowRightCircle, color: 'text-blue-600',    bg: 'bg-blue-50/70',     border: 'border-l-blue-400',    badgeBg: 'bg-blue-100'    },
-  approved_change: { label: 'Approved Change', Icon: CheckCircle2,     color: 'text-green-600',   bg: 'bg-green-50/70',    border: 'border-l-green-400',   badgeBg: 'bg-green-100'   },
-  decision:        { label: 'Decision',        Icon: Lightbulb,        color: 'text-amber-600',   bg: 'bg-amber-50/70',    border: 'border-l-amber-400',   badgeBg: 'bg-amber-100'   },
-  error:           { label: 'Error',           Icon: AlertTriangle,    color: 'text-red-600',     bg: 'bg-red-50/70',      border: 'border-l-red-400',     badgeBg: 'bg-red-100'     },
-  achievement:     { label: 'Achievement',     Icon: Star,             color: 'text-emerald-600', bg: 'bg-emerald-50/70',  border: 'border-l-emerald-400', badgeBg: 'bg-emerald-100' },
+  note:      { label: 'Note',      Icon: ScrollText,       color: 'text-slate-500',   bg: 'bg-slate-50/70',    border: 'border-l-slate-300',   badgeBg: 'bg-slate-100'   },
+  change:    { label: 'Change',    Icon: ArrowRightCircle, color: 'text-amber-600',   bg: 'bg-amber-50/70',    border: 'border-l-amber-400',   badgeBg: 'bg-amber-100'   },
+  decision:  { label: 'Decision',  Icon: CheckCircle2,     color: 'text-blue-600',    bg: 'bg-blue-50/70',     border: 'border-l-blue-400',    badgeBg: 'bg-blue-100'    },
+  risk:      { label: 'Risk',      Icon: AlertTriangle,    color: 'text-orange-600',  bg: 'bg-orange-50/70',   border: 'border-l-orange-400',  badgeBg: 'bg-orange-100'  },
+  issue:     { label: 'Issue',     Icon: Lightbulb,        color: 'text-red-600',     bg: 'bg-red-50/70',      border: 'border-l-red-400',     badgeBg: 'bg-red-100'     },
+  milestone: { label: 'Milestone', Icon: Star,             color: 'text-green-600',   bg: 'bg-green-50/70',    border: 'border-l-green-400',   badgeBg: 'bg-green-100'   },
+  update:    { label: 'Update',    Icon: Activity,         color: 'text-purple-600',  bg: 'bg-purple-50/70',   border: 'border-l-purple-400',  badgeBg: 'bg-purple-100'  },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -346,6 +348,7 @@ export function HomePage() {
   const [personalQuickBucket, setPersonalQuickBucket] = useState<TaskBucket>('inbox');
   const [creatingPersonal, setCreatingPersonal] = useState(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+  const [showNewLogModal, setShowNewLogModal] = useState(false);
   const [feedSearch, setFeedSearch] = useState('');
   const [feedDropdownOpen, setFeedDropdownOpen] = useState(false);
   const feedSearchRef = useRef<HTMLDivElement>(null);
@@ -568,6 +571,12 @@ export function HomePage() {
   function applyCreatedTask(created: HomeTask) {
     setTasks(prev => [created as CrossProjectTask, ...prev]);
     setCreatingTask(null);
+  }
+
+  // Insert a newly-created log into the logs state (prepend = most recent first)
+  function applyCreatedLog(log: CreatedLog) {
+    setLogs(prev => [log as CrossProjectLog, ...prev]);
+    setShowNewLogModal(false);
   }
 
   async function quickAddPersonalTask(bucket: TaskBucket) {
@@ -1416,6 +1425,14 @@ export function HomePage() {
                 {logs.length}
               </span>
             )}
+            {/* New Entry button */}
+            <button
+              onClick={() => setShowNewLogModal(true)}
+              className="flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 border border-violet-200/60 px-2.5 py-1 rounded-lg transition-all flex-shrink-0"
+            >
+              <Plus className="h-3 w-3" /> New Entry
+            </button>
+
             {/* Search */}
             {logs.length > 0 && (
               <div ref={feedSearchRef} className="relative ml-auto w-full max-w-[200px]">
@@ -1577,6 +1594,16 @@ export function HomePage() {
           onSaved={applyCreatedTask}
           onDeleted={() => { /* unused in create mode */ }}
           onClose={() => setCreatingTask(null)}
+        />
+      )}
+
+      {showNewLogModal && (
+        <HomeLogCreateModal
+          projects={projectsList}
+          currentMemberId={member?.id ?? null}
+          currentMemberName={member?.name ?? null}
+          onCreated={applyCreatedLog}
+          onClose={() => setShowNewLogModal(false)}
         />
       )}
     </>
