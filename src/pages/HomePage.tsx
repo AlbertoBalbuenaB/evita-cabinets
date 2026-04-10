@@ -14,7 +14,7 @@ import type { EnhancedTask, TaskStatus, TaskPriority, TeamMember } from '../type
 import { TASK_PRIORITY_CONFIG } from '../types';
 import type { Database } from '../lib/database.types';
 import { TaskCard } from '../components/tasks/TaskCard';
-import { HomeTaskEditModal, type HomeTask, type TaskBucket, type TaskRecurrence } from '../components/tasks/HomeTaskEditModal';
+import { HomeTaskFormModal, type HomeTask, type TaskBucket, type TaskRecurrence } from '../components/tasks/HomeTaskFormModal';
 import { formatCurrency } from '../lib/calculations';
 import { useSettingsStore } from '../lib/settingsStore';
 import { useCurrentMember } from '../lib/useCurrentMember';
@@ -330,6 +330,7 @@ export function HomePage() {
   const [logs, setLogs] = useState<CrossProjectLog[]>([]);
   const [recentQuotes, setRecentQuotes] = useState<RecentQuote[]>([]);
   const [pipeline, setPipeline] = useState<Record<string, number>>({});
+  const [projectsList, setProjectsList] = useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [taskFilters, setTaskFilters] = useState<TaskFilterState>({ priority: '', assigneeId: '', projectId: '' });
   const [taskTab, setTaskTab] = useState<'projects' | 'planner'>(() => {
@@ -338,6 +339,9 @@ export function HomePage() {
     return stored === 'planner' || stored === 'personal' ? 'planner' : 'projects';
   });
   const [editingTask, setEditingTask] = useState<CrossProjectTask | null>(null);
+  const [creatingTask, setCreatingTask] = useState<
+    { kind: 'project' | 'planner'; projectId?: string | null; bucket?: TaskBucket } | null
+  >(null);
   const [personalQuickAdd, setPersonalQuickAdd] = useState('');
   const [personalQuickBucket, setPersonalQuickBucket] = useState<TaskBucket>('inbox');
   const [creatingPersonal, setCreatingPersonal] = useState(false);
@@ -356,7 +360,7 @@ export function HomePage() {
     fetchSettings();
     (async () => {
       setLoading(true);
-      await Promise.all([loadTasks(), loadLogs(), loadQuotesData()]);
+      await Promise.all([loadTasks(), loadLogs(), loadQuotesData(), loadProjectsList()]);
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -379,6 +383,14 @@ export function HomePage() {
       counts[status] = (counts[status] || 0) + 1;
     });
     setPipeline(counts);
+  }
+
+  async function loadProjectsList() {
+    const { data } = await supabase
+      .from('projects')
+      .select('id, name')
+      .order('name', { ascending: true });
+    setProjectsList((data ?? []) as Array<{ id: string; name: string }>);
   }
 
   async function loadTasks() {
@@ -550,6 +562,12 @@ export function HomePage() {
   function removeTaskFromState(id: string) {
     setTasks(prev => prev.filter(t => t.id !== id));
     setEditingTask(null);
+  }
+
+  // Insert a newly-created task from the form modal into the tasks state
+  function applyCreatedTask(created: HomeTask) {
+    setTasks(prev => [created as CrossProjectTask, ...prev]);
+    setCreatingTask(null);
   }
 
   async function quickAddPersonalTask(bucket: TaskBucket) {
@@ -1121,6 +1139,13 @@ export function HomePage() {
                       Clear
                     </button>
                   )}
+
+                  <button
+                    onClick={() => setCreatingTask({ kind: 'project' })}
+                    className="ml-auto flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200/60 px-2.5 py-1 rounded-lg transition-all"
+                  >
+                    <Plus className="h-3 w-3" /> New Task
+                  </button>
                 </div>
 
                 {/* Subsections */}
@@ -1526,12 +1551,32 @@ export function HomePage() {
       />
 
       {editingTask && (
-        <HomeTaskEditModal
+        <HomeTaskFormModal
+          mode="edit"
           task={editingTask}
           teamMembers={teamMembers}
+          currentMemberId={member?.id ?? null}
           onSaved={applyEditedTask}
           onDeleted={removeTaskFromState}
           onClose={() => setEditingTask(null)}
+        />
+      )}
+
+      {creatingTask && (
+        <HomeTaskFormModal
+          mode="create"
+          teamMembers={teamMembers}
+          projects={projectsList}
+          createDefaults={{
+            kind: creatingTask.kind,
+            projectId: creatingTask.projectId ?? null,
+            ownerMemberId: creatingTask.kind === 'planner' ? (member?.id ?? null) : null,
+            bucket: creatingTask.bucket,
+          }}
+          currentMemberId={member?.id ?? null}
+          onSaved={applyCreatedTask}
+          onDeleted={() => { /* unused in create mode */ }}
+          onClose={() => setCreatingTask(null)}
         />
       )}
     </>

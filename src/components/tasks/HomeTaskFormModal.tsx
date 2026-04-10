@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { X, Trash2, ExternalLink, Repeat, Inbox, Sun, CalendarDays, CalendarRange } from 'lucide-react';
+import { X, Trash2, ExternalLink, Repeat, Inbox, Sun, CalendarDays, CalendarRange, FolderKanban } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { createNotifications } from '../../lib/notifications';
 import { Button } from '../Button';
+import { AutocompleteSelect } from '../AutocompleteSelect';
 import type {
   EnhancedTask, TeamMember, TaskStatus, TaskPriority,
 } from '../../types';
@@ -22,12 +24,30 @@ export interface HomeTask extends EnhancedTask {
   recurrence?: TaskRecurrence;
 }
 
+export type TaskFormMode = 'create' | 'edit';
+
+export interface CreateDefaults {
+  /** 'project' → task tied to a project (bucket/recurrence hidden, project selector shown). */
+  /** 'planner' → personal task (bucket/recurrence shown, no project selector). */
+  kind: 'project' | 'planner';
+  projectId?: string | null;
+  ownerMemberId?: string | null;
+  bucket?: TaskBucket;
+}
+
 interface Props {
-  task: HomeTask;
+  mode: TaskFormMode;
   teamMembers: TeamMember[];
-  /** Called after a successful save. Receives the updated task. */
+  /** Full project list for the create-mode project selector. Ignored in edit mode. */
+  projects?: Array<{ id: string; name: string }>;
+  /** Edit mode only. */
+  task?: HomeTask;
+  /** Create mode only. */
+  createDefaults?: CreateDefaults;
+  currentMemberId?: string | null;
+  /** Called after a successful save. Receives the updated/created task. */
   onSaved: (task: HomeTask) => void;
-  /** Called after a successful delete. Receives the deleted task id. */
+  /** Called after a successful delete. Receives the deleted task id. Unused in create mode. */
   onDeleted: (id: string) => void;
   onClose: () => void;
 }
@@ -56,25 +76,45 @@ function toDateTimeLocal(iso: string | null | undefined): string {
 }
 
 /**
- * Lightweight task edit modal used from HomePage. Works for both project tasks
- * (project_id is set) and personal tasks (project_id is null). For personal
- * tasks it also exposes the Bullet Journal bucket and recurrence fields.
+ * Unified task form modal used from HomePage. Handles both:
+ *  - create mode (kind: 'project' → project selector visible; kind: 'planner' → bucket/recurrence visible)
+ *  - edit mode   (behavior identical to the former HomeTaskEditModal)
  *
  * Intentionally simpler than TaskDetailPanel: no subtasks, comments, or
  * deliverables. Users who want those features navigate to the full project
- * task panel via the "Open in project" link (shown for project tasks only).
+ * task panel via the "Open in project" link (shown for existing project tasks only).
  */
-export function HomeTaskEditModal({ task, teamMembers, onSaved, onDeleted, onClose }: Props) {
-  const isPersonal = !task.project_id;
+export function HomeTaskFormModal({
+  mode, teamMembers, projects, task, createDefaults, currentMemberId,
+  onSaved, onDeleted, onClose,
+}: Props) {
+  const isCreate = mode === 'create';
+  // In create mode, determine "personal" from createDefaults.kind; in edit mode, from the existing task.
+  const isPersonal = isCreate
+    ? createDefaults?.kind === 'planner'
+    : !task?.project_id;
 
-  const [title, setTitle] = useState(task.title);
-  const [description, setDescription] = useState(task.description ?? '');
-  const [status, setStatus] = useState<TaskStatus>(task.status);
-  const [priority, setPriority] = useState<TaskPriority>(task.priority);
-  const [dueDate, setDueDate] = useState(toDateTimeLocal(task.due_date));
-  const [assigneeIds, setAssigneeIds] = useState<string[]>(task.assignees.map(a => a.id));
-  const [bucket, setBucket] = useState<TaskBucket>((task.bucket ?? 'inbox') as TaskBucket);
-  const [recurrence, setRecurrence] = useState<TaskRecurrence>((task.recurrence ?? 'none') as TaskRecurrence);
+  // Form state — initialized from task (edit) or empty defaults (create)
+  const [title, setTitle] = useState(isCreate ? '' : (task?.title ?? ''));
+  const [description, setDescription] = useState(isCreate ? '' : (task?.description ?? ''));
+  const [status, setStatus] = useState<TaskStatus>(isCreate ? 'pending' : (task?.status ?? 'pending'));
+  const [priority, setPriority] = useState<TaskPriority>(isCreate ? 'medium' : (task?.priority ?? 'medium'));
+  const [dueDate, setDueDate] = useState(isCreate ? '' : toDateTimeLocal(task?.due_date));
+  const [assigneeIds, setAssigneeIds] = useState<string[]>(() => {
+    if (isCreate) return currentMemberId ? [currentMemberId] : [];
+    return task?.assignees.map(a => a.id) ?? [];
+  });
+  const [bucket, setBucket] = useState<TaskBucket>(() => {
+    if (isCreate) return createDefaults?.bucket ?? 'inbox';
+    return (task?.bucket ?? 'inbox') as TaskBucket;
+  });
+  const [recurrence, setRecurrence] = useState<TaskRecurrence>(
+    isCreate ? 'none' : ((task?.recurrence ?? 'none') as TaskRecurrence)
+  );
+  const [projectId, setProjectId] = useState<string>(() => {
+    if (isCreate) return createDefaults?.projectId ?? '';
+    return task?.project_id ?? '';
+  });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -86,10 +126,97 @@ export function HomeTaskEditModal({ task, teamMembers, onSaved, onDeleted, onClo
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
 
+  const projectsOptions = (projects ?? []).map(p => ({ value: p.id, label: p.name }));
+  const needsProject = isCreate && createDefaults?.kind === 'project';
+  const canSave = !!title.trim() && (!needsProject || !!projectId);
+
   async function save() {
-    if (!title.trim()) return;
+    if (!canSave) return;
     setSaving(true);
 
+    if (isCreate) {
+      const insertRow = {
+        title: title.trim(),
+        description: description.trim() || null,
+        status,
+        priority,
+        due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        project_id: createDefaults?.kind === 'project' ? (projectId || null) : null,
+        owner_member_id: createDefaults?.kind === 'planner'
+          ? (createDefaults.ownerMemberId ?? null)
+          : null,
+        bucket: createDefaults?.kind === 'planner' ? bucket : null,
+        recurrence: createDefaults?.kind === 'planner' ? recurrence : 'none',
+        display_order: 0,
+      };
+
+      const { data: inserted, error } = await supabase
+        .from('project_tasks')
+        .insert(insertRow)
+        .select()
+        .single();
+
+      if (error || !inserted) {
+        setSaving(false);
+        return;
+      }
+
+      // Insert assignees
+      if (assigneeIds.length) {
+        await supabase.from('task_assignees').insert(
+          assigneeIds.map(mid => ({ task_id: inserted.id, member_id: mid }))
+        );
+      }
+
+      // Notify assignees — only for project tasks (planner tasks are personal)
+      if (createDefaults?.kind === 'project' && assigneeIds.length) {
+        const priorityLabel = TASK_PRIORITY_CONFIG[priority]?.label ?? priority;
+        createNotifications({
+          recipientIds: assigneeIds,
+          actorId: currentMemberId ?? null,
+          actorName: null,
+          type: 'task_assigned',
+          title: `Assigned to: ${title.trim()}`,
+          body: `Pending · ${priorityLabel}${dueDate ? ` · Due: ${new Date(dueDate).toLocaleDateString()}` : ''}`,
+          projectId: insertRow.project_id,
+          referenceType: 'project_task',
+          referenceId: inserted.id,
+        }).catch(console.error);
+      }
+
+      // Build full HomeTask to hand back
+      const membersById = new Map(teamMembers.map(m => [m.id, m]));
+      const nextAssignees = assigneeIds
+        .map(id => membersById.get(id))
+        .filter((m): m is TeamMember => !!m);
+      const projectName = createDefaults?.kind === 'project'
+        ? (projects?.find(p => p.id === insertRow.project_id)?.name ?? '')
+        : '';
+
+      const created: HomeTask = {
+        ...inserted,
+        description: inserted.description ?? null,
+        priority: (inserted.priority ?? 'medium') as TaskPriority,
+        status: (inserted.status ?? 'pending') as TaskStatus,
+        parent_task_id: null,
+        assignees: nextAssignees,
+        tags: [],
+        subtasks: [],
+        comments: [],
+        deliverables: [],
+        project_name: projectName,
+        owner_member_id: inserted.owner_member_id ?? null,
+        bucket: (inserted.bucket ?? null) as TaskBucket | null,
+        recurrence: (inserted.recurrence ?? 'none') as TaskRecurrence,
+      } as unknown as HomeTask;
+
+      setSaving(false);
+      onSaved(created);
+      return;
+    }
+
+    // ── Edit mode ────────────────────────────────────────────────────────
+    if (!task) { setSaving(false); return; }
     const update = {
       title: title.trim(),
       description: description.trim() || null,
@@ -142,8 +269,8 @@ export function HomeTaskEditModal({ task, teamMembers, onSaved, onDeleted, onClo
   }
 
   async function remove() {
+    if (!task) return;
     setDeleting(true);
-    // Cascade: delete assignees and tag assignments first (no FK cascade in some schemas)
     await supabase.from('task_assignees').delete().eq('task_id', task.id);
     await supabase.from('task_tag_assignments').delete().eq('task_id', task.id);
     const { error } = await supabase.from('project_tasks').delete().eq('id', task.id);
@@ -157,6 +284,10 @@ export function HomeTaskEditModal({ task, teamMembers, onSaved, onDeleted, onClo
 
   const activeMembers = teamMembers.filter(m => m.is_active);
 
+  const modalTitle = isCreate
+    ? (createDefaults?.kind === 'project' ? 'New Project Task' : 'New Planner Task')
+    : (isPersonal ? 'Edit Planner Task' : 'Edit Task');
+
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
       <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/70 w-full max-w-lg max-h-[92vh] overflow-y-auto">
@@ -164,9 +295,9 @@ export function HomeTaskEditModal({ task, teamMembers, onSaved, onDeleted, onClo
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/60 bg-gradient-to-r from-indigo-50/40 to-blue-50/20 sticky top-0 z-10 backdrop-blur-xl">
           <div className="flex items-center gap-2 min-w-0">
             <h3 className="text-base font-semibold text-slate-900 truncate">
-              {isPersonal ? 'Edit Planner Task' : 'Edit Task'}
+              {modalTitle}
             </h3>
-            {!isPersonal && task.project_id && (
+            {!isCreate && !isPersonal && task?.project_id && (
               <Link
                 to={`/projects/${task.project_id}?tab=management&task=${task.id}`}
                 onClick={onClose}
@@ -183,8 +314,25 @@ export function HomeTaskEditModal({ task, teamMembers, onSaved, onDeleted, onClo
         </div>
 
         <div className="p-5 space-y-4">
-          {/* Project context (for project tasks) */}
-          {!isPersonal && task.project_name && (
+          {/* Project selector — create mode, project kind only */}
+          {needsProject && (
+            <div>
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1">
+                <FolderKanban className="h-3 w-3" />
+                Project <span className="text-red-500">*</span>
+              </label>
+              <AutocompleteSelect
+                options={projectsOptions}
+                value={projectId}
+                onChange={setProjectId}
+                placeholder="Search and select a project…"
+                required
+              />
+            </div>
+          )}
+
+          {/* Project context (for existing project tasks in edit mode) */}
+          {!isCreate && !isPersonal && task?.project_name && (
             <div className="text-[11px] text-slate-500 -mt-1">
               Project: <span className="font-medium text-slate-700">{task.project_name}</span>
             </div>
@@ -343,7 +491,7 @@ export function HomeTaskEditModal({ task, teamMembers, onSaved, onDeleted, onClo
         {/* Footer */}
         <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-white/60 bg-white/30 backdrop-blur-sm sticky bottom-0">
           <div>
-            {!confirmDelete ? (
+            {!isCreate && !confirmDelete && (
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
@@ -353,7 +501,8 @@ export function HomeTaskEditModal({ task, teamMembers, onSaved, onDeleted, onClo
                 <Trash2 className="h-3.5 w-3.5" />
                 Delete
               </button>
-            ) : (
+            )}
+            {!isCreate && confirmDelete && (
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-rose-600 font-medium">Delete this task?</span>
                 <button
@@ -377,8 +526,10 @@ export function HomeTaskEditModal({ task, teamMembers, onSaved, onDeleted, onClo
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={onClose} disabled={saving || deleting}>Cancel</Button>
-            <Button size="sm" onClick={save} disabled={!title.trim() || saving || deleting}>
-              {saving ? 'Saving…' : 'Save'}
+            <Button size="sm" onClick={save} disabled={!canSave || saving || deleting}>
+              {saving
+                ? (isCreate ? 'Creating…' : 'Saving…')
+                : (isCreate ? 'Create Task' : 'Save')}
             </Button>
           </div>
         </div>
