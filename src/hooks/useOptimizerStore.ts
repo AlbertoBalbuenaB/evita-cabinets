@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Pieza, StockSize, Remnant, OptimizationResult, OptimizerTab, UnitSystem, EbConfig, EngineMode, OptimizationObjective } from '../lib/optimizer/types';
 import { runOptimization } from '../lib/optimizer/engine';
 import { exportOptimizerPDF, PdfLang } from '../lib/optimizer/pdfExport';
+import { exportLaw } from '../lib/optimizer/lawExport';
 
 interface OptimizerState {
   pieces: Pieza[];
@@ -51,6 +52,7 @@ interface OptimizerState {
   setObjective: (v: OptimizationObjective) => void;
   runOptimize: () => Promise<void>;
   exportPDF: (lang?: PdfLang) => Promise<void>;
+  exportLaw: () => void;
   saveProject: () => void;
   loadProject: (json: string) => void;
   reset: () => void;
@@ -145,6 +147,12 @@ export const useOptimizerStore = create<OptimizerState>((set, get) => ({
     const state = get();
     if (!state.result) { alert('Run optimization first'); return; }
     await exportOptimizerPDF(state.result, state.projectName, state.clientName, state.unit, state.ebConfig, state.areas, state.labelScale, lang);
+  },
+
+  exportLaw: () => {
+    const { result, projectName } = get();
+    if (!result) { alert('Run optimization first'); return; }
+    exportLaw(result, { projectName: projectName || 'Evita_Optimizer' });
   },
 
   saveProject: () => {

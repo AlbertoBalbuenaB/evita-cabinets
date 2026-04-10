@@ -40,6 +40,7 @@ import type {
 } from '../lib/optimizer/types';
 import type { QuotationOptimizerRun } from '../types';
 
+import { exportLaw } from '../lib/optimizer/lawExport';
 import { buildOptimizerSetupFromQuotation } from '../lib/optimizer/quotation/buildOptimizerSetupFromQuotation';
 import { computeEdgebandCost } from '../lib/optimizer/quotation/computeEdgebandCost';
 import { attributeBoardsToAreas } from '../lib/optimizer/quotation/attributeBoardsToAreas';
@@ -137,6 +138,7 @@ export interface QuotationOptimizerState {
    * without touching cabinet configurations.
    */
   refreshStocks: () => Promise<void>;
+  exportLaw: () => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -558,6 +560,13 @@ export function getQuotationOptimizerStore(
         set({ lastError: err instanceof Error ? err.message : String(err) });
         throw err;
       }
+    },
+
+    exportLaw: () => {
+      const state = get();
+      const result = state.pendingResult ?? state.loadedRun?.result ?? null;
+      if (!result) { alert('Run optimization first'); return; }
+      exportLaw(result, { projectName: `Quotation_${state.quotationId.slice(0, 8)}` });
     },
   }));
 

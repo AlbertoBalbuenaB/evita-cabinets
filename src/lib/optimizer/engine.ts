@@ -318,6 +318,201 @@ function guillotinePack(
 }
 
 // ─────────────────────────────────────────────────────────────
+// SHELF-FIRST GUILLOTINE
+// ─────────────────────────────────────────────────────────────
+
+/** Pack a single shelf (full-width horizontal strip) left-to-right with vertical cuts.
+ *  Pieces that are shorter than the shelf height create sub-columns where the remaining
+ *  vertical space below is filled via guillotinePack(). */
+function packShelf(
+  shelfX: number, shelfY: number, shelfW: number, shelfH: number,
+  items: (Pieza & { _idx: number })[], kerf: number,
+): { placed: PlacedPiece[]; tree: CutTreeNode; remaining: (Pieza & { _idx: number })[] } {
+  const placed: PlacedPiece[] = [];
+  const columns: CutTreeNode[] = [];
+  let xCursor = shelfX;
+  let remaining = [...items];
+
+  while (remaining.length > 0 && xCursor + 10 < shelfX + shelfW) {
+    const availW = shelfX + shelfW - xCursor;
+
+    // Find best piece that fits in remaining width × shelf height
+    let bestIdx = -1, bestW = 0, bestH = 0, bestScore = -Infinity;
+    for (let i = 0; i < remaining.length; i++) {
+      const p = remaining[i];
+      // Normal orientation
+      if (p.veta !== 'vertical' && p.ancho <= availW && p.alto <= shelfH) {
+        const s = scoreFit(availW, shelfH, p.ancho, p.alto);
+        if (s > bestScore) { bestScore = s; bestIdx = i; bestW = p.ancho; bestH = p.alto; }
+      }
+      // Rotated orientation
+      if (p.veta !== 'horizontal' && p.alto <= availW && p.ancho <= shelfH) {
+        const s = scoreFit(availW, shelfH, p.alto, p.ancho);
+        if (s > bestScore) { bestScore = s; bestIdx = i; bestW = p.alto; bestH = p.ancho; }
+      }
+    }
+    if (bestIdx === -1) break;
+
+    const piece = remaining[bestIdx];
+    remaining = remaining.filter((_, i) => i !== bestIdx);
+
+    const pp: PlacedPiece = {
+      piece, x: xCursor, y: shelfY,
+      w: bestW, h: bestH,
+      rotated: bestW !== piece.ancho,
+      idx: piece._idx,
+    };
+    placed.push(pp);
+
+    // Build column node
+    const pieceLeaf: CutTreeNode = {
+      x: xCursor, y: shelfY, w: bestW, h: bestH,
+      piece: pp, cut: null, left: null, right: null,
+    };
+
+    if (bestH < shelfH - kerf) {
+      // Sub-column: piece on top, try packing more below
+      const belowY = shelfY + bestH + kerf;
+      const belowH = shelfH - bestH - kerf;
+
+      if (belowH >= 10) {
+        const subResult = guillotinePack(xCursor, belowY, bestW, belowH, remaining, kerf);
+        const subTree = subResult.tree ?? {
+          x: xCursor, y: belowY, w: bestW, h: belowH,
+          piece: null, cut: null, left: null, right: null, // waste
+        };
+        placed.push(...subResult.placed);
+        const subPlacedSet = new Set(subResult.placed.map(p => p.piece));
+        remaining = remaining.filter(p => !subPlacedSet.has(p));
+
+        // Column node: H-cut separating piece from below
+        const colNode: CutTreeNode = {
+          x: xCursor, y: shelfY, w: bestW, h: shelfH,
+          piece: null,
+          cut: { type: 'H', pos: shelfY + bestH + kerf / 2, isPieceCut: true },
+          left: pieceLeaf,
+          right: subTree,
+        };
+        columns.push(colNode);
+      } else {
+        // Below space too small — extend piece leaf to fill shelf visually
+        columns.push(pieceLeaf);
+      }
+    } else {
+      // Piece fills full shelf height — simple leaf
+      columns.push(pieceLeaf);
+    }
+
+    xCursor += bestW + kerf;
+  }
+
+  // Right-side waste
+  const wasteW = shelfX + shelfW - xCursor;
+  if (wasteW > 0) {
+    columns.push({
+      x: xCursor, y: shelfY, w: wasteW, h: shelfH,
+      piece: null, cut: null, left: null, right: null, // waste
+    });
+  }
+
+  // Edge case: no columns at all
+  if (columns.length === 0) {
+    const wasteNode: CutTreeNode = {
+      x: shelfX, y: shelfY, w: shelfW, h: shelfH,
+      piece: null, cut: null, left: null, right: null,
+    };
+    return { placed: [], tree: wasteNode, remaining };
+  }
+
+  // Chain columns via V-cuts (right-to-left chaining)
+  let tree = columns[columns.length - 1];
+  for (let i = columns.length - 2; i >= 0; i--) {
+    tree = {
+      x: columns[i].x, y: shelfY,
+      w: shelfX + shelfW - columns[i].x,
+      h: shelfH,
+      piece: null,
+      cut: { type: 'V', pos: columns[i].x + columns[i].w + kerf / 2, isPieceCut: true },
+      left: columns[i],
+      right: tree,
+    };
+  }
+
+  return { placed, tree, remaining };
+}
+
+/** Shelf-first guillotine packer: creates full-width horizontal shelves (H-cuts at top level),
+ *  then packs pieces left-to-right within each shelf using vertical cuts.
+ *  Guarantees all first-level cuts are H-type — compatible with HongYe panel saws. */
+function shelfGuillotinePack(
+  rx: number, ry: number, rw: number, rh: number,
+  items: (Pieza & { _idx: number })[],
+  kerf: number,
+): { placed: PlacedPiece[]; tree: CutTreeNode | null } {
+  if (!items.length || rw < 10 || rh < 10) {
+    return { placed: [], tree: null };
+  }
+
+  const allPlaced: PlacedPiece[] = [];
+  const shelves: CutTreeNode[] = [];
+  let yCursor = ry;
+  let remaining = [...items];
+
+  while (remaining.length > 0 && yCursor + 10 <= ry + rh) {
+    const availH = ry + rh - yCursor;
+
+    // Determine shelf height: height of the tallest remaining piece that fits
+    let shelfH = 0;
+    for (const p of remaining) {
+      if (p.veta !== 'vertical' && p.alto <= availH && p.ancho <= rw) {
+        shelfH = Math.max(shelfH, p.alto);
+      }
+      if (p.veta !== 'horizontal' && p.ancho <= availH && p.alto <= rw) {
+        shelfH = Math.max(shelfH, p.ancho);
+      }
+    }
+    if (shelfH < 10) break;
+
+    // Pack this shelf
+    const shelfResult = packShelf(rx, yCursor, rw, shelfH, remaining, kerf);
+    if (shelfResult.placed.length === 0) break; // no pieces fit — stop
+
+    allPlaced.push(...shelfResult.placed);
+    remaining = shelfResult.remaining;
+    shelves.push(shelfResult.tree);
+    yCursor += shelfH + kerf;
+  }
+
+  if (shelves.length === 0) return { placed: [], tree: null };
+
+  // Bottom waste below all shelves
+  const wasteH = ry + rh - yCursor;
+  if (wasteH > 0) {
+    shelves.push({
+      x: rx, y: yCursor, w: rw, h: wasteH,
+      piece: null, cut: null, left: null, right: null, // waste
+    });
+  }
+
+  // Chain shelves via H-cuts (bottom-up chaining: last shelf is rightmost in tree)
+  let tree = shelves[shelves.length - 1];
+  for (let i = shelves.length - 2; i >= 0; i--) {
+    const shelfBottom = shelves[i].y + shelves[i].h;
+    tree = {
+      x: rx, y: shelves[i].y,
+      w: rw,
+      h: ry + rh - shelves[i].y,
+      piece: null,
+      cut: { type: 'H', pos: shelfBottom + kerf / 2, isPieceCut: true },
+      left: shelves[i],
+      right: tree,
+    };
+  }
+
+  return { placed: allPlaced, tree };
+}
+
+// ─────────────────────────────────────────────────────────────
 // OPTIMIZER
 // ─────────────────────────────────────────────────────────────
 class Optimizer {
@@ -420,27 +615,27 @@ class Optimizer {
       }
     }
 
-    // ── Guillotine passes: 8 deterministic + GUILLOTINE_ITERS GRASP ──
+    // ── Shelf-first guillotine passes: 8 deterministic + GUILLOTINE_ITERS GRASP ──
     for (const [sn, sf] of sorts) {
       const sorted = [...group].sort(sf);
-      const bds = this._buildGuillotine(sorted, mat, grs);
+      const bds = this._buildShelfGuillotine(sorted, mat, grs);
       const sc  = this._score(bds);
       totalIters++;
-      if (sc < bestScore) { bestScore = sc; best = bds; bestName = `guill-${sn}`; }
+      if (sc < bestScore) { bestScore = sc; best = bds; bestName = `shelf-${sn}`; }
     }
     for (let g = 0; g < GUILLOTINE_ITERS; g++) {
       const si = Math.floor(rng() * sorts.length);
       const [sn, sf] = sorts[si];
       const shuffled = this._shuffleWin([...group].sort(sf), rng);
-      const bds = this._buildGuillotine(shuffled, mat, grs);
+      const bds = this._buildShelfGuillotine(shuffled, mat, grs);
       const sc  = this._score(bds);
       totalIters++;
-      if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP-guill(${sn})`; }
+      if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP-shelf(${sn})`; }
     }
 
     // Local search rebuilds boards using MaxRect semantics (Board.place()), which would
-    // erase the guillotine cut tree. Skip it when the winner is a guillotine result.
-    const isGuillotine = bestName.startsWith('guill') || bestName.startsWith('GRASP-guill');
+    // erase the guillotine cut tree. Skip it when the winner is a guillotine/shelf result.
+    const isGuillotine = bestName.startsWith('shelf') || bestName.startsWith('GRASP-shelf');
     if (best && best.length > 1 && !isGuillotine) {
       const improved = this._localSearch(best, mat, grs);
       if (this._score(improved) < bestScore) { best = improved; bestName += ' +local'; }
@@ -598,6 +793,66 @@ class Optimizer {
       if (!placed) {
         // No stock can fit any remaining piece
         remaining.forEach(p => console.warn(`[guillotine] Piece ${p.nombre || p.ancho + 'x' + p.alto} does not fit any stock`));
+        break;
+      }
+    }
+
+    return boards;
+  }
+
+  /** Shelf-first guillotine: same loop as _buildGuillotine but uses shelfGuillotinePack
+   *  to guarantee H-cuts at the top level (compatible with HongYe panel saws). */
+  private _buildShelfGuillotine(pcs: (Pieza & { _idx: number })[], mat: string, grs: number): Board[] {
+    const boards: Board[] = [];
+    const availStocks = this._getStocksFor(mat, grs);
+    if (!availStocks.length) return [];
+
+    const usageCount: Record<string, number> = {};
+    let remaining = [...pcs];
+
+    while (remaining.length > 0) {
+      let placed = false;
+
+      for (const st of availStocks) {
+        if (st.isRemnant && st._used) continue;
+        if (st.stockId && st.qty && st.qty > 0) {
+          if ((usageCount[st.stockId] || 0) >= st.qty) continue;
+        }
+
+        const sierra = st.sierra || this.sierra;
+        const t = this.trim;
+        const packW = st.ancho - 2 * t;
+        const packH = st.alto  - 2 * t;
+
+        if (packW < 10 || packH < 10) continue;
+
+        const anyFits = remaining.some(p =>
+          (p.veta !== 'vertical'   && p.ancho <= packW && p.alto  <= packH) ||
+          (p.veta !== 'horizontal' && p.alto  <= packW && p.ancho <= packH)
+        );
+        if (!anyFits) continue;
+
+        const result = shelfGuillotinePack(t, t, packW, packH, remaining, sierra);
+        if (!result.placed.length) continue;
+
+        const nb = new Board(st.ancho, st.alto, sierra, mat, grs, {
+          nombre: st.nombre, costo: st.costo, isRemnant: !!st.isRemnant,
+        }, t);
+        nb.placed   = result.placed;
+        nb.cutTree  = result.tree ?? undefined;
+        boards.push(nb);
+
+        if (st.isRemnant) st._used = true;
+        if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
+
+        const placedSet = new Set(result.placed.map(pp => pp.piece));
+        remaining = remaining.filter(p => !placedSet.has(p));
+        placed = true;
+        break;
+      }
+
+      if (!placed) {
+        remaining.forEach(p => console.warn(`[shelf-guillotine] Piece ${p.nombre || p.ancho + 'x' + p.alto} does not fit any stock`));
         break;
       }
     }

@@ -30,7 +30,7 @@
  * -----------------------------------------------------------------------
  */
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { Hammer, Play, Save, Loader2, RefreshCw, Layers } from 'lucide-react';
+import { Hammer, Play, Save, Loader2, RefreshCw, Layers, FileDown } from 'lucide-react';
 import { Button } from '../../Button';
 import { CADViewer } from '../CADViewer';
 import { RightStatsPanel } from '../RightStatsPanel';
@@ -137,6 +137,7 @@ export function QuotationOptimizerTab({
   const setActive       = useStore((s) => s.setActive);
   const renameRun       = useStore((s) => s.renameRun);
   const deleteRun       = useStore((s) => s.deleteRun);
+  const storeExportLaw  = useStore((s) => s.exportLaw);
 
   // Local UI state
   const [selectedBoardIdx, setSelectedBoardIdx] = useState(0);
@@ -422,6 +423,17 @@ export function QuotationOptimizerTab({
             </Button>
           </>
         )}
+
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => storeExportLaw()}
+          disabled={!pendingResult && !loadedRun}
+          className="flex items-center gap-1"
+          title="Export .law for CNC panel saw"
+        >
+          <FileDown className="h-3.5 w-3.5" />.law
+        </Button>
 
         <Button
           variant="secondary"

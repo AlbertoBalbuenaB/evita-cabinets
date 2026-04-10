@@ -288,6 +288,10 @@ export function OptimizerPage() {
                 className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left disabled:opacity-40">
                 <FileDown className="h-3.5 w-3.5 text-slate-400" />PDF (Español)
               </button>
+              <button onClick={() => { store.exportLaw(); setExportOpen(false); }} disabled={!store.result}
+                className="w-full px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 text-left disabled:opacity-40">
+                <FileDown className="h-3.5 w-3.5 text-slate-400" />.law (CNC Saw)
+              </button>
             </div>
           )}
         </div>
