@@ -16,6 +16,7 @@ import type { Database } from '../lib/database.types';
 import { TaskCard } from '../components/tasks/TaskCard';
 import { HomeTaskFormModal, type HomeTask, type TaskBucket, type TaskRecurrence } from '../components/tasks/HomeTaskFormModal';
 import { HomeLogCreateModal, type CreatedLog } from '../components/HomeLogCreateModal';
+import { HomeLogDetailModal } from '../components/HomeLogDetailModal';
 import { formatCurrency } from '../lib/calculations';
 import { useSettingsStore } from '../lib/settingsStore';
 import { useCurrentMember } from '../lib/useCurrentMember';
@@ -349,6 +350,7 @@ export function HomePage() {
   const [creatingPersonal, setCreatingPersonal] = useState(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [showNewLogModal, setShowNewLogModal] = useState(false);
+  const [viewingLog, setViewingLog] = useState<CrossProjectLog | null>(null);
   const [feedSearch, setFeedSearch] = useState('');
   const [feedDropdownOpen, setFeedDropdownOpen] = useState(false);
   const feedSearchRef = useRef<HTMLDivElement>(null);
@@ -1415,6 +1417,7 @@ export function HomePage() {
         {/* Feed */}
         <div className="glass-white overflow-hidden p-0">
           {/* Header */}
+          {/* Header row */}
           <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100/80">
             <div className="p-1.5 rounded-lg bg-violet-100 flex-shrink-0">
               <Activity className="h-4 w-4 text-violet-600" />
@@ -1425,17 +1428,18 @@ export function HomePage() {
                 {logs.length}
               </span>
             )}
-            {/* New Entry button */}
             <button
               onClick={() => setShowNewLogModal(true)}
               className="flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 border border-violet-200/60 px-2.5 py-1 rounded-lg transition-all flex-shrink-0"
             >
               <Plus className="h-3 w-3" /> New Entry
             </button>
+          </div>
 
-            {/* Search */}
-            {logs.length > 0 && (
-              <div ref={feedSearchRef} className="relative ml-auto w-full max-w-[200px]">
+          {/* Search bar — separate row below header */}
+          {logs.length > 0 && (
+            <div className="px-5 py-2.5 border-b border-slate-100/80 bg-slate-50/40">
+              <div ref={feedSearchRef} className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
@@ -1468,8 +1472,8 @@ export function HomePage() {
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {logs.length === 0 ? (
             <div className="py-16 text-center text-slate-400">
@@ -1512,7 +1516,8 @@ export function HomePage() {
                         return (
                           <div
                             key={log.id}
-                            className={`flex gap-2.5 p-2.5 rounded-lg border-l-4 ${cfg.bg} ${cfg.border}`}
+                            onClick={() => setViewingLog(log)}
+                            className={`flex gap-2.5 p-2.5 rounded-lg border-l-4 cursor-pointer hover:shadow-sm hover:brightness-[0.98] transition-all ${cfg.bg} ${cfg.border}`}
                           >
                             <div className={`flex-shrink-0 mt-0.5 ${cfg.color}`}>
                               <Icon className="h-3.5 w-3.5" />
@@ -1604,6 +1609,15 @@ export function HomePage() {
           currentMemberName={member?.name ?? null}
           onCreated={applyCreatedLog}
           onClose={() => setShowNewLogModal(false)}
+        />
+      )}
+
+      {viewingLog && (
+        <HomeLogDetailModal
+          log={viewingLog}
+          currentMemberId={member?.id ?? null}
+          currentMemberName={member?.name ?? null}
+          onClose={() => setViewingLog(null)}
         />
       )}
     </>
