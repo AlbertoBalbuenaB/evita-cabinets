@@ -4,7 +4,7 @@ import { Ruler, LayoutDashboard, ArrowLeft } from 'lucide-react';
 const tools = [
   {
     title: 'Plan Viewer',
-    description: 'Upload architectural PDFs, calibrate scale, and take measurements',
+    description: 'Upload PDFs or images, calibrate scale, and take measurements',
     icon: Ruler,
     path: '/tools/plan-viewer',
     color: 'blue',

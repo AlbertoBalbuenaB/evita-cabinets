@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useState, forwardRef, useImperativeHandle } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import { loadPdf, renderPage } from '../../lib/plan-viewer/pdfLoader';
+import { loadPdf, renderPage, renderImage, isPdf } from '../../lib/plan-viewer/pdfLoader';
 import { screenToPdf } from '../../lib/plan-viewer/transforms';
 import { euclideanDistance, polylineLength } from '../../lib/plan-viewer/geometry';
 import { usePlanViewerStore } from '../../hooks/usePlanViewerStore';
@@ -23,6 +23,7 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const docRef = useRef<PDFDocumentProxy | null>(null);
+  const isImageRef = useRef(false);
 
   const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
   const [cursorPos, setCursorPos] = useState<PdfPoint | null>(null);
@@ -40,23 +41,48 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
     },
   }), [store]);
 
-  // Load PDF
+  // Load file (PDF or image)
   useEffect(() => {
     if (!file) return;
     let cancelled = false;
-    (async () => {
-      const doc = await loadPdf(file);
-      if (cancelled) return;
-      docRef.current = doc;
-      store.setPageInfo(doc.numPages, 0, 0);
-      store.setCurrentPage(1);
-    })();
+
+    if (isPdf(file)) {
+      isImageRef.current = false;
+      (async () => {
+        const doc = await loadPdf(file);
+        if (cancelled) return;
+        docRef.current = doc;
+        store.setPageInfo(doc.numPages, 0, 0);
+        store.setCurrentPage(1);
+      })();
+    } else {
+      // Image file — single page, render immediately
+      isImageRef.current = true;
+      docRef.current = null;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      (async () => {
+        const { width, height } = await renderImage(file, canvas, RENDER_SCALE);
+        if (cancelled) return;
+        setCanvasSize({ w: width, h: height });
+        store.setPageInfo(1, width, height);
+        store.setCurrentPage(1);
+
+        const container = containerRef.current;
+        if (container) {
+          const rect = container.getBoundingClientRect();
+          store.fitToScreen(rect.width, rect.height);
+        }
+      })();
+    }
+
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file]);
 
-  // Render current page
+  // Render current PDF page (only for PDFs)
   useEffect(() => {
+    if (isImageRef.current) return;
     const doc = docRef.current;
     const canvas = canvasRef.current;
     if (!doc || !canvas) return;

@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback } from 'react';
 import { Upload, FileText } from 'lucide-react';
+import { ACCEPTED_FILE_TYPES, isAcceptedFile } from '../../lib/plan-viewer/pdfLoader';
 
 interface PdfDropZoneProps {
   onFile: (file: File) => void;
@@ -14,7 +15,7 @@ export function PdfDropZone({ onFile }: PdfDropZoneProps) {
       e.preventDefault();
       setDragging(false);
       const file = e.dataTransfer.files[0];
-      if (file?.type === 'application/pdf') onFile(file);
+      if (file && isAcceptedFile(file)) onFile(file);
     },
     [onFile]
   );
@@ -59,15 +60,15 @@ export function PdfDropZone({ onFile }: PdfDropZoneProps) {
         </div>
         <div className="text-center">
           <p className="text-sm font-medium text-slate-700">
-            {dragging ? 'Drop your PDF here' : 'Drop a PDF here or click to browse'}
+            {dragging ? 'Drop your file here' : 'Drop a PDF or image here, or click to browse'}
           </p>
-          <p className="text-xs text-slate-400 mt-1">Supports architectural drawings and plans</p>
+          <p className="text-xs text-slate-400 mt-1">Supports PDF, PNG, JPG, WEBP, and other image formats</p>
         </div>
       </button>
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf,application/pdf"
+        accept={ACCEPTED_FILE_TYPES}
         className="hidden"
         onChange={handleChange}
       />

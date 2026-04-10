@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { usePlanViewerStore } from '../hooks/usePlanViewerStore';
+import { ACCEPTED_FILE_TYPES } from '../lib/plan-viewer/pdfLoader';
 import { PdfDropZone } from '../components/plan-viewer/PdfDropZone';
 import { PdfCanvas, type PdfCanvasHandle } from '../components/plan-viewer/PdfCanvas';
 import { Toolbar } from '../components/plan-viewer/Toolbar';
@@ -169,7 +170,7 @@ export function PlanViewerPage() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,application/pdf"
+        accept={ACCEPTED_FILE_TYPES}
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
