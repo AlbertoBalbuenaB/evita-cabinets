@@ -11,6 +11,9 @@ import {
   ClipboardList,
   Folder,
   File,
+  GripVertical,
+  Check,
+  X,
   type LucideIcon,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -67,12 +70,20 @@ const DEFAULT_DOCS = [
   'Production / Cut List',
 ];
 
+interface EditDraft {
+  id: string;
+  label: string;
+  url: string;
+}
+
 export function DocumentationSection({ projectId }: Props) {
   const [documents, setDocuments] = useState<ProjectDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [newLabel, setNewLabel] = useState('');
   const [newUrl, setNewUrl] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const { openPicker } = useGooglePicker();
 
   useEffect(() => {
@@ -150,10 +161,37 @@ export function DocumentationSection({ projectId }: Props) {
     }
   }
 
-  function saveManualUrl(doc: ProjectDocument, newUrlValue: string) {
-    setEditingId(null);
-    if (newUrlValue === doc.url) return;
-    updateDocument(doc.id, { url: newUrlValue, file_name: null });
+  function startEdit(doc: ProjectDocument) {
+    setEditDraft({ id: doc.id, label: doc.label, url: doc.url });
+  }
+
+  async function saveEdit() {
+    if (!editDraft) return;
+    const doc = documents.find((d) => d.id === editDraft.id);
+    if (!doc) {
+      setEditDraft(null);
+      return;
+    }
+    const trimmedLabel = editDraft.label.trim();
+    const trimmedUrl = editDraft.url.trim();
+    if (!trimmedLabel) return; // require a name
+
+    const labelChanged = trimmedLabel !== doc.label;
+    const urlChanged = trimmedUrl !== doc.url;
+    if (!labelChanged && !urlChanged) {
+      setEditDraft(null);
+      return;
+    }
+
+    const changes: Partial<Pick<ProjectDocument, 'label' | 'url' | 'file_name'>> = {};
+    if (labelChanged) changes.label = trimmedLabel;
+    if (urlChanged) {
+      changes.url = trimmedUrl;
+      changes.file_name = null; // user-edited URL: drop the picked filename
+    }
+
+    setEditDraft(null);
+    await updateDocument(editDraft.id, changes);
   }
 
   function pickForExistingRow(doc: ProjectDocument) {
@@ -168,8 +206,56 @@ export function DocumentationSection({ projectId }: Props) {
         changes.label = file.name;
       }
       updateDocument(doc.id, changes);
-      setEditingId(null);
+      setEditDraft(null);
     });
+  }
+
+  function handleDragStart(e: React.DragEvent, id: string) {
+    setDragId(id);
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+
+  async function handleDrop(e: React.DragEvent, targetId: string) {
+    e.preventDefault();
+    setDragOverId(null);
+    if (!dragId || dragId === targetId) {
+      setDragId(null);
+      return;
+    }
+
+    const dragIdx = documents.findIndex((d) => d.id === dragId);
+    const targetIdx = documents.findIndex((d) => d.id === targetId);
+    if (dragIdx === -1 || targetIdx === -1) {
+      setDragId(null);
+      return;
+    }
+
+    const reordered = [...documents];
+    const [moved] = reordered.splice(dragIdx, 1);
+    reordered.splice(targetIdx, 0, moved);
+    const updated = reordered.map((item, idx) => ({ ...item, display_order: idx }));
+
+    const prev = [...documents];
+    setDocuments(updated);
+    setDragId(null);
+
+    try {
+      for (const item of updated) {
+        const { error } = await supabase
+          .from('project_documents')
+          .update({ display_order: item.display_order })
+          .eq('id', item.id);
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error reordering documents:', error);
+      setDocuments(prev);
+    }
   }
 
   function pickForNewRow() {
@@ -262,15 +348,15 @@ export function DocumentationSection({ projectId }: Props) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <div className="animate-pulse h-6 bg-slate-100 rounded w-36" />
+      <div className="glass-white p-5">
+        <div className="animate-pulse h-6 bg-slate-100/60 rounded w-36" />
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4">
-      <div className="flex items-center mb-4">
+    <div className="glass-white p-5">
+      <div className="flex items-center mb-5">
         <Link2 className="h-5 w-5 text-sky-600 mr-2" />
         <h3 className="text-lg font-semibold text-slate-900">Documentation</h3>
       </div>
@@ -283,103 +369,192 @@ export function DocumentationSection({ projectId }: Props) {
       ) : (
         <div className="space-y-2 mb-4">
           {documents.map((doc) => {
-            const isEditing = editingId === doc.id;
-            const showCard = !!doc.url && !isEditing;
-            const meta = showCard ? getUrlMeta(doc.url) : null;
-            const host = showCard ? getUrlHost(doc.url) : '';
-            const primary = doc.file_name || doc.label;
+            const isEditing = editDraft?.id === doc.id;
+            const isDragging = dragId === doc.id;
+            const isDropTarget = dragOverId === doc.id && dragId !== null && dragId !== doc.id;
+            const hasUrl = !!doc.url;
+            const meta = hasUrl ? getUrlMeta(doc.url) : null;
+            const host = hasUrl ? getUrlHost(doc.url) : '';
+
+            const cardClasses = [
+              'group flex items-center gap-2 px-3 py-2.5',
+              'bg-white/70 backdrop-blur-sm',
+              'border border-white/90',
+              'rounded-xl',
+              'shadow-[0_1px_4px_rgba(99,102,241,0.05)]',
+              'hover:bg-white/90 hover:border-white hover:shadow-[0_4px_14px_rgba(99,102,241,0.1)]',
+              'transition-all duration-200',
+              isDragging ? 'opacity-50' : '',
+              isDropTarget ? 'ring-2 ring-blue-400/60 border-blue-300' : '',
+              isEditing ? 'ring-2 ring-blue-400/40' : '',
+            ]
+              .filter(Boolean)
+              .join(' ');
 
             return (
-              <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center gap-2 group">
-                <span className="text-sm font-medium text-slate-700 w-full sm:w-44 sm:flex-shrink-0 truncate">
-                  {doc.label}
-                </span>
+              <div
+                key={doc.id}
+                onDragOver={handleDragOver}
+                onDragEnter={() => setDragOverId(doc.id)}
+                onDragLeave={(e) => {
+                  // Only clear if leaving the row itself, not crossing children
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setDragOverId(null);
+                  }
+                }}
+                onDrop={(e) => handleDrop(e, doc.id)}
+                className={cardClasses}
+              >
+                {/* Drag handle */}
+                {!isEditing && (
+                  <div
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, doc.id)}
+                    onDragEnd={() => {
+                      setDragId(null);
+                      setDragOverId(null);
+                    }}
+                    className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-slate-100/80 transition-colors flex-shrink-0 opacity-30 group-hover:opacity-100"
+                    title="Drag to reorder"
+                  >
+                    <GripVertical className="h-4 w-4 text-slate-400" />
+                  </div>
+                )}
 
-                {showCard && meta ? (
+                {/* Content */}
+                {isEditing ? (
+                  <div className="flex-1 flex items-center gap-3 min-w-0">
+                    <div
+                      className={`flex-shrink-0 h-9 w-9 rounded-md flex items-center justify-center ${
+                        meta ? meta.iconTileClass : 'bg-slate-100 text-slate-400'
+                      }`}
+                    >
+                      {meta ? <meta.Icon className="h-5 w-5" /> : <Link2 className="h-5 w-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <input
+                        type="text"
+                        value={editDraft.label}
+                        onChange={(e) => setEditDraft({ ...editDraft, label: e.target.value })}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') saveEdit();
+                          if (e.key === 'Escape') setEditDraft(null);
+                        }}
+                        placeholder="Name"
+                        autoFocus
+                        className="w-full px-2 py-1 text-sm font-semibold text-slate-900 bg-white/90 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <input
+                        type="url"
+                        value={editDraft.url}
+                        onChange={(e) => setEditDraft({ ...editDraft, url: e.target.value })}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') saveEdit();
+                          if (e.key === 'Escape') setEditDraft(null);
+                        }}
+                        placeholder="https://..."
+                        className="w-full px-2 py-1 text-xs text-slate-600 bg-white/90 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                ) : hasUrl && meta ? (
                   <a
                     href={doc.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 flex items-center gap-3 px-3 py-2 border border-slate-200 rounded-lg hover:border-slate-300 hover:bg-slate-50 transition min-w-0"
+                    className="flex-1 flex items-center gap-3 min-w-0"
                   >
-                    <div className={`flex-shrink-0 h-9 w-9 rounded-md flex items-center justify-center ${meta.iconTileClass}`}>
+                    <div
+                      className={`flex-shrink-0 h-9 w-9 rounded-md flex items-center justify-center ${meta.iconTileClass}`}
+                    >
                       <meta.Icon className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-slate-900 truncate">{primary}</div>
+                      <div className="text-sm font-semibold text-slate-900 truncate">{doc.label}</div>
                       <div className="text-xs text-slate-500 truncate">
                         {meta.typeLabel}
                         {host && ` · ${host}`}
                       </div>
                     </div>
                   </a>
-                ) : isEditing ? (
-                  <input
-                    type="url"
-                    autoFocus
-                    defaultValue={doc.url}
-                    placeholder="Paste link here..."
-                    onBlur={(e) => saveManualUrl(doc, e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                      if (e.key === 'Escape') setEditingId(null);
-                    }}
-                    className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
                 ) : (
-                  <input
-                    type="url"
-                    value={doc.url}
-                    onChange={(e) =>
-                      setDocuments((d) =>
-                        d.map((x) => (x.id === doc.id ? { ...x, url: e.target.value } : x))
-                      )
-                    }
-                    onBlur={(e) => saveManualUrl(doc, e.target.value)}
-                    placeholder="Paste link here..."
-                    className="flex-1 px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                )}
-
-                <button
-                  onClick={() => pickForExistingRow(doc)}
-                  className="text-slate-400 hover:text-emerald-600 flex-shrink-0"
-                  title="Pick from Google Drive"
-                >
-                  <HardDrive className="h-4 w-4" />
-                </button>
-                {showCard && (
                   <button
-                    onClick={() => setEditingId(doc.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-blue-600 flex-shrink-0"
-                    title="Edit URL"
+                    type="button"
+                    onClick={() => startEdit(doc)}
+                    className="flex-1 flex items-center gap-3 min-w-0 text-left"
                   >
-                    <Pencil className="h-4 w-4" />
+                    <div className="flex-shrink-0 h-9 w-9 rounded-md flex items-center justify-center bg-slate-100/80 text-slate-400">
+                      <Link2 className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-slate-900 truncate">{doc.label}</div>
+                      <div className="text-xs text-slate-400 truncate italic">
+                        No link yet — click to add
+                      </div>
+                    </div>
                   </button>
                 )}
-                <button
-                  onClick={() => deleteDocument(doc.id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500 flex-shrink-0"
-                  title="Delete"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+
+                {/* Actions */}
+                {isEditing ? (
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={saveEdit}
+                      disabled={!editDraft.label.trim()}
+                      className="p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      title="Save"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setEditDraft(null)}
+                      className="p-1.5 rounded-md text-slate-400 hover:bg-slate-100 transition-colors"
+                      title="Cancel"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => startEdit(doc)}
+                      className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      title="Edit name & URL"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => pickForExistingRow(doc)}
+                      className="p-1.5 rounded-md text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                      title="Pick from Google Drive"
+                    >
+                      <HardDrive className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteDocument(doc.id)}
+                      className="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       )}
 
-      <div className="pt-3 border-t border-slate-200">
+      <div className="pt-4 border-t border-white/60">
         <div className="flex flex-col sm:flex-row sm:items-end gap-2">
           <div className="w-full sm:w-44">
-            <label className="block text-xs text-slate-600 mb-1">Label</label>
+            <label className="block text-xs text-slate-600 mb-1">Name</label>
             <input
               type="text"
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
               placeholder="Document name"
-              className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="block w-full px-3 py-2 text-sm bg-white/80 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="flex-1">
@@ -389,8 +564,10 @@ export function DocumentationSection({ projectId }: Props) {
               value={newUrl}
               onChange={(e) => setNewUrl(e.target.value)}
               placeholder="https://..."
-              className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onKeyDown={(e) => { if (e.key === 'Enter') addDocument(); }}
+              className="block w-full px-3 py-2 text-sm bg-white/80 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') addDocument();
+              }}
             />
           </div>
           <Button onClick={addDocument} disabled={!newLabel.trim()} size="sm">
