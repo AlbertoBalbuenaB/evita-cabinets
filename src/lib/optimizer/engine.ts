@@ -885,20 +885,43 @@ class Optimizer {
         const sW = needTranspose ? packH : packW;
         const sH = needTranspose ? packW : packH;
 
-        // Check against the TRANSPOSED dimensions (sW × sH) since that's what the
-        // shelf algorithm actually uses. A piece must fit sW (shelf span = short side).
-        const anyFits = remaining.some(p =>
-          (p.veta !== 'vertical'   && p.ancho <= sW && p.alto  <= sH) ||
-          (p.veta !== 'horizontal' && p.alto  <= sW && p.ancho <= sH)
-        );
+        // When transposing, "normal" in transposed space maps to "rotated" on the
+        // actual board and vice versa. Swap veta so grain constraints stay correct:
+        //   veta='vertical' (blocks normal on board) → blocks rotated in transposed = 'horizontal'
+        //   veta='horizontal' (blocks rotated on board) → blocks normal in transposed = 'vertical'
+        const swapVeta = (v: 'none' | 'horizontal' | 'vertical') =>
+          !needTranspose ? v : v === 'vertical' ? 'horizontal' : v === 'horizontal' ? 'vertical' : v;
+
+        const anyFits = remaining.some(p => {
+          const v = swapVeta(p.veta);
+          return (v !== 'vertical'   && p.ancho <= sW && p.alto  <= sH) ||
+                 (v !== 'horizontal' && p.alto  <= sW && p.ancho <= sH);
+        });
         if (!anyFits) continue;
 
-        const result = shelfGuillotinePack(t, t, sW, sH, remaining, sierra);
+        // Create piece copies with transposed veta for the packing algorithm.
+        // Keep a map from copy → original for restoring references after packing.
+        let packItems: (Pieza & { _idx: number })[];
+        let copyToOrig: Map<object, (Pieza & { _idx: number })> | null = null;
+        if (needTranspose) {
+          copyToOrig = new Map();
+          packItems = remaining.map(p => {
+            const copy = { ...p, veta: swapVeta(p.veta) };
+            copyToOrig!.set(copy, p);
+            return copy;
+          });
+        } else {
+          packItems = remaining;
+        }
+
+        const result = shelfGuillotinePack(t, t, sW, sH, packItems, sierra);
         if (!result.placed.length) continue;
 
         // Transpose coordinates back to the board's actual orientation
-        if (needTranspose) {
+        if (needTranspose && copyToOrig) {
           for (const pp of result.placed) {
+            // Restore original piece reference (packing used veta-swapped copies)
+            pp.piece = copyToOrig.get(pp.piece) ?? pp.piece;
             [pp.x, pp.y] = [pp.y, pp.x];
             [pp.w, pp.h] = [pp.h, pp.w];
             pp.rotated = pp.w !== pp.piece.ancho;
