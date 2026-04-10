@@ -552,11 +552,8 @@ function transposeCutTree(node: CutTreeNode | null): void {
   if (node.cut) {
     node.cut.type = node.cut.type === 'H' ? 'V' : 'H';
   }
-  if (node.piece) {
-    [node.piece.x, node.piece.y] = [node.piece.y, node.piece.x];
-    [node.piece.w, node.piece.h] = [node.piece.h, node.piece.w];
-    node.piece.rotated = node.piece.w !== node.piece.piece.ancho;
-  }
+  // NOTE: node.piece is NOT transposed here — PlacedPiece objects are shared
+  // references with result.placed[] and are already transposed in the caller loop.
   transposeCutTree(node.left);
   transposeCutTree(node.right);
 }
@@ -881,18 +878,20 @@ class Optimizer {
 
         if (packW < 10 || packH < 10) continue;
 
-        const anyFits = remaining.some(p =>
-          (p.veta !== 'vertical'   && p.ancho <= packW && p.alto  <= packH) ||
-          (p.veta !== 'horizontal' && p.alto  <= packW && p.ancho <= packH)
-        );
-        if (!anyFits) continue;
-
         // HongYe shelf convention: shelves span the SHORT side, stack along the LONG side.
         // If the board is landscape (packW > packH), transpose so the algorithm's
         // internal Y becomes the long dimension.
         const needTranspose = packW > packH;
         const sW = needTranspose ? packH : packW;
         const sH = needTranspose ? packW : packH;
+
+        // Check against the TRANSPOSED dimensions (sW × sH) since that's what the
+        // shelf algorithm actually uses. A piece must fit sW (shelf span = short side).
+        const anyFits = remaining.some(p =>
+          (p.veta !== 'vertical'   && p.ancho <= sW && p.alto  <= sH) ||
+          (p.veta !== 'horizontal' && p.alto  <= sW && p.ancho <= sH)
+        );
+        if (!anyFits) continue;
 
         const result = shelfGuillotinePack(t, t, sW, sH, remaining, sierra);
         if (!result.placed.length) continue;
