@@ -52,6 +52,9 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
   const [calcHasDrawers, setCalcHasDrawers] = useState<boolean>(formData.has_drawers ?? false);
   const [calcDrawers, setCalcDrawers] = useState<number>(3);
   const [calcDrawerSectionH, setCalcDrawerSectionH] = useState<number>(0);
+  const [calcShelfType, setCalcShelfType] = useState<'fixed' | 'adjustable'>('fixed');
+  const [calcOptimizeDepth, setCalcOptimizeDepth] = useState(true);
+  const [calcIsSink, setCalcIsSink] = useState(false);
   const [calcError, setCalcError] = useState<string>('');
   const [flashFields, setFlashFields] = useState<Set<string>>(new Set());
   const [despieceOpen, setDespieceOpen] = useState(false);
@@ -248,6 +251,9 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
       hasDrawers: calcHasDrawers,
       numDrawers: calcDrawers,
       drawerSectionHeightIn: calcDrawerSectionH,
+      shelfType: calcShelfType,
+      optimizeDepth: calcOptimizeDepth,
+      isSink: calcIsSink,
     });
     setCutPieces(pieces);
     setDespieceOpen(true);
@@ -447,7 +453,12 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                   <label className="block text-xs font-medium text-slate-700 mb-1">Cabinet Type</label>
                   <select
                     value={calcCabinetType}
-                    onChange={(e) => setCalcCabinetType(e.target.value as 'base' | 'wall' | 'tall')}
+                    onChange={(e) => {
+                      const newType = e.target.value as 'base' | 'wall' | 'tall';
+                      setCalcCabinetType(newType);
+                      setCalcShelfType(newType === 'base' ? 'fixed' : 'adjustable');
+                      if (newType !== 'base') setCalcIsSink(false);
+                    }}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   >
                     <option value="base">Base Cabinet</option>
@@ -465,6 +476,41 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                   />
                   <p className="mt-1 text-xs text-slate-500">Panel thickness for despiece calc (typically 18mm)</p>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Shelf Type</label>
+                  <div className="flex rounded-lg overflow-hidden border border-slate-300">
+                    <button type="button"
+                      className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${calcShelfType === 'fixed' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                      onClick={() => setCalcShelfType('fixed')}>Fixed</button>
+                    <button type="button"
+                      className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${calcShelfType === 'adjustable' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                      onClick={() => setCalcShelfType('adjustable')}>Adjustable</button>
+                  </div>
+                </div>
+                <div className="flex items-end pb-1">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
+                    <input type="checkbox" checked={calcOptimizeDepth}
+                      onChange={(e) => setCalcOptimizeDepth(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500" />
+                    Optimize depth (300/600mm)
+                  </label>
+                </div>
+                {calcCabinetType === 'base' && (
+                  <div className="flex items-end pb-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
+                      <input type="checkbox" checked={calcIsSink}
+                        onChange={(e) => {
+                          setCalcIsSink(e.target.checked);
+                          if (e.target.checked) setCalcShelves(0);
+                        }}
+                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500" />
+                      Sink base (no top, no shelves)
+                    </label>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-6">
@@ -704,6 +750,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                         <th className="text-center px-2 py-1.5 font-medium">Height (mm)</th>
                         <th className="text-center px-2 py-1.5 font-medium">Qty</th>
                         <th className="text-center px-2 py-1.5 font-medium">Material</th>
+                        <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Grain">Grain</th>
                         <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Top">T</th>
                         <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Bottom">B</th>
                         <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Left">L</th>
@@ -773,6 +820,11 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                               <option value="custom">Custom</option>
                             </select>
                           </td>
+                          <td className="px-1 py-1 text-center">
+                            <span className="text-sm" title={piece.veta === 'vertical' ? 'Vertical' : piece.veta === 'horizontal' ? 'Horizontal' : 'None'}>
+                              {piece.veta === 'vertical' ? '↕' : piece.veta === 'horizontal' ? '↔' : '—'}
+                            </span>
+                          </td>
                           {(['sup', 'inf', 'izq', 'der'] as const).map(side => {
                             const cb = piece.cubrecanto ?? { sup: 0, inf: 0, izq: 0, der: 0 };
                             const sideLabel = { sup: 'Top', inf: 'Bottom', izq: 'Left', der: 'Right' }[side];
@@ -806,7 +858,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 onClick={() =>
                   setCutPieces((prev) => [
                     ...prev,
-                    { id: crypto.randomUUID(), nombre: '', ancho: 0, alto: 0, cantidad: 1, material: 'custom', cubrecanto: { sup: 0, inf: 0, izq: 0, der: 0 } },
+                    { id: crypto.randomUUID(), nombre: '', ancho: 0, alto: 0, cantidad: 1, material: 'custom', cubrecanto: { sup: 0, inf: 0, izq: 0, der: 0 }, veta: 'none' },
                   ])
                 }
                 className="w-full py-1.5 px-3 border border-dashed border-slate-300 hover:border-slate-400 text-slate-500 hover:text-slate-700 text-xs rounded-lg transition-colors"
