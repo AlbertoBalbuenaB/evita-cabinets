@@ -52,6 +52,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
   const [calcHasDrawers, setCalcHasDrawers] = useState<boolean>(formData.has_drawers ?? false);
   const [calcDrawers, setCalcDrawers] = useState<number>(3);
   const [calcDrawerSectionH, setCalcDrawerSectionH] = useState<number>(0);
+  const [calcDrawerBoxThickness, setCalcDrawerBoxThickness] = useState<number>(15);
   const [calcShelfType, setCalcShelfType] = useState<'fixed' | 'adjustable'>('fixed');
   const [calcOptimizeDepth, setCalcOptimizeDepth] = useState(true);
   const [calcIsSink, setCalcIsSink] = useState(false);
@@ -254,6 +255,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
       shelfType: calcShelfType,
       optimizeDepth: calcOptimizeDepth,
       isSink: calcIsSink,
+      drawerBoxThickness: calcDrawerBoxThickness,
     });
     setCutPieces(pieces);
     setDespieceOpen(true);
@@ -448,7 +450,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">Cabinet Type</label>
                   <select
@@ -474,7 +476,17 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                     onChange={(e) => setCalcBodyThickness(parseInt(e.target.value) || 18)}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
-                  <p className="mt-1 text-xs text-slate-500">Panel thickness for despiece calc (typically 18mm)</p>
+                  <p className="mt-1 text-xs text-slate-500">Panel thickness (typically 18mm)</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Drawer Box (mm)</label>
+                  <input
+                    type="number" min="1" step="1"
+                    value={calcDrawerBoxThickness}
+                    onChange={(e) => setCalcDrawerBoxThickness(parseInt(e.target.value) || 15)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">Drawer box thickness (typically 15mm)</p>
                 </div>
               </div>
 
@@ -821,9 +833,21 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                             </select>
                           </td>
                           <td className="px-1 py-1 text-center">
-                            <span className="text-sm" title={piece.veta === 'vertical' ? 'Vertical' : piece.veta === 'horizontal' ? 'Horizontal' : 'None'}>
-                              {piece.veta === 'vertical' ? '↕' : piece.veta === 'horizontal' ? '↔' : '—'}
-                            </span>
+                            <select
+                              value={piece.veta ?? 'none'}
+                              onChange={(e) => setCutPieces((prev) =>
+                                prev.map((p) => p.id === piece.id ? { ...p, veta: e.target.value as CutPiece['veta'] } : p)
+                              )}
+                              className={`px-1 py-0.5 rounded text-xs font-medium border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 ${
+                                piece.veta === 'vertical'   ? 'bg-purple-100 text-purple-800' :
+                                piece.veta === 'horizontal' ? 'bg-teal-100 text-teal-800' :
+                                                              'bg-slate-100 text-slate-600'
+                              }`}
+                            >
+                              <option value="none">— None</option>
+                              <option value="vertical">↕ Vertical</option>
+                              <option value="horizontal">↔ Horizontal</option>
+                            </select>
                           </td>
                           {(['sup', 'inf', 'izq', 'der'] as const).map(side => {
                             const cb = piece.cubrecanto ?? { sup: 0, inf: 0, izq: 0, der: 0 };

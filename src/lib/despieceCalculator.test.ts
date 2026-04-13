@@ -179,11 +179,17 @@ describe('calculateDespiece — drawer base (3 drawers)', () => {
     expect(p.cubrecanto).toEqual({ sup: 1, inf: 1, izq: 0, der: 0 });
   });
 
-  it('Drawer Box Ends: qty = 6, veta none, cb all-0', () => {
+  it('Drawer Box Ends: qty = 6, veta none, cb all-0, uses 15mm drawerBoxThickness', () => {
     const p = findPiece(pieces, 'Drawer Box Ends')!;
     expect(p.cantidad).toBe(6);
     expect(p.veta).toBe('none');
     expect(p.cubrecanto).toEqual({ sup: 0, inf: 0, izq: 0, der: 0 });
+    // W=24" → 610mm raw → 600mm optimized, esp=18
+    // innerW = 600 - 36 = 564 (wait, W=24" → W=610→not depth, W is width)
+    // W = round(24 * 25.4) = 610mm, innerW = 610 - 2*18 = 574
+    // boxOuterW = innerW - SLIDE_CLEARANCE = 574 - 26 = 548
+    // Drawer Box Ends = boxOuterW - 2*drawerEsp = 548 - 2*15 = 518
+    expect(p.ancho).toBe(518);
   });
 
   it('Drawer Box Bottom: qty = 3, veta none, cb all-0', () => {
@@ -326,5 +332,47 @@ describe('calculateDespiece — backward compatibility', () => {
     });
     const shelf = findPiece(pieces, 'Shelves')!;
     expect(shelf.cubrecanto).toEqual({ sup: 1, inf: 1, izq: 1, der: 1 }); // adjustable
+  });
+});
+
+// ── Drawer box thickness ────────────────────────────────────────────────────
+describe('calculateDespiece — drawer box thickness', () => {
+  const base: DespieceInput = {
+    heightIn: 30,
+    widthIn: 24,
+    depthIn: 24,
+    cabinetType: 'base',
+    bodyThickness: 18,
+    shelves: 0,
+    hasDoors: false,
+    numDoors: 0,
+    doorSectionHeightIn: 0,
+    hasDrawers: true,
+    numDrawers: 3,
+    drawerSectionHeightIn: 0,
+    optimizeDepth: true,
+  };
+
+  it('defaults to 15mm drawer box thickness when not specified', () => {
+    const pieces = calculateDespiece(base);
+    const ends = findPiece(pieces, 'Drawer Box Ends')!;
+    // W=24"→610mm, D=24"→600mm(optimized), esp=18
+    // innerW = 610 - 36 = 574, boxOuterW = 574 - 26 = 548
+    // With drawerEsp=15: 548 - 30 = 518
+    expect(ends.ancho).toBe(518);
+  });
+
+  it('uses custom drawerBoxThickness when provided', () => {
+    const pieces = calculateDespiece({ ...base, drawerBoxThickness: 12 });
+    const ends = findPiece(pieces, 'Drawer Box Ends')!;
+    // With drawerEsp=12: 548 - 24 = 524
+    expect(ends.ancho).toBe(524);
+  });
+
+  it('does NOT affect body pieces (sides, top, bottom still use bodyThickness)', () => {
+    const pieces = calculateDespiece({ ...base, drawerBoxThickness: 12 });
+    const topPanel = findPiece(pieces, 'Top Panel')!;
+    // Top panel alto = D - esp = 600 - 18 = 582 (uses bodyThickness, not drawerBoxThickness)
+    expect(topPanel.alto).toBe(582);
   });
 });

@@ -192,7 +192,7 @@ export async function buildOptimizerSetupFromQuotation(
   // 4. Iterate cabinets → cut_pieces, emit Pieza[] and accumulate stocks/eb.
   const pieces: Pieza[] = [];
   const stocksByKey = new Map<string, StockSize>();
-  const ebPriceListIdsUsage = new Map<string, number>(); // count of references
+  const ebByRole = { box: new Set<string>(), doors: new Set<string>() };
   let cabinetsInstanceCount = 0;
   const cabinetDetails: BuildResult['cabinetDetails'] = {};
 
@@ -213,18 +213,18 @@ export async function buildOptimizerSetupFromQuotation(
       continue;
     }
 
-    // Count edgeband references (for slot assignment later).
+    // Collect edgeband IDs by role (for deterministic slot assignment later).
     // Skip any "Not Apply" placeholder entries — they mean no edgeband.
     if (cab.box_edgeband_id) {
       const ebRow = priceListById.get(cab.box_edgeband_id);
       if (!isNotApply(ebRow?.concept_description)) {
-        ebPriceListIdsUsage.set(cab.box_edgeband_id, (ebPriceListIdsUsage.get(cab.box_edgeband_id) ?? 0) + 1);
+        ebByRole.box.add(cab.box_edgeband_id);
       }
     }
     if (cab.doors_edgeband_id) {
       const ebRow = priceListById.get(cab.doors_edgeband_id);
       if (!isNotApply(ebRow?.concept_description)) {
-        ebPriceListIdsUsage.set(cab.doors_edgeband_id, (ebPriceListIdsUsage.get(cab.doors_edgeband_id) ?? 0) + 1);
+        ebByRole.doors.add(cab.doors_edgeband_id);
       }
     }
 
@@ -434,22 +434,36 @@ export async function buildOptimizerSetupFromQuotation(
     }
   }
 
-  // 5. Assign edgeband price_list ids to slots a/b/c by usage count.
-  const sortedEbIds = Array.from(ebPriceListIdsUsage.entries())
-    .sort((lhs, rhs) => rhs[1] - lhs[1])
-    .map(([id]) => id);
+  // 5. Assign edgeband price_list ids to slots by ROLE (deterministic).
+  // Slot a (cubrecanto 1) = Box Construction EB
+  // Slot b (cubrecanto 2) = Doors & Fronts EB
+  // Slot c (cubrecanto 3) = Reserved (any overflow)
+  const boxEbId = ebByRole.box.size > 0 ? Array.from(ebByRole.box)[0] : null;
+  // Fall back to box EB if no doors EB is set (handles closets/doorless cabinets
+  // where side panels have cubrecanto=2 on visible edges).
+  const doorsEbId = ebByRole.doors.size > 0 ? Array.from(ebByRole.doors)[0] : boxEbId;
 
-  const ebSlotToPriceListId: Record<'a' | 'b' | 'c', string | null> = {
-    a: sortedEbIds[0] ?? null,
-    b: sortedEbIds[1] ?? null,
-    c: sortedEbIds[2] ?? null,
-  };
-
-  if (sortedEbIds.length > 3) {
+  if (ebByRole.box.size > 1) {
     warnings.push(
-      `This quotation references ${sortedEbIds.length} distinct edge banding types but the optimizer supports only 3 (a/b/c). ${sortedEbIds.length - 3} type(s) rolled into slot c.`,
+      `This quotation uses ${ebByRole.box.size} distinct Box Construction edgebands. Only the first will be used for slot a pricing.`,
     );
   }
+  if (ebByRole.doors.size > 1) {
+    warnings.push(
+      `This quotation uses ${ebByRole.doors.size} distinct Doors & Fronts edgebands. Only the first will be used for slot b pricing.`,
+    );
+  }
+
+  // Collect any additional EB ids not covered by box/doors (rare — custom pieces with type C)
+  const usedEbIds = new Set([boxEbId, doorsEbId].filter(Boolean));
+  const extraEbIds = [...ebByRole.box, ...ebByRole.doors].filter(id => !usedEbIds.has(id));
+  const slotCId = extraEbIds.length > 0 ? extraEbIds[0] : null;
+
+  const ebSlotToPriceListId: Record<'a' | 'b' | 'c', string | null> = {
+    a: boxEbId,
+    b: doorsEbId,
+    c: slotCId,
+  };
 
   const ebConfig: EbConfig = {
     a: ebSlotFromPriceList(priceListById, ebSlotToPriceListId.a),

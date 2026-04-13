@@ -283,6 +283,7 @@ export function generateBulkDespieces(products: BulkProduct[]): BulkOutput {
       shelfType: shelf.type,
       optimizeDepth: true,
       isSink: config.isSink,
+      drawerBoxThickness: 15,
     };
 
     const cutPieces = calculateDespiece(input);
