@@ -15,6 +15,7 @@ export interface CutPiece {
   cantidad: number;
   material: 'cuerpo' | 'frente' | 'back' | 'custom';
   cubrecanto?: Cubrecanto;
+  veta?: 'none' | 'horizontal' | 'vertical';
 }
 
 export type Product = Database['public']['Tables']['products_catalog']['Row'];

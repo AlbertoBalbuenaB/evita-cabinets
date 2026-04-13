@@ -285,6 +285,7 @@ export function ProductItem() {
                     <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Height (mm)</th>
                     <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Qty</th>
                     <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Material</th>
+                    <th className="text-center pb-2 font-medium text-slate-500 text-xs uppercase tracking-wide">Grain</th>
                     <th className="text-center pb-2 font-medium text-slate-400 text-xs uppercase" title="Top">T</th>
                     <th className="text-center pb-2 font-medium text-slate-400 text-xs uppercase" title="Bottom">B</th>
                     <th className="text-center pb-2 font-medium text-slate-400 text-xs uppercase" title="Left">L</th>
@@ -308,6 +309,14 @@ export function ProductItem() {
                           {piece.material === 'cuerpo' ? 'Box Construction' :
                            piece.material === 'frente' ? 'Doors & Fronts' :
                            piece.material === 'back'   ? 'Back Panel' : 'Custom'}
+                        </span>
+                      </td>
+                      <td className="py-2 text-center">
+                        <span className="text-sm" title={
+                          piece.veta === 'vertical' ? 'Vertical grain' :
+                          piece.veta === 'horizontal' ? 'Horizontal grain' : 'No grain'
+                        }>
+                          {piece.veta === 'vertical' ? '↕' : piece.veta === 'horizontal' ? '↔' : '—'}
                         </span>
                       </td>
                       {(['sup', 'inf', 'izq', 'der'] as const).map(side => {
