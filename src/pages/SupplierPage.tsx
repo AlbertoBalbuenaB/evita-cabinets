@@ -258,8 +258,20 @@ export function SupplierPage() {
           </div>
         </div>
 
-        {/* Supplier name */}
-        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{supplier.name}</h2>
+        {/* Supplier name + logo */}
+        <div className="flex items-center gap-4">
+          {supplier.logo_url && (
+            <div className="h-14 w-14 rounded-xl border border-slate-200/70 bg-white flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+              <img
+                src={supplier.logo_url}
+                alt={`${supplier.name} logo`}
+                className="w-full h-full object-contain p-1"
+                onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none'; }}
+              />
+            </div>
+          )}
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{supplier.name}</h2>
+        </div>
 
         {/* Categories */}
         {categories.length > 0 && (
