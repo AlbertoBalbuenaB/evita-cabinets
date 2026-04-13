@@ -2126,6 +2126,7 @@ export type Database = {
           is_active: boolean
           last_evaluation_date: string | null
           lead_time_days: number | null
+          logo_url: string | null
           min_purchase_amount: number | null
           name: string
           notes: string | null
@@ -2148,6 +2149,7 @@ export type Database = {
           is_active?: boolean
           last_evaluation_date?: string | null
           lead_time_days?: number | null
+          logo_url?: string | null
           min_purchase_amount?: number | null
           name: string
           notes?: string | null
@@ -2170,6 +2172,7 @@ export type Database = {
           is_active?: boolean
           last_evaluation_date?: string | null
           lead_time_days?: number | null
+          logo_url?: string | null
           min_purchase_amount?: number | null
           name?: string
           notes?: string | null

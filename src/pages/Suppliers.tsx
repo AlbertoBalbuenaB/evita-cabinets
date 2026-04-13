@@ -56,10 +56,17 @@ function getAvatarGradient(name: string): string {
   return gradients[Math.abs(hash) % gradients.length];
 }
 
-function SupplierAvatar({ name, size = 'sm' }: { name: string; size?: 'sm' | 'lg' }) {
+function SupplierAvatar({ name, logoUrl, size = 'sm' }: { name: string; logoUrl?: string | null; size?: 'sm' | 'lg' }) {
   const initials = name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   const gradient = getAvatarGradient(name);
   const sizeClass = size === 'lg' ? 'h-12 w-12 text-base' : 'h-9 w-9 text-xs';
+  if (logoUrl) {
+    return (
+      <div className={`rounded-xl overflow-hidden bg-white border border-slate-200/60 flex-shrink-0 flex items-center justify-center ${sizeClass}`}>
+        <img src={logoUrl} alt={name} className="w-full h-full object-contain p-0.5" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.parentElement as HTMLElement).classList.add('bg-gradient-to-br', ...gradient.split(' ')); }} />
+      </div>
+    );
+  }
   return (
     <div className={`flex items-center justify-center rounded-xl bg-gradient-to-br ${gradient} text-white font-bold flex-shrink-0 ${sizeClass}`}>
       {initials || <Truck className="h-4 w-4" />}
@@ -95,7 +102,7 @@ function SupplierCard({
     >
       {/* Header row */}
       <div className="flex items-start justify-between gap-3 mb-3">
-        <SupplierAvatar name={supplier.name} size="lg" />
+        <SupplierAvatar name={supplier.name} logoUrl={supplier.logo_url} size="lg" />
         <div className="flex items-center gap-1.5">
           {health !== 'none' && (
             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${healthStyle.className}`}>
@@ -205,7 +212,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showInactive, setShowInactive] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = useState<ViewMode>('card');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -510,7 +517,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                       >
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
-                            <SupplierAvatar name={supplier.name} />
+                            <SupplierAvatar name={supplier.name} logoUrl={supplier.logo_url} />
                             <div>
                               <p className="font-medium text-slate-900">{supplier.name}</p>
                               {supplier.payment_terms && (

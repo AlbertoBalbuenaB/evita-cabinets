@@ -15,6 +15,7 @@ interface SupplierFormModalProps {
 
 interface FormState {
   name: string;
+  logo_url: string;
   contact_name: string;
   phone: string;
   email: string;
@@ -36,6 +37,7 @@ interface FormState {
 function getDefaultForm(supplier?: Supplier | null): FormState {
   return {
     name: supplier?.name ?? '',
+    logo_url: supplier?.logo_url ?? '',
     contact_name: supplier?.contact_name ?? '',
     phone: supplier?.phone ?? '',
     email: supplier?.email ?? '',
@@ -245,6 +247,7 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
 
       const payload = {
         name: form.name.trim(),
+        logo_url: form.logo_url.trim() || null,
         contact_name: form.contact_name.trim() || null,
         phone: form.phone.trim() || null,
         email: form.email.trim() || null,
@@ -298,14 +301,39 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
         {/* ── Section 1: Basic Info ── */}
         <FormSection title="Basic Info" />
 
-        <Input
-          label="Name *"
-          value={form.name}
-          onChange={(e) => set('name', e.target.value)}
-          placeholder="e.g. Hafele, Blum, Richelieu"
-          disabled={saving}
-          required
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Name *"
+            value={form.name}
+            onChange={(e) => set('name', e.target.value)}
+            placeholder="e.g. Hafele, Blum, Richelieu"
+            disabled={saving}
+            required
+          />
+          <div>
+            <Input
+              label="Logo URL"
+              type="url"
+              value={form.logo_url}
+              onChange={(e) => set('logo_url', e.target.value)}
+              placeholder="https://example.com/logo.png"
+              disabled={saving}
+            />
+            {form.logo_url.trim() && (
+              <div className="mt-2 flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center overflow-hidden">
+                  <img
+                    src={form.logo_url.trim()}
+                    alt="Logo preview"
+                    className="w-full h-full object-contain p-0.5"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+                <span className="text-xs text-slate-400">Preview</span>
+              </div>
+            )}
+          </div>
+        </div>
 
         {isEditing && (
           <label className="flex items-center gap-3 cursor-pointer select-none">
