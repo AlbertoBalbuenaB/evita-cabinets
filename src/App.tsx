@@ -20,6 +20,7 @@ const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.S
 const OptimizerPage = lazy(() => import('./pages/OptimizerPage').then(m => ({ default: m.OptimizerPage })));
 const AiChat = lazy(() => import('./components/AiChat').then(m => ({ default: m.AiChat })));
 const Suppliers = lazy(() => import('./pages/Suppliers').then(m => ({ default: m.Suppliers })));
+const SupplierPage = lazy(() => import('./pages/SupplierPage').then(m => ({ default: m.SupplierPage })));
 const ToolsHub = lazy(() => import('./pages/ToolsHub').then(m => ({ default: m.ToolsHub })));
 const PlanViewerPage = lazy(() => import('./pages/PlanViewerPage').then(m => ({ default: m.PlanViewerPage })));
 
@@ -74,6 +75,7 @@ function App() {
             <Route path="/optimizer" element={<OptimizerPage />} />
             <Route path="/tools" element={<ToolsHub />} />
             <Route path="/tools/plan-viewer" element={<PlanViewerPage />} />
+            <Route path="/suppliers/:id" element={<SupplierPage />} />
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

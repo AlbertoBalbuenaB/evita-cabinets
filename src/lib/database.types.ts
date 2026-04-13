@@ -1552,6 +1552,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "project_tasks_owner_member_id_fkey"
+            columns: ["owner_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "project_tasks_parent_task_id_fkey"
             columns: ["parent_task_id"]
             isOneToOne: false
@@ -1686,7 +1693,6 @@ export type Database = {
           created_at: string | null
           created_by_member_id: string | null
           customer: string | null
-          group_id: string | null
           id: string
           inventory_auto_committed: boolean
           last_modified_at: string | null
@@ -1703,7 +1709,6 @@ export type Database = {
           created_at?: string | null
           created_by_member_id?: string | null
           customer?: string | null
-          group_id?: string | null
           id?: string
           inventory_auto_committed?: boolean
           last_modified_at?: string | null
@@ -1720,7 +1725,6 @@ export type Database = {
           created_at?: string | null
           created_by_member_id?: string | null
           customer?: string | null
-          group_id?: string | null
           id?: string
           inventory_auto_committed?: boolean
           last_modified_at?: string | null
@@ -1745,6 +1749,90 @@ export type Database = {
             columns: ["last_modified_by_member_id"]
             isOneToOne: false
             referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_item_comment_replies: {
+        Row: {
+          author_id: string | null
+          author_name: string
+          body: string
+          comment_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string
+          body: string
+          comment_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string
+          body?: string
+          comment_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_item_comment_replies_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_item_comment_replies_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_item_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_item_comments: {
+        Row: {
+          author_id: string | null
+          author_name: string
+          body: string
+          created_at: string
+          id: string
+          purchase_item_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string
+          body: string
+          created_at?: string
+          id?: string
+          purchase_item_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string
+          body?: string
+          created_at?: string
+          id?: string
+          purchase_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_item_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_item_comments_purchase_item_id_fkey"
+            columns: ["purchase_item_id"]
+            isOneToOne: false
+            referencedRelation: "project_purchase_items"
             referencedColumns: ["id"]
           },
         ]
@@ -1825,7 +1913,6 @@ export type Database = {
           customer: string | null
           disclaimer_price_validity: string | null
           disclaimer_tariff_info: string | null
-          group_id: string | null
           id: string
           install_delivery: number | null
           install_delivery_per_box: number | null
@@ -1863,7 +1950,6 @@ export type Database = {
           customer?: string | null
           disclaimer_price_validity?: string | null
           disclaimer_tariff_info?: string | null
-          group_id?: string | null
           id?: string
           install_delivery?: number | null
           install_delivery_per_box?: number | null
@@ -1901,7 +1987,6 @@ export type Database = {
           customer?: string | null
           disclaimer_price_validity?: string | null
           disclaimer_tariff_info?: string | null
-          group_id?: string | null
           id?: string
           install_delivery?: number | null
           install_delivery_per_box?: number | null
@@ -1988,46 +2073,111 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_logs: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          comment: string
+          created_at: string | null
+          id: string
+          log_type: string
+          supplier_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          comment: string
+          created_at?: string | null
+          id?: string
+          log_type?: string
+          supplier_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          comment?: string
+          created_at?: string | null
+          id?: string
+          log_type?: string
+          supplier_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_logs_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
+          address: string | null
+          categories: string[] | null
           contact_name: string | null
           created_at: string
+          delivery_terms: string | null
           email: string | null
           id: string
           is_active: boolean
+          last_evaluation_date: string | null
           lead_time_days: number | null
+          min_purchase_amount: number | null
           name: string
           notes: string | null
           payment_terms: string | null
           phone: string | null
+          punctuality: string | null
+          quality_score: number | null
+          special_discounts: string | null
           updated_at: string
           website: string | null
         }
         Insert: {
+          address?: string | null
+          categories?: string[] | null
           contact_name?: string | null
           created_at?: string
+          delivery_terms?: string | null
           email?: string | null
           id?: string
           is_active?: boolean
+          last_evaluation_date?: string | null
           lead_time_days?: number | null
+          min_purchase_amount?: number | null
           name: string
           notes?: string | null
           payment_terms?: string | null
           phone?: string | null
+          punctuality?: string | null
+          quality_score?: number | null
+          special_discounts?: string | null
           updated_at?: string
           website?: string | null
         }
         Update: {
+          address?: string | null
+          categories?: string[] | null
           contact_name?: string | null
           created_at?: string
+          delivery_terms?: string | null
           email?: string | null
           id?: string
           is_active?: boolean
+          last_evaluation_date?: string | null
           lead_time_days?: number | null
+          min_purchase_amount?: number | null
           name?: string
           notes?: string | null
           payment_terms?: string | null
           phone?: string | null
+          punctuality?: string | null
+          quality_score?: number | null
+          special_discounts?: string | null
           updated_at?: string
           website?: string | null
         }
@@ -2596,4 +2746,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-

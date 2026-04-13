@@ -188,6 +188,9 @@ export type ProjectLog = Database['public']['Tables']['project_logs']['Row'];
 export type ProjectLogInsert = Database['public']['Tables']['project_logs']['Insert'];
 export type ProjectLogReply = Database['public']['Tables']['project_log_replies']['Row'];
 
+export type SupplierLog = Database['public']['Tables']['supplier_logs']['Row'];
+export type SupplierLogInsert = Database['public']['Tables']['supplier_logs']['Insert'];
+
 // ── Enhanced Task Management ────────────────────────────────────────────────
 
 export type TaskStatus = 'pending' | 'in_progress' | 'in_review' | 'blocked' | 'done' | 'cancelled';

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Star, X, Tag, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Modal } from './Modal';
 import { Input } from './Input';
@@ -18,8 +19,16 @@ interface FormState {
   phone: string;
   email: string;
   website: string;
+  address: string;
+  categories: string[];
+  quality_score: number | null;
+  punctuality: string;
+  last_evaluation_date: string;
   payment_terms: string;
   lead_time_days: string;
+  delivery_terms: string;
+  special_discounts: string;
+  min_purchase_amount: string;
   notes: string;
   is_active: boolean;
 }
@@ -31,12 +40,177 @@ function getDefaultForm(supplier?: Supplier | null): FormState {
     phone: supplier?.phone ?? '',
     email: supplier?.email ?? '',
     website: supplier?.website ?? '',
+    address: supplier?.address ?? '',
+    categories: supplier?.categories ?? [],
+    quality_score: supplier?.quality_score ?? null,
+    punctuality: supplier?.punctuality ?? '',
+    last_evaluation_date: supplier?.last_evaluation_date ?? '',
     payment_terms: supplier?.payment_terms ?? '',
     lead_time_days: supplier?.lead_time_days != null ? String(supplier.lead_time_days) : '',
+    delivery_terms: supplier?.delivery_terms ?? '',
+    special_discounts: supplier?.special_discounts ?? '',
+    min_purchase_amount: supplier?.min_purchase_amount != null ? String(supplier.min_purchase_amount) : '',
     notes: supplier?.notes ?? '',
     is_active: supplier?.is_active ?? true,
   };
 }
+
+// ── Section divider ──────────────────────────────────────────────────────────
+
+function FormSection({ title }: { title: string }) {
+  return (
+    <div className="flex items-center gap-3 pt-2">
+      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">{title}</span>
+      <div className="flex-1 h-px bg-slate-200" />
+    </div>
+  );
+}
+
+// ── Star selector ─────────────────────────────────────────────────────────────
+
+function StarSelector({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onChange(value === i ? null : i)}
+            className="p-0.5 transition-transform hover:scale-110"
+            title={`Quality score: ${i}`}
+          >
+            <Star
+              className={`h-5 w-5 transition-colors ${
+                value != null && i <= value
+                  ? 'text-amber-400 fill-amber-400'
+                  : 'text-slate-200 fill-slate-200 hover:text-amber-300 hover:fill-amber-300'
+              }`}
+            />
+          </button>
+        ))}
+      </div>
+      {value != null && (
+        <span className="text-sm text-slate-500">{value}/5</span>
+      )}
+    </div>
+  );
+}
+
+// ── Category picker ───────────────────────────────────────────────────────────
+
+function CategoryPicker({
+  selected,
+  onChange,
+}: {
+  selected: string[];
+  onChange: (cats: string[]) => void;
+}) {
+  const [options, setOptions] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+
+  useEffect(() => {
+    supabase.from('custom_types').select('type_name').order('type_name').then(({ data }) => {
+      if (data) setOptions(data.map((d) => d.type_name));
+    });
+  }, []);
+
+  function toggle(cat: string) {
+    onChange(selected.includes(cat) ? selected.filter((c) => c !== cat) : [...selected, cat]);
+  }
+
+  function remove(cat: string) {
+    onChange(selected.filter((c) => c !== cat));
+  }
+
+  const filtered = options.filter(
+    (o) => o.toLowerCase().includes(inputValue.toLowerCase()) && !selected.includes(o)
+  );
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-1">Categories</label>
+
+      {/* Selected chips */}
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {selected.map((cat) => (
+            <span
+              key={cat}
+              className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
+            >
+              <Tag className="h-3 w-3" />
+              {cat}
+              <button
+                type="button"
+                onClick={() => remove(cat)}
+                className="ml-0.5 text-blue-500 hover:text-blue-800 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Dropdown trigger */}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-3 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-500 bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+        >
+          <span>{selected.length > 0 ? `${selected.length} selected` : 'Add categories…'}</span>
+          <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+
+        {open && (
+          <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+            <div className="p-2 border-b border-slate-100">
+              <input
+                type="text"
+                placeholder="Search types…"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+              />
+            </div>
+            <div className="max-h-48 overflow-y-auto p-1">
+              {filtered.length === 0 ? (
+                <p className="text-xs text-slate-400 px-3 py-2">No types found.</p>
+              ) : (
+                filtered.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => { toggle(opt); setInputValue(''); }}
+                    className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors"
+                  >
+                    {opt}
+                  </button>
+                ))
+              )}
+            </div>
+            <div className="p-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="w-full text-center text-xs text-slate-400 hover:text-slate-600 py-1"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      <p className="mt-1 text-xs text-slate-400">Types are managed in Inventory settings.</p>
+    </div>
+  );
+}
+
+// ── Main modal ────────────────────────────────────────────────────────────────
 
 export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: SupplierFormModalProps) {
   const [form, setForm] = useState<FormState>(getDefaultForm(supplier));
@@ -51,7 +225,7 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
     }
   }, [isOpen, supplier]);
 
-  function set(field: keyof FormState, value: string | boolean) {
+  function set<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -67,43 +241,41 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
     setSaving(true);
     try {
       const leadTime = form.lead_time_days.trim() !== '' ? parseInt(form.lead_time_days, 10) : null;
+      const minPurchase = form.min_purchase_amount.trim() !== '' ? parseFloat(form.min_purchase_amount) : null;
+
+      const payload = {
+        name: form.name.trim(),
+        contact_name: form.contact_name.trim() || null,
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
+        website: form.website.trim() || null,
+        address: form.address.trim() || null,
+        categories: form.categories.length > 0 ? form.categories : [],
+        quality_score: form.quality_score,
+        punctuality: form.punctuality || null,
+        last_evaluation_date: form.last_evaluation_date || null,
+        payment_terms: form.payment_terms.trim() || null,
+        lead_time_days: leadTime,
+        delivery_terms: form.delivery_terms.trim() || null,
+        special_discounts: form.special_discounts.trim() || null,
+        min_purchase_amount: minPurchase,
+        notes: form.notes.trim() || null,
+      };
 
       if (isEditing) {
-        const update: SupplierUpdate = {
-          name: form.name.trim(),
-          contact_name: form.contact_name.trim() || null,
-          phone: form.phone.trim() || null,
-          email: form.email.trim() || null,
-          website: form.website.trim() || null,
-          payment_terms: form.payment_terms.trim() || null,
-          lead_time_days: leadTime,
-          notes: form.notes.trim() || null,
-          is_active: form.is_active,
-        };
-        const { error: err } = await supabase
-          .from('suppliers')
-          .update(update)
-          .eq('id', supplier!.id);
+        const update: SupplierUpdate = { ...payload, is_active: form.is_active };
+        const { error: err } = await supabase.from('suppliers').update(update).eq('id', supplier!.id);
         if (err) throw err;
       } else {
-        const insert: SupplierInsert = {
-          name: form.name.trim(),
-          contact_name: form.contact_name.trim() || null,
-          phone: form.phone.trim() || null,
-          email: form.email.trim() || null,
-          website: form.website.trim() || null,
-          payment_terms: form.payment_terms.trim() || null,
-          lead_time_days: leadTime,
-          notes: form.notes.trim() || null,
-        };
+        const insert: SupplierInsert = { ...payload };
         const { error: err } = await supabase.from('suppliers').insert(insert);
         if (err) throw err;
       }
 
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Failed to save supplier.');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Failed to save supplier.');
     } finally {
       setSaving(false);
     }
@@ -114,7 +286,7 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
       isOpen={isOpen}
       onClose={onClose}
       title={isEditing ? 'Edit Supplier' : 'New Supplier'}
-      size="md"
+      size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -122,6 +294,9 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
             {error}
           </div>
         )}
+
+        {/* ── Section 1: Basic Info ── */}
+        <FormSection title="Basic Info" />
 
         <Input
           label="Name *"
@@ -131,6 +306,22 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
           disabled={saving}
           required
         />
+
+        {isEditing && (
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={form.is_active}
+              onChange={(e) => set('is_active', e.target.checked)}
+              disabled={saving}
+              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-sm font-medium text-slate-700">Active</span>
+          </label>
+        )}
+
+        {/* ── Section 2: Contact Details ── */}
+        <FormSection title="Contact Details" />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
@@ -145,7 +336,7 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
             type="tel"
             value={form.phone}
             onChange={(e) => set('phone', e.target.value)}
-            placeholder="+1 (555) 000-0000"
+            placeholder="+52 (33) 1234-5678"
             disabled={saving}
           />
         </div>
@@ -169,9 +360,79 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
           />
         </div>
 
+        {/* ── Section 3: Location ── */}
+        <FormSection title="Location" />
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+          <textarea
+            value={form.address}
+            onChange={(e) => set('address', e.target.value)}
+            placeholder="Full address, city, state. You can list multiple branches separated by lines."
+            rows={2}
+            disabled={saving}
+            className="block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500 resize-none text-sm"
+          />
+        </div>
+
+        {/* ── Section 4: Categories ── */}
+        <FormSection title="Categories" />
+
+        <CategoryPicker
+          selected={form.categories}
+          onChange={(cats) => set('categories', cats)}
+        />
+
+        {/* ── Section 5: Evaluation ── */}
+        <FormSection title="Supplier Evaluation" />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Quality Score</label>
+            <StarSelector
+              value={form.quality_score}
+              onChange={(v) => set('quality_score', v)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Punctuality</label>
+            <div className="flex gap-2">
+              {(['Alta', 'Media', 'Baja'] as const).map((p) => {
+                const active = form.punctuality === p;
+                const colors: Record<string, string> = {
+                  Alta:  active ? 'bg-green-100 text-green-700 border-green-300' : 'bg-white text-slate-500 border-slate-300 hover:border-green-300',
+                  Media: active ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-white text-slate-500 border-slate-300 hover:border-amber-300',
+                  Baja:  active ? 'bg-red-100 text-red-700 border-red-300' : 'bg-white text-slate-500 border-slate-300 hover:border-red-300',
+                };
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => set('punctuality', active ? '' : p)}
+                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${colors[p]}`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <Input
+          label="Last Evaluation Date"
+          type="date"
+          value={form.last_evaluation_date}
+          onChange={(e) => set('last_evaluation_date', e.target.value)}
+          disabled={saving}
+        />
+
+        {/* ── Section 6: Commercial Terms ── */}
+        <FormSection title="Commercial Terms" />
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
-            label="Payment Terms"
+            label="Terms of Payment"
             value={form.payment_terms}
             onChange={(e) => set('payment_terms', e.target.value)}
             placeholder="e.g. Net 30, On delivery"
@@ -188,8 +449,42 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
           />
         </div>
 
-        <div className="w-full">
-          <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Delivery Terms"
+            value={form.delivery_terms}
+            onChange={(e) => set('delivery_terms', e.target.value)}
+            placeholder="e.g. FOB, CIF, Ex-works"
+            disabled={saving}
+          />
+          <Input
+            label="Min. Purchase Amount"
+            type="number"
+            min={0}
+            step="0.01"
+            value={form.min_purchase_amount}
+            onChange={(e) => set('min_purchase_amount', e.target.value)}
+            placeholder="e.g. 500.00"
+            disabled={saving}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Special Discounts</label>
+          <textarea
+            value={form.special_discounts}
+            onChange={(e) => set('special_discounts', e.target.value)}
+            placeholder="Describe any volume discounts, promotional rates, or special agreements..."
+            rows={2}
+            disabled={saving}
+            className="block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500 resize-none text-sm"
+          />
+        </div>
+
+        {/* ── Section 7: Notes ── */}
+        <FormSection title="Notes" />
+
+        <div>
           <textarea
             value={form.notes}
             onChange={(e) => set('notes', e.target.value)}
@@ -200,19 +495,7 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
           />
         </div>
 
-        {isEditing && (
-          <label className="flex items-center gap-3 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={form.is_active}
-              onChange={(e) => set('is_active', e.target.checked)}
-              disabled={saving}
-              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm font-medium text-slate-700">Active</span>
-          </label>
-        )}
-
+        {/* Actions */}
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="secondary" onClick={onClose} disabled={saving}>
             Cancel
