@@ -329,14 +329,14 @@ export async function importPrefabPriceList(
       (oldPrices ?? []).map((p) => [`${p.prefab_catalog_id}|${p.finish}`, p.cost_usd]),
     );
 
-    const { error: archErr, count: archived } = await supabase
+    const { error: archErr } = await supabase
       .from('prefab_catalog_price')
       .update({ is_current: false })
       .in('prefab_catalog_id', affectedIds)
-      .eq('is_current', true)
-      .select('*', { count: 'exact', head: true });
+      .eq('is_current', true);
     if (archErr) report.errors.push(`Archive old prices: ${archErr.message}`);
-    report.pricesArchived = archived ?? 0;
+    // oldPrices was fetched above for the diff — same rows we just archived.
+    report.pricesArchived = (oldPrices ?? []).length;
 
     // ── 7. Insert new prices ──
     const newPriceRows = [];
