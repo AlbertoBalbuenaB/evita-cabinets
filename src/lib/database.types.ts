@@ -408,6 +408,63 @@ export type Database = {
           },
         ]
       }
+      area_prefab_items: {
+        Row: {
+          area_id: string
+          cost_mxn: number
+          cost_usd: number
+          created_at: string | null
+          finish: string
+          fx_rate: number
+          id: string
+          notes: string | null
+          prefab_catalog_id: string
+          quantity: number
+          updated_at: string | null
+        }
+        Insert: {
+          area_id: string
+          cost_mxn: number
+          cost_usd: number
+          created_at?: string | null
+          finish: string
+          fx_rate?: number
+          id?: string
+          notes?: string | null
+          prefab_catalog_id: string
+          quantity?: number
+          updated_at?: string | null
+        }
+        Update: {
+          area_id?: string
+          cost_mxn?: number
+          cost_usd?: number
+          created_at?: string | null
+          finish?: string
+          fx_rate?: number
+          id?: string
+          notes?: string | null
+          prefab_catalog_id?: string
+          quantity?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "area_prefab_items_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "project_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_prefab_items_prefab_catalog_id_fkey"
+            columns: ["prefab_catalog_id"]
+            isOneToOne: false
+            referencedRelation: "prefab_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       area_sections: {
         Row: {
           area_id: string
@@ -910,6 +967,130 @@ export type Database = {
             columns: ["price_list_item_id"]
             isOneToOne: false
             referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prefab_brand: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      prefab_catalog: {
+        Row: {
+          brand_id: string
+          cabinet_code: string
+          category: string
+          created_at: string | null
+          depth_in: number | null
+          description: string | null
+          dims_auto_parsed: boolean
+          dims_locked: boolean
+          height_in: number | null
+          id: string
+          is_active: boolean
+          item_type: Database["public"]["Enums"]["prefab_item_type"]
+          notes: string | null
+          updated_at: string | null
+          width_in: number | null
+        }
+        Insert: {
+          brand_id: string
+          cabinet_code: string
+          category: string
+          created_at?: string | null
+          depth_in?: number | null
+          description?: string | null
+          dims_auto_parsed?: boolean
+          dims_locked?: boolean
+          height_in?: number | null
+          id?: string
+          is_active?: boolean
+          item_type?: Database["public"]["Enums"]["prefab_item_type"]
+          notes?: string | null
+          updated_at?: string | null
+          width_in?: number | null
+        }
+        Update: {
+          brand_id?: string
+          cabinet_code?: string
+          category?: string
+          created_at?: string | null
+          depth_in?: number | null
+          description?: string | null
+          dims_auto_parsed?: boolean
+          dims_locked?: boolean
+          height_in?: number | null
+          id?: string
+          is_active?: boolean
+          item_type?: Database["public"]["Enums"]["prefab_item_type"]
+          notes?: string | null
+          updated_at?: string | null
+          width_in?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prefab_catalog_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "prefab_brand"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prefab_catalog_price: {
+        Row: {
+          cost_usd: number
+          created_at: string | null
+          effective_date: string
+          finish: string
+          id: string
+          is_current: boolean
+          prefab_catalog_id: string
+        }
+        Insert: {
+          cost_usd: number
+          created_at?: string | null
+          effective_date?: string
+          finish: string
+          id?: string
+          is_current?: boolean
+          prefab_catalog_id: string
+        }
+        Update: {
+          cost_usd?: number
+          created_at?: string | null
+          effective_date?: string
+          finish?: string
+          id?: string
+          is_current?: boolean
+          prefab_catalog_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prefab_catalog_price_prefab_catalog_id_fkey"
+            columns: ["prefab_catalog_id"]
+            isOneToOne: false
+            referencedRelation: "prefab_catalog"
             referencedColumns: ["id"]
           },
         ]
@@ -2619,7 +2800,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      prefab_item_type: "cabinet" | "accessory" | "linear" | "panel"
     }
     CompositeTypes: {
       [_ in never]: never
