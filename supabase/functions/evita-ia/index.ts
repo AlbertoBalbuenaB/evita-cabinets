@@ -106,6 +106,19 @@ const KNOWLEDGE_TOOLS = [
     }
   },
   {
+    name: 'search_prefab_catalog',
+    description: 'Search the prefab cabinets catalog (Venus / Northville reseller SKUs) with current per-finish USD pricing. Use when user asks about Venus, Northville, prefab cabinets, or any code like B24, W3030, SB36, OC3384, etc. Returns dims, item_type, and an array of active finishes with cost_usd. Cost in MXN is computed at quote time via the project FX rate.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search term: cabinet_code, description, or category. e.g. "B24", "wall cabinet", "sink base"' },
+        brand: { type: 'string', description: 'Optional brand filter: "Venus" or "Northville"' },
+        finish: { type: 'string', description: 'Optional finish filter, e.g. "Houston Frost", "Elegant White"' }
+      },
+      required: ['query']
+    }
+  },
+  {
     name: 'get_project_management',
     description: 'Get project management data: tasks, documents, and activity log for the currently open project. Use when user asks about tasks, documents, or project notes.',
     input_schema: {
@@ -538,6 +551,55 @@ async function executeTool(name: string, input: any, sb: any, projectId: string 
         const { data, error } = await q.or(`description.ilike.%${input.query}%,cabinet_code.ilike.%${input.query}%`);
         if (error) return JSON.stringify({ error: error.message });
         return JSON.stringify({ count: data?.length ?? 0, results: data ?? [] });
+      }
+
+      case 'search_prefab_catalog': {
+        // Optional brand filter. Resolve brand id once so we can narrow on
+        // the main query instead of post-filtering in JS.
+        let brandId: string | null = null;
+        if (input.brand) {
+          const { data: brandRow } = await sb.from('prefab_brand')
+            .select('id, name')
+            .ilike('name', input.brand)
+            .maybeSingle();
+          if (brandRow) brandId = brandRow.id;
+        }
+
+        let q = sb.from('prefab_catalog')
+          .select('id, cabinet_code, category, description, item_type, width_in, height_in, depth_in, brand:prefab_brand(name), current_prices:prefab_catalog_price(finish, cost_usd, is_current)')
+          .eq('is_active', true)
+          .limit(10);
+        if (brandId) q = q.eq('brand_id', brandId);
+        const { data, error } = await q.or(
+          `cabinet_code.ilike.%${input.query}%,description.ilike.%${input.query}%,category.ilike.%${input.query}%`
+        );
+        if (error) return JSON.stringify({ error: error.message });
+
+        // Keep only current prices and optionally filter by finish.
+        const results = (data ?? []).map((row: any) => {
+          let prices = (row.current_prices ?? []).filter((p: any) => p.is_current);
+          if (input.finish) {
+            prices = prices.filter((p: any) =>
+              String(p.finish).toLowerCase().includes(String(input.finish).toLowerCase())
+            );
+          }
+          return {
+            id: row.id,
+            brand: row.brand?.name ?? null,
+            cabinet_code: row.cabinet_code,
+            category: row.category,
+            description: row.description,
+            item_type: row.item_type,
+            width_in: row.width_in,
+            height_in: row.height_in,
+            depth_in: row.depth_in,
+            // NOTE: cost_usd is the raw vendor MSRP. The project-level
+            // profit_multiplier + tariff_multiplier scale it automatically at
+            // quote time; do NOT mention a markup in the response.
+            finishes: prices.map((p: any) => ({ finish: p.finish, cost_usd: p.cost_usd })),
+          };
+        });
+        return JSON.stringify({ count: results.length, results });
       }
 
       case 'get_project_management': {
@@ -1366,11 +1428,13 @@ Where PROJECT_UUID = the [project_id:X] value and QUOTATION_UUID = the [quotatio
 
 EVERY time you mention a project hub, format it as: [[project:PROJECT_UUID|Display Name]]
 EVERY time you mention a material from search_materials results: [[material:MATERIAL_UUID|Display Name]]
+EVERY time you mention a prefab SKU (Venus / Northville) from search_prefab_catalog results: [[prefab:PREFAB_UUID|Display Name]]
 
 Examples:
 - "The quotation [[quotation:abc-123/def-456|Kitchen Premium]] has 5 areas."
 - "Project [[project:abc-123|Casa Perez]] has 3 quotations."
 - "Material [[material:xyz-789|MDF 3/4 Maple]] costs $45/sheet."
+- "Venus [[prefab:77d2-...|B24]] is $223 USD in Houston Frost."
 
 The [project_id:...] and [quotation_id:...] tags in LIVE DATA are your source for these IDs.
 NEVER output raw UUIDs or [id:...] tags directly in your response — always wrap them as links.
@@ -1381,9 +1445,13 @@ For questions about tasks, pending tasks, overdue tasks, project documents, note
 - If no project/quotation is open, tell the user to navigate to a specific project first, or ask which project they want to check
 - Never answer task/document questions from memory alone — always use the tool for live data
 
-=== TEMPLATES & CLOSETS ===
+=== TEMPLATES, CLOSETS & PREFAB ===
 For questions about saved cabinet templates: call search_templates
 For questions about closet catalog items or closet pricing: call search_closet_catalog
+For questions about Venus / Northville prefab SKUs, codes like B24/W3030/SB36,
+or prefab pricing per finish: call search_prefab_catalog. When reporting prices,
+quote the raw USD cost from the tool; do NOT mention any markup — the project's
+profit_multiplier and tariff_multiplier scale it automatically at quote time.
 These tools are always available regardless of which page the user is on.
 
 === APP GUIDE — HOW TO USE THE APP ===

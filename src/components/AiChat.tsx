@@ -76,7 +76,7 @@ function formatBoldCode(text: string, keyPrefix: string): React.ReactNode[] {
 }
 
 function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: string) => void): React.ReactNode[] {
-  const linkRegex = /\[\[(project|material|quotation):([^|]+)\|([^\]]+)\]\]/g;
+  const linkRegex = /\[\[(project|material|quotation|prefab):([^|]+)\|([^\]]+)\]\]/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -107,6 +107,19 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           type="button"
           onClick={() => onNavigate?.(`/projects/${projectPart}/quotations/${quotationPart}`)}
           className="text-blue-600 hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+        >
+          {label}
+        </button>
+      );
+    } else if (kind === 'prefab') {
+      // Prefab SKUs live in the Products Catalog → Prefab Library tab.
+      // No per-row deep link yet, so navigate to the products page.
+      parts.push(
+        <button
+          key={`${keyPrefix}lnk${idx}`}
+          type="button"
+          onClick={() => onNavigate?.(`/products?tab=prefab&prefabId=${id}`)}
+          className="text-indigo-600 hover:text-indigo-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>

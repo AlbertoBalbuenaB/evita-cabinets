@@ -55,6 +55,14 @@ export function ProductsCatalog() {
     }
   }, [searchParams, products]);
 
+  // Deep-link from evita-ia prefab links: ?tab=prefab&prefabId=UUID
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'prefab' || tab === 'closets' || tab === 'templates' || tab === 'products') {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
   async function loadProducts() {
     try {
       const data = await fetchAllProducts({ onlyActive: !showArchived });
