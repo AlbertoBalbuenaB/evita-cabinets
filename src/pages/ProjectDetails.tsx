@@ -58,6 +58,15 @@ interface ProjectDetailsProps {
 export function ProjectDetails({ project: initialProject, parentProject, onBack }: ProjectDetailsProps) {
   const setActiveProjectTab = useAiChatContext(s => s.setActiveProjectTab);
   const [project, setProject] = useState<Quotation>(initialProject);
+  // Pricing method used by the Print buttons. Kept in state so the
+  // FloatingActionBar can render a pill/sub-label letting the user know
+  // which mode the next PDF export will use. Refreshed by
+  // `updateProjectTotal` (which already re-fetches `quotations.pricing_method`
+  // from Supabase) and whenever the user toggles the method inside the
+  // Breakdown tab (via the `onRecomputeRollup` callback).
+  const [pdfPricingMethod, setPdfPricingMethod] = useState<'sqft' | 'optimizer'>(
+    (initialProject.pricing_method as 'sqft' | 'optimizer') ?? 'sqft',
+  );
   const [areas, setAreas] = useState<(ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[]; sections: AreaSection[] })[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -304,6 +313,10 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
       const pricingMethod: 'sqft' | 'optimizer' =
         (q?.pricing_method as 'sqft' | 'optimizer') ?? 'sqft';
+      // Mirror the freshly-read value into UI state so the toolbar pill
+      // next to the Print button reflects it without waiting for a page
+      // reload. Safe to call even when unchanged (React bails out).
+      setPdfPricingMethod(pricingMethod);
       const activeRunId = q?.active_optimizer_run_id ?? null;
 
       if (activeRunId) {
@@ -708,19 +721,21 @@ const [isEditingDate, setIsEditingDate] = useState(false);
    * run, compute per-area cabinet subtotals from the optimizer so the PDFs
    * print the precise (Breakdown) numbers instead of the ft² subtotals.
    *
-   * Returns `{ subtotals, label }` where:
-   *   - `subtotals` is a map keyed by `area.id`; undefined/empty when the
-   *     quotation is in ft² mode, has no active run, or the run is stale.
-   *   - `label` tells the PDF header which badge to render.
+   * Returns a map keyed by `area.id`, or `undefined` when the quotation is
+   * in ft² mode / has no active run / the run is stale (in which case the
+   * PDFs fall back to `Σ cabinet.subtotal` and emit byte-identical output
+   * to the legacy behavior).
    *
    * Mirrors the same DB access pattern used in `updateProjectTotal`
-   * (lines ~296-340) and `handlePrintCutList` (lines ~725-745): always
-   * re-fetches from Supabase to bypass React prop staleness.
+   * (lines ~296-340) and `handlePrintCutList`: always re-fetches from
+   * Supabase to bypass React prop staleness.
+   *
+   * NOTE: This function intentionally does NOT return any "label" for the
+   * PDF to render. The pricing method is surfaced only in the platform UI
+   * (the Print button pill in FloatingActionBar); the printed PDF stays
+   * agnostic so clients don't see how prices were computed.
    */
-  async function resolveOptimizerAreaSubtotals(): Promise<{
-    subtotals: Record<string, number> | undefined;
-    label: 'sqft' | 'optimizer';
-  }> {
+  async function resolveOptimizerAreaSubtotals(): Promise<Record<string, number> | undefined> {
     try {
       const { data: q } = await supabase
         .from('quotations')
@@ -730,10 +745,14 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
       const pricingMethod: 'sqft' | 'optimizer' =
         (q?.pricing_method as 'sqft' | 'optimizer') ?? 'sqft';
+      // Keep the toolbar pill in sync with whatever the DB says RIGHT NOW,
+      // even if the user is about to cancel the print (clicking the button
+      // should never leave stale UI behind).
+      setPdfPricingMethod(pricingMethod);
       const activeRunId = q?.active_optimizer_run_id ?? null;
 
       if (pricingMethod !== 'optimizer' || !activeRunId) {
-        return { subtotals: undefined, label: 'sqft' };
+        return undefined;
       }
 
       const { data: run } = await supabase
@@ -748,7 +767,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
             `[resolveOptimizerAreaSubtotals] Active optimizer run for quotation ${project.id} is stale; PDF will fall back to ft² per-area subtotals.`,
           );
         }
-        return { subtotals: undefined, label: 'sqft' };
+        return undefined;
       }
 
       const snapshot = run.snapshot as unknown as OptimizerRunSnapshot;
@@ -767,37 +786,35 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         subtotals[areaId] = v.cabinetsSubtotal;
       }
 
-      return { subtotals, label: 'optimizer' };
+      return subtotals;
     } catch (err) {
       console.error(
         '[resolveOptimizerAreaSubtotals] failed; PDF will fall back to ft²:',
         err,
       );
-      return { subtotals: undefined, label: 'sqft' };
+      return undefined;
     }
   }
 
   async function handlePrint() {
-    const { subtotals, label } = await resolveOptimizerAreaSubtotals();
+    const optimizerAreaSubtotals = await resolveOptimizerAreaSubtotals();
     await printQuotation(project, areas, products, priceList, {
       pdfProjectName: isPdfNameModified ? pdfProjectName : undefined,
       pdfCustomer: isPdfCustomerModified ? pdfCustomer : undefined,
       pdfAddress: isPdfAddressModified ? pdfAddress : undefined,
       pdfProjectBrief: isPdfBriefModified ? pdfProjectBrief : undefined,
-      optimizerAreaSubtotals: subtotals,
-      pricingMethodLabel: label,
+      optimizerAreaSubtotals,
     });
   }
 
   async function handlePrintUSD() {
-    const { subtotals, label } = await resolveOptimizerAreaSubtotals();
+    const optimizerAreaSubtotals = await resolveOptimizerAreaSubtotals();
     await printQuotationUSD(project, areas, exchangeRate, products, priceList, disclaimerTariffInfo, disclaimerPriceValidity, {
       pdfProjectName: isPdfNameModified ? pdfProjectName : undefined,
       pdfCustomer: isPdfCustomerModified ? pdfCustomer : undefined,
       pdfAddress: isPdfAddressModified ? pdfAddress : undefined,
       pdfProjectBrief: isPdfBriefModified ? pdfProjectBrief : undefined,
-      optimizerAreaSubtotals: subtotals,
-      pricingMethodLabel: label,
+      optimizerAreaSubtotals,
     });
   }
 
@@ -1301,6 +1318,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         hasAreasOrderChanged={hasAreasOrderChanged}
         savingAreasOrder={savingAreasOrder}
         areasEmpty={areas.length === 0}
+        pdfPricingMethod={pdfPricingMethod}
       />
 
       <div className="mb-6 mt-6 page-enter">

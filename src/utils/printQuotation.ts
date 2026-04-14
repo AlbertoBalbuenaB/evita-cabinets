@@ -22,14 +22,13 @@ export interface PDFOverrides {
    * Populated by `resolveOptimizerAreaSubtotals()` in ProjectDetails when
    * `quotations.pricing_method === 'optimizer'` and the active run is
    * fresh. Left undefined in ft² mode.
+   *
+   * NOTE: The printed PDF is intentionally AGNOSTIC to the pricing method —
+   * no badge, label or footnote reveals to the end client how the prices
+   * were computed. That visual distinction lives in the platform UI only
+   * (`FloatingActionBar` pill on the Print button).
    */
   optimizerAreaSubtotals?: Record<string, number>;
-  /**
-   * Pricing method label surfaced in the PDF header so the printed
-   * document is self-documenting. 'optimizer' prints a small badge next
-   * to the title; 'sqft' or undefined prints nothing extra.
-   */
-  pricingMethodLabel?: 'sqft' | 'optimizer';
 }
 
 export async function printQuotation(
@@ -496,7 +495,7 @@ export async function printQuotation(
       <div class="project-header">
         <div class="project-header-left">
           <span class="project-label">Project</span>
-          <div class="project-name">${resolvedName}${overrides.pricingMethodLabel === 'optimizer' ? ' <span style="display:inline-block; font-size:7pt; font-weight:600; padding:1px 6px; margin-left:6px; vertical-align:middle; border:1px solid #1d4ed8; color:#1d4ed8; border-radius:3px; letter-spacing:0.5px;">OPTIMIZER</span>' : ''}</div>
+          <div class="project-name">${resolvedName}</div>
           <span class="project-label">Address</span>
           <div style="font-size: 10pt; font-weight: 600; margin-top: 2px;">${resolvedAddress || '-'}</div>
         </div>
@@ -1030,7 +1029,7 @@ export async function printQuotationUSD(
       <div class="project-header">
         <div class="project-header-left">
           <span class="project-label">Project</span>
-          <div class="project-name">${resolvedName}${overrides.pricingMethodLabel === 'optimizer' ? ' <span style="display:inline-block; font-size:7pt; font-weight:600; padding:1px 6px; margin-left:6px; vertical-align:middle; border:1px solid #1d4ed8; color:#1d4ed8; border-radius:3px; letter-spacing:0.5px;">OPTIMIZER</span>' : ''}</div>
+          <div class="project-name">${resolvedName}</div>
           <span class="project-label">Address</span>
           <div style="font-size: 10pt; font-weight: 600; margin-top: 2px;">${resolvedAddress || '-'}</div>
         </div>
