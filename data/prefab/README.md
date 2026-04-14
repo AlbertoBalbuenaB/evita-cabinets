@@ -82,3 +82,28 @@ directamente. Estos CSV sólo son el seed inicial. El importador:
 - Marca `is_active=false` los SKUs que ya no aparecen en la nueva lista
   (las cotizaciones históricas siguen viendo el snapshot en
   `area_prefab_items`).
+
+## Known supplier data issues
+
+El xlsx original de Venus (`venus_2024_09.csv`, rows ~2746-2754) contiene
+**4 SKUs duplicados** en el acabado `Houston Trenton Fairy Green`, con dos
+precios distintos registrados para la misma llave `(code, finish)`:
+
+| Code    | Precio 1 USD | Precio 2 USD (usado) | Delta |
+|---------|-------------:|---------------------:|------:|
+| VDB2421 | 521 | **547** | +26 |
+| VDB2721 | 534 | **554** | +20 |
+| VDB3021 | 568 | **589** | +21 |
+| VDB3621 | 633 | **656** | +23 |
+
+El UNIQUE constraint `(prefab_catalog_id, finish, effective_date)` no permite
+ambos valores, así que **el seed toma el precio MÁS ALTO** (defensiva de
+margen — si Venus termina cobrándonos el precio bajo, ganamos; al revés
+perdemos; además en bloques consecutivos así la fila más reciente suele ser
+la corrección). El total resultante es 4,084 prices en lugar de los 4,088
+listados en el xlsx crudo.
+
+Si en un import futuro `prefabImport.ts` detecta el mismo patrón, loguea un
+`console.warn` listando los duplicados para que Alberto pueda preguntarle a
+Venus y limpiar la fuente.
+
