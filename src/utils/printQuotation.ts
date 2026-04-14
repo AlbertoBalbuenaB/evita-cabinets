@@ -9,6 +9,27 @@ export interface PDFOverrides {
   pdfCustomer?: string;
   pdfAddress?: string;
   pdfProjectBrief?: string;
+  /**
+   * Optimizer-mode override: per-area cabinet subtotal in MXN, pre-quantity.
+   *
+   * When present for a given `area.id`, the PDF uses this value instead of
+   * `Σ cabinet.subtotal` for that area. All downstream math (profit
+   * multiplier, tariff, referral, tax, USD conversion, boxes/sf) is
+   * unchanged. Areas NOT present in the map keep their ft² behavior, so
+   * mixed-mode quotations (or areas without an optimizer contribution) stay
+   * byte-identical to the legacy output.
+   *
+   * Populated by `resolveOptimizerAreaSubtotals()` in ProjectDetails when
+   * `quotations.pricing_method === 'optimizer'` and the active run is
+   * fresh. Left undefined in ft² mode.
+   */
+  optimizerAreaSubtotals?: Record<string, number>;
+  /**
+   * Pricing method label surfaced in the PDF header so the printed
+   * document is self-documenting. 'optimizer' prints a small badge next
+   * to the title; 'sqft' or undefined prints nothing extra.
+   */
+  pricingMethodLabel?: 'sqft' | 'optimizer';
 }
 
 export async function printQuotation(
@@ -21,8 +42,18 @@ export async function printQuotation(
   const resolvedName = overrides.pdfProjectName ?? project.name;
   const resolvedAddress = overrides.pdfAddress ?? (project.address || '');
   const resolvedBrief = overrides.pdfProjectBrief ?? filterProjectBriefForPDF(project.project_brief || '');
+  // Optimizer-mode swap: if the caller passed per-area overrides, use them
+  // in place of `Σ cabinet.subtotal` for that area. Areas missing from the
+  // map fall back to the ft² sum, so mixed-mode/ft²-mode quotations keep
+  // their existing behavior.
+  const resolveAreaCabinetsTotal = (area: ProjectArea & { cabinets: AreaCabinet[] }) => {
+    const override = overrides.optimizerAreaSubtotals?.[area.id];
+    if (typeof override === 'number' && Number.isFinite(override)) return override;
+    return area.cabinets.reduce((s, c) => s + (c.subtotal ?? 0), 0);
+  };
+
   const cabinetsSubtotal = areas.reduce(
-    (sum, area) => sum + area.cabinets.reduce((s, c) => s + (c.subtotal ?? 0), 0) * (area.quantity ?? 1),
+    (sum, area) => sum + resolveAreaCabinetsTotal(area) * (area.quantity ?? 1),
     0
   );
 
@@ -51,7 +82,7 @@ export async function printQuotation(
 
   const areaBreakdown = areas.map(area => {
     const qty = area.quantity ?? 1;
-    const areaCabinetsTotal = area.cabinets.reduce((sum, c) => sum + (c.subtotal ?? 0), 0);
+    const areaCabinetsTotal = resolveAreaCabinetsTotal(area);
     const areaItemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
     const areaClosetTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
     const rawTotal = areaCabinetsTotal + areaItemsTotal + areaClosetTotal;
@@ -465,7 +496,7 @@ export async function printQuotation(
       <div class="project-header">
         <div class="project-header-left">
           <span class="project-label">Project</span>
-          <div class="project-name">${resolvedName}</div>
+          <div class="project-name">${resolvedName}${overrides.pricingMethodLabel === 'optimizer' ? ' <span style="display:inline-block; font-size:7pt; font-weight:600; padding:1px 6px; margin-left:6px; vertical-align:middle; border:1px solid #1d4ed8; color:#1d4ed8; border-radius:3px; letter-spacing:0.5px;">OPTIMIZER</span>' : ''}</div>
           <span class="project-label">Address</span>
           <div style="font-size: 10pt; font-weight: 600; margin-top: 2px;">${resolvedAddress || '-'}</div>
         </div>
@@ -598,10 +629,19 @@ export async function printQuotationUSD(
   const taxPercentage = project.tax_percentage || 0;
   const referralRate = project.referral_currency_rate || 0;
 
+  // Optimizer-mode swap: mirrors the MXN path in `printQuotation`.
+  // Areas with an override use the optimizer-derived per-area cabinet
+  // subtotal (pre-quantity, MXN); everything else falls back to ft².
+  const resolveAreaCabinetsTotal = (area: ProjectArea & { cabinets: AreaCabinet[] }) => {
+    const override = overrides.optimizerAreaSubtotals?.[area.id];
+    if (typeof override === 'number' && Number.isFinite(override)) return override;
+    return area.cabinets.reduce((s, c) => s + (c.subtotal ?? 0), 0);
+  };
+
   // First pass: calculate original prices, tariffs, and taxes (NOT inflated)
   const baseAreaData = areas.map(area => {
     const qty = area.quantity ?? 1;
-    const areaCabinetsTotal = area.cabinets.reduce((sum, c) => sum + (c.subtotal ?? 0), 0);
+    const areaCabinetsTotal = resolveAreaCabinetsTotal(area);
     const areaItemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
     const areaClosetTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
     const areaMaterialsSubtotal = (areaCabinetsTotal + areaItemsTotal + areaClosetTotal) * qty;
@@ -990,7 +1030,7 @@ export async function printQuotationUSD(
       <div class="project-header">
         <div class="project-header-left">
           <span class="project-label">Project</span>
-          <div class="project-name">${resolvedName}</div>
+          <div class="project-name">${resolvedName}${overrides.pricingMethodLabel === 'optimizer' ? ' <span style="display:inline-block; font-size:7pt; font-weight:600; padding:1px 6px; margin-left:6px; vertical-align:middle; border:1px solid #1d4ed8; color:#1d4ed8; border-radius:3px; letter-spacing:0.5px;">OPTIMIZER</span>' : ''}</div>
           <span class="project-label">Address</span>
           <div style="font-size: 10pt; font-weight: 600; margin-top: 2px;">${resolvedAddress || '-'}</div>
         </div>

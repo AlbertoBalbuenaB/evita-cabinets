@@ -66,14 +66,14 @@ export interface OptimizerQuotationTotal {
  * These are subtracted from `cabinet.subtotal` to obtain the non-material
  * extras that must be added on top of the optimizer boards + edgeband.
  */
-const MATERIAL_FIELDS = [
+export const MATERIAL_FIELDS = [
   'box_material_cost',
   'box_edgeband_cost',
   'doors_material_cost',
   'doors_edgeband_cost',
 ] as const;
 
-function cabinetMaterialCost(cab: Record<string, unknown>): number {
+export function cabinetMaterialCost(cab: Record<string, unknown>): number {
   let total = 0;
   for (const f of MATERIAL_FIELDS) {
     const v = cab[f];

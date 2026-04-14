@@ -48,6 +48,7 @@ import { CutListDetailPanel } from './CutListDetailPanel';
 import { StaleBadge } from './StaleBadge';
 import { BreakdownBOM } from './BreakdownBOM';
 import type { OptimizationResult } from '../../../lib/optimizer/types';
+import { allocateBoardCostsByArea } from '../../../lib/optimizer/quotation/computeOptimizerAreaSubtotals';
 import type {
   PricingMethod,
   ProjectArea,
@@ -276,34 +277,16 @@ export function QuotationOptimizerTab({
 
   // Per-area breakdown rows — recomputed from result.boards + snapshot.stocks
   // each time a run is loaded, so costs are always current (not stale zeros).
+  //
+  // The actual m²→cost allocation lives in `allocateBoardCostsByArea` so the
+  // Breakdown tab, the MXN/USD PDF exporters, and any future diagnostics all
+  // share a single source of truth for how a board's cost is split across
+  // areas when its pieces span multiple areas.
   const perAreaRows = useMemo(() => {
     if (!loadedRun) return [];
     const { result, snapshot } = loadedRun;
-    const stockByName = new Map(snapshot.stocks.map((s) => [s.nombre, s]));
-    const attr: Record<string, { m2: number; cost: number; boards: number }> = {};
+    const attr = allocateBoardCostsByArea(result, snapshot.stocks);
 
-    for (const board of result.boards) {
-      if (board.placed.length === 0) continue;
-      const boardCost =
-        stockByName.get(board.stockInfo.nombre)?.costo ?? board.stockInfo.costo;
-      const perAreaM2: Record<string, number> = {};
-      let totalM2 = 0;
-      for (const pp of board.placed) {
-        const areaId = pp.piece.areaId;
-        if (!areaId) continue;
-        const m2 = (pp.w * pp.h) / 1_000_000;
-        perAreaM2[areaId] = (perAreaM2[areaId] ?? 0) + m2;
-        totalM2 += m2;
-      }
-      if (totalM2 <= 0) continue;
-      for (const [areaId, m2] of Object.entries(perAreaM2)) {
-        const f = m2 / totalM2;
-        const b = (attr[areaId] ??= { m2: 0, cost: 0, boards: 0 });
-        b.m2 += m2;
-        b.cost += boardCost * f;
-        b.boards += f;
-      }
-    }
     return Object.entries(attr)
       .map(([areaId, v]) => ({
         areaId,

@@ -25,7 +25,9 @@ import { recalculateAreaEdgebandCosts } from '../lib/edgebandRolls';
 import { recalculateAreaSheetMaterialCosts } from '../lib/sheetMaterials';
 import { computeQuotationTotalsSqft } from '../lib/pricing/computeQuotationTotalsSqft';
 import { computeOptimizerQuotationTotal } from '../lib/optimizer/quotation/computeOptimizerQuotationTotal';
+import { computeOptimizerAreaSubtotals } from '../lib/optimizer/quotation/computeOptimizerAreaSubtotals';
 import type { OptimizerRunSnapshot } from '../lib/optimizer/quotation/types';
+import type { OptimizationResult } from '../lib/optimizer/types';
 import { exportOptimizerPDF, type PdfLang } from '../lib/optimizer/pdfExport';
 import { QuotationOptimizerTab } from '../components/optimizer/quotation/QuotationOptimizerTab';
 import { OptimizerRunsAnalytics } from '../components/optimizer/quotation/OptimizerRunsAnalytics';
@@ -701,21 +703,101 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     }
   }
 
+  /**
+   * When the quotation is in optimizer pricing mode AND has a fresh active
+   * run, compute per-area cabinet subtotals from the optimizer so the PDFs
+   * print the precise (Breakdown) numbers instead of the ft² subtotals.
+   *
+   * Returns `{ subtotals, label }` where:
+   *   - `subtotals` is a map keyed by `area.id`; undefined/empty when the
+   *     quotation is in ft² mode, has no active run, or the run is stale.
+   *   - `label` tells the PDF header which badge to render.
+   *
+   * Mirrors the same DB access pattern used in `updateProjectTotal`
+   * (lines ~296-340) and `handlePrintCutList` (lines ~725-745): always
+   * re-fetches from Supabase to bypass React prop staleness.
+   */
+  async function resolveOptimizerAreaSubtotals(): Promise<{
+    subtotals: Record<string, number> | undefined;
+    label: 'sqft' | 'optimizer';
+  }> {
+    try {
+      const { data: q } = await supabase
+        .from('quotations')
+        .select('pricing_method, active_optimizer_run_id')
+        .eq('id', project.id)
+        .maybeSingle();
+
+      const pricingMethod: 'sqft' | 'optimizer' =
+        (q?.pricing_method as 'sqft' | 'optimizer') ?? 'sqft';
+      const activeRunId = q?.active_optimizer_run_id ?? null;
+
+      if (pricingMethod !== 'optimizer' || !activeRunId) {
+        return { subtotals: undefined, label: 'sqft' };
+      }
+
+      const { data: run } = await supabase
+        .from('quotation_optimizer_runs')
+        .select('snapshot, result, is_stale')
+        .eq('id', activeRunId)
+        .maybeSingle();
+
+      if (!run || run.is_stale) {
+        if (run?.is_stale) {
+          console.warn(
+            `[resolveOptimizerAreaSubtotals] Active optimizer run for quotation ${project.id} is stale; PDF will fall back to ft² per-area subtotals.`,
+          );
+        }
+        return { subtotals: undefined, label: 'sqft' };
+      }
+
+      const snapshot = run.snapshot as unknown as OptimizerRunSnapshot;
+      const result = run.result as unknown as OptimizationResult;
+      const cabinetsCovered = new Set<string>(snapshot?.cabinetsCovered ?? []);
+
+      const perArea = computeOptimizerAreaSubtotals({
+        snapshot,
+        result,
+        areasData: areas,
+        cabinetsCovered,
+      });
+
+      const subtotals: Record<string, number> = {};
+      for (const [areaId, v] of Object.entries(perArea)) {
+        subtotals[areaId] = v.cabinetsSubtotal;
+      }
+
+      return { subtotals, label: 'optimizer' };
+    } catch (err) {
+      console.error(
+        '[resolveOptimizerAreaSubtotals] failed; PDF will fall back to ft²:',
+        err,
+      );
+      return { subtotals: undefined, label: 'sqft' };
+    }
+  }
+
   async function handlePrint() {
+    const { subtotals, label } = await resolveOptimizerAreaSubtotals();
     await printQuotation(project, areas, products, priceList, {
       pdfProjectName: isPdfNameModified ? pdfProjectName : undefined,
       pdfCustomer: isPdfCustomerModified ? pdfCustomer : undefined,
       pdfAddress: isPdfAddressModified ? pdfAddress : undefined,
       pdfProjectBrief: isPdfBriefModified ? pdfProjectBrief : undefined,
+      optimizerAreaSubtotals: subtotals,
+      pricingMethodLabel: label,
     });
   }
 
   async function handlePrintUSD() {
+    const { subtotals, label } = await resolveOptimizerAreaSubtotals();
     await printQuotationUSD(project, areas, exchangeRate, products, priceList, disclaimerTariffInfo, disclaimerPriceValidity, {
       pdfProjectName: isPdfNameModified ? pdfProjectName : undefined,
       pdfCustomer: isPdfCustomerModified ? pdfCustomer : undefined,
       pdfAddress: isPdfAddressModified ? pdfAddress : undefined,
       pdfProjectBrief: isPdfBriefModified ? pdfProjectBrief : undefined,
+      optimizerAreaSubtotals: subtotals,
+      pricingMethodLabel: label,
     });
   }
 
