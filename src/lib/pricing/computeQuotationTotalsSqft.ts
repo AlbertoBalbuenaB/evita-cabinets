@@ -26,6 +26,7 @@ import type {
   AreaItem,
   AreaCountertop,
   AreaClosetItem,
+  AreaPrefabItem,
 } from '../../types';
 
 export interface AreaWithChildren extends ProjectArea {
@@ -33,6 +34,15 @@ export interface AreaWithChildren extends ProjectArea {
   items: AreaItem[];
   countertops: AreaCountertop[];
   closetItems: AreaClosetItem[];
+  /**
+   * Prefab reseller line items (Venus / Northville). Each row carries its
+   * own `cost_mxn` snapshot — precomputed at insert time as
+   * `quantity × cost_usd × fx_rate`. They flow into `materialsSubtotal`
+   * alongside closets, items, and countertops, and are therefore subject
+   * to the project-level `profit_multiplier` and `tariff_multiplier` via
+   * the same pipeline. They are opaque to the despiece/optimizer engines.
+   */
+  prefabItems?: AreaPrefabItem[];
 }
 
 export interface QuotationMultipliers {
@@ -71,7 +81,8 @@ function sumAreaChildren(area: AreaWithChildren): number {
   const itemsTotal       = area.items.reduce((s, i) => s + i.subtotal, 0);
   const countertopsTotal = area.countertops.reduce((s, ct) => s + ct.subtotal, 0);
   const closetItemsTotal = area.closetItems.reduce((s, ci) => s + ci.subtotal_mxn, 0);
-  return cabinetsTotal + itemsTotal + countertopsTotal + closetItemsTotal;
+  const prefabItemsTotal = (area.prefabItems ?? []).reduce((s, pi) => s + pi.cost_mxn, 0);
+  return cabinetsTotal + itemsTotal + countertopsTotal + closetItemsTotal + prefabItemsTotal;
 }
 
 export function computeQuotationTotalsSqft(

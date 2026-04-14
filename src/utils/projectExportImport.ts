@@ -1,5 +1,26 @@
 import { supabase } from '../lib/supabase';
-import type { Quotation, ProjectArea, AreaCabinet, AreaItem, AreaCountertop, AreaClosetItem, HardwareItem, AccessoryItem } from '../types';
+import type { Quotation, ProjectArea, AreaCabinet, AreaItem, AreaCountertop, AreaClosetItem, AreaPrefabItem, HardwareItem, AccessoryItem } from '../types';
+
+/**
+ * Portable prefab payload for .evita.json round-trip.
+ *
+ * We serialize the vendor identity (brand name + cabinet_code) instead of
+ * the raw prefab_catalog_id so the file survives being imported into a
+ * different project/database. On import we re-resolve (brand_name, code)
+ * → prefab_catalog_id; unresolved lines are logged and skipped so the
+ * rest of the project imports cleanly.
+ */
+export interface ExportedPrefabItem {
+  area_id: string;
+  brand_name: string;
+  cabinet_code: string;
+  finish: string;
+  quantity: number;
+  cost_usd: number;
+  fx_rate: number;
+  cost_mxn: number;
+  notes: string | null;
+}
 
 export interface ProjectExport {
   exportVersion: "1.0";
@@ -11,6 +32,7 @@ export interface ProjectExport {
     items: AreaItem[];
     countertops: AreaCountertop[];
     closetItems: AreaClosetItem[];
+    prefabItems?: ExportedPrefabItem[];
   }>;
   metadata: {
     totalAreas: number;
@@ -18,6 +40,7 @@ export interface ProjectExport {
     totalItems: number;
     totalCountertops: number;
     totalClosetItems: number;
+    totalPrefabItems?: number;
     originalProjectId: string;
   };
 }
@@ -43,6 +66,8 @@ export interface ImportSummary {
   itemsImported: number;
   countertopsImported: number;
   closetItemsImported: number;
+  prefabItemsImported?: number;
+  prefabItemsSkipped?: number;
 }
 
 export async function exportQuotationToJSON(quotationId: string): Promise<void> {
@@ -70,17 +95,34 @@ async function exportProjectToJSON(projectId: string): Promise<void> {
 
     const areas = await Promise.all(
       (projectAreas || []).map(async (area) => {
-        const [cabinetsResult, itemsResult, countertopsResult, closetItemsResult] = await Promise.all([
+        const [cabinetsResult, itemsResult, countertopsResult, closetItemsResult, prefabItemsResult] = await Promise.all([
           supabase.from('area_cabinets').select('*').eq('area_id', area.id),
           supabase.from('area_items').select('*').eq('area_id', area.id),
           supabase.from('area_countertops').select('*').eq('area_id', area.id),
           supabase.from('area_closet_items').select('*').eq('area_id', area.id),
+          supabase.from('area_prefab_items').select('*, catalog_item:prefab_catalog(cabinet_code, brand:prefab_brand(name))').eq('area_id', area.id),
         ]);
 
         if (cabinetsResult.error) throw new Error(`Error loading cabinets: ${cabinetsResult.error.message}`);
         if (itemsResult.error) throw new Error(`Error loading items: ${itemsResult.error.message}`);
         if (countertopsResult.error) throw new Error(`Error loading countertops: ${countertopsResult.error.message}`);
         if (closetItemsResult.error) throw new Error(`Error loading closet items: ${closetItemsResult.error.message}`);
+        if (prefabItemsResult.error) throw new Error(`Error loading prefab items: ${prefabItemsResult.error.message}`);
+
+        // Serialize prefab rows with vendor identity (brand + code) so the
+        // file can be imported into a different project/database.
+        const prefabItems: ExportedPrefabItem[] = ((prefabItemsResult.data || []) as unknown as Array<AreaPrefabItem & { catalog_item?: { cabinet_code?: string; brand?: { name?: string } | null } }>)
+          .map((pi) => ({
+            area_id: pi.area_id,
+            brand_name: pi.catalog_item?.brand?.name ?? '',
+            cabinet_code: pi.catalog_item?.cabinet_code ?? '',
+            finish: pi.finish,
+            quantity: pi.quantity,
+            cost_usd: pi.cost_usd,
+            fx_rate: pi.fx_rate,
+            cost_mxn: pi.cost_mxn,
+            notes: pi.notes,
+          }));
 
         return {
           area,
@@ -88,6 +130,7 @@ async function exportProjectToJSON(projectId: string): Promise<void> {
           items: itemsResult.data || [],
           countertops: countertopsResult.data || [],
           closetItems: (closetItemsResult.data || []) as unknown as AreaClosetItem[],
+          prefabItems,
         };
       })
     );
@@ -103,6 +146,7 @@ async function exportProjectToJSON(projectId: string): Promise<void> {
         totalItems: areas.reduce((sum, a) => sum + a.items.length, 0),
         totalCountertops: areas.reduce((sum, a) => sum + a.countertops.length, 0),
         totalClosetItems: areas.reduce((sum, a) => sum + a.closetItems.length, 0),
+        totalPrefabItems: areas.reduce((sum, a) => sum + (a.prefabItems?.length ?? 0), 0),
         originalProjectId: projectId,
       },
     };
@@ -272,9 +316,27 @@ export async function performQuotationImport(
     let totalItems = 0;
     let totalCountertops = 0;
     let totalClosetItems = 0;
+    let totalPrefabItems = 0;
+    let totalPrefabSkipped = 0;
+
+    // Build a (brand_name, cabinet_code) → catalog_id map once so we can
+    // resolve prefab line items without hitting the DB per row.
+    const prefabCatalogMap = new Map<string, string>();
+    const anyPrefab = areas.some((a: any) => (a.prefabItems?.length ?? 0) > 0);
+    if (anyPrefab) {
+      const { data: catalogRows, error: catErr } = await supabase
+        .from('prefab_catalog')
+        .select('id, cabinet_code, brand:prefab_brand(name)');
+      if (catErr) throw new Error(`Failed to load prefab catalog for import: ${catErr.message}`);
+      for (const row of (catalogRows || []) as Array<{ id: string; cabinet_code: string; brand: { name: string } | null }>) {
+        const brandName = row.brand?.name;
+        if (brandName) prefabCatalogMap.set(`${brandName}|${row.cabinet_code}`, row.id);
+      }
+    }
 
     for (const areaData of areas) {
       const { area, cabinets, items, countertops, closetItems = [] } = areaData;
+      const prefabItems = (areaData as typeof areaData & { prefabItems?: ExportedPrefabItem[] }).prefabItems ?? [];
 
       const areaInsert = {
         project_id: newQuotation.id,
@@ -373,6 +435,38 @@ export async function performQuotationImport(
 
         totalClosetItems += closetItems.length;
       }
+
+      if (prefabItems.length > 0) {
+        const prefabInserts: Array<Record<string, unknown>> = [];
+        for (const pi of prefabItems) {
+          const key = `${pi.brand_name}|${pi.cabinet_code}`;
+          const prefab_catalog_id = prefabCatalogMap.get(key);
+          if (!prefab_catalog_id) {
+            console.warn(`[projectExportImport] skipping prefab line ${key} — not found in destination catalog`);
+            totalPrefabSkipped++;
+            continue;
+          }
+          prefabInserts.push({
+            area_id: newArea.id,
+            prefab_catalog_id,
+            finish: pi.finish,
+            quantity: pi.quantity,
+            cost_usd: pi.cost_usd,
+            fx_rate: pi.fx_rate,
+            cost_mxn: pi.cost_mxn,
+            notes: pi.notes,
+          });
+        }
+        if (prefabInserts.length > 0) {
+          const { error: prefabError } = await supabase
+            .from('area_prefab_items')
+            .insert(prefabInserts as any);
+          if (prefabError) {
+            throw new Error(`Failed to create prefab items: ${prefabError.message}`);
+          }
+          totalPrefabItems += prefabInserts.length;
+        }
+      }
     }
 
     return {
@@ -384,6 +478,8 @@ export async function performQuotationImport(
         itemsImported: totalItems,
         countertopsImported: totalCountertops,
         closetItemsImported: totalClosetItems,
+        prefabItemsImported: totalPrefabItems,
+        prefabItemsSkipped: totalPrefabSkipped,
       },
     };
   } catch (error) {

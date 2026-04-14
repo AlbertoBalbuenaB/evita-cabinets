@@ -1,7 +1,7 @@
 import { formatCurrency } from '../lib/calculations';
 import { calculateAreaBoxesAndPallets } from '../lib/boxesAndPallets';
 import { supabase } from '../lib/supabase';
-import type { Quotation, ProjectArea, AreaCabinet, AreaItem, AreaCountertop, AreaClosetItem, Product, PriceListItem } from '../types';
+import type { Quotation, ProjectArea, AreaCabinet, AreaItem, AreaCountertop, AreaClosetItem, AreaPrefabItem, Product, PriceListItem } from '../types';
 import { filterProjectBriefForPDF, renderBriefBlocksAsHTML } from './filterProjectBrief';
 
 export interface PDFOverrides {
@@ -33,7 +33,7 @@ export interface PDFOverrides {
 
 export async function printQuotation(
   project: Quotation,
-  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems?: AreaClosetItem[] })[],
+  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems?: AreaClosetItem[]; prefabItems?: AreaPrefabItem[] })[],
   products: Product[] = [],
   priceList: PriceListItem[] = [],
   overrides: PDFOverrides = {}
@@ -71,7 +71,12 @@ export async function printQuotation(
     0
   );
 
-  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal + closetItemsSubtotal;
+  const prefabItemsSubtotal = areas.reduce(
+    (sum, area) => sum + (area.prefabItems || []).reduce((s, pi) => s + pi.cost_mxn, 0) * (area.quantity ?? 1),
+    0
+  );
+
+  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal + closetItemsSubtotal + prefabItemsSubtotal;
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -84,7 +89,8 @@ export async function printQuotation(
     const areaCabinetsTotal = resolveAreaCabinetsTotal(area);
     const areaItemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
     const areaClosetTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
-    const rawTotal = areaCabinetsTotal + areaItemsTotal + areaClosetTotal;
+    const areaPrefabTotal = (area.prefabItems || []).reduce((sum, pi) => sum + pi.cost_mxn, 0);
+    const rawTotal = areaCabinetsTotal + areaItemsTotal + areaClosetTotal + areaPrefabTotal;
     const areaTotal = rawTotal * qty;
 
     const boxesPalletsCalc = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
@@ -101,7 +107,8 @@ export async function printQuotation(
   const cabinetAreaBreakdown = areaBreakdown.filter((_, i) => {
     const area = areas[i];
     const hasClosets = (area.closetItems || []).length > 0;
-    return !(area.cabinets.length === 0 && !hasClosets && (area.countertops.length > 0 || area.items.length > 0));
+    const hasPrefab = (area.prefabItems || []).length > 0;
+    return !(area.cabinets.length === 0 && !hasClosets && !hasPrefab && (area.countertops.length > 0 || area.items.length > 0));
   });
 
   const totalBoxes = cabinetAreaBreakdown.reduce((sum, a) => sum + a.boxes, 0);
@@ -602,7 +609,7 @@ export async function printQuotation(
 
 export async function printQuotationUSD(
   project: Quotation,
-  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems?: AreaClosetItem[] })[],
+  areas: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems?: AreaClosetItem[]; prefabItems?: AreaPrefabItem[] })[],
   exchangeRate: number,
   products: Product[] = [],
   priceList: PriceListItem[] = [],
@@ -643,7 +650,8 @@ export async function printQuotationUSD(
     const areaCabinetsTotal = resolveAreaCabinetsTotal(area);
     const areaItemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
     const areaClosetTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
-    const areaMaterialsSubtotal = (areaCabinetsTotal + areaItemsTotal + areaClosetTotal) * qty;
+    const areaPrefabTotal = (area.prefabItems || []).reduce((sum, pi) => sum + pi.cost_mxn, 0);
+    const areaMaterialsSubtotal = (areaCabinetsTotal + areaItemsTotal + areaClosetTotal + areaPrefabTotal) * qty;
 
     const areaPrice = profitMultiplier > 0 && profitMultiplier < 1
       ? areaMaterialsSubtotal / (1 - profitMultiplier)
@@ -691,7 +699,8 @@ export async function printQuotationUSD(
   const usdCabinetAreaBreakdown = areaBreakdown.filter((_, i) => {
     const area = areas[i];
     const hasClosets = (area.closetItems || []).length > 0;
-    return !(area.cabinets.length === 0 && !hasClosets && (area.countertops.length > 0 || area.items.length > 0));
+    const hasPrefab = (area.prefabItems || []).length > 0;
+    return !(area.cabinets.length === 0 && !hasClosets && !hasPrefab && (area.countertops.length > 0 || area.items.length > 0));
   });
 
   const totalBoxesUSD = usdCabinetAreaBreakdown.reduce((sum, a) => sum + a.boxes, 0);

@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History, SeparatorHorizontal, Layers } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History, SeparatorHorizontal, Layers, Boxes } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { fetchAllProducts } from '../lib/fetchAllProducts';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
 import { formatCurrency } from '../lib/calculations';
-import type { Quotation, Project, ProjectArea, AreaCabinet, ProjectAreaInsert, Product, AreaItem, AreaCountertop, AreaClosetItem, AreaSection, PriceListItem, PricingMethod, QuotationOptimizerRun } from '../types';
+import type { Quotation, Project, ProjectArea, AreaCabinet, ProjectAreaInsert, Product, AreaItem, AreaCountertop, AreaClosetItem, AreaPrefabItem, AreaSection, PriceListItem, PricingMethod, QuotationOptimizerRun } from '../types';
+import { PrefabItemForm } from '../components/PrefabItemForm';
 import { CabinetForm } from '../components/CabinetForm';
 import { ItemForm } from '../components/ItemForm';
 import { CountertopForm } from '../components/CountertopForm';
@@ -60,6 +61,15 @@ interface ProjectDetailsProps {
   onBack: () => void;
 }
 
+type AreaWithChildren = ProjectArea & {
+  cabinets: AreaCabinet[];
+  items: AreaItem[];
+  countertops: AreaCountertop[];
+  closetItems: AreaClosetItem[];
+  prefabItems: AreaPrefabItem[];
+  sections: AreaSection[];
+};
+
 export function ProjectDetails({ project: initialProject, parentProject, onBack }: ProjectDetailsProps) {
   const setActiveProjectTab = useAiChatContext(s => s.setActiveProjectTab);
   const [project, setProject] = useState<Quotation>(initialProject);
@@ -80,7 +90,7 @@ export function ProjectDetails({ project: initialProject, parentProject, onBack 
   const [optimizerIsStale, setOptimizerIsStale] = useState<boolean>(
     (initialProject as any).optimizer_is_stale === true,
   );
-  const [areas, setAreas] = useState<(ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[]; sections: AreaSection[] })[]>([]);
+  const [areas, setAreas] = useState<AreaWithChildren[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAreaModalOpen, setIsAreaModalOpen] = useState(false);
@@ -93,6 +103,8 @@ export function ProjectDetails({ project: initialProject, parentProject, onBack 
   const [editingCountertop, setEditingCountertop] = useState<AreaCountertop | null>(null);
   const [selectedAreaForCloset, setSelectedAreaForCloset] = useState<string | null>(null);
   const [editingClosetItem, setEditingClosetItem] = useState<AreaClosetItem | null>(null);
+  const [selectedAreaForPrefab, setSelectedAreaForPrefab] = useState<string | null>(null);
+  const [editingPrefabItem, setEditingPrefabItem] = useState<AreaPrefabItem | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'pricing' | 'cutlist' | 'analytics' | 'history'>('info');
 
   useEffect(() => {
@@ -228,20 +240,22 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
       const areaIds = (areasData || []).map((a) => a.id);
 
-      const [allCabinetsResult, allItemsResult, allCountertopsResult, allClosetItemsResult, allSectionsResult] = areaIds.length > 0
+      const [allCabinetsResult, allItemsResult, allCountertopsResult, allClosetItemsResult, allPrefabItemsResult, allSectionsResult] = areaIds.length > 0
         ? await Promise.all([
             supabase.from('area_cabinets').select('*').in('area_id', areaIds).order('display_order').order('created_at'),
             supabase.from('area_items').select('*').in('area_id', areaIds).order('created_at'),
             supabase.from('area_countertops').select('*').in('area_id', areaIds).order('created_at'),
             supabase.from('area_closet_items').select('*, catalog_item:closet_catalog(*)').in('area_id', areaIds).order('created_at'),
+            supabase.from('area_prefab_items').select('*, catalog_item:prefab_catalog(*, brand:prefab_brand(*))').in('area_id', areaIds).order('created_at'),
             supabase.from('area_sections').select('*').in('area_id', areaIds).order('display_order'),
           ])
-        : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
+        : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
 
       const allCabinets: AreaCabinet[] = allCabinetsResult.data || [];
       const allItems: AreaItem[] = (allItemsResult.data || []) as unknown as AreaItem[];
       const allCountertops: AreaCountertop[] = (allCountertopsResult.data || []) as unknown as AreaCountertop[];
       const allClosetItems: AreaClosetItem[] = (allClosetItemsResult.data || []) as unknown as AreaClosetItem[];
+      const allPrefabItems: AreaPrefabItem[] = (allPrefabItemsResult.data || []) as unknown as AreaPrefabItem[];
       const allSections: AreaSection[] = (allSectionsResult.data || []) as AreaSection[];
 
       const areasWithCabinetsAndItems = (areasData || []).map((area) => {
@@ -251,6 +265,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           items: allItems.filter((i) => i.area_id === area.id),
           countertops: allCountertops.filter((ct) => ct.area_id === area.id),
           closetItems: allClosetItems.filter((ci) => ci.area_id === area.id),
+          prefabItems: allPrefabItems.filter((pi) => pi.area_id === area.id),
           sections: allSections.filter((s) => s.area_id === area.id),
         };
         console.log('[loadAreas] area sample:', { id: area.id, name: area.name, cabinetCount: result.cabinets.length, itemCount: result.items.length, countertopCount: result.countertops.length, closetCount: result.closetItems.length, firstCabinet: result.cabinets[0] ?? null });
@@ -267,7 +282,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   }
 
   async function updateProjectTotal(
-    areasData: (ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[]; sections: AreaSection[] })[],
+    areasData: AreaWithChildren[],
     opts?: {
       profitMultiplier?: number;
       tariffMultiplier?: number;
@@ -487,7 +502,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     }
   }
 
-  async function handleDuplicateArea(area: ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[]; sections: AreaSection[] }) {
+  async function handleDuplicateArea(area: AreaWithChildren) {
     if (!confirm(`Duplicate area "${area.name}" with all its cabinets and items?`)) return;
 
     try {
@@ -539,6 +554,15 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         }));
         const { error: closetError } = await supabase.from('area_closet_items').insert(closetItemsToInsert as any);
         if (closetError) throw closetError;
+      }
+
+      if ((area.prefabItems ?? []).length > 0) {
+        const prefabItemsToInsert = area.prefabItems.map(({ id, created_at, updated_at, catalog_item, ...rest }) => ({
+          ...rest,
+          area_id: newArea.id,
+        }));
+        const { error: prefabError } = await supabase.from('area_prefab_items').insert(prefabItemsToInsert as any);
+        if (prefabError) throw prefabError;
       }
 
       if (area.sections.length > 0) {
@@ -758,6 +782,24 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   async function handleCloseClosetForm() {
     setSelectedAreaForCloset(null);
     setEditingClosetItem(null);
+    await loadAreas();
+  }
+
+  async function handleDeletePrefabItem(prefabItemId: string) {
+    if (!confirm('Are you sure you want to delete this prefab item?')) return;
+    try {
+      const { error } = await supabase.from('area_prefab_items').delete().eq('id', prefabItemId);
+      if (error) throw error;
+      await loadAreas();
+    } catch (error) {
+      console.error('Error deleting prefab item:', error);
+      alert('Failed to delete prefab item');
+    }
+  }
+
+  async function handleClosePrefabForm() {
+    setSelectedAreaForPrefab(null);
+    setEditingPrefabItem(null);
     await loadAreas();
   }
 
@@ -1237,6 +1279,13 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           (area.quantity ?? 1),
       0,
     );
+    const prefabItemsSubtotal = areas.reduce(
+      (sum, area) =>
+        sum +
+        (area.prefabItems || []).reduce((s, pi) => s + pi.cost_mxn, 0) *
+          (area.quantity ?? 1),
+      0,
+    );
 
     // Try to compute optimizer-mode totals.
     let optCabinetsSubtotal = cabinetsSubtotalSqft;
@@ -1325,6 +1374,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       itemsSubtotal,
       countertopsSubtotal,
       closetItemsSubtotal,
+      prefabItemsSubtotal,
       materialsSubtotal,
       price,
       profitAmount,
@@ -1354,6 +1404,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   const itemsSubtotal = quotationView.itemsSubtotal;
   const countertopsSubtotal = quotationView.countertopsSubtotal;
   const closetItemsSubtotal = quotationView.closetItemsSubtotal;
+  const prefabItemsSubtotal = quotationView.prefabItemsSubtotal;
   const materialsSubtotal = quotationView.materialsSubtotal;
   const price = quotationView.price;
   const profitAmount = quotationView.profitAmount;
@@ -1954,6 +2005,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <p className="text-sm text-slate-600">Cabinets Subtotal:</p>
                 <p className="text-sm text-slate-600">Countertops Subtotal:</p>
                 <p className="text-sm text-slate-600">Prefab Closets Subtotal:</p>
+                <p className="text-sm text-slate-600">Prefab Cabinets Subtotal:</p>
                 <p className="text-sm text-slate-600">Individual Items Subtotal:</p>
                 <p className="text-sm text-slate-600 mt-2 pt-2 border-t border-slate-300">Materials Subtotal:</p>
                 {profitMultiplier > 0 && <p className="text-sm text-slate-600">Profit ({(profitMultiplier * 100).toFixed(1)}%):</p>}
@@ -1969,6 +2021,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <p className="text-sm font-medium text-slate-700">{formatPrice(cabinetsSubtotal)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(countertopsSubtotal)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(closetItemsSubtotal)}</p>
+                <p className="text-sm font-medium text-slate-700">{formatPrice(prefabItemsSubtotal)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(itemsSubtotal)}</p>
                 <p className="text-sm font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(materialsSubtotal)}</p>
                 {profitMultiplier > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(profitAmount)}</p>}
@@ -2434,14 +2487,15 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                         {(() => {
                           // Per-area cabinet subtotal comes from quotationView so it
                           // switches between sqft and optimizer mode along with the
-                          // rest of the UI. Items/countertops/closets are always ft²
-                          // sourced (they don't go through the optimizer).
+                          // rest of the UI. Items/countertops/closets/prefab are always
+                          // ft² sourced (they don't go through the optimizer).
                           const cabinetsPart = quotationView.perAreaCabinetSubtotal[area.id] ?? 0;
                           const rawTotal =
                             cabinetsPart +
                             area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0) +
                             area.items.reduce((sum, i) => sum + i.subtotal, 0) +
-                            (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
+                            (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0) +
+                            (area.prefabItems || []).reduce((sum, pi) => sum + pi.cost_mxn, 0);
                           const qty = area.quantity ?? 1;
                           return qty > 1 ? (
                             <div>
@@ -2536,11 +2590,15 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                     Add Closet
                   </Button>
                   */}
+                  <Button size="sm" variant="outline" onClick={() => { setSelectedAreaForPrefab(area.id); setEditingPrefabItem(null); }} className="w-full sm:w-auto border-indigo-300 hover:bg-indigo-50 text-indigo-700">
+                    <Boxes className="h-4 w-4 mr-2" />
+                    Add Prefab
+                  </Button>
                 </div>
 
-                {area.cabinets.length === 0 && area.items.length === 0 && area.countertops.length === 0 && (area.closetItems || []).length === 0 && (area.sections || []).length === 0 ? (
+                {area.cabinets.length === 0 && area.items.length === 0 && area.countertops.length === 0 && (area.closetItems || []).length === 0 && (area.prefabItems || []).length === 0 && (area.sections || []).length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-slate-600 mb-3">No cabinets, countertops, items, or closets in this area</p>
+                    <p className="text-slate-600 mb-3">No cabinets, countertops, items, closets, or prefab in this area</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -2765,6 +2823,93 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                       </div>
                     )}
 
+                    {(area.prefabItems || []).length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-slate-700 text-sm">Prefab Cabinets</h4>
+                        <div className="space-y-2">
+                          {(area.prefabItems || []).map((prefabItem) => {
+                            const catalog = (prefabItem as AreaPrefabItem & { catalog_item?: { cabinet_code: string; description: string | null; width_in: number | null; height_in: number | null; depth_in: number | null; category: string; brand?: { name: string } | null } }).catalog_item;
+                            return (
+                              <div
+                                key={prefabItem.id}
+                                className="bg-indigo-50 border border-indigo-200 rounded-lg p-4"
+                              >
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2 flex-wrap gap-1">
+                                      <h4 className="font-semibold text-slate-900">
+                                        {catalog?.brand?.name ?? 'Prefab'} — {catalog?.description ?? catalog?.cabinet_code ?? 'Item'}
+                                      </h4>
+                                      <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded">
+                                        Prefab
+                                      </span>
+                                      {catalog && (
+                                        <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                                          {catalog.cabinet_code}
+                                        </span>
+                                      )}
+                                      <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+                                        {prefabItem.finish}
+                                      </span>
+                                    </div>
+                                    {catalog && (
+                                      <div className="mt-1 text-xs text-indigo-700">
+                                        {catalog.category} · {catalog.width_in ?? '—'}" W × {catalog.height_in ?? '—'}" H × {catalog.depth_in ?? '—'}" D
+                                      </div>
+                                    )}
+                                    <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                                      <div className="flex justify-between">
+                                        <span className="text-slate-600">Quantity:</span>
+                                        <span className="font-medium">{prefabItem.quantity}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-slate-600">Unit Cost:</span>
+                                        <span className="font-medium">${prefabItem.cost_usd.toFixed(2)} USD</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-slate-600">FX (snapshot):</span>
+                                        <span className="font-medium">{prefabItem.fx_rate.toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex justify-between col-span-2 pt-1 border-t border-indigo-200">
+                                        <span className="text-slate-600 font-medium">Subtotal:</span>
+                                        <span className="font-semibold text-indigo-900">
+                                          {formatPrice(prefabItem.cost_mxn)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    {prefabItem.notes && (
+                                      <div className="mt-2 text-xs text-slate-600 italic">
+                                        Note: {prefabItem.notes}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex space-x-1 ml-4">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedAreaForPrefab(prefabItem.area_id);
+                                        setEditingPrefabItem(prefabItem);
+                                      }}
+                                    >
+                                      <Edit2 className="h-4 w-4 text-slate-600" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeletePrefabItem(prefabItem.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4 text-red-600" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {(area.closetItems || []).length > 0 && (
                       <div className="space-y-2">
                         <h4 className="font-semibold text-slate-700 text-sm">Prefab Closets</h4>
@@ -2898,6 +3043,14 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           areaId={selectedAreaForCloset}
           closetItem={editingClosetItem}
           onClose={handleCloseClosetForm}
+        />
+      )}
+
+      {selectedAreaForPrefab && (
+        <PrefabItemForm
+          areaId={selectedAreaForPrefab}
+          prefabItem={editingPrefabItem}
+          onClose={handleClosePrefabForm}
         />
       )}
 
