@@ -63,29 +63,31 @@ export function PrefabItemForm({ areaId, prefabItem, onClose }: PrefabItemFormPr
   async function loadData() {
     try {
       fetchSettings();
-      const [brandsRes, catalogRes, pricesRes] = await Promise.all([
+      // Use the view so prices are aggregated server-side (one row per SKU).
+      // The naive two-query pattern (prefab_catalog + prefab_catalog_price) hits
+      // PostgREST's max-rows cap: with 6 400+ current prices across both brands,
+      // only the first 1 000 rows were returned, leaving most SKUs with 0 finishes.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const [brandsRes, catalogRes] = await Promise.all([
         supabase.from('prefab_brand').select('*').eq('is_active', true).order('name'),
-        supabase.from('prefab_catalog').select('*').eq('is_active', true).order('cabinet_code'),
-        supabase.from('prefab_catalog_price').select('*').eq('is_current', true),
+        (supabase as any)
+          .from('prefab_catalog_with_prices')
+          .select('*')
+          .eq('is_active', true)
+          .order('cabinet_code'),
       ]);
       if (brandsRes.error) throw brandsRes.error;
       if (catalogRes.error) throw catalogRes.error;
-      if (pricesRes.error) throw pricesRes.error;
 
       const brandList = (brandsRes.data || []) as PrefabBrand[];
       setBrands(brandList);
 
-      const pricesByCat: Record<string, PrefabCatalogPrice[]> = {};
-      for (const p of (pricesRes.data || []) as PrefabCatalogPrice[]) {
-        (pricesByCat[p.prefab_catalog_id] ??= []).push(p);
-      }
-      for (const k of Object.keys(pricesByCat)) {
-        pricesByCat[k].sort((a, b) => a.finish.localeCompare(b.finish));
-      }
-
-      const enriched: EnrichedCatalogItem[] = ((catalogRes.data || []) as PrefabCatalogItem[]).map(
-        (c) => ({ ...c, prices: pricesByCat[c.id] || [] }),
-      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const enriched: EnrichedCatalogItem[] = ((catalogRes.data || []) as any[]).map((c: any) => ({
+        ...(c as PrefabCatalogItem),
+        // prices is a JSONB array pre-sorted by finish in the view
+        prices: (c.prices ?? []) as PrefabCatalogPrice[],
+      }));
       setCatalog(enriched);
 
       // If editing an existing line, seed the selected brand from its catalog row.
