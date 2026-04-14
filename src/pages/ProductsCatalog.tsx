@@ -702,7 +702,8 @@ function PrefabLibraryTab() {
           .from('prefab_catalog_price')
           .select('*')
           .in('prefab_catalog_id', catalogIds)
-          .eq('is_current', true);
+          .eq('is_current', true)
+          .limit(10000);
         if (prErr) throw prErr;
         for (const p of (priceData || []) as PrefabCatalogPrice[]) {
           (pricesByCatalog[p.prefab_catalog_id] ??= []).push(p);
