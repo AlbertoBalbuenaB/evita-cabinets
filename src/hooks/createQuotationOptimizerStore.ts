@@ -84,6 +84,7 @@ export interface QuotationOptimizerState {
   pendingCabinetInstanceCount: number;
   pendingCabinetDetails: Record<string, {
     productSku: string | null;
+    productDescription: string | null;
     quantity: number;
     areaId: string;
     areaName: string;
@@ -380,6 +381,7 @@ export function getQuotationOptimizerStore(
           warnings:              state.pendingWarnings,
           cabinetsCovered:       Array.from(state.pendingCabinetsCovered),
           cabinetsSkipped:       state.pendingCabinetsSkipped,
+          cabinetDetails:        state.pendingCabinetDetails,
           builtAt:               state.pendingBuiltAt ?? new Date().toISOString(),
         };
 

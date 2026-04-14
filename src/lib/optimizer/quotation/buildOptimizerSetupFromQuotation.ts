@@ -59,6 +59,7 @@ export interface BuildResult {
    *  Cut-list detail UI panel to label each group. */
   cabinetDetails: Record<string, {
     productSku: string | null;
+    productDescription: string | null;
     quantity: number;
     areaId: string;
     areaName: string;
@@ -75,7 +76,7 @@ type PriceListRow = Database['public']['Tables']['price_list']['Row'];
 type AreaCabinetRow = Database['public']['Tables']['area_cabinets']['Row'];
 type ProductRow = Pick<
   Database['public']['Tables']['products_catalog']['Row'],
-  'sku' | 'cut_pieces'
+  'sku' | 'cut_pieces' | 'description'
 >;
 
 const DEFAULT_CUBRECANTO: Cubrecanto = { sup: 0, inf: 0, izq: 0, der: 0 };
@@ -157,7 +158,7 @@ export async function buildOptimizerSetupFromQuotation(
   if (skus.length > 0) {
     const { data: products, error: prodErr } = await supabase
       .from('products_catalog')
-      .select('sku, cut_pieces')
+      .select('sku, cut_pieces, description')
       .in('sku', skus);
     if (prodErr) {
       throw new Error(`Failed to load products_catalog: ${prodErr.message}`);
@@ -411,6 +412,7 @@ export async function buildOptimizerSetupFromQuotation(
       cabinetsInstanceCount += qty;
       cabinetDetails[cab.id] = {
         productSku: cab.product_sku,
+        productDescription: product?.description ?? null,
         quantity: qty,
         areaId: cab.project_areas.id,
         areaName: cab.project_areas.name,
@@ -424,6 +426,7 @@ export async function buildOptimizerSetupFromQuotation(
       cabinetsInstanceCount += qty;
       cabinetDetails[cab.id] = {
         productSku: cab.product_sku,
+        productDescription: product?.description ?? null,
         quantity: qty,
         areaId: cab.project_areas.id,
         areaName: cab.project_areas.name,

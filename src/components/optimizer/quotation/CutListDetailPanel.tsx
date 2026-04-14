@@ -3,6 +3,7 @@ import type { Pieza } from '../../../lib/optimizer/types';
 
 export interface CabinetDisplayInfo {
   productSku: string | null;
+  productDescription: string | null;
   quantity: number;
   areaId: string;
   areaName: string;
@@ -38,13 +39,13 @@ export function CutListDetailPanel({ pieces, cabinetDetails }: Props) {
     else groups.set(key, [p]);
   }
 
-  // Order groups by area name, then by productSku, so the UI is stable
-  // across rebuilds.
+  // Order groups by area name, then by productSku, then by description, so
+  // the UI is stable across rebuilds.
   const orderedGroups = Array.from(groups.entries()).sort(([aId], [bId]) => {
     const a = cabinetDetails[aId];
     const b = cabinetDetails[bId];
-    const aLabel = `${a?.areaName ?? 'zzz'}|${a?.productSku ?? 'zzz'}`;
-    const bLabel = `${b?.areaName ?? 'zzz'}|${b?.productSku ?? 'zzz'}`;
+    const aLabel = `${a?.areaName ?? 'zzz'}|${a?.productSku ?? 'zzz'}|${a?.productDescription ?? ''}`;
+    const bLabel = `${b?.areaName ?? 'zzz'}|${b?.productSku ?? 'zzz'}|${b?.productDescription ?? ''}`;
     return aLabel.localeCompare(bLabel);
   });
 
@@ -64,7 +65,11 @@ export function CutListDetailPanel({ pieces, cabinetDetails }: Props) {
           const info = cabinetDetails[cabinetId];
           const pieceCount = groupPieces.reduce((s, p) => s + p.cantidad, 0);
           const label = info
-            ? `${info.productSku ?? '(no SKU)'} — ${info.areaName}`
+            ? [
+                info.productSku ?? '(no SKU)',
+                info.productDescription,
+                info.areaName,
+              ].filter((s): s is string => !!s && s.length > 0).join(' — ')
             : `Cabinet ${cabinetId.slice(0, 8)}…`;
           const qtySuffix = info && info.quantity > 1 ? ` ×${info.quantity}` : '';
           return (

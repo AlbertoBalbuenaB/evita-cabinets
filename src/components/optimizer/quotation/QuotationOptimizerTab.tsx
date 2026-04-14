@@ -44,7 +44,7 @@ import { OptimizerComparisonPanel } from './OptimizerComparisonPanel';
 import { PricingMethodToggle } from './PricingMethodToggle';
 import { FtVsOptimizerComparisonCard } from './FtVsOptimizerComparisonCard';
 import { PerAreaBoardsBreakdown } from './PerAreaBoardsBreakdown';
-import { CutListDetailPanel } from './CutListDetailPanel';
+import { CutListDetailPanel, type CabinetDisplayInfo } from './CutListDetailPanel';
 import { StaleBadge } from './StaleBadge';
 import { BreakdownBOM } from './BreakdownBOM';
 import type { OptimizationResult } from '../../../lib/optimizer/types';
@@ -351,42 +351,124 @@ export function QuotationOptimizerTab({
       .sort((a, b) => b.cost - a.cost);
   }, [loadedRun, areasById]);
 
-  // Source of truth for the cut-list detail panel: prefer the pending build
-  // (the user's current editing session); fall back to the loaded run's
-  // snapshot so users auditing an old run still see its despiece.
-  // When falling back, `cabinetDetails` is reconstructed from the snapshot
-  // pieces' tags — we have cabinetId, areaId and the per-piece `area`
-  // string, but we don't know productSku or quantity, so the labels are
-  // slightly degraded (no SKU, no ×qty suffix). That's the documented
-  // limitation in the plan.
+  // Retro-compat fallback: for snapshots saved before `cabinetDetails` was
+  // persisted, re-query area_cabinets + products_catalog so the Cut-list
+  // labels still show SKU + description. Keyed by loadedRun.builtAt so the
+  // effect refires when switching between runs.
+  const [legacyCabinetDetails, setLegacyCabinetDetails] = useState<
+    Record<string, CabinetDisplayInfo>
+  >({});
+  useEffect(() => {
+    if (!loadedRun || loadedRun.snapshot.cabinetDetails) {
+      setLegacyCabinetDetails({});
+      return;
+    }
+    const cabinetIds = Array.from(
+      new Set(
+        loadedRun.snapshot.pieces
+          .map((p) => p.cabinetId)
+          .filter((id): id is string => !!id),
+      ),
+    );
+    if (cabinetIds.length === 0) {
+      setLegacyCabinetDetails({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data: cabs, error: cabErr } = await supabase
+        .from('area_cabinets')
+        .select('id, product_sku, quantity, project_areas!inner(id, name)')
+        .in('id', cabinetIds);
+      if (cancelled || cabErr || !cabs) return;
+
+      const skus = Array.from(
+        new Set(
+          cabs
+            .map((c) => c.product_sku)
+            .filter((s): s is string => !!s),
+        ),
+      );
+      const descBySku = new Map<string, string>();
+      if (skus.length > 0) {
+        const { data: prods } = await supabase
+          .from('products_catalog')
+          .select('sku, description')
+          .in('sku', skus);
+        for (const p of prods ?? []) descBySku.set(p.sku, p.description);
+      }
+
+      if (cancelled) return;
+      const map: Record<string, CabinetDisplayInfo> = {};
+      for (const c of cabs as Array<{
+        id: string;
+        product_sku: string | null;
+        quantity: number | null;
+        project_areas: { id: string; name: string } | { id: string; name: string }[];
+      }>) {
+        const pa = Array.isArray(c.project_areas) ? c.project_areas[0] : c.project_areas;
+        map[c.id] = {
+          productSku: c.product_sku,
+          productDescription: c.product_sku ? descBySku.get(c.product_sku) ?? null : null,
+          quantity: c.quantity ?? 1,
+          areaId: pa?.id ?? '',
+          areaName: pa?.name ?? '(unknown area)',
+        };
+      }
+      setLegacyCabinetDetails(map);
+    })();
+    return () => { cancelled = true; };
+  }, [loadedRun]);
+
+  // Source of truth for the cut-list detail panel:
+  //   1. Prefer the pending build (user's current editing session).
+  //   2. If a run is loaded, use `snapshot.cabinetDetails` when present.
+  //   3. Otherwise (legacy snapshot), use the re-queried `legacyCabinetDetails`.
+  //   4. Final fallback: reconstruct labels from the per-piece `area` tag.
   const cutListSource = useMemo(() => {
     if (pendingPieces.length > 0) {
       return { pieces: pendingPieces, cabinetDetails: pendingCabinetDetails };
     }
     if (loadedRun) {
-      const derived: Record<string, {
-        productSku: string | null;
-        quantity: number;
-        areaId: string;
-        areaName: string;
-      }> = {};
-      for (const p of loadedRun.snapshot.pieces) {
+      const snap = loadedRun.snapshot;
+      if (snap.cabinetDetails) {
+        return { pieces: snap.pieces, cabinetDetails: snap.cabinetDetails };
+      }
+      if (Object.keys(legacyCabinetDetails).length > 0) {
+        return { pieces: snap.pieces, cabinetDetails: legacyCabinetDetails };
+      }
+      // Final fallback: derive minimal labels from piece tags.
+      const derived: Record<string, CabinetDisplayInfo> = {};
+      for (const p of snap.pieces) {
         if (!p.cabinetId || derived[p.cabinetId]) continue;
         derived[p.cabinetId] = {
           productSku: null,
+          productDescription: null,
           quantity: 1,
           areaId: p.areaId ?? '',
           areaName: p.area ?? '(unknown area)',
         };
       }
-      return { pieces: loadedRun.snapshot.pieces, cabinetDetails: derived };
+      return { pieces: snap.pieces, cabinetDetails: derived };
     }
     return null;
-  }, [pendingPieces, pendingCabinetDetails, loadedRun]);
+  }, [pendingPieces, pendingCabinetDetails, loadedRun, legacyCabinetDetails]);
 
   const canSelectOptimizer = activeRunId != null;
 
   return (
+    // Full-bleed wrapper: escape the Layout's max-w-7xl container so the
+    // Breakdown tab uses the full viewport width. Only affects this tab —
+    // the other tabs (Info, Pricing, Analytics, History) still respect
+    // the centered container.
+    <div
+      className="relative"
+      style={{
+        width: '100vw',
+        marginLeft: 'calc(50% - 50vw)',
+        marginRight: 'calc(50% - 50vw)',
+      }}
+    >
     <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 104px)' }}>
 
       {/* ── Header bar ────────────────────────────────────── */}
@@ -509,41 +591,39 @@ export function QuotationOptimizerTab({
         </div>
       )}
 
-      {/* ── Main three-panel layout ───────────────────────── */}
-      <div className="flex flex-1 min-h-[600px]">
-        <div className="w-64 shrink-0">
+      {/* ── Row 1 — Post-Build: Sidebar (Build Summary / Stocks /     */}
+      {/*         Edgebanding / Settings) + Cut-List Detail          */}
+      <div className="flex min-h-[400px] border-b border-slate-200">
+        <div className="w-64 shrink-0 border-r border-slate-200 bg-white overflow-y-auto">
           <QuotationOptimizerSidebar useStore={useStore} />
         </div>
-
-        <div className="flex-1 flex flex-col">
-          {displayResult ? (
-            <CADViewer board={selectedBoard} unit="mm" />
+        <div className="flex-1 bg-slate-50 overflow-y-auto px-4 py-4">
+          {cutListSource && cutListSource.pieces.length > 0 ? (
+            <CutListDetailPanel
+              pieces={cutListSource.pieces}
+              cabinetDetails={cutListSource.cabinetDetails}
+            />
           ) : (
-            <div className="flex-1 flex items-center justify-center bg-slate-50 text-slate-400 text-sm">
-              {pendingPieces.length === 0
-                ? 'Click "Build from Quotation" to start.'
-                : 'Click "Run" to optimize.'}
+            <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+              Click "Build from Quotation" to generate the cut list.
             </div>
           )}
         </div>
-
-        <div className="w-80 shrink-0 border-l border-slate-200 bg-white overflow-y-auto">
-          <RightStatsPanel
-            result={displayResult}
-            selectedIdx={selectedBoardIdx}
-            onSelectBoard={(idx) => setSelectedBoardIdx(idx)}
-          />
-        </div>
       </div>
 
-      {/* ── Per-area breakdown below the optimizer panels ─── */}
-      {/* ── Cut-list detail panel ─────────────────────────── */}
-      {cutListSource && cutListSource.pieces.length > 0 && (
-        <div className="px-4 py-4 border-t border-slate-200 bg-slate-50">
-          <CutListDetailPanel
-            pieces={cutListSource.pieces}
-            cabinetDetails={cutListSource.cabinetDetails}
-          />
+      {/* ── Row 2 — Post-Run: CAD Viewer + Global Statistics ── */}
+      {displayResult && (
+        <div className="flex min-h-[600px] border-b border-slate-200">
+          <div className="flex-1 flex flex-col bg-white">
+            <CADViewer board={selectedBoard} unit="mm" />
+          </div>
+          <div className="w-80 shrink-0 border-l border-slate-200 bg-white overflow-y-auto">
+            <RightStatsPanel
+              result={displayResult}
+              selectedIdx={selectedBoardIdx}
+              onSelectBoard={(idx) => setSelectedBoardIdx(idx)}
+            />
+          </div>
         </div>
       )}
 
@@ -571,6 +651,7 @@ export function QuotationOptimizerTab({
         runs={runs}
         activeRunId={activeRunId}
       />
+    </div>
     </div>
   );
 }

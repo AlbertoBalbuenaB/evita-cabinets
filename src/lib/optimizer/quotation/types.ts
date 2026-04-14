@@ -52,6 +52,17 @@ export interface OptimizerRunSnapshot {
   /** Cabinet ids skipped and why. */
   cabinetsSkipped: Array<{ id: string; reason: string }>;
 
+  /** Per-cabinet display metadata (SKU + description) for the Cut-list UI.
+   *  Optional because runs saved before this field was introduced won't
+   *  have it — the UI falls back to re-querying area_cabinets in that case. */
+  cabinetDetails?: Record<string, {
+    productSku: string | null;
+    productDescription: string | null;
+    quantity: number;
+    areaId: string;
+    areaName: string;
+  }>;
+
   /** ISO timestamp of when the run was built. */
   builtAt: string;
 }
