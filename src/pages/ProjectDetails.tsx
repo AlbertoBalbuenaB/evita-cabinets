@@ -27,7 +27,10 @@ import { recalculateAreaEdgebandCosts } from '../lib/edgebandRolls';
 import { recalculateAreaSheetMaterialCosts } from '../lib/sheetMaterials';
 import { computeQuotationTotalsSqft } from '../lib/pricing/computeQuotationTotalsSqft';
 import { computeOptimizerQuotationTotal } from '../lib/optimizer/quotation/computeOptimizerQuotationTotal';
-import { computeOptimizerAreaSubtotals } from '../lib/optimizer/quotation/computeOptimizerAreaSubtotals';
+import {
+  computeOptimizerAreaSubtotals,
+  computeOptimizerTariffableMaterialsCost,
+} from '../lib/optimizer/quotation/computeOptimizerAreaSubtotals';
 import type { OptimizerRunSnapshot } from '../lib/optimizer/quotation/types';
 import type { OptimizationResult } from '../lib/optimizer/types';
 import { exportOptimizerPDF, type PdfLang } from '../lib/optimizer/pdfExport';
@@ -350,13 +353,26 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
           if (!run.is_stale) {
             const snapshot = run.snapshot as unknown as OptimizerRunSnapshot;
+            const result = run.result as unknown as OptimizationResult;
             const cabinetsCovered = new Set<string>(snapshot?.cabinetsCovered ?? []);
+
+            // Compute the tariffable share of the optimizer materials via
+            // the proportional m² / per-cabinet rule. Must match the rule
+            // used by the ft² pricing helper so toggling methods doesn't
+            // inflate or deflate the tariff amount artificially.
+            const tariffableMaterialsCost = computeOptimizerTariffableMaterialsCost({
+              result,
+              snapshot,
+              areasData,
+              edgebandByCabinet: snapshot?.edgebandCostByCabinet ?? {},
+            });
 
             const optTotals = computeOptimizerQuotationTotal({
               materialCost: Number(run.material_cost ?? 0),
               edgebandCost: Number(run.edgeband_cost ?? 0),
               areasData,
               cabinetsCovered,
+              tariffableMaterialsCost,
               multipliers: {
                 profitMultiplier:  _profitMultiplier,
                 tariffMultiplier:  _tariffMultiplier,
@@ -1239,11 +1255,21 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         const result = activeOptimizerRun.result as unknown as OptimizationResult;
         const cabinetsCovered = new Set<string>(snapshot?.cabinetsCovered ?? []);
 
+        // Proportional tariffable-materials share — mirrors the rule used
+        // by `updateProjectTotal` so the UI and the persisted total agree.
+        const tariffableMaterialsCost = computeOptimizerTariffableMaterialsCost({
+          result,
+          snapshot,
+          areasData: areas,
+          edgebandByCabinet: snapshot?.edgebandCostByCabinet ?? {},
+        });
+
         const opt = computeOptimizerQuotationTotal({
           materialCost: Number(activeOptimizerRun.material_cost ?? 0),
           edgebandCost: Number(activeOptimizerRun.edgeband_cost ?? 0),
           areasData: areas,
           cabinetsCovered,
+          tariffableMaterialsCost,
           multipliers,
         });
 
@@ -2181,7 +2207,20 @@ const [isEditingDate, setIsEditingDate] = useState(false);
               </div>
             ) : areas.length > 0 ? (
               <>
-                <ProjectCharts areas={areas} products={products} />
+                <ProjectCharts
+                  areas={areas}
+                  products={products}
+                  pricingMethod={pricingMethod}
+                  optimizerOverrides={
+                    pricingMethod === 'optimizer' && activeOptimizerRun
+                      ? {
+                          perAreaCabinetSubtotal: quotationView.perAreaCabinetSubtotal,
+                          boardsCost: Number(activeOptimizerRun.material_cost ?? 0),
+                          edgebandCost: Number(activeOptimizerRun.edgeband_cost ?? 0),
+                        }
+                      : undefined
+                  }
+                />
 
                 {pricingMethod === 'optimizer' && activeOptimizerRun ? (
                   <MaterialBreakdownOptimizer run={activeOptimizerRun} areas={areas} />

@@ -15,6 +15,22 @@ type EnrichedArea = ProjectArea & {
 interface ProjectChartsProps {
   areas: EnrichedArea[];
   products: Product[];
+  /**
+   * Current pricing method for the quotation. When 'optimizer' AND
+   * `optimizerOverrides` is provided, the charts below source their
+   * per-area cabinet totals + materials breakdown from the optimizer run
+   * instead of the sqft per-cabinet fields. Backwards compatible — when
+   * this prop is omitted the component behaves exactly as before.
+   */
+  pricingMethod?: 'sqft' | 'optimizer';
+  optimizerOverrides?: {
+    /** From `quotationView.perAreaCabinetSubtotal` — per-area cabinet cost in optimizer mode (no quantity multiplier). */
+    perAreaCabinetSubtotal: Record<string, number>;
+    /** Board material cost from the active run. */
+    boardsCost: number;
+    /** Edgeband cost from the active run. */
+    edgebandCost: number;
+  };
 }
 
 const COLOR_PALETTE: Record<string, string> = {
@@ -57,7 +73,9 @@ function KpiCard({
   );
 }
 
-export function ProjectCharts({ areas, products }: ProjectChartsProps) {
+export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrides }: ProjectChartsProps) {
+  const isOptimizerMode = pricingMethod === 'optimizer' && optimizerOverrides != null;
+
   const analytics = useMemo(() => {
     const calculateTaxesForArea = (cabinets: AreaCabinet[], areaQty: number) => {
       return cabinets.reduce((sum, cabinet) => {
@@ -72,7 +90,13 @@ export function ProjectCharts({ areas, products }: ProjectChartsProps) {
 
     const areasCosts = areas.map((area) => {
       const areaQty = area.quantity ?? 1;
-      const cabinetsTotal = (area.cabinets || []).reduce((sum, c) => sum + (c.subtotal ?? 0), 0) * areaQty;
+      // Cabinets portion switches on pricing method: sqft sums cabinet.subtotal
+      // (raw per-cabinet fields); optimizer uses the per-area allocated cost
+      // from quotationView.perAreaCabinetSubtotal (board + edgeband share +
+      // non-material extras + ft² fallback for skipped cabinets).
+      const cabinetsTotal = isOptimizerMode
+        ? (optimizerOverrides!.perAreaCabinetSubtotal[area.id] ?? 0) * areaQty
+        : (area.cabinets || []).reduce((sum, c) => sum + (c.subtotal ?? 0), 0) * areaQty;
       const itemsTotal = (area.items || []).reduce((sum, i) => sum + i.subtotal, 0) * areaQty;
       const countertopsTotal = (area.countertops || []).reduce((sum, ct) => sum + ct.subtotal, 0) * areaQty;
       const closetItemsTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0) * areaQty;
@@ -123,20 +147,39 @@ export function ProjectCharts({ areas, products }: ProjectChartsProps) {
       taxes: totalProjectTaxes,
     };
 
-    const materialsBreakdown = [
-      { name: 'Box Material', cost: materialsCosts.boxMaterial, color: 'bg-blue-500' },
-      { name: 'Box Edgeband', cost: materialsCosts.boxEdgeband, color: 'bg-blue-400' },
-      { name: 'Box Interior', cost: materialsCosts.boxInterior, color: 'bg-blue-300' },
-      { name: 'Doors Material', cost: materialsCosts.doorsMaterial, color: 'bg-green-500' },
-      { name: 'Doors Edgeband', cost: materialsCosts.doorsEdgeband, color: 'bg-green-400' },
-      { name: 'Doors Interior', cost: materialsCosts.doorsInterior, color: 'bg-green-300' },
-      { name: 'Hardware', cost: materialsCosts.hardware, color: 'bg-amber-500' },
-      { name: 'Countertops', cost: totalCountertopsCost, color: 'bg-orange-500' },
-      { name: 'Prefab Closets', cost: totalClosetItemsCost, color: 'bg-teal-500' },
-      { name: 'Individual Items', cost: totalItemsCost, color: 'bg-amber-600' },
-      { name: 'Taxes', cost: materialsCosts.taxes, color: 'bg-red-500' },
-      { name: 'Labor', cost: materialsCosts.labor, color: 'bg-slate-500' },
-    ].filter((item) => item.cost > 0);
+    // In optimizer mode, replace the six sqft sheet-material categories
+    // (Box Material / Edgeband / Interior and Doors Material / Edgeband /
+    // Interior) with two optimizer-sourced rows: Boards + Edgeband.
+    // Hardware / Labor / Countertops / Items / Prefab Closets stay
+    // unchanged because the optimizer doesn't touch those categories.
+    // The legacy "Taxes" heuristic only round-trips in sqft mode, so it's
+    // dropped in optimizer mode.
+    const materialsBreakdown = (
+      isOptimizerMode
+        ? [
+            { name: 'Boards (optimizer)', cost: optimizerOverrides!.boardsCost, color: 'bg-blue-500' },
+            { name: 'Edgeband (optimizer)', cost: optimizerOverrides!.edgebandCost, color: 'bg-amber-500' },
+            { name: 'Hardware', cost: materialsCosts.hardware, color: 'bg-amber-600' },
+            { name: 'Countertops', cost: totalCountertopsCost, color: 'bg-orange-500' },
+            { name: 'Prefab Closets', cost: totalClosetItemsCost, color: 'bg-teal-500' },
+            { name: 'Individual Items', cost: totalItemsCost, color: 'bg-green-500' },
+            { name: 'Labor', cost: materialsCosts.labor, color: 'bg-slate-500' },
+          ]
+        : [
+            { name: 'Box Material', cost: materialsCosts.boxMaterial, color: 'bg-blue-500' },
+            { name: 'Box Edgeband', cost: materialsCosts.boxEdgeband, color: 'bg-blue-400' },
+            { name: 'Box Interior', cost: materialsCosts.boxInterior, color: 'bg-blue-300' },
+            { name: 'Doors Material', cost: materialsCosts.doorsMaterial, color: 'bg-green-500' },
+            { name: 'Doors Edgeband', cost: materialsCosts.doorsEdgeband, color: 'bg-green-400' },
+            { name: 'Doors Interior', cost: materialsCosts.doorsInterior, color: 'bg-green-300' },
+            { name: 'Hardware', cost: materialsCosts.hardware, color: 'bg-amber-500' },
+            { name: 'Countertops', cost: totalCountertopsCost, color: 'bg-orange-500' },
+            { name: 'Prefab Closets', cost: totalClosetItemsCost, color: 'bg-teal-500' },
+            { name: 'Individual Items', cost: totalItemsCost, color: 'bg-amber-600' },
+            { name: 'Taxes', cost: materialsCosts.taxes, color: 'bg-red-500' },
+            { name: 'Labor', cost: materialsCosts.labor, color: 'bg-slate-500' },
+          ]
+    ).filter((item) => item.cost > 0);
 
     const totalCost = materialsBreakdown.reduce((sum, item) => sum + item.cost, 0);
     const maxAreaCost = Math.max(...areasCosts.map((a) => a.total), 1);
@@ -147,10 +190,20 @@ export function ProjectCharts({ areas, products }: ProjectChartsProps) {
       0
     );
     const totalSKUs = new Set(areas.flatMap((a) => (a.cabinets || []).map((c) => c.product_sku))).size;
-    const cabinetsCost = areas.reduce(
-      (sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.subtotal ?? 0), 0) * (area.quantity ?? 1),
-      0
-    );
+    // In optimizer mode this sums the allocated per-area optimizer values;
+    // in sqft mode it sums raw cabinet.subtotal. The distinction feeds
+    // `avgCostPerCabinet` below, which is the "Avg / Cabinet" KPI.
+    const cabinetsCost = isOptimizerMode
+      ? areas.reduce(
+          (sum, area) =>
+            sum +
+            (optimizerOverrides!.perAreaCabinetSubtotal[area.id] ?? 0) * (area.quantity ?? 1),
+          0,
+        )
+      : areas.reduce(
+          (sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.subtotal ?? 0), 0) * (area.quantity ?? 1),
+          0
+        );
     const avgCostPerCabinet = totalCabinets > 0 ? cabinetsCost / totalCabinets : 0;
     const totalEffectiveAreas = areas.reduce((sum, area) => sum + (area.quantity ?? 1), 0);
 
@@ -177,7 +230,7 @@ export function ProjectCharts({ areas, products }: ProjectChartsProps) {
       totalBoxes,
       totalPallets,
     };
-  }, [areas, products]);
+  }, [areas, products, isOptimizerMode, optimizerOverrides]);
 
   if (areas.length === 0) return null;
 

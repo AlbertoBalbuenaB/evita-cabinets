@@ -23,6 +23,7 @@ import { supabase } from '../../../lib/supabase';
 import { useSettingsStore } from '../../../lib/settingsStore';
 import { computeEdgebandCost } from '../../../lib/optimizer/quotation/computeEdgebandCost';
 import { computeOptimizerQuotationTotal } from '../../../lib/optimizer/quotation/computeOptimizerQuotationTotal';
+import { computeOptimizerTariffableMaterialsCost } from '../../../lib/optimizer/quotation/computeOptimizerAreaSubtotals';
 import type { OptimizerRunSnapshot } from '../../../lib/optimizer/quotation/types';
 import type { OptimizationResult } from '../../../lib/optimizer/types';
 import type {
@@ -311,11 +312,25 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
     const cabinetsCovered = new Set(snapshot.cabinetsCovered);
     const installDeliveryMxn = (quotation.install_delivery_usd ?? 0) * (exchangeRate || 1);
 
+    // Normalise area shape once so both helpers see the same data.
+    const normalisedAreas = areas.map(a => ({ ...a, closetItems: a.closetItems ?? [] }));
+
+    // Proportional tariffable-materials allocation (mirrors the rule used
+    // by ProjectDetails so the Breakdown BOM summary agrees with the
+    // UI and the PDF exports).
+    const tariffableMaterialsCost = computeOptimizerTariffableMaterialsCost({
+      result,
+      snapshot,
+      areasData: normalisedAreas,
+      edgebandByCabinet: ebResult.perCabinet,
+    });
+
     const totals = computeOptimizerQuotationTotal({
       materialCost:   result.totalCost,
       edgebandCost:   ebResult.totalCost,
-      areasData:      areas.map(a => ({ ...a, closetItems: a.closetItems ?? [] })),
+      areasData:      normalisedAreas,
       cabinetsCovered,
+      tariffableMaterialsCost,
       multipliers: {
         profitMultiplier: quotation.profit_multiplier        ?? 0,
         tariffMultiplier: quotation.tariff_multiplier        ?? 0,

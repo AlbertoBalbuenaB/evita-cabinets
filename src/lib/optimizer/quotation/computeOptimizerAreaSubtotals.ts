@@ -181,3 +181,61 @@ export function computeOptimizerAreaSubtotals(
 
   return out;
 }
+
+/**
+ * Compute the share of `optimizerMaterialsCost` (boards + edgeband) that is
+ * attributable to areas with `applies_tariff === true`. Used by
+ * `computeOptimizerQuotationTotal` to mirror the ft² tariff rule
+ * ("tariff applies only to materials coming from tariffable areas")
+ * proportionally rather than the old all-or-nothing heuristic.
+ *
+ * Rule:
+ *   - **Boards**: allocated by piece m² share per area (same rule as the
+ *     PDF exporter and the Breakdown tab). Sum over tariffable areas.
+ *   - **Edgeband**: resolved per-cabinet (each piece belongs to exactly
+ *     one cabinet, which belongs to exactly one area). Sum the per-cabinet
+ *     edgeband cost for every cabinet whose area is tariffable.
+ *
+ * This is a pure function; callers supply both the optimizer run payload
+ * and the per-cabinet edgeband map. Stored runs use
+ * `snapshot.edgebandCostByCabinet`; live recomputations (e.g. BreakdownBOM)
+ * pass `computeEdgebandCost(...).perCabinet`.
+ */
+export function computeOptimizerTariffableMaterialsCost(args: {
+  result: OptimizationResult;
+  snapshot: OptimizerRunSnapshot;
+  areasData: AreaWithChildren[];
+  edgebandByCabinet: Record<string, number>;
+}): number {
+  const { result, snapshot, areasData, edgebandByCabinet } = args;
+
+  // ── Boards: m²-proportional allocation per area, sum over tariffable ──
+  const byArea = allocateBoardCostsByArea(result, snapshot.stocks);
+  let tariffableBoards = 0;
+  for (const area of areasData) {
+    if (area.applies_tariff === true) {
+      tariffableBoards += byArea[area.id]?.cost ?? 0;
+    }
+  }
+
+  // ── Edgeband: per-cabinet, bucket by area.applies_tariff ──
+  const cabinetIsTariffable = new Map<string, boolean>();
+  for (const area of areasData) {
+    const tariffable = area.applies_tariff === true;
+    for (const cab of area.cabinets) {
+      cabinetIsTariffable.set(cab.id, tariffable);
+    }
+  }
+  let tariffableEdgeband = 0;
+  for (const [cabId, cost] of Object.entries(edgebandByCabinet)) {
+    if (
+      cabinetIsTariffable.get(cabId) === true &&
+      typeof cost === 'number' &&
+      Number.isFinite(cost)
+    ) {
+      tariffableEdgeband += cost;
+    }
+  }
+
+  return tariffableBoards + tariffableEdgeband;
+}

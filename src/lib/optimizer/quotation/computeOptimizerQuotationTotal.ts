@@ -40,6 +40,20 @@ export interface OptimizerQuotationTotalInput {
   cabinetsCovered: Set<string>;
   /** Same multiplier inputs used by the sqft rollup. */
   multipliers: QuotationMultipliers;
+  /**
+   * Share of `materialCost + edgebandCost` that is attributable to
+   * tariffable areas. Kept as an explicit input (not computed inside this
+   * pure math function) so the helper stays decoupled from optimizer
+   * runtime types. Callers compute it via
+   * `computeOptimizerTariffableMaterialsCost()` in
+   * `src/lib/optimizer/quotation/computeOptimizerAreaSubtotals.ts`.
+   *
+   * Replaces the previous all-or-nothing heuristic that dumped the full
+   * optimizer materials into the tariff pool whenever ANY covered cabinet
+   * lived in a tariffable area — which inflated the optimizer tariff
+   * above the ft² tariff for mixed quotations (bug fix).
+   */
+  tariffableMaterialsCost: number;
 }
 
 export interface OptimizerQuotationTotal {
@@ -85,7 +99,14 @@ export function cabinetMaterialCost(cab: Record<string, unknown>): number {
 export function computeOptimizerQuotationTotal(
   args: OptimizerQuotationTotalInput,
 ): OptimizerQuotationTotal {
-  const { materialCost, edgebandCost, areasData, cabinetsCovered, multipliers: m } = args;
+  const {
+    materialCost,
+    edgebandCost,
+    areasData,
+    cabinetsCovered,
+    multipliers: m,
+    tariffableMaterialsCost,
+  } = args;
 
   let coveredCabinetExtras = 0;
   let fallbackCabinetsSubtotal = 0;
@@ -158,22 +179,20 @@ export function computeOptimizerQuotationTotal(
     ? materialsSubtotal / (1 - m.profitMultiplier)
     : materialsSubtotal;
 
-  // Tariffable subtotal mirrors the sqft approach but with the same
-  // substitution: optimizer materials are flat (not weighted per area),
-  // and we proportionally allocate them to tariffable vs non-tariffable
-  // based on the tariffable weighted share of cabinet extras.
-  // Simpler and defensible: apply the full optimizer materials to the
-  // tariffable pool ONLY if at least one covered cabinet sits in a
-  // tariffable area — otherwise zero. This matches the existing sqft
-  // policy at the area level (all-or-nothing per area).
-  const anyTariffableCoveredCabinet = areasData.some(
-    (a) =>
-      a.applies_tariff === true &&
-      a.cabinets.some((c) => cabinetsCovered.has(c.id)),
-  );
-
+  // Tariffable subtotal mirrors the sqft approach but with the optimizer
+  // materials substituted in. The key rule is: tariff only applies to the
+  // share of the optimizer materials that was physically cut for cabinets
+  // in areas where `applies_tariff === true`. The caller computes that
+  // share (m²-proportional for boards + per-cabinet for edgeband) via
+  // `computeOptimizerTariffableMaterialsCost` and passes it in as
+  // `tariffableMaterialsCost`.
+  //
+  // Everything else in the tariffable pool (non-material extras of
+  // covered cabinets, fallback cabinets' ft² subtotals, and non-cabinet
+  // subtotals from items/countertops/closets) is still summed the same
+  // way as the sqft helper: by iterating tariffable areas above.
   const tariffableSubtotal =
-    (anyTariffableCoveredCabinet ? optimizerMaterialsCost : 0) +
+    tariffableMaterialsCost +
     weightedTariffableCovered +
     weightedTariffableFallback +
     weightedTariffableNonCabinet;
