@@ -229,6 +229,15 @@ describe('calculateDespiece — depth optimization', () => {
     expect(side.ancho).toBe(300);
   });
 
+  it('16" depth with optimizeDepth=true → 400mm (1/3 sheet)', () => {
+    const pieces = calculateDespiece({ ...base, depthIn: 16, optimizeDepth: true });
+    const side = findPiece(pieces, 'Side Panels')!;
+    expect(side.ancho).toBe(400);  // 16"D → 400mm, not 600mm
+
+    const top = findPiece(pieces, 'Top Panel')!;
+    expect(top.alto).toBe(382);    // 400 - 18 = 382mm
+  });
+
   it('24" depth with optimizeDepth=false → 610mm (raw)', () => {
     const pieces = calculateDespiece({ ...base, optimizeDepth: false });
     const side = findPiece(pieces, 'Side Panels')!;
