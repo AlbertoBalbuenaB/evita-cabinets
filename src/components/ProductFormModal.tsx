@@ -507,7 +507,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                     <input type="checkbox" checked={calcOptimizeDepth}
                       onChange={(e) => setCalcOptimizeDepth(e.target.checked)}
                       className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500" />
-                    Optimize depth (300/400/600mm)
+                    Optimize depth (300/400/450/600mm)
                   </label>
                 </div>
                 {calcCabinetType === 'base' && (

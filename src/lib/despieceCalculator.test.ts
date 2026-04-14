@@ -238,6 +238,20 @@ describe('calculateDespiece — depth optimization', () => {
     expect(top.alto).toBe(382);    // 400 - 18 = 382mm
   });
 
+  it('18" depth with optimizeDepth=true → 450mm', () => {
+    const pieces = calculateDespiece({ ...base, depthIn: 18, optimizeDepth: true });
+    const side = findPiece(pieces, 'Side Panels')!;
+    expect(side.ancho).toBe(450);
+    const top = findPiece(pieces, 'Top Panel')!;
+    expect(top.alto).toBe(432);    // 450 - 18 = 432mm
+  });
+
+  it('17" depth with optimizeDepth=true → 450mm (falls in 18" bucket)', () => {
+    const pieces = calculateDespiece({ ...base, depthIn: 17, optimizeDepth: true });
+    const side = findPiece(pieces, 'Side Panels')!;
+    expect(side.ancho).toBe(450);
+  });
+
   it('24" depth with optimizeDepth=false → 610mm (raw)', () => {
     const pieces = calculateDespiece({ ...base, optimizeDepth: false });
     const side = findPiece(pieces, 'Side Panels')!;

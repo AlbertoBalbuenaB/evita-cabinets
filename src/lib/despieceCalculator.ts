@@ -34,7 +34,8 @@ function uid(): string {
 /** Snap raw mm depth to nearest standard sheet fraction of 1220mm. */
 function optimizeDepthMm(rawMm: number): number {
   if (rawMm <= 305) return 300;   // 12"D → 1/4 sheet (1220/4 ≈ 305)
-  if (rawMm <= 460) return 400;   // 16"D → 1/3 sheet (1220/3 ≈ 407)
+  if (rawMm <= 410) return 400;   // 16"D → 1/3 sheet (1220/3 ≈ 407)
+  if (rawMm <= 480) return 450;   // 18"D
   if (rawMm <= 630) return 600;   // 24"D → 1/2 sheet (1220/2 = 610)
   return rawMm;                    // keep raw for very deep cabinets
 }
