@@ -125,6 +125,61 @@ export interface AreaClosetItem {
   catalog_item?: ClosetCatalogItem;
 }
 
+export interface PrefabBrand {
+  id: string;
+  name: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type PrefabItemType = 'cabinet' | 'accessory' | 'linear' | 'panel';
+
+export interface PrefabCatalogPrice {
+  id: string;
+  prefab_catalog_id: string;
+  finish: string;
+  cost_usd: number;
+  effective_date: string;
+  is_current: boolean;
+  created_at?: string;
+}
+
+export interface PrefabCatalogItem {
+  id: string;
+  brand_id: string;
+  category: string;
+  cabinet_code: string;
+  description: string | null;
+  item_type: PrefabItemType;
+  width_in: number | null;
+  height_in: number | null;
+  depth_in: number | null;
+  dims_auto_parsed: boolean;
+  dims_locked: boolean;
+  is_active: boolean;
+  notes: string | null;
+  created_at?: string;
+  updated_at?: string;
+  brand?: PrefabBrand;
+  current_prices?: PrefabCatalogPrice[];
+}
+
+export interface AreaPrefabItem {
+  id: string;
+  area_id: string;
+  prefab_catalog_id: string;
+  finish: string;
+  quantity: number;
+  cost_usd: number;
+  fx_rate: number;
+  cost_mxn: number;
+  notes: string | null;
+  created_at?: string;
+  updated_at?: string;
+  catalog_item?: PrefabCatalogItem;
+}
+
 export type Setting = Database['public']['Tables']['settings']['Row'];
 export type SettingInsert = Database['public']['Tables']['settings']['Insert'];
 export type SettingUpdate = Database['public']['Tables']['settings']['Update'];

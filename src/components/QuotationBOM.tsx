@@ -13,6 +13,7 @@ import type {
   AreaItem,
   AreaCountertop,
   AreaClosetItem,
+  AreaPrefabItem,
   Quotation,
 } from '../types';
 
@@ -21,6 +22,7 @@ type EnrichedArea = ProjectArea & {
   items: AreaItem[];
   countertops: AreaCountertop[];
   closetItems?: AreaClosetItem[];
+  prefabItems?: AreaPrefabItem[];
 };
 
 interface QuotationBOMProps {
@@ -36,7 +38,8 @@ type BOMCategory =
   | 'Hardware'
   | 'Accessories'
   | 'Items'
-  | 'Countertops';
+  | 'Countertops'
+  | 'Prefab Cabinets';
 
 const CATEGORY_ORDER: BOMCategory[] = [
   'Box Construction',
@@ -46,6 +49,7 @@ const CATEGORY_ORDER: BOMCategory[] = [
   'Accessories',
   'Items',
   'Countertops',
+  'Prefab Cabinets',
 ];
 
 const CATEGORY_COLORS: Record<BOMCategory, string> = {
@@ -56,6 +60,7 @@ const CATEGORY_COLORS: Record<BOMCategory, string> = {
   'Accessories':      'bg-green-50 text-green-800',
   'Items':            'bg-orange-50 text-orange-800',
   'Countertops':      'bg-teal-50 text-teal-800',
+  'Prefab Cabinets':  'bg-indigo-50 text-indigo-800',
 };
 
 interface BOMRow {
@@ -124,6 +129,7 @@ export function QuotationBOM({ areas, projectId, quotation }: QuotationBOMProps)
     const accessoriesMap = new Map<string, BOMRow>();
     const itemsRows: BOMRow[] = [];
     const countertopsRows: BOMRow[] = [];
+    const prefabRows: BOMRow[] = [];
 
     // ── Helper: accumulate sheet-type material ─────────────────────────────
     function accumulateSheet(
@@ -313,6 +319,27 @@ export function QuotationBOM({ areas, projectId, quotation }: QuotationBOMProps)
           priceListItemId: ct.price_list_item_id,
         });
       });
+
+      // Area prefab items (Venus / Northville reseller rows). Each line is
+      // one (code, finish) pair. Price is the USD MSRP snapshot, subtotal is
+      // the MXN snapshot already multiplied by cost_usd × fx_rate × quantity;
+      // we only multiply by areaQty here to honor the area-level quantity.
+      (area.prefabItems ?? []).forEach(pi => {
+        const cat = (pi as AreaPrefabItem & { catalog_item?: { cabinet_code?: string; description?: string | null; brand?: { name?: string } | null } }).catalog_item;
+        const brand = cat?.brand?.name ?? '';
+        const code  = cat?.cabinet_code ?? '—';
+        const desc  = cat?.description ? ` — ${cat.description}` : '';
+        const label = `${brand ? brand + ' ' : ''}${code}${desc} · ${pi.finish}`;
+        prefabRows.push({
+          category: 'Prefab Cabinets',
+          concept: label,
+          unit: 'pc',
+          qty: pi.quantity * areaQty,
+          price: pi.cost_usd,
+          subtotal: pi.cost_mxn * areaQty,
+          priceListItemId: null,
+        });
+      });
     });
 
     // ── Build final BOM rows ───────────────────────────────────────────────
@@ -346,6 +373,7 @@ export function QuotationBOM({ areas, projectId, quotation }: QuotationBOMProps)
     accessoriesMap.forEach(row => { if (row.qty > 0 && row.subtotal > 0) rows.push(row); });
     rows.push(...itemsRows.filter(r => r.qty > 0));
     rows.push(...countertopsRows.filter(r => r.qty > 0));
+    rows.push(...prefabRows.filter(r => r.qty > 0));
 
     return rows;
   }, [areas, products, priceList, loading]);
@@ -355,7 +383,11 @@ export function QuotationBOM({ areas, projectId, quotation }: QuotationBOMProps)
     if (!bom) return null;
 
     const installDeliveryMxn = (quotation.install_delivery_usd ?? 0) * (exchangeRate || 1);
-    const areasNorm = areas.map(a => ({ ...a, closetItems: a.closetItems ?? [] }));
+    const areasNorm = areas.map(a => ({
+      ...a,
+      closetItems: a.closetItems ?? [],
+      prefabItems: a.prefabItems ?? [],
+    }));
 
     const totals = computeQuotationTotalsSqft(areasNorm, {
       profitMultiplier:  quotation.profit_multiplier        ?? 0,

@@ -1,7 +1,9 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Search, Pencil as Edit2, Trash2, Check, X, Archive, ArchiveRestore, Library, Package, ToggleLeft, ToggleRight, Bookmark, LayoutList, LayoutGrid, Layers, Box } from 'lucide-react';
+import { Plus, Search, Pencil as Edit2, Trash2, Check, X, Archive, ArchiveRestore, Library, Package, ToggleLeft, ToggleRight, Bookmark, LayoutList, LayoutGrid, Layers, Box, Boxes, Upload } from 'lucide-react';
 import { ClosetCatalogForm } from '../components/ClosetCatalogForm';
+import { PrefabCatalogForm } from '../components/PrefabCatalogForm';
+import { Modal } from '../components/Modal';
 import { ProductFormModal } from '../components/ProductFormModal';
 import { supabase } from '../lib/supabase';
 import { fetchAllProducts } from '../lib/fetchAllProducts';
@@ -10,13 +12,15 @@ import { SafeEditModal } from '../components/SafeEditModal';
 import { checkProductUsage } from '../lib/productUsageChecker';
 import { getAllCollections, archiveProduct, restoreProduct } from '../lib/collectionManager';
 import { Templates } from './Templates';
-import type { Product, ProductInsert, ClosetCatalogItem } from '../types';
+import { importPrefabPriceList, type PrefabImportReport } from '../lib/prefabImport';
+import { useSettingsStore } from '../lib/settingsStore';
+import type { Product, ProductInsert, ClosetCatalogItem, PrefabCatalogItem, PrefabBrand, PrefabCatalogPrice } from '../types';
 import type { ProductUsage } from '../lib/productUsageChecker';
 
 export function ProductsCatalog() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<'products' | 'closets' | 'templates'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'closets' | 'prefab' | 'templates'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [collections, setCollections] = useState<string[]>([]);
@@ -50,6 +54,14 @@ export function ProductsCatalog() {
       }
     }
   }, [searchParams, products]);
+
+  // Deep-link from evita-ia prefab links: ?tab=prefab&prefabId=UUID
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'prefab' || tab === 'closets' || tab === 'templates' || tab === 'products') {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   async function loadProducts() {
     try {
@@ -244,6 +256,13 @@ export function ProductsCatalog() {
           Closet Library
         </button>
         <button
+          onClick={() => setActiveTab('prefab')}
+          className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prefab' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
+        >
+          <Boxes className="h-4 w-4" />
+          Prefab Library
+        </button>
+        <button
           onClick={() => setActiveTab('templates')}
           className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'templates' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
         >
@@ -253,6 +272,8 @@ export function ProductsCatalog() {
       </div>
 
       {activeTab === 'closets' && <ClosetLibraryTab />}
+
+      {activeTab === 'prefab' && <PrefabLibraryTab />}
 
       {activeTab === 'templates' && <Templates embedded />}
 
@@ -610,6 +631,454 @@ function ClosetLibraryTab() {
           onClose={closeForm}
           onSaved={() => { closeForm(); loadClosetItems(); }}
         />
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────── Prefab Library Tab ───────────────────────────
+
+interface PrefabRowWithPrices extends PrefabCatalogItem {
+  prices: PrefabCatalogPrice[];
+}
+
+function PrefabLibraryTab() {
+  const [brands, setBrands] = useState<PrefabBrand[]>([]);
+  const [selectedBrandId, setSelectedBrandId] = useState<string>('');
+  const [rows, setRows] = useState<PrefabRowWithPrices[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [finishFilter, setFinishFilter] = useState<string>('all');
+  const [showInactive, setShowInactive] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<PrefabCatalogItem | null>(null);
+  const [importReport, setImportReport] = useState<PrefabImportReport | null>(null);
+  const [importing, setImporting] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const exchangeRate = useSettingsStore(s => s.settings.exchangeRateUsdToMxn);
+  const fetchSettings = useSettingsStore(s => s.fetchSettings);
+
+  useEffect(() => { fetchSettings(); }, [fetchSettings]);
+
+  useEffect(() => {
+    loadBrands();
+  }, []);
+
+  useEffect(() => {
+    if (selectedBrandId) loadCatalog();
+  }, [selectedBrandId, showInactive]);
+
+  async function loadBrands() {
+    const { data, error } = await supabase
+      .from('prefab_brand')
+      .select('*')
+      .eq('is_active', true)
+      .order('name');
+    if (error) { console.error(error); return; }
+    const list = (data || []) as PrefabBrand[];
+    setBrands(list);
+    if (list.length > 0 && !selectedBrandId) setSelectedBrandId(list[0].id);
+  }
+
+  async function loadCatalog() {
+    setLoading(true);
+    try {
+      let q = supabase
+        .from('prefab_catalog')
+        .select('*')
+        .eq('brand_id', selectedBrandId)
+        .order('category')
+        .order('cabinet_code');
+      if (!showInactive) q = q.eq('is_active', true);
+      const { data: catalogData, error: catErr } = await q;
+      if (catErr) throw catErr;
+
+      const catalogIds = (catalogData || []).map(r => r.id);
+      let pricesByCatalog: Record<string, PrefabCatalogPrice[]> = {};
+      if (catalogIds.length > 0) {
+        const { data: priceData, error: prErr } = await supabase
+          .from('prefab_catalog_price')
+          .select('*')
+          .in('prefab_catalog_id', catalogIds)
+          .eq('is_current', true);
+        if (prErr) throw prErr;
+        for (const p of (priceData || []) as PrefabCatalogPrice[]) {
+          (pricesByCatalog[p.prefab_catalog_id] ??= []).push(p);
+        }
+      }
+
+      const withPrices: PrefabRowWithPrices[] = (catalogData || []).map((r) => ({
+        ...(r as PrefabCatalogItem),
+        prices: (pricesByCatalog[r.id] || []).sort((a, b) => a.finish.localeCompare(b.finish)),
+      }));
+      setRows(withPrices);
+    } catch (error) {
+      console.error('Error loading prefab catalog:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function toggleActive(item: PrefabCatalogItem) {
+    const { error } = await supabase
+      .from('prefab_catalog')
+      .update({ is_active: !item.is_active })
+      .eq('id', item.id);
+    if (!error) {
+      setRows(prev => prev.map(r => r.id === item.id ? { ...r, is_active: !r.is_active } : r));
+    }
+  }
+
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of rows) set.add(r.category);
+    return Array.from(set).sort();
+  }, [rows]);
+
+  const finishes = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of rows) for (const p of r.prices) set.add(p.finish);
+    return Array.from(set).sort();
+  }, [rows]);
+
+  const filtered = useMemo(() => {
+    let result = rows;
+    if (categoryFilter !== 'all') result = result.filter(r => r.category === categoryFilter);
+    if (finishFilter !== 'all') {
+      result = result.filter(r => r.prices.some(p => p.finish === finishFilter));
+    }
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      result = result.filter(r =>
+        r.cabinet_code.toLowerCase().includes(q) ||
+        (r.description || '').toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [rows, categoryFilter, finishFilter, searchTerm]);
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const brand = brands.find(b => b.id === selectedBrandId);
+    if (!brand) return;
+
+    setImporting(true);
+    try {
+      const report = await importPrefabPriceList(file, { brandName: brand.name });
+      setImportReport(report);
+      await loadCatalog();
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      alert('Import failed: ' + msg);
+    } finally {
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  }
+
+  function openAdd() { setEditingItem(null); setFormOpen(true); }
+  function openEdit(item: PrefabCatalogItem) { setEditingItem(item); setFormOpen(true); }
+  function closeForm() { setFormOpen(false); setEditingItem(null); }
+
+  const selectedBrand = brands.find(b => b.id === selectedBrandId);
+
+  if (loading && rows.length === 0) {
+    return (
+      <div className="space-y-4 page-enter">
+        <div className="glass-white h-14 animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-40 skeleton-shimmer" />)}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Brand pills */}
+      <div className="mb-4 flex items-center gap-2">
+        {brands.map(b => (
+          <button
+            key={b.id}
+            onClick={() => setSelectedBrandId(b.id)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+              selectedBrandId === b.id
+                ? 'bg-indigo-600 border-indigo-600 text-white'
+                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            {b.name}
+          </button>
+        ))}
+        <div className="ml-auto text-xs text-slate-500">{filtered.length} items</div>
+      </div>
+
+      {/* Action row */}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Button onClick={openAdd} size="sm">
+            <Plus className="h-4 w-4 mr-1" />
+            Add Prefab
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileRef.current?.click()}
+            disabled={importing}
+          >
+            <Upload className="h-4 w-4 mr-1" />
+            {importing ? 'Importing…' : 'Import price list'}
+          </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileSelected}
+            className="hidden"
+          />
+        </div>
+        <div className="text-xs text-slate-500">
+          FX: ${exchangeRate.toFixed(2)} MXN/USD
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="mb-4 flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="Search by code or description..."
+            className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        <select
+          value={categoryFilter}
+          onChange={e => setCategoryFilter(e.target.value)}
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+        >
+          <option value="all">All Categories</option>
+          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select
+          value={finishFilter}
+          onChange={e => setFinishFilter(e.target.value)}
+          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+        >
+          <option value="all">All Finishes</option>
+          {finishes.map(f => <option key={f} value={f}>{f}</option>)}
+        </select>
+        <label className="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 text-sm">
+          <input
+            type="checkbox"
+            checked={showInactive}
+            onChange={e => setShowInactive(e.target.checked)}
+            className="w-4 h-4 text-indigo-600 border-slate-300 rounded"
+          />
+          <span className="text-slate-700">Show Inactive</span>
+        </label>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto rounded-lg border border-slate-200">
+        <table className="w-full text-sm">
+          <thead className="bg-indigo-50 border-b border-indigo-200">
+            <tr>
+              <th className="text-left px-4 py-3 font-semibold text-indigo-900">Code</th>
+              <th className="text-left px-4 py-3 font-semibold text-indigo-900">Category</th>
+              <th className="text-left px-4 py-3 font-semibold text-indigo-900">Type</th>
+              <th className="text-right px-4 py-3 font-semibold text-indigo-900">W"</th>
+              <th className="text-right px-4 py-3 font-semibold text-indigo-900">H"</th>
+              <th className="text-right px-4 py-3 font-semibold text-indigo-900">D"</th>
+              <th className="text-left px-4 py-3 font-semibold text-indigo-900">
+                {finishFilter === 'all' ? 'Finishes' : finishFilter}
+              </th>
+              <th className="text-right px-4 py-3 font-semibold text-indigo-900">Price USD</th>
+              <th className="text-right px-4 py-3 font-semibold text-indigo-900">Price MXN</th>
+              <th className="text-center px-4 py-3 font-semibold text-indigo-900">Flags</th>
+              <th className="text-center px-4 py-3 font-semibold text-indigo-900">Active</th>
+              <th className="text-center px-4 py-3 font-semibold text-indigo-900">Edit</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={12} className="text-center py-10 text-slate-400">
+                  {rows.length === 0 && loading
+                    ? 'Loading…'
+                    : rows.length === 0
+                      ? 'No rows. Run scripts/seedPrefabLibrary.mjs or use "Import price list".'
+                      : 'No items match the current filters.'}
+                </td>
+              </tr>
+            ) : (
+              filtered.map(item => {
+                const displayPrice =
+                  finishFilter !== 'all'
+                    ? item.prices.find(p => p.finish === finishFilter)
+                    : item.prices[0];
+                const usd = displayPrice?.cost_usd;
+                const mxn = usd != null ? usd * exchangeRate : null;
+                const finishLabel =
+                  finishFilter !== 'all'
+                    ? displayPrice
+                      ? '1 finish'
+                      : '—'
+                    : `${item.prices.length} finish${item.prices.length === 1 ? '' : 'es'}`;
+                return (
+                  <tr
+                    key={item.id}
+                    className={`hover:bg-slate-50 transition-colors ${!item.is_active ? 'opacity-50' : ''}`}
+                  >
+                    <td className="px-4 py-2 font-mono text-xs text-slate-700">
+                      {item.cabinet_code}
+                      {item.description && (
+                        <div className="text-[11px] text-slate-400 font-sans">
+                          {item.description}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-xs text-slate-600">{item.category}</td>
+                    <td className="px-4 py-2">
+                      <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">
+                        {item.item_type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-right text-slate-700">{item.width_in ?? '—'}</td>
+                    <td className="px-4 py-2 text-right text-slate-700">{item.height_in ?? '—'}</td>
+                    <td className="px-4 py-2 text-right text-slate-700">{item.depth_in ?? '—'}</td>
+                    <td className="px-4 py-2 text-slate-600 text-xs">{finishLabel}</td>
+                    <td className="px-4 py-2 text-right font-medium text-slate-900">
+                      {usd != null ? `$${usd.toFixed(2)}` : '—'}
+                    </td>
+                    <td className="px-4 py-2 text-right text-slate-700">
+                      {mxn != null ? `$${mxn.toFixed(0)}` : '—'}
+                    </td>
+                    <td className="px-4 py-2 text-center space-x-1">
+                      {item.dims_locked && (
+                        <span
+                          className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800"
+                          title="User-edited dimensions (importer won't overwrite)"
+                        >
+                          locked
+                        </span>
+                      )}
+                      {item.dims_auto_parsed && !item.dims_locked && (
+                        <span
+                          className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-100 text-sky-800"
+                          title="Dimensions decoded from cabinet code"
+                        >
+                          auto
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      <button
+                        onClick={() => toggleActive(item)}
+                        className="text-slate-400 hover:text-indigo-600 transition-colors"
+                        title={item.is_active ? 'Deactivate' : 'Activate'}
+                      >
+                        {item.is_active
+                          ? <ToggleRight className="h-5 w-5 text-indigo-600" />
+                          : <ToggleLeft className="h-5 w-5" />}
+                      </button>
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      <button
+                        onClick={() => openEdit(item)}
+                        className="text-slate-400 hover:text-indigo-700 transition-colors"
+                        title="Edit"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {formOpen && selectedBrand && (
+        <PrefabCatalogForm
+          item={editingItem}
+          brandId={selectedBrandId}
+          brandName={selectedBrand.name}
+          onClose={closeForm}
+          onSaved={() => { closeForm(); loadCatalog(); }}
+        />
+      )}
+
+      {importReport && (
+        <Modal
+          isOpen={true}
+          onClose={() => setImportReport(null)}
+          title={`Import report — ${importReport.brand}`}
+          size="lg"
+        >
+          <div className="space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-3">
+              <div>Sheet: <span className="font-mono">{importReport.sheetName}</span></div>
+              <div>Rows parsed: <b>{importReport.rowsParsed}</b></div>
+              <div>SKUs parsed: <b>{importReport.skusParsed}</b></div>
+              <div>Catalog inserted: <b className="text-green-700">{importReport.catalogInserted}</b></div>
+              <div>Catalog updated: <b>{importReport.catalogUpdated}</b></div>
+              <div>Catalog deactivated: <b className="text-red-700">{importReport.catalogDeactivated}</b></div>
+              <div>Prices archived: <b>{importReport.pricesArchived}</b></div>
+              <div>Prices inserted: <b className="text-green-700">{importReport.pricesInserted}</b></div>
+            </div>
+            {importReport.priceChanges.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-slate-700 mt-3 mb-1">
+                  Price changes ({importReport.priceChanges.length})
+                </h4>
+                <div className="max-h-60 overflow-y-auto border border-slate-200 rounded">
+                  <table className="w-full text-xs">
+                    <thead className="bg-slate-50 sticky top-0">
+                      <tr>
+                        <th className="px-2 py-1 text-left">Code</th>
+                        <th className="px-2 py-1 text-left">Finish</th>
+                        <th className="px-2 py-1 text-right">Old</th>
+                        <th className="px-2 py-1 text-right">New</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {importReport.priceChanges.slice(0, 200).map((c, i) => (
+                        <tr key={i} className="border-t border-slate-100">
+                          <td className="px-2 py-0.5 font-mono">{c.code}</td>
+                          <td className="px-2 py-0.5">{c.finish}</td>
+                          <td className="px-2 py-0.5 text-right text-slate-500">
+                            {c.oldUsd != null ? `$${c.oldUsd.toFixed(2)}` : 'new'}
+                          </td>
+                          <td className="px-2 py-0.5 text-right">${c.newUsd.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            {importReport.errors.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-red-700 mt-3 mb-1">
+                  Errors ({importReport.errors.length})
+                </h4>
+                <ul className="max-h-40 overflow-y-auto text-xs text-red-700 list-disc pl-5">
+                  {importReport.errors.slice(0, 20).map((e, i) => <li key={i}>{e}</li>)}
+                </ul>
+              </div>
+            )}
+            <div className="flex justify-end pt-3 border-t border-slate-200">
+              <Button onClick={() => setImportReport(null)}>Close</Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

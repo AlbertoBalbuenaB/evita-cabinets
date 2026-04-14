@@ -143,7 +143,8 @@ export function computeOptimizerQuotationTotal(
     const itemsTotal       = area.items.reduce((s, i) => s + i.subtotal, 0);
     const countertopsTotal = area.countertops.reduce((s, ct) => s + ct.subtotal, 0);
     const closetItemsTotal = area.closetItems.reduce((s, ci) => s + ci.subtotal_mxn, 0);
-    const areaNonCabinet   = itemsTotal + countertopsTotal + closetItemsTotal;
+    const prefabItemsTotal = (area.prefabItems ?? []).reduce((s, pi) => s + pi.cost_mxn, 0);
+    const areaNonCabinet   = itemsTotal + countertopsTotal + closetItemsTotal + prefabItemsTotal;
 
     coveredCabinetExtras     += areaCoveredExtras;
     fallbackCabinetsSubtotal += areaFallbackCabinets;
@@ -165,6 +166,7 @@ export function computeOptimizerQuotationTotal(
   // The materials subtotal in optimizer mode is:
   //   boards + edgeband + non-material extras of covered cabinets
   //   + ft² subtotal of fallback cabinets + items + countertops + closet items
+  //   + prefab items (Venus / Northville, always ft²-sourced)
   // (The optimizer boards/edgeband are flat across the quotation — not area
   // scaled — because a single project-wide optimizer run produces them, and
   // area.quantity is already encoded into the cabinet.quantity used when
