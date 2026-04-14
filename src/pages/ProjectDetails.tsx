@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History, SeparatorHorizontal, Layers } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { fetchAllProducts } from '../lib/fetchAllProducts';
@@ -6,7 +6,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
 import { formatCurrency } from '../lib/calculations';
-import type { Quotation, Project, ProjectArea, AreaCabinet, ProjectAreaInsert, Product, AreaItem, AreaCountertop, AreaClosetItem, AreaSection, PriceListItem } from '../types';
+import type { Quotation, Project, ProjectArea, AreaCabinet, ProjectAreaInsert, Product, AreaItem, AreaCountertop, AreaClosetItem, AreaSection, PriceListItem, PricingMethod, QuotationOptimizerRun } from '../types';
 import { CabinetForm } from '../components/CabinetForm';
 import { ItemForm } from '../components/ItemForm';
 import { CountertopForm } from '../components/CountertopForm';
@@ -14,6 +14,8 @@ import { ClosetForm } from '../components/ClosetForm';
 import { CabinetCard } from '../components/CabinetCard';
 import { MaterialBreakdown } from '../components/MaterialBreakdown';
 import { AreaMaterialBreakdown } from '../components/AreaMaterialBreakdown';
+import { AreaMaterialBreakdownOptimizer } from '../components/optimizer/quotation/AreaMaterialBreakdownOptimizer';
+import { MaterialBreakdownOptimizer } from '../components/optimizer/quotation/MaterialBreakdownOptimizer';
 import { ProjectCharts } from '../components/ProjectCharts';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { printQuotation, printQuotationUSD } from '../utils/printQuotation';
@@ -58,14 +60,22 @@ interface ProjectDetailsProps {
 export function ProjectDetails({ project: initialProject, parentProject, onBack }: ProjectDetailsProps) {
   const setActiveProjectTab = useAiChatContext(s => s.setActiveProjectTab);
   const [project, setProject] = useState<Quotation>(initialProject);
-  // Pricing method used by the Print buttons. Kept in state so the
-  // FloatingActionBar can render a pill/sub-label letting the user know
-  // which mode the next PDF export will use. Refreshed by
-  // `updateProjectTotal` (which already re-fetches `quotations.pricing_method`
-  // from Supabase) and whenever the user toggles the method inside the
-  // Breakdown tab (via the `onRecomputeRollup` callback).
-  const [pdfPricingMethod, setPdfPricingMethod] = useState<'sqft' | 'optimizer'>(
-    (initialProject.pricing_method as 'sqft' | 'optimizer') ?? 'sqft',
+  // Canonical pricing method for the whole Quotation section. Drives the
+  // Header Card total, Info/Pricing/Analytics tabs, per-area Material
+  // Breakdown, and the PDF exports. Source of truth lives here; the
+  // Breakdown tab's internal toggle delegates back to this handler via
+  // `handlePricingMethodChange`. Initialised from the DB-persisted
+  // `quotations.pricing_method`.
+  const [pricingMethod, setPricingMethod] = useState<PricingMethod>(
+    (initialProject.pricing_method as PricingMethod) ?? 'sqft',
+  );
+  // The currently-active optimizer run for this quotation, if any. Loaded
+  // lazily on mount / whenever the rollup recomputes. Used to derive the
+  // optimizer-mode Header total, Info/Pricing subtotals, and per-area
+  // Material Breakdown.
+  const [activeOptimizerRun, setActiveOptimizerRun] = useState<QuotationOptimizerRun | null>(null);
+  const [optimizerIsStale, setOptimizerIsStale] = useState<boolean>(
+    (initialProject as any).optimizer_is_stale === true,
   );
   const [areas, setAreas] = useState<(ProjectArea & { cabinets: AreaCabinet[]; items: AreaItem[]; countertops: AreaCountertop[]; closetItems: AreaClosetItem[]; sections: AreaSection[] })[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -262,6 +272,8 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       installDelivery?: number;
       referralRate?: number;
       otherExpenses?: number;
+      /** Optional override for `pricing_method`, to avoid a DB race when the caller just wrote a new value. */
+      pricingMethodOverride?: PricingMethod;
     }
   ) {
     const _profitMultiplier = opts?.profitMultiplier ?? profitMultiplier;
@@ -286,73 +298,88 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     });
     const sqftProjectTotal = totals.fullProjectTotal;
 
-    // ── Phase 7: optimizer-pricing rollup branch ────────────────────────
+    // ── Phase 7 + global switch (Phase 10): optimizer-pricing rollup ────
     // Whenever the quotation has an active optimizer run, recompute the
     // optimizer grand total in parallel so the ft²-vs-optimizer comparison
     // card always stays fresh. The fresh value is written to
     // `optimizer_total_amount`.
     //
-    // Which value ends up in `total_amount` (the "official" total read by
-    // PDF, dashboards, etc.) depends on `quotations.pricing_method`:
-    //   - 'sqft'      → sqft total (legacy behavior, unchanged)
-    //   - 'optimizer' → optimizer grand total, OR fall back to sqft if the
-    //                    active run is stale / missing (safety net)
-    //
-    // Both the mode and the active_run_id are re-fetched from DB here to
-    // bypass React prop staleness (the user may have toggled the method
-    // from within the Breakdown tab without remounting ProjectDetails).
+    // Which value ends up in `total_amount` depends on
+    // `quotations.pricing_method`:
+    //   - 'sqft'      → sqft total
+    //   - 'optimizer' → optimizer grand total if we have a non-stale active
+    //                    run. If the run is stale we KEEP the cached
+    //                    optimizer_total_amount in total_amount (do NOT
+    //                    fall back to sqft automatically), and show a
+    //                    "STALE" badge in the toolbar and header. This
+    //                    matches the user-confirmed behavior for stale runs.
     let optimizerGrandTotal: number | null = null;
     let writeTotal = sqftProjectTotal;
+    let currentPricingMethod: PricingMethod = opts?.pricingMethodOverride ?? pricingMethod;
+    let loadedActiveRun: QuotationOptimizerRun | null = null;
+    let currentOptimizerStale = false;
 
     try {
       const { data: q } = await supabase
         .from('quotations')
-        .select('pricing_method, active_optimizer_run_id')
+        .select('pricing_method, active_optimizer_run_id, optimizer_total_amount, optimizer_is_stale')
         .eq('id', project.id)
         .maybeSingle();
 
-      const pricingMethod: 'sqft' | 'optimizer' =
-        (q?.pricing_method as 'sqft' | 'optimizer') ?? 'sqft';
-      // Mirror the freshly-read value into UI state so the toolbar pill
-      // next to the Print button reflects it without waiting for a page
-      // reload. Safe to call even when unchanged (React bails out).
-      setPdfPricingMethod(pricingMethod);
+      if (!opts?.pricingMethodOverride) {
+        currentPricingMethod = (q?.pricing_method as PricingMethod) ?? 'sqft';
+      }
+      // Mirror the freshly-read value into UI state.
+      setPricingMethod(currentPricingMethod);
+      currentOptimizerStale = q?.optimizer_is_stale === true;
+      setOptimizerIsStale(currentOptimizerStale);
       const activeRunId = q?.active_optimizer_run_id ?? null;
+      const cachedOptimizerTotal =
+        q?.optimizer_total_amount != null ? Number(q.optimizer_total_amount) : null;
 
       if (activeRunId) {
         const { data: run } = await supabase
           .from('quotation_optimizer_runs')
-          .select('material_cost, edgeband_cost, is_stale, snapshot')
+          .select('*')
           .eq('id', activeRunId)
           .maybeSingle();
 
-        if (run && !run.is_stale) {
-          const snapshot = run.snapshot as unknown as OptimizerRunSnapshot;
-          const cabinetsCovered = new Set<string>(snapshot?.cabinetsCovered ?? []);
+        if (run) {
+          loadedActiveRun = run as unknown as QuotationOptimizerRun;
+          setActiveOptimizerRun(loadedActiveRun);
 
-          const optTotals = computeOptimizerQuotationTotal({
-            materialCost: Number(run.material_cost ?? 0),
-            edgebandCost: Number(run.edgeband_cost ?? 0),
-            areasData,
-            cabinetsCovered,
-            multipliers: {
-              profitMultiplier:  _profitMultiplier,
-              tariffMultiplier:  _tariffMultiplier,
-              referralRate:      _referralRate,
-              taxPercentage:     _taxPercentage,
-              installDeliveryMxn: _installDeliveryMxn,
-              otherExpenses:     _otherExpenses,
-            },
-          });
-          optimizerGrandTotal = optTotals.fullProjectTotal;
-          if (pricingMethod === 'optimizer') {
-            writeTotal = optimizerGrandTotal;
+          if (!run.is_stale) {
+            const snapshot = run.snapshot as unknown as OptimizerRunSnapshot;
+            const cabinetsCovered = new Set<string>(snapshot?.cabinetsCovered ?? []);
+
+            const optTotals = computeOptimizerQuotationTotal({
+              materialCost: Number(run.material_cost ?? 0),
+              edgebandCost: Number(run.edgeband_cost ?? 0),
+              areasData,
+              cabinetsCovered,
+              multipliers: {
+                profitMultiplier:  _profitMultiplier,
+                tariffMultiplier:  _tariffMultiplier,
+                referralRate:      _referralRate,
+                taxPercentage:     _taxPercentage,
+                installDeliveryMxn: _installDeliveryMxn,
+                otherExpenses:     _otherExpenses,
+              },
+            });
+            optimizerGrandTotal = optTotals.fullProjectTotal;
+            if (currentPricingMethod === 'optimizer') {
+              writeTotal = optimizerGrandTotal;
+            }
+          } else if (currentPricingMethod === 'optimizer' && cachedOptimizerTotal !== null) {
+            // Stale run + optimizer mode → keep cached total in DB, no
+            // silent downgrade to sqft.
+            writeTotal = cachedOptimizerTotal;
           }
-        } else if (run?.is_stale && pricingMethod === 'optimizer') {
-          console.warn(
-            `[updateProjectTotal] Active optimizer run for quotation ${project.id} is stale; falling back to ft² total.`,
-          );
+        } else {
+          setActiveOptimizerRun(null);
         }
+      } else {
+        setActiveOptimizerRun(null);
       }
     } catch (err) {
       console.error('[updateProjectTotal] optimizer branch failed; keeping sqft total:', err);
@@ -380,6 +407,36 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       }
     } catch (error) {
       console.error('Error updating totals:', error);
+    }
+  }
+
+  /**
+   * Canonical handler for the global Pricing Method switch (FT² ↔ Optimizer).
+   *
+   * Writes `quotations.pricing_method`, mirrors the value into local state
+   * immediately for optimistic UI, then reruns the rollup so `total_amount`
+   * in the DB matches the new mode. Used by:
+   *   - `FloatingActionBar` (the global toolbar toggle)
+   *   - `QuotationOptimizerTab` (delegated from the Breakdown-tab toggle)
+   *   - `QuotationOptimizerTab` on first run (auto-switch)
+   */
+  async function handlePricingMethodChange(next: PricingMethod) {
+    const prev = pricingMethod;
+    // Optimistic UI
+    setPricingMethod(next);
+    try {
+      const { error } = await supabase
+        .from('quotations')
+        .update({ pricing_method: next })
+        .eq('id', project.id);
+      if (error) throw error;
+      await updateProjectTotal(areas, { pricingMethodOverride: next });
+    } catch (err) {
+      console.error('Error switching pricing method:', err);
+      setPricingMethod(prev);
+      alert(
+        `Failed to switch pricing method: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -743,15 +800,15 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         .eq('id', project.id)
         .maybeSingle();
 
-      const pricingMethod: 'sqft' | 'optimizer' =
-        (q?.pricing_method as 'sqft' | 'optimizer') ?? 'sqft';
-      // Keep the toolbar pill in sync with whatever the DB says RIGHT NOW,
+      const freshPricingMethod: PricingMethod =
+        (q?.pricing_method as PricingMethod) ?? 'sqft';
+      // Keep the toolbar state in sync with whatever the DB says RIGHT NOW,
       // even if the user is about to cancel the print (clicking the button
       // should never leave stale UI behind).
-      setPdfPricingMethod(pricingMethod);
+      setPricingMethod(freshPricingMethod);
       const activeRunId = q?.active_optimizer_run_id ?? null;
 
-      if (pricingMethod !== 'optimizer' || !activeRunId) {
+      if (freshPricingMethod !== 'optimizer' || !activeRunId) {
         return undefined;
       }
 
@@ -1100,62 +1157,184 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     }
   }
 
-  const cabinetsSubtotal = areas.reduce(
-    (sum, area) => sum + area.cabinets.reduce((s, c) => s + (c.subtotal ?? 0), 0) * (area.quantity ?? 1),
-    0
-  );
-
-  const itemsSubtotal = areas.reduce(
-    (sum, area) => sum + area.items.reduce((s, i) => s + i.subtotal, 0) * (area.quantity ?? 1),
-    0
-  );
-
-  const countertopsSubtotal = areas.reduce(
-    (sum, area) => sum + area.countertops.reduce((s, ct) => s + ct.subtotal, 0) * (area.quantity ?? 1),
-    0
-  );
-
-  const closetItemsSubtotal = areas.reduce(
-    (sum, area) => sum + (area.closetItems || []).reduce((s, ci) => s + ci.subtotal_mxn, 0) * (area.quantity ?? 1),
-    0
-  );
-
-  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal + closetItemsSubtotal;
-
   const totalProjectBoxes = areas.reduce((sum, area) => {
     const { boxes } = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
     return sum + boxes * (area.quantity ?? 1);
   }, 0);
 
-  // Price (Sale Price of Materials)
-  const price = profitMultiplier > 0 && profitMultiplier < 1
-    ? materialsSubtotal / (1 - profitMultiplier)
-    : materialsSubtotal;
-  const profitAmount = price - materialsSubtotal;
-
-  // Tariff - Calculated on Material Cost only for areas where applies_tariff is enabled
-  const tariffableSubtotal = areas.reduce((sum, area) => {
-    if (area.applies_tariff !== true) return sum;
-    const qty = area.quantity ?? 1;
-    return sum + (
-      area.cabinets.reduce((s, c) => s + (c.subtotal ?? 0), 0) +
-      area.items.reduce((s, i) => s + i.subtotal, 0) +
-      area.countertops.reduce((s, ct) => s + ct.subtotal, 0) +
-      (area.closetItems || []).reduce((s, ci) => s + ci.subtotal_mxn, 0)
-    ) * qty;
-  }, 0);
-  const tariffAmount = tariffableSubtotal * tariffMultiplier;
-
   const installDeliveryMxn = installDelivery * exchangeRate;
 
-  // Referral Fee - Applied to (Price + Install Cost)
-  const referralAmount = (price + installDeliveryMxn) * referralRate;
+  /**
+   * Derived totals for the whole Quotation section, switched by
+   * `pricingMethod`. This is the single source of truth consumed by the
+   * Header Card, Info tab cost breakdown, Pricing tab per-area totals, and
+   * the Analytics tab. Both ft² and optimizer paths go through the same
+   * set of fields so downstream JSX doesn't branch.
+   *
+   * Optimizer mode requirements:
+   *   - `activeOptimizerRun` must be loaded (loaded inside updateProjectTotal).
+   *   - If the run is stale, we still compute with current areas data — the
+   *     STALE badge in the toolbar/header tells the user to re-optimize.
+   *   - If the method is 'optimizer' but no run is loaded yet (e.g. mid-load),
+   *     we fall back to ft² so the UI never flashes zeros.
+   */
+  const quotationView = useMemo(() => {
+    const installDeliveryMxnLocal = installDelivery * exchangeRate;
+    const multipliers = {
+      profitMultiplier,
+      tariffMultiplier,
+      referralRate,
+      taxPercentage,
+      installDeliveryMxn: installDeliveryMxnLocal,
+      otherExpenses,
+    };
 
-  // Tax - Applied to (Price + Tariff)
-  const taxAmount = (price + tariffAmount + referralAmount) * (taxPercentage / 100);
+    // Always compute sqft as the baseline.
+    const sqft = computeQuotationTotalsSqft(areas, multipliers);
 
-  // Grand Total
-  const projectTotal = price + tariffAmount + referralAmount + taxAmount + installDeliveryMxn + otherExpenses;
+    // Per-area cabinet-only subtotals (without × quantity) for area cards.
+    const sqftPerAreaCabinetSubtotal: Record<string, number> = {};
+    for (const area of areas) {
+      sqftPerAreaCabinetSubtotal[area.id] = area.cabinets.reduce(
+        (s, c) => s + (c.subtotal ?? 0),
+        0,
+      );
+    }
+
+    // Aggregated ft² subtotals by category (kept for the Info-tab breakdown).
+    const cabinetsSubtotalSqft = areas.reduce(
+      (sum, area) => sum + sqftPerAreaCabinetSubtotal[area.id] * (area.quantity ?? 1),
+      0,
+    );
+    const itemsSubtotal = areas.reduce(
+      (sum, area) => sum + area.items.reduce((s, i) => s + i.subtotal, 0) * (area.quantity ?? 1),
+      0,
+    );
+    const countertopsSubtotal = areas.reduce(
+      (sum, area) => sum + area.countertops.reduce((s, ct) => s + ct.subtotal, 0) * (area.quantity ?? 1),
+      0,
+    );
+    const closetItemsSubtotal = areas.reduce(
+      (sum, area) =>
+        sum +
+        (area.closetItems || []).reduce((s, ci) => s + ci.subtotal_mxn, 0) *
+          (area.quantity ?? 1),
+      0,
+    );
+
+    // Try to compute optimizer-mode totals.
+    let optCabinetsSubtotal = cabinetsSubtotalSqft;
+    let optMaterialsSubtotal = sqft.materialsSubtotal;
+    let optPrice = sqft.price;
+    let optTariffAmount = sqft.tariffAmount;
+    let optReferralAmount = sqft.referralAmount;
+    let optTaxAmount = sqft.taxAmount;
+    let optFullProjectTotal = sqft.fullProjectTotal;
+    let optPerAreaCabinetSubtotal = { ...sqftPerAreaCabinetSubtotal };
+    let optimizerReady = false;
+
+    if (activeOptimizerRun) {
+      try {
+        const snapshot = activeOptimizerRun.snapshot as unknown as OptimizerRunSnapshot;
+        const result = activeOptimizerRun.result as unknown as OptimizationResult;
+        const cabinetsCovered = new Set<string>(snapshot?.cabinetsCovered ?? []);
+
+        const opt = computeOptimizerQuotationTotal({
+          materialCost: Number(activeOptimizerRun.material_cost ?? 0),
+          edgebandCost: Number(activeOptimizerRun.edgeband_cost ?? 0),
+          areasData: areas,
+          cabinetsCovered,
+          multipliers,
+        });
+
+        optMaterialsSubtotal = opt.materialsSubtotal;
+        optPrice = opt.price;
+        optTariffAmount = opt.tariffAmount;
+        optReferralAmount = opt.referralAmount;
+        optTaxAmount = opt.taxAmount;
+        optFullProjectTotal = opt.fullProjectTotal;
+        optCabinetsSubtotal =
+          opt.optimizerMaterialsCost + opt.coveredCabinetExtras + opt.fallbackCabinetsSubtotal;
+
+        // Per-area cabinet subtotals sourced from the optimizer run.
+        const perAreaOpt = computeOptimizerAreaSubtotals({
+          snapshot,
+          result,
+          areasData: areas,
+          cabinetsCovered,
+        });
+        for (const area of areas) {
+          optPerAreaCabinetSubtotal[area.id] =
+            perAreaOpt[area.id]?.cabinetsSubtotal ?? sqftPerAreaCabinetSubtotal[area.id] ?? 0;
+        }
+        optimizerReady = true;
+      } catch (err) {
+        console.warn('[quotationView] optimizer totals failed; falling back to sqft:', err);
+        optimizerReady = false;
+      }
+    }
+
+    // In optimizer mode without a loaded run we render ft² values so we
+    // never flash zeros — the STALE/LOADING badge communicates the state.
+    const useOptimizer = pricingMethod === 'optimizer' && optimizerReady;
+
+    const cabinetsSubtotal = useOptimizer ? optCabinetsSubtotal : cabinetsSubtotalSqft;
+    const materialsSubtotal = useOptimizer ? optMaterialsSubtotal : sqft.materialsSubtotal;
+    const price = useOptimizer ? optPrice : sqft.price;
+    const profitAmount = price - materialsSubtotal;
+    const tariffAmount = useOptimizer ? optTariffAmount : sqft.tariffAmount;
+    const referralAmount = useOptimizer ? optReferralAmount : sqft.referralAmount;
+    const taxAmount = useOptimizer ? optTaxAmount : sqft.taxAmount;
+    const projectTotal = useOptimizer ? optFullProjectTotal : sqft.fullProjectTotal;
+    const perAreaCabinetSubtotal = useOptimizer
+      ? optPerAreaCabinetSubtotal
+      : sqftPerAreaCabinetSubtotal;
+
+    return {
+      method: pricingMethod,
+      usingOptimizer: useOptimizer,
+      isStale: optimizerIsStale,
+      activeRun: activeOptimizerRun,
+      cabinetsSubtotal,
+      itemsSubtotal,
+      countertopsSubtotal,
+      closetItemsSubtotal,
+      materialsSubtotal,
+      price,
+      profitAmount,
+      tariffAmount,
+      referralAmount,
+      taxAmount,
+      projectTotal,
+      perAreaCabinetSubtotal,
+      installDeliveryMxn: installDeliveryMxnLocal,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    areas,
+    pricingMethod,
+    activeOptimizerRun,
+    optimizerIsStale,
+    profitMultiplier,
+    tariffMultiplier,
+    taxPercentage,
+    referralRate,
+    installDelivery,
+    exchangeRate,
+    otherExpenses,
+  ]);
+
+  const cabinetsSubtotal = quotationView.cabinetsSubtotal;
+  const itemsSubtotal = quotationView.itemsSubtotal;
+  const countertopsSubtotal = quotationView.countertopsSubtotal;
+  const closetItemsSubtotal = quotationView.closetItemsSubtotal;
+  const materialsSubtotal = quotationView.materialsSubtotal;
+  const price = quotationView.price;
+  const profitAmount = quotationView.profitAmount;
+  const tariffAmount = quotationView.tariffAmount;
+  const referralAmount = quotationView.referralAmount;
+  const taxAmount = quotationView.taxAmount;
+  const projectTotal = quotationView.projectTotal;
 
   const formatPrice = (amount: number) => {
     const amountInUSD = amount / exchangeRate;
@@ -1220,6 +1399,12 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         pdf_address: pdfAddress !== (project.address || '') ? pdfAddress : null,
         pdf_project_brief: pdfProjectBrief !== filteredOriginalBrief ? pdfProjectBrief : null,
       }));
+      // Re-run the rollup so `optimizer_total_amount` and `total_amount`
+      // stay mutually consistent whenever the user tweaks profit/tariff/
+      // tax/etc from the Info tab. `updateProjectTotal` branches on the
+      // current `pricing_method` and writes both fields when the quotation
+      // has an active optimizer run.
+      await updateProjectTotal(areas);
     } catch (error) {
       console.error('Error updating project costs:', error);
     }
@@ -1318,7 +1503,10 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         hasAreasOrderChanged={hasAreasOrderChanged}
         savingAreasOrder={savingAreasOrder}
         areasEmpty={areas.length === 0}
-        pdfPricingMethod={pdfPricingMethod}
+        pricingMethod={pricingMethod}
+        canSelectOptimizer={activeOptimizerRun != null}
+        optimizerStale={optimizerIsStale}
+        onPricingMethodChange={handlePricingMethodChange}
       />
 
       <div className="mb-6 mt-6 page-enter">
@@ -1466,7 +1654,32 @@ const [isEditingDate, setIsEditingDate] = useState(false);
             </div>
 
             <div className="flex-shrink-0 text-right">
-              <div className="text-xs text-slate-400 uppercase tracking-wide mb-1">Project Total</div>
+              <div className="text-xs text-slate-400 uppercase tracking-wide mb-1 flex items-center justify-end gap-2">
+                <span>Project Total</span>
+                <span
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide border ${
+                    pricingMethod === 'optimizer'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                      : 'bg-slate-100 text-slate-600 border-slate-200'
+                  }`}
+                  title={
+                    pricingMethod === 'optimizer'
+                      ? 'Values come from the active optimizer run (board-based).'
+                      : 'Values come from the legacy ft² pricing.'
+                  }
+                >
+                  {pricingMethod === 'optimizer' ? 'OPTIMIZER' : 'FT²'}
+                </span>
+                {pricingMethod === 'optimizer' && optimizerIsStale && (
+                  <span
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide border bg-amber-50 text-amber-700 border-amber-200"
+                    title="The optimizer run is stale because cabinets changed after it was saved. Re-optimize in the Breakdown tab to refresh these numbers."
+                  >
+                    <AlertTriangle className="h-2.5 w-2.5" />
+                    STALE
+                  </span>
+                )}
+              </div>
               <div className="text-2xl font-bold text-slate-900 leading-tight">
                 {formatPrice(projectTotal)}{' '}
                 <span className="text-sm font-normal text-slate-500">
@@ -1970,7 +2183,11 @@ const [isEditingDate, setIsEditingDate] = useState(false);
               <>
                 <ProjectCharts areas={areas} products={products} />
 
-                <MaterialBreakdown areas={areas} />
+                {pricingMethod === 'optimizer' && activeOptimizerRun ? (
+                  <MaterialBreakdownOptimizer run={activeOptimizerRun} areas={areas} />
+                ) : (
+                  <MaterialBreakdown areas={areas} />
+                )}
 
                 <OptimizerRunsAnalytics quotationId={project.id} />
               </>
@@ -1993,6 +2210,8 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           onRecomputeRollup={() => updateProjectTotal(areas)}
           areas={areas}
           quotation={project}
+          pricingMethod={pricingMethod}
+          onPricingMethodChange={handlePricingMethodChange}
         />
       )}
 
@@ -2165,10 +2384,22 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                         />
                       </div>
                       <div className="text-left sm:text-right">
-                        <div className="text-xs sm:text-sm text-slate-600">Area Total</div>
+                        <div className="text-xs sm:text-sm text-slate-600">
+                          Area Total
+                          {quotationView.usingOptimizer && (
+                            <span className="ml-1 inline-flex items-center gap-0.5 px-1 py-0 rounded bg-blue-50 border border-blue-200 text-blue-700 text-[9px] font-semibold uppercase tracking-wide">
+                              OPT
+                            </span>
+                          )}
+                        </div>
                         {(() => {
+                          // Per-area cabinet subtotal comes from quotationView so it
+                          // switches between sqft and optimizer mode along with the
+                          // rest of the UI. Items/countertops/closets are always ft²
+                          // sourced (they don't go through the optimizer).
+                          const cabinetsPart = quotationView.perAreaCabinetSubtotal[area.id] ?? 0;
                           const rawTotal =
-                            area.cabinets.reduce((sum, c) => sum + (c.subtotal ?? 0), 0) +
+                            cabinetsPart +
                             area.countertops.reduce((sum, ct) => sum + ct.subtotal, 0) +
                             area.items.reduce((sum, i) => sum + i.subtotal, 0) +
                             (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
@@ -2283,7 +2514,14 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                         />
 
                         {areaMaterialsVisible[area.id] && (
-                          <AreaMaterialBreakdown areaId={area.id} />
+                          pricingMethod === 'optimizer' && activeOptimizerRun ? (
+                            <AreaMaterialBreakdownOptimizer
+                              areaId={area.id}
+                              run={activeOptimizerRun}
+                            />
+                          ) : (
+                            <AreaMaterialBreakdown areaId={area.id} />
+                          )
                         )}
                       </>
                     )}

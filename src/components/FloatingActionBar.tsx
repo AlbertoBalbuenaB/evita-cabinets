@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Plus, RefreshCw, TrendingUp, Save, ArrowDownUp,
          Printer, FileSpreadsheet, FileJson, Download,
-         DollarSign, Package, ChevronDown, Layers } from 'lucide-react';
+         DollarSign, Package, ChevronDown, Layers, AlertTriangle } from 'lucide-react';
+import { PricingMethodToggle } from './optimizer/quotation/PricingMethodToggle';
+import type { PricingMethod } from '../types';
 
 interface FloatingActionBarProps {
   onAddArea: () => void;
@@ -21,12 +23,18 @@ interface FloatingActionBarProps {
   savingAreasOrder?: boolean;
   areasEmpty: boolean;
   /**
-   * Pricing method that the MXN/USD PDF exports will use. Drives the pill
-   * rendered next to the Print button (`FT²` vs `OPTIMIZER`) so the user
-   * knows which mode is active before clicking. The printed PDF itself is
-   * agnostic — this indicator exists only in the platform UI.
+   * Global pricing method for the whole Quotation section. The MXN/USD PDF
+   * exports, the Info/Pricing/Analytics tabs, the Header Card total, and the
+   * per-area Material Breakdown all follow this value. The switch lives in
+   * this toolbar (next to Print) and writes `quotations.pricing_method`
+   * through the `onPricingMethodChange` callback.
    */
-  pdfPricingMethod?: 'sqft' | 'optimizer';
+  pricingMethod?: PricingMethod;
+  /** True once the quotation has at least one active optimizer run. */
+  canSelectOptimizer?: boolean;
+  /** True when the active optimizer run is stale (cabinets changed after run). */
+  optimizerStale?: boolean;
+  onPricingMethodChange?: (next: PricingMethod) => void;
 }
 
 export function FloatingActionBar({
@@ -46,20 +54,12 @@ export function FloatingActionBar({
   hasAreasOrderChanged = false,
   savingAreasOrder = false,
   areasEmpty,
-  pdfPricingMethod = 'sqft',
+  pricingMethod = 'sqft',
+  canSelectOptimizer = false,
+  optimizerStale = false,
+  onPricingMethodChange,
 }: FloatingActionBarProps) {
-  const isOptimizerMode = pdfPricingMethod === 'optimizer';
-  // Visual language for the pricing-method pill. Blue = precise (optimizer);
-  // neutral slate = legacy ft². Kept tiny so it doesn't compete with the
-  // Save/Add-Area primary CTAs, but readable enough to catch the user's eye
-  // before they click Print.
-  const pricingPillBg = isOptimizerMode ? 'rgba(37,99,235,0.1)' : 'rgba(100,116,139,0.1)';
-  const pricingPillColor = isOptimizerMode ? '#1d4ed8' : '#475569';
-  const pricingPillBorder = isOptimizerMode ? 'rgba(37,99,235,0.3)' : 'rgba(100,116,139,0.25)';
-  const pricingPillLabel = isOptimizerMode ? 'OPTIMIZER' : 'FT²';
-  const pricingPillTitle = isOptimizerMode
-    ? 'MXN & USD PDFs will use the precise Breakdown (optimizer) per-area pricing. Change this in the Breakdown tab → Pricing Method toggle.'
-    : 'MXN & USD PDFs will use the legacy ft² per-area pricing. Switch to Optimizer in the Breakdown tab to use precise board-by-board pricing.';
+  const isOptimizerMode = pricingMethod === 'optimizer';
   const [isPrintMenuOpen, setIsPrintMenuOpen] = useState(false);
   const [isCSVMenuOpen, setIsCSVMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -253,33 +253,43 @@ export function FloatingActionBar({
           <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.1)', margin: '0 4px', flexShrink: 0 }} />
 
           {/*
-            Pricing-method pill — tells the user which mode the next MXN/USD
-            PDF export will use. Lives in the toolbar (NOT in the PDF) so
-            clients never see it. Click-through is passive: the toggle that
-            actually changes the method lives in the Breakdown tab.
+            Global Pricing Method switch — flips FT² ↔ Optimizer for the whole
+            Quotation section: Info/Pricing/Analytics tabs, Header Card total,
+            per-area Material Breakdown, AND the PDF exports. Default is FT²;
+            once the first optimizer run is saved, the method auto-switches to
+            Optimizer (one-shot — further manual toggles are respected).
           */}
-          <div
-            title={pricingPillTitle}
-            style={{
-              height: 22,
-              padding: '0 8px',
-              borderRadius: 11,
-              background: pricingPillBg,
-              color: pricingPillColor,
-              border: `1px solid ${pricingPillBorder}`,
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              flexShrink: 0,
-              cursor: 'help',
-              userSelect: 'none',
-            }}
-          >
-            <span style={{ fontSize: 9, opacity: 0.7, fontWeight: 500 }}>PDF:</span>
-            <span>{pricingPillLabel}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <PricingMethodToggle
+              value={pricingMethod}
+              onChange={(next) => onPricingMethodChange?.(next)}
+              canSelectOptimizer={canSelectOptimizer}
+              size="sm"
+            />
+            {isOptimizerMode && optimizerStale && (
+              <div
+                title="The active optimizer run is stale because cabinets changed after it was saved. Values shown are from the last run. Re-optimize in the Breakdown tab to refresh."
+                style={{
+                  height: 22,
+                  padding: '0 8px',
+                  borderRadius: 11,
+                  background: 'rgba(245,158,11,0.12)',
+                  color: '#b45309',
+                  border: '1px solid rgba(245,158,11,0.35)',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  cursor: 'help',
+                  userSelect: 'none',
+                }}
+              >
+                <AlertTriangle style={{ width: 10, height: 10 }} />
+                STALE
+              </div>
+            )}
           </div>
 
           <div style={{ position: 'relative', flexShrink: 0 }}>
