@@ -685,34 +685,26 @@ function PrefabLibraryTab() {
   async function loadCatalog() {
     setLoading(true);
     try {
-      let q = supabase
-        .from('prefab_catalog')
+      // Query the view instead of two separate tables. The view aggregates all
+      // current prices as a JSONB array server-side, returning one row per SKU.
+      // This avoids the PostgREST per-request row cap that silently truncates
+      // when is_current prices exceed max-rows (Northville: ~2 338, Venus: ~4 084).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let q = (supabase as any)
+        .from('prefab_catalog_with_prices')
         .select('*')
         .eq('brand_id', selectedBrandId)
         .order('category')
         .order('cabinet_code');
       if (!showInactive) q = q.eq('is_active', true);
-      const { data: catalogData, error: catErr } = await q;
-      if (catErr) throw catErr;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await q as { data: any[] | null; error: any };
+      if (error) throw error;
 
-      const catalogIds = (catalogData || []).map(r => r.id);
-      let pricesByCatalog: Record<string, PrefabCatalogPrice[]> = {};
-      if (catalogIds.length > 0) {
-        const { data: priceData, error: prErr } = await supabase
-          .from('prefab_catalog_price')
-          .select('*')
-          .in('prefab_catalog_id', catalogIds)
-          .eq('is_current', true)
-          .limit(10000);
-        if (prErr) throw prErr;
-        for (const p of (priceData || []) as PrefabCatalogPrice[]) {
-          (pricesByCatalog[p.prefab_catalog_id] ??= []).push(p);
-        }
-      }
-
-      const withPrices: PrefabRowWithPrices[] = (catalogData || []).map((r) => ({
+      const withPrices: PrefabRowWithPrices[] = (data || []).map((r: any) => ({
         ...(r as PrefabCatalogItem),
-        prices: (pricesByCatalog[r.id] || []).sort((a, b) => a.finish.localeCompare(b.finish)),
+        // prices is a JSONB array pre-sorted by finish in the view
+        prices: (r.prices ?? []) as PrefabCatalogPrice[],
       }));
       setRows(withPrices);
     } catch (error) {
