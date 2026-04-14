@@ -33,6 +33,15 @@ export interface PrefabImportReport {
   pricesInserted: number;
   pricesArchived: number;
   priceChanges: Array<{ code: string; finish: string; oldUsd: number | null; newUsd: number }>;
+  /**
+   * Duplicate rows in the xlsx where the same (code, finish) pair appears
+   * with different prices. The importer keeps the MAX price (defensive
+   * margin) and logs a console.warn so Alberto can follow up with the
+   * supplier. See data/prefab/README.md → "Known supplier data issues"
+   * for the precedent (Venus 2024-09 had 4 such duplicates on Houston
+   * Trenton Fairy Green).
+   */
+  duplicates: Array<{ code: string; finish: string; prices: number[]; kept: number }>;
   errors: string[];
 }
 
@@ -174,6 +183,7 @@ export async function importPrefabPriceList(
     pricesInserted: 0,
     pricesArchived: 0,
     priceChanges: [],
+    duplicates: [],
     errors: [],
   };
 
@@ -190,12 +200,61 @@ export async function importPrefabPriceList(
     return report;
   }
 
-  // Group rows by code → {category, prices[]}
-  const byCode = new Map<string, { category: string; prices: { finish: string; cost_usd: number }[] }>();
+  // Group rows by code → {category, prices[]}, with dedup on (code, finish).
+  //
+  // Some supplier xlsx files (notably Venus 2024-09) ship duplicate rows for
+  // the same (code, finish) pair with two different prices — see
+  // data/prefab/README.md → "Known supplier data issues". The DB has a
+  // UNIQUE constraint on (prefab_catalog_id, finish, effective_date), so we
+  // must collapse them before upsert. We keep the MAX price as a defensive
+  // margin move (if the supplier ends up billing the lower number we profit;
+  // the reverse would cost us) and emit a console.warn listing every
+  // duplicate so Alberto can chase them with the supplier for the next list.
+  const byCode = new Map<string, {
+    category: string;
+    priceByFinish: Map<string, { cost_usd: number; all: number[] }>;
+  }>();
   for (const r of rows) {
-    if (!byCode.has(r.code)) byCode.set(r.code, { category: r.category, prices: [] });
-    byCode.get(r.code)!.prices.push({ finish: r.finish, cost_usd: r.cost_usd });
+    if (!byCode.has(r.code)) {
+      byCode.set(r.code, { category: r.category, priceByFinish: new Map() });
+    }
+    const bucket = byCode.get(r.code)!;
+    const existing = bucket.priceByFinish.get(r.finish);
+    if (!existing) {
+      bucket.priceByFinish.set(r.finish, { cost_usd: r.cost_usd, all: [r.cost_usd] });
+    } else {
+      existing.all.push(r.cost_usd);
+      // Keep MAX. Also catch the case where the same price is repeated — no
+      // delta → not reported as a duplicate, just silently collapsed.
+      if (r.cost_usd > existing.cost_usd) existing.cost_usd = r.cost_usd;
+    }
   }
+
+  // Collect duplicate records (different prices for the same (code, finish))
+  // and warn. Note: duplicated rows with IDENTICAL prices are not reported
+  // because they are harmless and common in vendor exports.
+  for (const [code, bucket] of byCode) {
+    for (const [finish, info] of bucket.priceByFinish) {
+      if (info.all.length <= 1) continue;
+      const distinct = new Set(info.all);
+      if (distinct.size <= 1) continue;
+      report.duplicates.push({
+        code,
+        finish,
+        prices: [...info.all],
+        kept: info.cost_usd,
+      });
+    }
+  }
+  if (report.duplicates.length > 0) {
+    console.warn(
+      `[prefabImport] ${report.duplicates.length} duplicate (code, finish) pair(s) with differing prices — kept MAX. Follow up with supplier:`,
+    );
+    for (const d of report.duplicates) {
+      console.warn(`  ${d.code} · ${d.finish}: [${d.prices.join(', ')}] → ${d.kept}`);
+    }
+  }
+
   report.skusParsed = byCode.size;
 
   // ── 2. Resolve brand ──
@@ -343,22 +402,23 @@ export async function importPrefabPriceList(
     for (const [code, data] of byCode) {
       const catalogId = idByCode.get(code);
       if (!catalogId) continue;
-      for (const p of data.prices) {
+      for (const [finish, info] of data.priceByFinish) {
+        const costUsd = info.cost_usd;
         newPriceRows.push({
           prefab_catalog_id: catalogId,
-          finish: p.finish,
-          cost_usd: p.cost_usd,
+          finish,
+          cost_usd: costUsd,
           effective_date: effectiveDate,
           is_current: true,
         });
-        const oldUsd = oldByKey.get(`${catalogId}|${p.finish}`);
-        if (oldUsd !== undefined && oldUsd !== p.cost_usd) {
+        const oldUsd = oldByKey.get(`${catalogId}|${finish}`);
+        if (oldUsd !== undefined && oldUsd !== costUsd) {
           report.priceChanges.push({
-            code, finish: p.finish, oldUsd, newUsd: p.cost_usd,
+            code, finish, oldUsd, newUsd: costUsd,
           });
         } else if (oldUsd === undefined) {
           report.priceChanges.push({
-            code, finish: p.finish, oldUsd: null, newUsd: p.cost_usd,
+            code, finish, oldUsd: null, newUsd: costUsd,
           });
         }
       }
