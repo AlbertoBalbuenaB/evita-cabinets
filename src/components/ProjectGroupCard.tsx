@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Calendar, MapPin, Pencil as Edit2, Trash2, Eye, Copy, MoreVertical, AlertTriangle, CheckCircle2, XCircle, Ban, AlertCircle, Clock, FileText, Send, User, Layers, Unlink, Star } from 'lucide-react';
+import { ChevronDown, ChevronUp, Calendar, MapPin, Pencil as Edit2, Trash2, Eye, Copy, MoreVertical, AlertTriangle, CheckCircle2, XCircle, Ban, AlertCircle, Clock, FileText, Send, User, Layers, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from './Button';
 import { formatCurrency } from '../lib/calculations';
@@ -15,13 +15,8 @@ interface ProjectGroupCardProps {
   onDelete: (project: Quotation) => void;
   onDuplicate: (project: Quotation) => void;
   onStatusChange: (project: Quotation, status: QuotationStatus) => void;
-  onUngroup: (projectId: string) => void;
   staleProjectIds: string[];
   exchangeRate?: number;
-  selectionMode?: boolean;
-  selectedProjectIds?: string[];
-  onSelect?: (projectId: string, checked: boolean) => void;
-  onSelectAll?: (projectIds: string[], checked: boolean) => void;
 }
 
 export function ProjectGroupCard({
@@ -31,13 +26,8 @@ export function ProjectGroupCard({
   onEdit,
   onDelete,
   onDuplicate,
-  onUngroup,
   staleProjectIds,
   exchangeRate = 1,
-  selectionMode,
-  selectedProjectIds = [],
-  onSelect,
-  onSelectAll,
 }: ProjectGroupCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showPrimaryActions, setShowPrimaryActions] = useState(false);
@@ -90,10 +80,6 @@ export function ProjectGroupCard({
   const primaryProject = group.primaryProject;
   const statusConfig = getStatusConfig(primaryProject.status ?? '');
 
-  const groupProjectIds = group.projects.map(p => p.id);
-  const allGroupSelected = selectionMode && groupProjectIds.every(id => selectedProjectIds.includes(id));
-  const someGroupSelected = selectionMode && groupProjectIds.some(id => selectedProjectIds.includes(id)) && !allGroupSelected;
-
   const sortedVersions = [...group.projects].sort((a, b) =>
     new Date(b.created_at ?? '').getTime() - new Date(a.created_at ?? '').getTime()
   );
@@ -101,25 +87,6 @@ export function ProjectGroupCard({
   return (
     <div className="group glass-white hover:shadow-lg hover:border-blue-400/60 transition-all duration-200 overflow-hidden relative">
       <div className="h-1.5 bg-blue-500" />
-
-      {selectionMode && (
-        <div className="absolute top-4 left-4 z-10">
-          <input
-            type="checkbox"
-            checked={allGroupSelected || false}
-            ref={(el) => {
-              if (el) el.indeterminate = someGroupSelected || false;
-            }}
-            onChange={(e) => {
-              e.stopPropagation();
-              onSelectAll?.(groupProjectIds, e.target.checked);
-            }}
-            onClick={(e) => e.stopPropagation()}
-            className="h-5 w-5 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
-            title={allGroupSelected ? 'Deselect all versions' : 'Select all versions'}
-          />
-        </div>
-      )}
 
       <div className="absolute top-4 right-4 z-10">
         <div className="relative">
@@ -287,7 +254,7 @@ export function ProjectGroupCard({
                     }`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (!selectionMode) onView(project);
+                      onView(project);
                     }}
                   >
                     {isLatest && (
@@ -295,18 +262,6 @@ export function ProjectGroupCard({
                     )}
                     <div className="p-3">
                       <div className="flex items-start gap-2">
-                        {selectionMode && (
-                          <input
-                            type="checkbox"
-                            checked={selectedProjectIds.includes(project.id)}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              onSelect?.(project.id, e.target.checked);
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="h-4 w-4 mt-0.5 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0"
-                          />
-                        )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                             <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold flex-shrink-0 ${
@@ -389,18 +344,6 @@ export function ProjectGroupCard({
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
-                          {group.versionCount > 1 && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onUngroup(project.id);
-                              }}
-                              className="p-1.5 rounded-md hover:bg-orange-50 text-slate-500 hover:text-orange-600 transition-colors"
-                              title="Remove from group"
-                            >
-                              <Unlink className="h-3.5 w-3.5" />
-                            </button>
-                          )}
                         </div>
                       </div>
                     </div>

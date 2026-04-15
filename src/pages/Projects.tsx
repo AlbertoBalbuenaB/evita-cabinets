@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, FolderOpen, Calendar, MapPin, Pencil as Edit2, Trash2, Tag, Search, Filter, TrendingUp, DollarSign, CheckCircle2, Clock, FileText, X, XCircle, AlertCircle, Ban, Copy, Eye, MoreVertical, AlertTriangle, Send, User, Upload, CheckSquare2, Square, Link2, Grid3x3 } from 'lucide-react';
+import { Plus, FolderOpen, Calendar, MapPin, Pencil as Edit2, Trash2, Tag, Search, Filter, TrendingUp, DollarSign, CheckCircle2, Clock, FileText, X, XCircle, AlertCircle, Ban, Copy, Eye, MoreVertical, AlertTriangle, Send, User, Upload, Grid3x3 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -37,8 +37,6 @@ export function Projects() {
   const [yearFilter, setYearFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortBy>('modified_desc');
   const [showFilters, setShowFilters] = useState(false);
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
 
   useEffect(() => {
     loadProjects();
@@ -244,7 +242,6 @@ export function Projects() {
       const { id, created_at, updated_at, ...projectData } = project;
       projectData.name = `${projectData.name} (Copy)`;
       projectData.status = 'Pending';
-      projectData.group_id = project.group_id || crypto.randomUUID();
 
       const { error } = await supabase.from('quotations').insert([projectData]);
 
@@ -286,11 +283,7 @@ export function Projects() {
 
         if (error) throw error;
       } else {
-        const projectWithGroup = {
-          ...project,
-          group_id: crypto.randomUUID(),
-        };
-        const { error } = await supabase.from('quotations').insert([projectWithGroup]);
+        const { error } = await supabase.from('quotations').insert([project]);
 
         if (error) throw error;
       }
@@ -321,90 +314,6 @@ export function Projects() {
     setMonthFilter('all');
     setYearFilter('all');
     setSortBy('modified_desc');
-  }
-
-  function toggleSelectionMode() {
-    setSelectionMode(!selectionMode);
-    setSelectedProjectIds([]);
-  }
-
-  function handleProjectSelect(projectId: string, checked: boolean) {
-    if (checked) {
-      setSelectedProjectIds([...selectedProjectIds, projectId]);
-    } else {
-      setSelectedProjectIds(selectedProjectIds.filter(id => id !== projectId));
-    }
-  }
-
-  function handleSelectAllInGroup(groupProjectIds: string[], checked: boolean) {
-    if (checked) {
-      const newSelected = [...new Set([...selectedProjectIds, ...groupProjectIds])];
-      setSelectedProjectIds(newSelected);
-    } else {
-      setSelectedProjectIds(selectedProjectIds.filter(id => !groupProjectIds.includes(id)));
-    }
-  }
-
-  async function handleGroupSelected() {
-    if (selectedProjectIds.length < 2) {
-      alert('Please select at least 2 projects to group together');
-      return;
-    }
-
-    try {
-      const selectedProjects = projects.filter(p => selectedProjectIds.includes(p.id));
-      const primaryProject = selectedProjects.sort((a, b) =>
-        new Date(a.created_at ?? '').getTime() - new Date(b.created_at ?? '').getTime()
-      )[0];
-
-      let groupId = primaryProject.group_id;
-      if (!groupId) {
-        groupId = crypto.randomUUID();
-        const { error: primaryError } = await supabase
-          .from('quotations')
-          .update({ group_id: groupId })
-          .eq('id', primaryProject.id);
-
-        if (primaryError) throw primaryError;
-      }
-
-      const otherProjectIds = selectedProjectIds.filter(id => id !== primaryProject.id);
-      if (otherProjectIds.length > 0) {
-        const { error } = await supabase
-          .from('quotations')
-          .update({ group_id: groupId })
-          .in('id', otherProjectIds);
-
-        if (error) throw error;
-      }
-
-      await loadProjects();
-      setSelectedProjectIds([]);
-      setSelectionMode(false);
-      alert(`Successfully grouped ${selectedProjectIds.length} projects together!`);
-    } catch (error) {
-      console.error('Error grouping projects:', error);
-      alert('Failed to group projects');
-    }
-  }
-
-  async function handleUngroupProject(projectId: string) {
-    if (!confirm('Remove this project from the group? It will become a standalone project.')) return;
-
-    try {
-      const { error } = await supabase
-        .from('quotations')
-        .update({ group_id: null })
-        .eq('id', projectId);
-
-      if (error) throw error;
-
-      await loadProjects();
-      alert('Project removed from group successfully!');
-    } catch (error) {
-      console.error('Error ungrouping project:', error);
-      alert('Failed to ungroup project');
-    }
   }
 
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || typeFilter !== 'all' || customerFilter !== 'all' || monthFilter !== 'all' || yearFilter !== 'all';
@@ -444,23 +353,6 @@ export function Projects() {
             <p className="mt-2 text-slate-600">Manage your millwork quotations</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={toggleSelectionMode}
-              size="lg"
-              variant={selectionMode ? 'primary' : 'secondary'}
-            >
-              {selectionMode ? (
-                <>
-                  <CheckSquare2 className="h-5 w-5 sm:mr-2" />
-                  <span className="hidden sm:inline">Cancel Selection</span>
-                </>
-              ) : (
-                <>
-                  <Square className="h-5 w-5 sm:mr-2" />
-                  <span className="hidden sm:inline">Select</span>
-                </>
-              )}
-            </Button>
             <Button onClick={() => setIsImportModalOpen(true)} size="lg" variant="secondary">
               <Upload className="h-5 w-5 sm:mr-2" />
               <span className="hidden sm:inline">Import Project</span>
@@ -710,9 +602,6 @@ export function Projects() {
                 onStatusChange={handleQuickStatusChange}
                 staleProjectIds={staleProjectIds}
                 exchangeRate={exchangeRate}
-                selectionMode={selectionMode}
-                isSelected={selectedProjectIds.includes(group.primaryProject.id)}
-                onSelect={handleProjectSelect}
               />
             ) : (
               <ProjectGroupCard
@@ -724,36 +613,11 @@ export function Projects() {
                 onDelete={handleDelete}
                 onDuplicate={handleDuplicate}
                 onStatusChange={handleQuickStatusChange}
-                onUngroup={handleUngroupProject}
                 staleProjectIds={staleProjectIds}
                 exchangeRate={exchangeRate}
-                selectionMode={selectionMode}
-                selectedProjectIds={selectedProjectIds}
-                onSelect={handleProjectSelect}
-                onSelectAll={handleSelectAllInGroup}
               />
             )
           )}
-        </div>
-      )}
-
-      {selectionMode && selectedProjectIds.length >= 2 && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-blue-600 text-white rounded-full shadow-2xl px-8 py-4 flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <CheckSquare2 className="h-5 w-5" />
-              <span className="font-semibold">{selectedProjectIds.length} projects selected</span>
-            </div>
-            <Button
-              onClick={handleGroupSelected}
-              variant="secondary"
-              size="lg"
-              className="bg-white text-blue-600 hover:bg-blue-50"
-            >
-              <Link2 className="h-5 w-5 mr-2" />
-              Group Selected Projects
-            </Button>
-          </div>
         </div>
       )}
 
@@ -785,12 +649,9 @@ interface ProjectCardProps {
   onStatusChange: (project: Quotation, status: ProjectStatus) => void;
   staleProjectIds: string[];
   exchangeRate: number;
-  selectionMode?: boolean;
-  isSelected?: boolean;
-  onSelect?: (projectId: string, checked: boolean) => void;
 }
 
-function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusChange, staleProjectIds, exchangeRate, selectionMode, isSelected, onSelect }: ProjectCardProps) {
+function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusChange, staleProjectIds, exchangeRate }: ProjectCardProps) {
   const [showActions, setShowActions] = useState(false);
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -857,21 +718,6 @@ function ProjectCard({ project, onView, onEdit, onDelete, onDuplicate, onStatusC
   return (
     <div className="group bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all duration-200 overflow-hidden relative">
       <div className="h-1.5 bg-blue-500" />
-
-      {selectionMode && (
-        <div className="absolute top-4 left-4 z-10">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={(e) => {
-              e.stopPropagation();
-              onSelect?.(project.id, e.target.checked);
-            }}
-            onClick={(e) => e.stopPropagation()}
-            className="h-5 w-5 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
-          />
-        </div>
-      )}
 
       <div className="absolute top-4 right-4 z-10">
         <div className="relative">
