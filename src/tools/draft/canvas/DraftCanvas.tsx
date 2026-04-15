@@ -604,13 +604,14 @@ export function DraftCanvas() {
 
   function handleStageMouseMove(e: Konva.KonvaEventObject<MouseEvent>): void {
     // Pan continuation (smooth — every frame)
-    if (isPanning && panStartRef.current) {
-      const dx = e.evt.clientX - panStartRef.current.mx;
-      const dy = e.evt.clientY - panStartRef.current.my;
+    const panStart = panStartRef.current; // capture before async gap
+    if (isPanning && panStart) {
+      const dx = e.evt.clientX - panStart.mx;
+      const dy = e.evt.clientY - panStart.my;
       setStageState((s) => ({
         ...s,
-        x: panStartRef.current!.sx + dx,
-        y: panStartRef.current!.sy + dy,
+        x: panStart.sx + dx,
+        y: panStart.sy + dy,
       }));
       return; // don't fire wall cursor update during pan
     }
