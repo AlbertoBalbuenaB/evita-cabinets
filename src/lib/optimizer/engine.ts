@@ -783,72 +783,7 @@ class Optimizer {
     return boards;
   }
 
-  /** Guillotine-based build: packs pieces via recursive guillotine partitioning.
-   *  Returns Board[] (same type as _build) so _score can compare across algorithms. */
-  private _buildGuillotine(pcs: (Pieza & { _idx: number })[], mat: string, grs: number): Board[] {
-    const boards: Board[] = [];
-    const availStocks = this._getStocksFor(mat, grs);
-    if (!availStocks.length) return [];
-
-    const usageCount: Record<string, number> = {};
-    let remaining = [...pcs];
-
-    while (remaining.length > 0) {
-      let placed = false;
-
-      for (const st of availStocks) {
-        if (st.isRemnant && st._used) continue;
-        if (st.stockId && st.qty && st.qty > 0) {
-          if ((usageCount[st.stockId] || 0) >= st.qty) continue;
-        }
-
-        const sierra = st.sierra || this.sierra;
-        const t = this.trim;
-        // Effective packing area: board minus trim on all sides, minus one kerf for edge
-        const packW = st.ancho - 2 * t;
-        const packH = st.alto  - 2 * t;
-
-        if (packW < 10 || packH < 10) continue;
-
-        // Check if at least one remaining piece can fit (any orientation)
-        const anyFits = remaining.some(p =>
-          (p.veta !== 'vertical'   && p.ancho <= packW && p.alto  <= packH) ||
-          (p.veta !== 'horizontal' && p.alto  <= packW && p.ancho <= packH)
-        );
-        if (!anyFits) continue;
-
-        const result = guillotinePack(t, t, packW, packH, remaining, sierra);
-        if (!result.placed.length) continue;
-
-        const nb = new Board(st.ancho, st.alto, sierra, mat, grs, {
-          nombre: st.nombre, costo: st.costo, isRemnant: !!st.isRemnant,
-        }, t);
-        nb.placed   = result.placed;
-        nb.cutTree  = result.tree ?? undefined;
-        boards.push(nb);
-
-        if (st.isRemnant) st._used = true;
-        if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
-
-        const placedSet = new Set(result.placed.map(pp => pp.piece));
-        remaining = remaining.filter(p => !placedSet.has(p));
-        placed = true;
-        break;
-      }
-
-      if (!placed) {
-        // No stock can fit any remaining piece
-        remaining.forEach(p => console.warn(`[guillotine] Piece ${p.nombre || p.ancho + 'x' + p.alto} does not fit any stock`));
-        break;
-      }
-    }
-
-    return boards;
-  }
-
-  /** Shelf-first guillotine: same loop as _buildGuillotine but uses shelfGuillotinePack
-   *  to guarantee H-cuts at the top level (compatible with HongYe panel saws). */
-  /** Shelf-first guillotine: same loop as _buildGuillotine but uses shelfGuillotinePack
+  /** Shelf-first guillotine: guillotine-based build using shelfGuillotinePack
    *  to guarantee H-cuts at the top level (compatible with HongYe panel saws).
    *  When the board is in landscape (width > height), the coordinate system is
    *  transposed so shelves span the SHORT dimension and stack along the LONG

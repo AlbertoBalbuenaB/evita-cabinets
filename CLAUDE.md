@@ -418,6 +418,20 @@ Claude Code must pause and suggest a PR (with rationale) before committing when 
 
 Wait for explicit approval before committing or opening a PR when one of these conditions is detected.
 
+### Refactor / dead-code lessons (learned April 2026)
+1. **`tsc --noEmit` only flags unused locals within a file, not unused exports across files.**
+   When a refactor replaces a page or component, the predecessor often survives as an orphaned file that imports its own private dependencies — none of it triggers a typecheck error. Found 5 such orphans (~2,300 lines) on `fix/typecheck-baseline` in April 2026 (`Projects.tsx`, `ProjectGroupCard.tsx`, `ProjectGroupListItem.tsx`, `ImportProjectModal.tsx`, `projectGrouping.ts`).
+   - Before assuming a file is alive, run `grep -rln "from.*pageOrComponentName" src/` to confirm at least one active importer exists.
+   - Consider adding `ts-prune` or `knip` to detect unused exports as a CI/pre-commit step.
+
+2. **Page/route refactors must `git rm` the predecessor in the same PR.**
+   When introducing a new file at the same route (e.g., `ProjectsHub.tsx` replacing `Projects.tsx` at `/projects`), do NOT leave the old file behind — it accumulates dead UI and dead bug fixes that mislead future debugging. Either:
+   - Delete the old file in the same PR that adds the new one, OR
+   - Rename the old file to something obviously dead (e.g., `Projects.legacy.tsx`) and tag it with `// @deprecated DELETE ME` so the next cleanup pass catches it.
+
+3. **Schema refactors must leave a migration artifact for every DROP/CREATE.**
+   The `group_id` column was added in migration `20260118022123_add_group_id_to_projects.sql` and silently disappeared during the projects-table recreate that introduced the projects/quotations split. No migration file documents the loss, leaving the registered migration permanently out of sync with the actual schema. Future schema refactors must commit a migration with the explicit DDL (DROP/RECREATE/ALTER) so `supabase_migrations.schema_migrations` stays consistent with reality.
+
 ---
 
 ## Rules for Claude Code

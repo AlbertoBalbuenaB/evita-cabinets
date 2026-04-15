@@ -2,7 +2,7 @@
 // .law (ZDCUT) Export for HongYe CNC Panel Saw
 // ─────────────────────────────────────────────────────────────
 
-import { OptimizationResult, BoardResult, CutTreeNode, PlacedPiece } from './types';
+import { OptimizationResult, BoardResult, CutTreeNode } from './types';
 
 /** Format a number for .law output: integers stay whole, fractionals get one decimal max, no trailing zeros. */
 function fmtLaw(n: number): string {
@@ -83,7 +83,6 @@ function buildPartXml(
  *  Emits a flat list of piece leaves sorted by y then x. */
 function buildFlatPartsXml(
   board: BoardResult,
-  counter: StepCounter,
   productIdMap: Map<string, number>,
   indent: string,
 ): string {
@@ -187,7 +186,7 @@ export function exportLaw(
       if (board.cutTree) {
         xml += buildPartXml(board.cutTree, counter, trim, T + T + T + T, productIdMap);
       } else {
-        xml += buildFlatPartsXml(board, counter, productIdMap, T + T + T + T);
+        xml += buildFlatPartsXml(board, productIdMap, T + T + T + T);
       }
 
       xml += `${T}${T}${T}</Panel>${NL}`;
