@@ -36,6 +36,7 @@ import { SpecsEditorModal } from './panels/SpecsEditorModal';
 import { DraftCanvas } from './canvas/DraftCanvas';
 import * as api from './lib/draftApi';
 import type { QuotationSummary } from './lib/draftApi';
+import { PAPER_DIMENSIONS, SCALE_OPTIONS } from './types';
 
 export function DraftToolPage() {
   const { member } = useCurrentMember();
@@ -227,8 +228,31 @@ export function DraftToolPage() {
             Tags
           </button>
 
-          {/* Paper size (static Phase 1) */}
-          <span className="text-[11px] text-slate-500 px-2">US Letter</span>
+          {/* Paper size selector */}
+          <select
+            value={(currentDrawing?.paper_size as string) ?? 'ANSI_A'}
+            onChange={(e) => updateDrawingPatch({ paper_size: e.target.value })}
+            disabled={!currentDrawing}
+            className="px-2 py-1 rounded-lg border border-slate-300/60 bg-white/70 text-[11px] text-slate-700 disabled:opacity-50"
+            title="Paper size"
+          >
+            {Object.entries(PAPER_DIMENSIONS).map(([key, { label }]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </select>
+
+          {/* Scale selector */}
+          <select
+            value={(currentDrawing?.scale as string) ?? 'auto'}
+            onChange={(e) => updateDrawingPatch({ scale: e.target.value })}
+            disabled={!currentDrawing}
+            className="px-2 py-1 rounded-lg border border-slate-300/60 bg-white/70 text-[11px] text-slate-700 disabled:opacity-50"
+            title="Drawing scale"
+          >
+            {SCALE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
 
           {/* Save status pill */}
           <SaveStatusPill status={saveStatus} error={saveError} />

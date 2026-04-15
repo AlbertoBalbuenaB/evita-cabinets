@@ -14,6 +14,36 @@ import type { Database } from '../../lib/database.types';
 // ── Enum narrowings ─────────────────────────────────────────────────────────
 export type ViewType = 'plan' | 'elevation' | 'detail';
 
+// ── Paper sizes (ANSI + ISO) ────────────────────────────────────────────────
+export type PaperSize =
+  | 'ANSI_A' | 'ANSI_B' | 'ANSI_C' | 'ANSI_D' | 'ANSI_E'
+  | 'ISO_A5' | 'ISO_A4' | 'ISO_A3' | 'ISO_A2' | 'ISO_A1';
+
+/** Dimensions in mm for each paper size (landscape orientation). */
+export const PAPER_DIMENSIONS: Record<PaperSize, { w_mm: number; h_mm: number; label: string }> = {
+  ANSI_A: { w_mm: 279.4, h_mm: 215.9, label: 'ANSI A (Letter)' },
+  ANSI_B: { w_mm: 431.8, h_mm: 279.4, label: 'ANSI B (Tabloid)' },
+  ANSI_C: { w_mm: 558.8, h_mm: 431.8, label: 'ANSI C (17×22)' },
+  ANSI_D: { w_mm: 863.6, h_mm: 558.8, label: 'ANSI D (22×34)' },
+  ANSI_E: { w_mm: 1117.6, h_mm: 863.6, label: 'ANSI E (34×44)' },
+  ISO_A5: { w_mm: 210, h_mm: 148, label: 'ISO A5' },
+  ISO_A4: { w_mm: 297, h_mm: 210, label: 'ISO A4' },
+  ISO_A3: { w_mm: 420, h_mm: 297, label: 'ISO A3' },
+  ISO_A2: { w_mm: 594, h_mm: 420, label: 'ISO A2' },
+  ISO_A1: { w_mm: 841, h_mm: 594, label: 'ISO A1' },
+};
+
+// ── Drawing scale ───────────────────────────────────────────────────────────
+export type DrawingScale = 'auto' | '1:10' | '1:20' | '1:25' | '1:50' | '1:100';
+export const SCALE_OPTIONS: Array<{ value: DrawingScale; label: string }> = [
+  { value: 'auto', label: 'Auto' },
+  { value: '1:10', label: '1:10' },
+  { value: '1:20', label: '1:20' },
+  { value: '1:25', label: '1:25' },
+  { value: '1:50', label: '1:50' },
+  { value: '1:100', label: '1:100' },
+];
+
 export type ElementType =
   | 'wall'
   | 'cabinet'
@@ -64,9 +94,15 @@ export type ElementProps =
 export interface WallProps {
   type: 'wall';
   thickness_mm: number;
+  /** Wall vertical height in mm (default 2438mm = 96" = 8'). Used to
+   *  render the wall as a vertical boundary in Elevation view. */
+  wall_height_mm: number;
   /** Panel finish override applied to this wall (Phase 2). */
   panel_finish?: string;
 }
+
+/** Default wall height: 8 feet (96 inches). */
+export const DEFAULT_WALL_HEIGHT_MM = 2438.4; // 96 * 25.4
 
 export interface CabinetProps {
   type: 'cabinet';

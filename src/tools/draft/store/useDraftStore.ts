@@ -354,6 +354,7 @@ export const useDraftStore = create<DraftStoreState>((set, get) => ({
           lock_tags: currentDrawing.lock_tags,
           show_position_tags: currentDrawing.show_position_tags,
           paper_size: currentDrawing.paper_size,
+          scale: currentDrawing.scale,
           version: currentDrawing.version,
         });
       }

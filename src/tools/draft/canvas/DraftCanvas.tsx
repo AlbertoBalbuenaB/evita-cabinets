@@ -36,6 +36,7 @@ import type {
   CountertopProps,
   DimensionProps,
 } from '../types';
+import { DEFAULT_WALL_HEIGHT_MM } from '../types';
 import { DRAG_MIME } from '../types';
 import {
   BlockPrimitive,
@@ -100,6 +101,9 @@ export function DraftCanvas() {
 
   // Countertop modal state
   const [countertopModalOpen, setCountertopModalOpen] = useState(false);
+
+  // Drop rejection toast
+  const [dropRejectMsg, setDropRejectMsg] = useState<string | null>(null);
 
   // Store slices
   const currentDrawing = useDraftStore((s) => s.currentDrawing);
@@ -263,57 +267,124 @@ export function DraftCanvas() {
 
   // Filter visible elements by the current view + area + elevation.
   //
-  // KEY DESIGN: Elevation is a DERIVED VIEW of the Plan, not a separate
-  // canvas. When in elevation view, we take all plan-view cabinets from
-  // the current area and project them as elevation renderings. This makes
-  // Plan ↔ Elevation inherently linked — place a cabinet in Plan and it
-  // automatically appears in Elevation at the correct height.
-  //
-  // Elevation-only elements (dimensions, tags, notes) are stored with
-  // view_type='elevation' and render alongside the projected cabinets.
+  // DATA MODEL (CAD workflow):
+  //   - Walls are plan-view elements (view_type='plan').
+  //   - Cabinets are elevation-view elements (view_type='elevation',
+  //     elevation_id set). They are PLACED from the elevation view.
+  //   - Plan view DERIVES cabinet positions from their elevation data +
+  //     the wall associated with that elevation.
+  //   - Elevation view shows cabinets directly, plus wall outlines as
+  //     vertical boundaries (derived from plan walls).
+  //   - Both views allow MOVING cabinets.
   const visibleElements = useMemo(() => {
     const out: DrawingElementRow[] = [];
 
     if (currentView === 'plan') {
+      // 1. Show walls (plan-native)
       for (const el of Object.values(elements)) {
-        if (el.view_type !== 'plan') continue;
-        if (el.area_id && el.area_id !== currentAreaId) continue;
-        out.push(el);
+        if (el.view_type === 'plan' && (!el.area_id || el.area_id === currentAreaId)) {
+          out.push(el);
+        }
       }
-    } else if (currentView === 'elevation') {
-      // 1. Project plan cabinets into elevation coordinates
-      const planCabinets = Object.values(elements).filter(
+      // 2. Project elevation cabinets back onto the plan.
+      //    For now, show them at a default position near origin.
+      //    Full wall-association projection is a Phase 2 feature.
+      const elevCabs = Object.values(elements).filter(
         (el) =>
-          el.view_type === 'plan' &&
+          el.view_type === 'elevation' &&
           el.element_type === 'cabinet' &&
           (!el.area_id || el.area_id === currentAreaId)
       );
-      // Sort by plan X position so they stack left-to-right
-      planCabinets.sort((a, b) => Number(a.x_mm) - Number(b.x_mm));
-
-      let elevX = 0;
-      for (const planEl of planCabinets) {
-        const product = planEl.product_id ? catalog[planEl.product_id] : null;
-        const family = product?.draft_family ?? 'base';
-        const elevY = family === 'wall' ? inToMm(54) : 0;
-        // Create a virtual elevation element (not persisted — derived on the fly)
+      for (const ec of elevCabs) {
+        // Project into plan: place along x at the same x as elevation,
+        // at y=0 with plan view_type so the renderer uses plan primitives.
         const projected: DrawingElementRow = {
-          ...planEl,
-          view_type: 'elevation' as string,
-          x_mm: elevX,
-          y_mm: elevY,
+          ...ec,
+          view_type: 'plan' as string,
+          y_mm: 0,
           rotation_deg: 0,
         };
         out.push(projected);
-        elevX += Number(planEl.width_mm ?? 0);
       }
-
-      // 2. Also include real elevation-only elements (dimensions, tags, notes)
+    } else if (currentView === 'elevation') {
+      // 1. Show elevation cabinets directly (source of truth)
       for (const el of Object.values(elements)) {
         if (el.view_type !== 'elevation') continue;
-        if (el.element_type === 'cabinet') continue; // skip old duplicates
         if (el.elevation_id && el.elevation_id !== currentElevationId) continue;
-        out.push(el);
+        if (!el.area_id || el.area_id === currentAreaId) {
+          out.push(el);
+        }
+      }
+
+      // 2. Derive wall boundaries from plan walls — render as tall rects
+      //    that frame the elevation space.
+      const planWalls = Object.values(elements).filter(
+        (el) =>
+          el.view_type === 'plan' &&
+          el.element_type === 'wall' &&
+          (!el.area_id || el.area_id === currentAreaId)
+      );
+      if (planWalls.length > 0) {
+        // Use the longest wall to set the elevation width boundary
+        const longest = planWalls.reduce((a, b) =>
+          Number(a.width_mm ?? 0) > Number(b.width_mm ?? 0) ? a : b
+        );
+        const wallLength = Number(longest.width_mm ?? 3000);
+        const wallProps = longest.props as unknown as WallProps | null;
+        const wallHeight = wallProps?.wall_height_mm ?? DEFAULT_WALL_HEIGHT_MM;
+
+        // Left wall boundary
+        out.push({
+          ...longest,
+          id: `wall-boundary-left-${longest.id}`,
+          view_type: 'elevation' as string,
+          element_type: 'wall' as string,
+          x_mm: -50,
+          y_mm: 0,
+          rotation_deg: 90,
+          width_mm: wallHeight,
+          height_mm: 50,
+          z_index: -20,
+        } as DrawingElementRow);
+        // Right wall boundary
+        out.push({
+          ...longest,
+          id: `wall-boundary-right-${longest.id}`,
+          view_type: 'elevation' as string,
+          element_type: 'wall' as string,
+          x_mm: wallLength,
+          y_mm: 0,
+          rotation_deg: 90,
+          width_mm: wallHeight,
+          height_mm: 50,
+          z_index: -20,
+        } as DrawingElementRow);
+        // Floor line
+        out.push({
+          ...longest,
+          id: `wall-boundary-floor-${longest.id}`,
+          view_type: 'elevation' as string,
+          element_type: 'wall' as string,
+          x_mm: -50,
+          y_mm: 0,
+          rotation_deg: 0,
+          width_mm: wallLength + 100,
+          height_mm: 20,
+          z_index: -20,
+        } as DrawingElementRow);
+        // Ceiling line
+        out.push({
+          ...longest,
+          id: `wall-boundary-ceiling-${longest.id}`,
+          view_type: 'elevation' as string,
+          element_type: 'wall' as string,
+          x_mm: -50,
+          y_mm: wallHeight,
+          rotation_deg: 0,
+          width_mm: wallLength + 100,
+          height_mm: 20,
+          z_index: -20,
+        } as DrawingElementRow);
       }
     }
 
@@ -354,6 +425,8 @@ export function DraftCanvas() {
   }
 
   // ── Drop handler (drag-drop from CatalogPanel) ────────────────────────
+  // CAD rule: cabinets can only be PLACED from Elevation view. They can be
+  // moved in both views, but new drops in Plan are rejected.
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     const raw = e.dataTransfer.getData(DRAG_MIME);
@@ -365,11 +438,25 @@ export function DraftCanvas() {
       return;
     }
     if (payload.kind !== 'catalog_cabinet') return;
+
+    // Block drops in Plan view — cabinets are placed from Elevation only
+    if (currentView === 'plan') {
+      setDropRejectMsg('Switch to Elevation view to place cabinets');
+      setTimeout(() => setDropRejectMsg(null), 3000);
+      return;
+    }
+
+    if (!currentElevationId) {
+      setDropRejectMsg('Select an elevation first');
+      setTimeout(() => setDropRejectMsg(null), 3000);
+      return;
+    }
+
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     const world = screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
 
-    // Smart snap: align to nearest wall / floor / AFF datum before insert.
+    // Elevation snap: base/tall → floor, wall → 54" AFF, chain flush
     const snap = snapCabinetOnDrop(
       world.x,
       world.y,
@@ -379,7 +466,7 @@ export function DraftCanvas() {
         depth_mm: payload.depth_mm,
       },
       Object.values(elements),
-      currentView === 'plan' ? 'plan' : 'elevation'
+      'elevation'
     );
 
     const cabinetProps: CabinetProps = { type: 'cabinet' };
@@ -387,14 +474,14 @@ export function DraftCanvas() {
       id: crypto.randomUUID(),
       drawing_id: currentDrawing.id,
       area_id: currentAreaId,
-      elevation_id: currentView === 'elevation' ? currentElevationId : null,
-      view_type: currentView,
+      elevation_id: currentElevationId,
+      view_type: 'elevation',
       element_type: 'cabinet',
       product_id: payload.product_id,
       tag: null,
       x_mm: snap.x_mm,
       y_mm: snap.y_mm,
-      rotation_deg: snap.rotation_deg,
+      rotation_deg: 0,
       width_mm: payload.width_mm,
       height_mm: payload.height_mm,
       depth_mm: payload.depth_mm,
@@ -402,8 +489,6 @@ export function DraftCanvas() {
       z_index: 0,
     };
     addElement(row as DrawingElementRow);
-    // Elevation representation is auto-derived from plan elements — no
-    // separate elevation element needed. See visibleElements useMemo.
   }
 
   // ── Toolbar action handlers (Steps 7.6, 9, 10) ────────────────────────
@@ -577,7 +662,11 @@ export function DraftCanvas() {
       return;
     }
     const rotationDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
-    const wallProps: WallProps = { type: 'wall', thickness_mm: inToMm(4.5) };
+    const wallProps: WallProps = {
+      type: 'wall',
+      thickness_mm: inToMm(4.5),
+      wall_height_mm: DEFAULT_WALL_HEIGHT_MM,
+    };
     const row: DrawingElementRow = {
       id: crypto.randomUUID(),
       drawing_id: currentDrawing.id,
@@ -842,6 +931,13 @@ export function DraftCanvas() {
           })}
         </Layer>
       </Stage>
+
+      {/* Drop rejection toast */}
+      {dropRejectMsg && (
+        <div className="pointer-events-none absolute top-16 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-lg bg-amber-600/90 text-white text-xs shadow-lg">
+          {dropRejectMsg}
+        </div>
+      )}
 
       <CountertopModal
         isOpen={countertopModalOpen}

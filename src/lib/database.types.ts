@@ -991,6 +991,7 @@ export type Database = {
           name: string
           paper_size: string | null
           project_id: string
+          scale: string | null
           show_position_tags: boolean
           specs: Json
           updated_at: string
@@ -1005,6 +1006,7 @@ export type Database = {
           name: string
           paper_size?: string | null
           project_id: string
+          scale?: string | null
           show_position_tags?: boolean
           specs?: Json
           updated_at?: string
@@ -1019,6 +1021,7 @@ export type Database = {
           name?: string
           paper_size?: string | null
           project_id?: string
+          scale?: string | null
           show_position_tags?: boolean
           specs?: Json
           updated_at?: string
