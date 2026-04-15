@@ -24,6 +24,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Stage, Layer, Rect, Line, Text, Group } from 'react-konva';
 import type Konva from 'konva';
+import { Ruler, Square, Tag as TagIcon } from 'lucide-react';
 import { useDraftStore } from '../store/useDraftStore';
 import { useCatalog } from '../lib/useCatalog';
 import type {
@@ -32,18 +33,33 @@ import type {
   DragPayload,
   WallProps,
   CabinetProps,
+  CountertopProps,
+  DimensionProps,
 } from '../types';
 import { DRAG_MIME } from '../types';
 import {
   BlockPrimitive,
   getBlockSvg,
+  renderCountertop,
+  renderDimension,
 } from '../svg/blockRenderer';
 import { inToMm } from '../utils/format';
+import { snapCabinetOnDrop } from './snapHelpers';
+import {
+  generateCountertopOutlines,
+  buildCountertopProps,
+} from './countertopGeometry';
+import { generateDimensions } from './autoDimension';
+import { generateAutoTags } from './autoTag';
+import { CountertopModal } from '../panels/CountertopModal';
 
 const GRID_COLOR = 'rgba(99, 102, 241, 0.10)';
 const GRID_STRONG = 'rgba(99, 102, 241, 0.20)';
 const SELECTION_STROKE = '#6366f1';
 const WALL_STROKE = '#334155';
+const DIMENSION_STROKE = '#F58220'; // Evita orange
+const COUNTERTOP_FILL = 'rgba(148, 163, 184, 0.15)';
+const COUNTERTOP_STROKE = '#475569';
 const NUDGE_MM = 3.175; // 1/8"
 
 export function DraftCanvas() {
@@ -61,12 +77,17 @@ export function DraftCanvas() {
   const [wallStart, setWallStart] = useState<{ x: number; y: number } | null>(null);
   const [wallCursor, setWallCursor] = useState<{ x: number; y: number } | null>(null);
 
+  // Countertop modal state
+  const [countertopModalOpen, setCountertopModalOpen] = useState(false);
+
   // Store slices
   const currentDrawing = useDraftStore((s) => s.currentDrawing);
   const currentView = useDraftStore((s) => s.currentView);
   const currentAreaId = useDraftStore((s) => s.currentAreaId);
   const currentElevationId = useDraftStore((s) => s.currentElevationId);
   const elements = useDraftStore((s) => s.elements);
+  const areas = useDraftStore((s) => s.areas);
+  const elevations = useDraftStore((s) => s.elevations);
   const selectedIds = useDraftStore((s) => s.selectedIds);
   const addElement = useDraftStore((s) => s.addElement);
   const patchElement = useDraftStore((s) => s.patchElement);
@@ -189,6 +210,20 @@ export function DraftCanvas() {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     const world = screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
+
+    // Smart snap: align to nearest wall / floor / AFF datum before insert.
+    const snap = snapCabinetOnDrop(
+      world.x,
+      world.y,
+      {
+        family: payload.family,
+        width_mm: payload.width_mm,
+        depth_mm: payload.depth_mm,
+      },
+      Object.values(elements),
+      currentView === 'plan' ? 'plan' : 'elevation'
+    );
+
     const cabinetProps: CabinetProps = { type: 'cabinet' };
     const row: DrawingElementInsert = {
       id: crypto.randomUUID(),
@@ -199,9 +234,9 @@ export function DraftCanvas() {
       element_type: 'cabinet',
       product_id: payload.product_id,
       tag: null,
-      x_mm: world.x,
-      y_mm: world.y,
-      rotation_deg: 0,
+      x_mm: snap.x_mm,
+      y_mm: snap.y_mm,
+      rotation_deg: snap.rotation_deg,
       width_mm: payload.width_mm,
       height_mm: payload.height_mm,
       depth_mm: payload.depth_mm,
@@ -209,6 +244,99 @@ export function DraftCanvas() {
       z_index: 0,
     };
     addElement(row as DrawingElementRow);
+  }
+
+  // ── Toolbar action handlers (Steps 7.6, 9, 10) ────────────────────────
+  function handleAutoCountertopClick() {
+    const selected = selectedIds.map((id) => elements[id]).filter(Boolean);
+    if (selected.length === 0) {
+      alert('Select at least one base/vanity cabinet first.');
+      return;
+    }
+    const hasCabinet = selected.some((e) => e.element_type === 'cabinet');
+    if (!hasCabinet) {
+      alert('Selection must include at least one cabinet.');
+      return;
+    }
+    setCountertopModalOpen(true);
+  }
+
+  function handleCreateCountertop(settings: {
+    materialLabel: string;
+    thicknessIn: number;
+    edgeProfile: CountertopProps['edge_profile'];
+    backsplash?: { present: boolean; height_in: number; material_label: string };
+  }) {
+    if (!currentDrawing) return;
+    const selected = selectedIds
+      .map((id) => elements[id])
+      .filter(
+        (e): e is DrawingElementRow =>
+          Boolean(e) && e.element_type === 'cabinet' && e.view_type === 'plan'
+      );
+    const outlines = generateCountertopOutlines(selected);
+    for (const outline of outlines) {
+      const props = buildCountertopProps(
+        outline,
+        settings.materialLabel,
+        settings.thicknessIn,
+        settings.edgeProfile,
+        settings.backsplash
+      );
+      const row: DrawingElementRow = {
+        id: crypto.randomUUID(),
+        drawing_id: currentDrawing.id,
+        area_id: currentAreaId,
+        elevation_id: null,
+        view_type: 'plan',
+        element_type: 'countertop',
+        product_id: null,
+        tag: null,
+        x_mm: outline.origin.x,
+        y_mm: outline.origin.y,
+        rotation_deg: outline.rotation_deg,
+        width_mm: outline.localWidth,
+        height_mm: outline.localDepth,
+        depth_mm: null,
+        props: props as unknown as DrawingElementRow['props'],
+        z_index: -5,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      addElement(row);
+    }
+  }
+
+  function handleDimensionAllClick() {
+    if (!currentDrawing) return;
+    const plan = generateDimensions(Object.values(elements), {
+      drawingId: currentDrawing.id,
+      view: currentView,
+      areaId: currentAreaId,
+      elevationId: currentElevationId,
+    });
+    if (plan.toRemove.length > 0) removeElements(plan.toRemove);
+    for (const dim of plan.dimensions) {
+      addElement(dim as DrawingElementRow);
+    }
+  }
+
+  function handleAutoTagClick() {
+    if (!currentDrawing || currentDrawing.lock_tags) return;
+    const area = areas.find((a) => a.id === currentAreaId) ?? null;
+    const elevation = elevations.find((e) => e.id === currentElevationId) ?? null;
+    if (!area || !elevation) {
+      alert('Auto-tag requires an active elevation. Switch to Elevation view first.');
+      return;
+    }
+    const plan = generateAutoTags(Object.values(elements), {
+      area,
+      elevation,
+      lockTags: Boolean(currentDrawing.lock_tags),
+    });
+    for (const upd of plan.updates) {
+      patchElement(upd.id, { tag: upd.tag });
+    }
   }
 
   // ── Stage click (empty area → clear selection) ────────────────────────
@@ -324,8 +452,8 @@ export function DraftCanvas() {
       }}
       onDrop={handleDrop}
     >
-      {/* Wall-tool toggle floating button */}
-      <div className="absolute top-3 left-3 z-10 flex gap-2">
+      {/* Canvas toolbar */}
+      <div className="absolute top-3 left-3 z-10 flex gap-2 flex-wrap">
         <button
           type="button"
           onClick={() => {
@@ -340,6 +468,35 @@ export function DraftCanvas() {
           }`}
         >
           {wallToolActive ? 'Drawing wall…' : 'Draw wall'}
+        </button>
+        <button
+          type="button"
+          onClick={handleAutoCountertopClick}
+          disabled={currentView !== 'plan'}
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium glass-white border border-slate-200/60 text-slate-700 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+          title="Generate a countertop from the selected cabinets"
+        >
+          <Square className="h-3.5 w-3.5" />
+          Auto Countertop
+        </button>
+        <button
+          type="button"
+          onClick={handleDimensionAllClick}
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium glass-white border border-slate-200/60 text-slate-700 hover:bg-white"
+          title="Generate dimension chains for the current view"
+        >
+          <Ruler className="h-3.5 w-3.5" />
+          Dimension All
+        </button>
+        <button
+          type="button"
+          onClick={handleAutoTagClick}
+          disabled={currentView !== 'elevation' || Boolean(currentDrawing?.lock_tags)}
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium glass-white border border-slate-200/60 text-slate-700 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+          title="Assign position tags to cabinets in this elevation"
+        >
+          <TagIcon className="h-3.5 w-3.5" />
+          Auto-tag
         </button>
       </div>
 
@@ -428,10 +585,39 @@ export function DraftCanvas() {
                 />
               );
             }
+            if (el.element_type === 'countertop') {
+              return (
+                <CountertopNode
+                  key={el.id}
+                  element={el}
+                  view={currentView}
+                  selected={selectedIds.includes(el.id)}
+                  onSelect={(multi) => toggleSelected(el.id, multi)}
+                />
+              );
+            }
+            if (el.element_type === 'dimension') {
+              return (
+                <DimensionNode
+                  key={el.id}
+                  element={el}
+                  lang={(currentDrawing?.export_language as 'en' | 'es') ?? 'en'}
+                  selected={selectedIds.includes(el.id)}
+                  onSelect={(multi) => toggleSelected(el.id, multi)}
+                />
+              );
+            }
             return null;
           })}
         </Layer>
       </Stage>
+
+      <CountertopModal
+        isOpen={countertopModalOpen}
+        onClose={() => setCountertopModalOpen(false)}
+        selectedCount={selectedIds.length}
+        onCreate={handleCreateCountertop}
+      />
     </div>
   );
 }
@@ -558,6 +744,194 @@ function CabinetNode({
           stroke={SELECTION_STROKE}
           strokeWidth={4}
           dash={[14, 8]}
+          fillEnabled={false}
+          listening={false}
+        />
+      )}
+    </Group>
+  );
+}
+
+// ── Countertop + Dimension Konva nodes ────────────────────────────────────
+
+function CountertopNode({
+  element,
+  view,
+  selected,
+  onSelect,
+}: {
+  element: DrawingElementRow;
+  view: import('../types').ViewType;
+  selected: boolean;
+  onSelect: (multi: boolean) => void;
+}) {
+  const result = useMemo(() => {
+    try {
+      const props = element.props as unknown as CountertopProps;
+      if (props?.type !== 'countertop') return null;
+      return renderCountertop(props, element, view);
+    } catch (err) {
+      console.warn('[CountertopNode] render failed', err);
+      return null;
+    }
+  }, [element, view]);
+
+  if (!result) return null;
+
+  return (
+    <Group
+      x={Number(element.x_mm)}
+      y={Number(element.y_mm)}
+      rotation={Number(element.rotation_deg ?? 0)}
+      onClick={(e) => {
+        e.cancelBubble = true;
+        onSelect(e.evt.shiftKey);
+      }}
+    >
+      {/* Base fill polygon (first polygon primitive) */}
+      {result.primitives.map((p, idx) => {
+        if (p.kind === 'polygon') {
+          return (
+            <Line
+              key={`fill-${idx}`}
+              points={[...p.points]}
+              closed
+              fill={COUNTERTOP_FILL}
+              stroke={COUNTERTOP_STROKE}
+              strokeWidth={p.strokeWidth ?? 2}
+            />
+          );
+        }
+        if (p.kind === 'rect') {
+          return (
+            <Rect
+              key={`rect-${idx}`}
+              x={p.x}
+              y={p.y}
+              width={p.width}
+              height={p.height}
+              fill={COUNTERTOP_FILL}
+              stroke={COUNTERTOP_STROKE}
+              strokeWidth={p.strokeWidth ?? 2}
+              opacity={p.fillOpacity ?? 1}
+            />
+          );
+        }
+        if (p.kind === 'line') {
+          return (
+            <Line
+              key={`line-${idx}`}
+              points={[...p.points]}
+              stroke={COUNTERTOP_STROKE}
+              strokeWidth={p.strokeWidth ?? 1}
+              dash={p.dash}
+            />
+          );
+        }
+        if (p.kind === 'text') {
+          return (
+            <Group key={`text-${idx}`} x={p.x} y={p.y} scaleY={-1}>
+              <Text
+                text={p.text}
+                fontSize={p.fontSize ?? 24}
+                fontStyle={p.bold ? 'bold' : undefined}
+                fill={COUNTERTOP_STROKE}
+                align={p.align ?? 'left'}
+                offsetX={p.align === 'center' ? (p.text.length * (p.fontSize ?? 24)) / 4 : 0}
+              />
+            </Group>
+          );
+        }
+        return null;
+      })}
+      {selected && result.widthMm > 0 && result.heightMm > 0 && (
+        <Rect
+          x={-10}
+          y={-10}
+          width={result.widthMm + 20}
+          height={result.heightMm + 20}
+          stroke={SELECTION_STROKE}
+          strokeWidth={4}
+          dash={[14, 8]}
+          fillEnabled={false}
+          listening={false}
+        />
+      )}
+    </Group>
+  );
+}
+
+function DimensionNode({
+  element,
+  lang,
+  selected,
+  onSelect,
+}: {
+  element: DrawingElementRow;
+  lang: 'en' | 'es';
+  selected: boolean;
+  onSelect: (multi: boolean) => void;
+}) {
+  const result = useMemo(() => {
+    try {
+      const props = element.props as unknown as DimensionProps;
+      if (props?.type !== 'dimension') return null;
+      return renderDimension(props, lang);
+    } catch (err) {
+      console.warn('[DimensionNode] render failed', err);
+      return null;
+    }
+  }, [element, lang]);
+
+  if (!result) return null;
+
+  return (
+    <Group
+      x={Number(element.x_mm)}
+      y={Number(element.y_mm)}
+      rotation={Number(element.rotation_deg ?? 0)}
+      onClick={(e) => {
+        e.cancelBubble = true;
+        onSelect(e.evt.shiftKey);
+      }}
+    >
+      {result.primitives.map((p, idx) => {
+        if (p.kind === 'line') {
+          return (
+            <Line
+              key={`dim-line-${idx}`}
+              points={[...p.points]}
+              stroke={DIMENSION_STROKE}
+              strokeWidth={p.strokeWidth ?? 2}
+              dash={p.dash}
+            />
+          );
+        }
+        if (p.kind === 'text') {
+          return (
+            <Group key={`dim-text-${idx}`} x={p.x} y={p.y} scaleY={-1}>
+              <Text
+                text={p.text}
+                fontSize={p.fontSize ?? 36}
+                fontStyle={p.bold ? 'bold' : undefined}
+                fill={DIMENSION_STROKE}
+                align={p.align ?? 'left'}
+                offsetX={p.align === 'center' ? (p.text.length * (p.fontSize ?? 36)) / 4 : 0}
+              />
+            </Group>
+          );
+        }
+        return null;
+      })}
+      {selected && (
+        <Rect
+          x={-20}
+          y={-20}
+          width={result.widthMm + 40}
+          height={result.heightMm + 40}
+          stroke={SELECTION_STROKE}
+          strokeWidth={2}
+          dash={[8, 4]}
           fillEnabled={false}
           listening={false}
         />

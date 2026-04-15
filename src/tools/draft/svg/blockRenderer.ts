@@ -27,9 +27,20 @@
  *     rendered via a separate primitive so the caller can toggle it.
  */
 
-import type { ProductsCatalogRow } from '../types';
-import type { ViewType } from '../types';
-import { inToMm, formatAwiSpec } from '../utils/format';
+import type {
+  ProductsCatalogRow,
+  ViewType,
+  CountertopProps,
+  DimensionProps,
+  DrawingElementRow,
+  ExportLanguage,
+} from '../types';
+import {
+  inToMm,
+  formatAwiSpec,
+  formatInchesFractional,
+  formatCm,
+} from '../utils/format';
 
 // ── Primitive types ─────────────────────────────────────────────────────────
 
@@ -531,4 +542,229 @@ function escapeXml(s: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
+}
+
+// ── Countertop rendering (Step 7.6) ────────────────────────────────────────
+
+/**
+ * Convert a countertop element + its props into a set of primitives. The
+ * outline polygon is in world mm coords relative to `element.x_mm/y_mm`
+ * (so if the element origin is (0, 0) the outline coords are world-
+ * absolute; otherwise they're offsets from the element origin).
+ *
+ * Plan view: filled polygon with material label, waterfall hatching, seam
+ * dashed lines, backsplash line.
+ * Elevation view: thin horizontal strip at counter height + optional
+ * backsplash rect. Phase 1 uses a simplified visual — the full 3D-feel
+ * mitered waterfall joint lands in Session D polish.
+ */
+export function renderCountertop(
+  props: CountertopProps,
+  element: DrawingElementRow,
+  view: ViewType
+): BlockRenderResult {
+  const primitives: BlockPrimitive[] = [];
+  const ox = Number(element.x_mm);
+  const oy = Number(element.y_mm);
+
+  if (view === 'plan') {
+    // Translate world coords to element-local by subtracting origin.
+    const flatOutline: number[] = [];
+    for (const pt of props.outline_mm) {
+      flatOutline.push(pt.x - ox, pt.y - oy);
+    }
+    if (flatOutline.length >= 6) {
+      primitives.push({
+        kind: 'polygon',
+        points: flatOutline,
+        closed: true,
+        strokeWidth: 2,
+      });
+    }
+
+    // Waterfall edge markers (thick hatched lines on the polygon sides
+    // listed in props.waterfall_sides). Phase 1 approximation: mark the
+    // first N sides as waterfall.
+    if (props.waterfall_sides.length > 0 && props.outline_mm.length >= 4) {
+      const pts = props.outline_mm;
+      for (let i = 0; i < pts.length; i += 1) {
+        const p0 = pts[i];
+        const p1 = pts[(i + 1) % pts.length];
+        primitives.push({
+          kind: 'line',
+          points: [p0.x - ox, p0.y - oy, p1.x - ox, p1.y - oy],
+          strokeWidth: 6,
+          dash: [20, 10],
+        });
+      }
+    }
+
+    // Seam dashed lines (naive: at `position_mm` along x)
+    for (const seam of props.seams) {
+      const x = seam.position_mm - ox;
+      primitives.push({
+        kind: 'line',
+        points: [x, 0, x, 300],
+        strokeWidth: 1,
+        dash: [10, 6],
+      });
+      primitives.push({
+        kind: 'text',
+        x,
+        y: 320,
+        text: 'SEAM',
+        fontSize: 24,
+        align: 'center',
+      });
+    }
+
+    // Material label at the center of the bounding box
+    if (props.outline_mm.length >= 3) {
+      const xs = props.outline_mm.map((p) => p.x - ox);
+      const ys = props.outline_mm.map((p) => p.y - oy);
+      const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+      const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+      primitives.push({
+        kind: 'text',
+        x: cx,
+        y: cy,
+        text: `${props.material_label} · ${props.thickness_in}"`,
+        fontSize: 32,
+        align: 'center',
+      });
+    }
+    const xs = props.outline_mm.map((p) => p.x - ox);
+    const ys = props.outline_mm.map((p) => p.y - oy);
+    return {
+      primitives,
+      widthMm: xs.length ? Math.max(...xs) - Math.min(...xs) : 0,
+      heightMm: ys.length ? Math.max(...ys) - Math.min(...ys) : 0,
+    };
+  }
+
+  // Elevation view: simplified strip
+  const stripWidth = Number(element.width_mm ?? 1200);
+  const stripHeight = inToMm(props.thickness_in);
+  primitives.push({
+    kind: 'rect',
+    x: 0,
+    y: 0,
+    width: stripWidth,
+    height: stripHeight,
+    strokeWidth: 1.5,
+    fillOpacity: 0.1,
+  });
+  // Material label
+  primitives.push({
+    kind: 'text',
+    x: stripWidth / 2,
+    y: stripHeight / 2,
+    text: `${props.material_label} · ${props.thickness_in}"`,
+    fontSize: 22,
+    align: 'center',
+  });
+  // Backsplash rect on top if present
+  if (props.backsplash?.present) {
+    const bsH = inToMm(props.backsplash.height_in);
+    primitives.push({
+      kind: 'rect',
+      x: 0,
+      y: stripHeight,
+      width: stripWidth,
+      height: bsH,
+      strokeWidth: 1,
+      fillOpacity: 0.08,
+    });
+  }
+  return { primitives, widthMm: stripWidth, heightMm: stripHeight };
+}
+
+// ── Dimension rendering (Step 9) ───────────────────────────────────────────
+
+/**
+ * Convert a dimension element into primitives. Dimensions persist only the
+ * mm value + orientation + anchors; rendering picks EN fractional inches
+ * or ES centimeters based on the drawing's `export_language` field.
+ *
+ * The primitive list is in element-local coords (origin at element.x_mm,
+ * element.y_mm). The dimension bar extends `value_mm` along the local
+ * x-axis for horizontal orientation, or along the local y-axis for vertical.
+ */
+export function renderDimension(
+  props: DimensionProps,
+  lang: ExportLanguage
+): BlockRenderResult {
+  const label =
+    lang === 'en'
+      ? formatInchesFractional(props.value_mm)
+      : formatCm(props.value_mm);
+  const primitives: BlockPrimitive[] = [];
+  const tickSize = 40;
+
+  if (props.orientation === 'horizontal') {
+    // Main dimension line
+    primitives.push({
+      kind: 'line',
+      points: [0, 0, props.value_mm, 0],
+      strokeWidth: 2,
+    });
+    // End ticks (diagonal 45°)
+    primitives.push({
+      kind: 'line',
+      points: [-tickSize / 2, -tickSize / 2, tickSize / 2, tickSize / 2],
+      strokeWidth: 2,
+    });
+    primitives.push({
+      kind: 'line',
+      points: [
+        props.value_mm - tickSize / 2,
+        -tickSize / 2,
+        props.value_mm + tickSize / 2,
+        tickSize / 2,
+      ],
+      strokeWidth: 2,
+    });
+    primitives.push({
+      kind: 'text',
+      x: props.value_mm / 2,
+      y: 40,
+      text: label,
+      fontSize: 36,
+      align: 'center',
+      bold: true,
+    });
+    return { primitives, widthMm: props.value_mm, heightMm: 80 };
+  }
+
+  // Vertical
+  primitives.push({
+    kind: 'line',
+    points: [0, 0, 0, props.value_mm],
+    strokeWidth: 2,
+  });
+  primitives.push({
+    kind: 'line',
+    points: [-tickSize / 2, -tickSize / 2, tickSize / 2, tickSize / 2],
+    strokeWidth: 2,
+  });
+  primitives.push({
+    kind: 'line',
+    points: [
+      -tickSize / 2,
+      props.value_mm - tickSize / 2,
+      tickSize / 2,
+      props.value_mm + tickSize / 2,
+    ],
+    strokeWidth: 2,
+  });
+  primitives.push({
+    kind: 'text',
+    x: -50,
+    y: props.value_mm / 2,
+    text: label,
+    fontSize: 36,
+    align: 'right',
+    bold: true,
+  });
+  return { primitives, widthMm: 100, heightMm: props.value_mm };
 }
