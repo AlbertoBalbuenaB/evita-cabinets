@@ -90,7 +90,7 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
         supplier_id: supplierId,
         log_type: newType,
         comment: newComment.trim(),
-        author_id: member?.user_id ?? null,
+        author_id: member?.auth_user_id ?? null,
         author_name: member?.name ?? null,
       });
       if (error) throw error;
@@ -152,7 +152,7 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
   }
 
   const canEditLog = (log: SupplierLog) =>
-    isAdmin || (member?.user_id != null && log.author_id === member.user_id);
+    isAdmin || (member?.auth_user_id != null && log.author_id === member.auth_user_id);
 
   return (
     <div className="space-y-4">
