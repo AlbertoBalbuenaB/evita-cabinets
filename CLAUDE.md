@@ -432,6 +432,15 @@ Wait for explicit approval before committing or opening a PR when one of these c
 3. **Schema refactors must leave a migration artifact for every DROP/CREATE.**
    The `group_id` column was added in migration `20260118022123_add_group_id_to_projects.sql` and silently disappeared during the projects-table recreate that introduced the projects/quotations split. No migration file documents the loss, leaving the registered migration permanently out of sync with the actual schema. Future schema refactors must commit a migration with the explicit DDL (DROP/RECREATE/ALTER) so `supabase_migrations.schema_migrations` stays consistent with reality.
 
+### Future-proofing for dark mode (deferred to a dedicated session)
+A full dark mode audit was run in April 2026 and found ~1,236 hardcoded colors across 110 files. Implementation was deferred until the platform is more stable, but new code should follow these rules so the eventual refactor stays small:
+
+1. **New components/pages MUST use glass classes** (`glass-white`, `glass-blue`, `glass-indigo`, `glass-green`) for containers instead of raw `bg-white border border-slate-200`. Every new file that respects this is one less file to refactor when dark mode lands.
+2. **Avoid new direct uses of** `bg-white`, `text-black`, `text-slate-900`. Prefer `text-slate-700` for body text — it maps cleanly to dark mode tokens later.
+3. **Tables, modals, panels** — wrap in `glass-white` + use `border-b border-slate-200/60` for row separators, never full borders or solid `bg-white` cards.
+4. **Charts** — when adding new chart components, follow the lookup-palette pattern in `src/components/ProjectCharts.tsx` (`COLOR_PALETTE` object) so a future dark palette is a one-object swap.
+5. **The full dark mode plan is at** `.claude/plans/spicy-yawning-goblet.md` and includes the prioritized refactor order, file inventory, and verification checklist for when it's time to execute.
+
 ---
 
 ## Rules for Claude Code
