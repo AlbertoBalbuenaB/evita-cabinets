@@ -15,7 +15,7 @@ This platform handles quotation, project management, inventory, and supplier wor
 - **Deploy:** Vercel (auto-deploy from `main` branch)
 - **Repo:** github.com/AlbertoBalbuenaB/evita-cabinets
 - **Supabase project:** `rludrzyrpsotvzizlztg` (us-east-1)
-- **Edge function:** `evita-ia` (v35) — AI chat with tool-use (search_materials, search_products)
+- **Edge function:** `evita-ia` (v42) — AI chat with tool-use (search_materials, search_products)
 - **Tests:** Vitest — run `npm test`
 - **Type check:** `npm run typecheck`
 
@@ -398,6 +398,25 @@ Manual chunks configured: vendor-react, vendor-supabase, vendor-xlsx, vendor-pdf
 - Do NOT create PRs for routine changes — commit and push directly
 - **ALWAYS run `npm run typecheck` before committing any code/type changes** (skip only for pure doc/markdown commits)
 - Run `npm test` before committing changes to `lib/cabinet/`, `lib/optimizer/`, or `lib/pricing/`
+
+### When to PROACTIVELY recommend a PR instead of direct commit to main
+Claude Code must pause and suggest a PR (with rationale) before committing when a change matches ANY of these:
+
+1. **Database schema changes** — any migration with `DROP`, `ALTER COLUMN TYPE`, or changes to RLS policies
+2. **Business constants** — any touch to waste factors, labor costs, FX rate, material UUIDs, or anything in the "Business Constants" section
+3. **Edge function `evita-ia`** — any deploy with >100 changed lines, OR changes to tool-use logic, auth, or modification-intent detection
+4. **Large refactors** — changes spanning >5 files OR >300 lines of non-trivial code
+5. **Core pricing/cut-list logic** — changes to `lib/cabinet/`, `lib/optimizer/engine.ts`, `lib/pricing/`, or `lib/calculations.ts` that affect output values (not just refactors)
+6. **Auth / permissions** — changes to `lib/auth.ts`, `useCurrentMember`, `AdminRoute`, or role checks
+7. **DB types regeneration** — if `database.types.ts` diff is >500 lines (indicates significant schema drift)
+8. **Experimental / uncertain changes** — when Claude is not confident the change works on first try and wants a Vercel Preview Deployment to verify
+9. **Deletion of existing features or files** — removing any page, route, component, or table referenced elsewhere
+10. **Dependency changes** — adding/removing/upgrading anything in `package.json` (especially React, Vite, Supabase, Tailwind)
+
+**How to phrase the recommendation:**
+> "Este cambio toca [razón]. Recomiendo hacerlo en una rama + PR en lugar de commit directo a main porque [beneficio: preview deploy / diff review / rollback seguro]. ¿Procedo con PR o prefieres commit directo a main?"
+
+Wait for explicit approval before committing or opening a PR when one of these conditions is detected.
 
 ---
 
