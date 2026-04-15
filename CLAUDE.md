@@ -340,6 +340,11 @@ Manual chunks configured: vendor-react, vendor-supabase, vendor-xlsx, vendor-pdf
 - Solo developer — direct commits or worktree branches
 - `.claude/worktrees/` should be in .gitignore
 
+### Git workflow
+- Solo developer — commit directly to `main` unless explicitly asked for a PR
+- Always write descriptive commit messages in English
+- Do NOT create PRs for routine changes — commit and push directly
+
 ---
 
 ## Rules for Claude Code
