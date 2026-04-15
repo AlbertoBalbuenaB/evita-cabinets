@@ -332,6 +332,58 @@ VITE_ANTHROPIC_API_KEY=    # Optional: direct Claude API for in-app AI
 - 140+ migrations from Oct 2025 to Apr 2026
 - Edge function has modification-intent detection for safe AI operations
 
+---
+
+## Supabase Workflow
+
+### Tool split — when to use MCP vs Supabase CLI
+| Task | Tool |
+|------|------|
+| DDL / schema migrations | MCP `apply_migration` |
+| Inspection queries, advisors, Postgres logs | MCP |
+| Regenerate `database.types.ts` | MCP `generate_typescript_types` |
+| One-off data fixes / UPDATEs | MCP `execute_sql` |
+| **Edge function `evita-ia` deploy** | **Supabase CLI** (MCP unreliable for files >50k) |
+| **Edge function live logs** | **Supabase CLI** (`supabase functions logs --tail`) |
+| **Edge function local debug** | **Supabase CLI** (`supabase functions serve`) |
+
+### DDL / migrations flow
+1. Write SQL for the migration
+2. Create local file: `supabase/migrations/YYYYMMDDHHMMSS_description.sql`
+3. Apply to production via MCP: `apply_migration(name, query)`
+4. If schema changed, regenerate `src/lib/database.types.ts` via `generate_typescript_types`
+5. `npm run typecheck`
+6. Commit + push the `.sql` (and updated types) to `main`
+
+**Always use `apply_migration` (not `execute_sql`) for DDL** — it registers the migration in `supabase_migrations` so the history stays consistent with the existing 140+ migrations.
+
+### Edge function `evita-ia` flow (CLI)
+```bash
+# Deploy (after editing supabase/functions/evita-ia/index.ts)
+supabase functions deploy evita-ia
+
+# Tail live logs
+supabase functions logs evita-ia --tail
+
+# Run locally against production DB for debugging
+supabase functions serve evita-ia --env-file supabase/functions/evita-ia/.env
+```
+- `index.ts` is ~86k and imports inline — no `import_map.json` needed
+- Deploy overwrites the active version (currently v35) — no automatic rollback
+- For changes >100 lines, confirm with Alberto before deploying
+
+### Data operations
+- **< 20 rows:** `execute_sql` with INSERT/UPDATE
+- **Bulk import:** seed CSVs live in `data/prefab/` — do NOT commit bulk inserts as migrations
+- **Backfills for a new column:** include inside the same DDL migration
+
+### Safety rules (require explicit Alberto confirmation)
+- `DROP TABLE` / `DROP COLUMN` / destructive `ALTER TYPE`
+- Mutations to `team_members`, `settings`, or hardcoded material UUIDs in `price_list`
+- RLS policy changes
+- Edge function deploys > 100 changed lines
+- Anything marked "PRESERVE EXACTLY" in this file
+
 ## Vite Build
 Manual chunks configured: vendor-react, vendor-supabase, vendor-xlsx, vendor-pdf, vendor-zip, vendor-pdfjs, vendor-tiptap
 
