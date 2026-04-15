@@ -20,7 +20,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, Search, Grip } from 'lucide-react';
+import { ChevronDown, ChevronRight, Search, Grip, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import * as api from '../lib/draftApi';
 import type { ProductsCatalogRow, DragPayload, DrawingFamily } from '../types';
 import { DRAG_MIME } from '../types';
@@ -41,6 +41,7 @@ const SECTIONS: Array<{
 ];
 
 export function CatalogPanel() {
+  const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<ProductsCatalogRow[]>([]);
   const [search, setSearch] = useState('');
@@ -86,10 +87,33 @@ export function CatalogPanel() {
     return bySection;
   }, [products, search]);
 
+  if (collapsed) {
+    return (
+      <aside className="glass-white w-10 flex-shrink-0 flex flex-col items-center py-3 rounded-2xl">
+        <button
+          type="button"
+          onClick={() => setCollapsed(false)}
+          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-white/70"
+          title="Expand catalog"
+        >
+          <PanelLeftOpen className="h-4 w-4" />
+        </button>
+      </aside>
+    );
+  }
+
   return (
-    <aside className="glass-white w-72 min-w-[18rem] max-w-[18rem] flex flex-col h-full rounded-2xl overflow-hidden">
-      <div className="p-3 border-b border-slate-200/60">
+    <aside className="glass-white w-64 min-w-[16rem] max-w-[16rem] flex-shrink-0 flex flex-col h-full rounded-2xl overflow-hidden">
+      <div className="p-3 border-b border-slate-200/60 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-800">Catalog Library</h2>
+        <button
+          type="button"
+          onClick={() => setCollapsed(true)}
+          className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-white/70"
+          title="Collapse panel"
+        >
+          <PanelLeftClose className="h-3.5 w-3.5" />
+        </button>
         <div className="relative mt-2">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           <input

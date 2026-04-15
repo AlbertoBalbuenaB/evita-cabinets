@@ -79,6 +79,10 @@ export function DraftCanvas() {
   const [wallStart, setWallStart] = useState<{ x: number; y: number } | null>(null);
   const [wallCursor, setWallCursor] = useState<{ x: number; y: number } | null>(null);
 
+  // Manual pan state (replaces Stage draggable — fixes double-offset bug)
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef<{ mx: number; my: number; sx: number; sy: number } | null>(null);
+
   // Countertop modal state
   const [countertopModalOpen, setCountertopModalOpen] = useState(false);
 
@@ -433,18 +437,63 @@ export function DraftCanvas() {
     }
   }
 
-  // ── Stage click (empty area → clear selection) ────────────────────────
-  function handleStageClick(e: Konva.KonvaEventObject<MouseEvent>) {
+  // ── Pan + click handlers ──────────────────────────────────────────────
+  // Manual pan replaces Stage draggable to avoid the double-offset bug
+  // (Stage.x + Layer.x both applied simultaneously). stageState is the
+  // single source of truth for position; updated every mouse-move frame.
+
+  function handleStageMouseDown(e: Konva.KonvaEventObject<MouseEvent>) {
+    // Only start a pan from empty Stage (not from elements)
+    if (e.target !== e.target.getStage()) return;
+    if (wallToolActive) return; // wall tool uses click-click, not drag
+    setIsPanning(true);
+    panStartRef.current = {
+      mx: e.evt.clientX,
+      my: e.evt.clientY,
+      sx: stageState.x,
+      sy: stageState.y,
+    };
+  }
+
+  function handleStageMouseMove(e: Konva.KonvaEventObject<MouseEvent>): void {
+    // Pan continuation (smooth — every frame)
+    if (isPanning && panStartRef.current) {
+      const dx = e.evt.clientX - panStartRef.current.mx;
+      const dy = e.evt.clientY - panStartRef.current.my;
+      setStageState((s) => ({
+        ...s,
+        x: panStartRef.current!.sx + dx,
+        y: panStartRef.current!.sy + dy,
+      }));
+      return; // don't fire wall cursor update during pan
+    }
+    // Wall tool cursor tracking
+    if (wallToolActive && wallStart) {
+      const stage = stageRef.current;
+      if (!stage) return;
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+      setWallCursor(screenToWorld(pointer.x, pointer.y));
+    }
+  }
+
+  function handleStageMouseUp(e: Konva.KonvaEventObject<MouseEvent>) {
+    if (isPanning) {
+      setIsPanning(false);
+      panStartRef.current = null;
+      return; // don't fire click after a pan
+    }
+    // Treat as click (mouseup without prior pan)
     if (e.target === e.target.getStage()) {
       if (wallToolActive) {
-        handleWallClick(e);
+        handleWallClick();
       } else {
         clearSelection();
       }
     }
   }
 
-  function handleWallClick(_e: Konva.KonvaEventObject<MouseEvent>) {
+  function handleWallClick() {
     const stage = stageRef.current;
     if (!stage || !currentDrawing) return;
     const pointer = stage.getPointerPosition();
@@ -488,17 +537,9 @@ export function DraftCanvas() {
       updated_at: new Date().toISOString(),
     };
     addElement(row);
+    // Keep wall tool active — user can draw the next wall immediately.
     setWallStart(null);
     setWallCursor(null);
-  }
-
-  function handleStageMouseMove(): void {
-    if (!wallToolActive || !wallStart) return;
-    const stage = stageRef.current;
-    if (!stage) return;
-    const pointer = stage.getPointerPosition();
-    if (!pointer) return;
-    setWallCursor(screenToWorld(pointer.x, pointer.y));
   }
 
   // ── Grid ───────────────────────────────────────────────────────────────
@@ -540,7 +581,7 @@ export function DraftCanvas() {
     <div
       ref={containerRef}
       className={`relative flex-1 h-full overflow-hidden rounded-2xl glass-white text-slate-700 ${
-        wallToolActive ? 'cursor-crosshair' : ''
+        isPanning ? 'cursor-grabbing' : wallToolActive ? 'cursor-crosshair' : 'cursor-grab'
       }`}
       onDragOver={(e) => {
         e.preventDefault();
@@ -619,14 +660,9 @@ export function DraftCanvas() {
         width={size.width}
         height={size.height}
         onWheel={handleWheel}
-        onMouseDown={handleStageClick}
+        onMouseDown={handleStageMouseDown}
         onMouseMove={handleStageMouseMove}
-        x={0}
-        y={0}
-        draggable={!wallToolActive}
-        onDragEnd={(e) => {
-          setStageState((s) => ({ ...s, x: e.target.x(), y: e.target.y() }));
-        }}
+        onMouseUp={handleStageMouseUp}
       >
         <Layer
           listening={false}
