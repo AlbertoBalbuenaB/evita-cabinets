@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Trash2, Copy, CheckCircle2, XCircle, Minus, Route, Square, Hexagon,
-  Locate, Check, FileDown, ClipboardCopy, Save, FolderOpen, Plus, X, Type,
+  Locate, Check, FileDown, ClipboardCopy, Save, Plus, X, Type,
 } from 'lucide-react';
 import { usePlanViewerStore } from '../../hooks/usePlanViewerStore';
 import { formatMeasurement, formatArea, formatAngle, convertUnit } from '../../lib/plan-viewer/geometry';
