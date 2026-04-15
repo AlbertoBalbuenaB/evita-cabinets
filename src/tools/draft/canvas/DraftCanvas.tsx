@@ -84,6 +84,11 @@ export function DraftCanvas() {
   /** Set by the first auto-fit; prevents re-fitting on every element change. */
   const didInitialFitRef = useRef(false);
 
+  /** Live ref of stageState so screenToWorld always reads fresh values,
+   *  even in event handlers that close over a stale render. */
+  const stageStateRef = useRef(stageState);
+  stageStateRef.current = stageState;
+
   // Wall tool state (click-click)
   const [wallToolActive, setWallToolActive] = useState(false);
   const [wallStart, setWallStart] = useState<{ x: number; y: number } | null>(null);
@@ -341,9 +346,10 @@ export function DraftCanvas() {
   }
 
   function screenToWorld(screenX: number, screenY: number) {
+    const s = stageStateRef.current; // always fresh, not closure-stale
     return {
-      x: (screenX - stageState.x) / stageState.scale,
-      y: (stageState.y - screenY) / stageState.scale,
+      x: (screenX - s.x) / s.scale,
+      y: (s.y - screenY) / s.scale,
     };
   }
 

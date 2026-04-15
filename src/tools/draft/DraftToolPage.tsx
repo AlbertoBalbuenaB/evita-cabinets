@@ -15,7 +15,7 @@
  * Route: `/tools/draft` (registered in `src/App.tsx`).
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -39,6 +39,9 @@ import type { QuotationSummary } from './lib/draftApi';
 
 export function DraftToolPage() {
   const { member } = useCurrentMember();
+
+  // Guards
+  const creatingElevRef = useRef(false);
 
   // Header state
   const [quotations, setQuotations] = useState<QuotationSummary[]>([]);
@@ -242,12 +245,20 @@ export function DraftToolPage() {
               active={currentView === 'elevation'}
               onClick={async () => {
                 setCurrentView('elevation');
-                // Auto-create first elevation if none exists for this area
-                if (currentAreaId && elevations.filter((e) => e.area_id === currentAreaId).length === 0) {
+                // Auto-create first elevation if none exists for this area.
+                // Guard with ref to prevent rapid clicks from queueing dupes.
+                if (
+                  currentAreaId &&
+                  elevations.filter((e) => e.area_id === currentAreaId).length === 0 &&
+                  !creatingElevRef.current
+                ) {
+                  creatingElevRef.current = true;
                   try {
                     await useDraftStore.getState().createElevation(currentAreaId, 'A');
                   } catch (err) {
                     console.error('Failed to create default elevation', err);
+                  } finally {
+                    creatingElevRef.current = false;
                   }
                 }
               }}
