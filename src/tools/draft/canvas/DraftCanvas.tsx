@@ -53,14 +53,24 @@ import { generateDimensions } from './autoDimension';
 import { generateAutoTags } from './autoTag';
 import { CountertopModal } from '../panels/CountertopModal';
 
-const GRID_COLOR = 'rgba(99, 102, 241, 0.10)';
-const GRID_STRONG = 'rgba(99, 102, 241, 0.20)';
+const GRID_COLOR = 'rgba(99, 102, 241, 0.08)';
+const GRID_STRONG = 'rgba(99, 102, 241, 0.22)';
 const SELECTION_STROKE = '#6366f1';
 const WALL_STROKE = '#334155';
+const ELEMENT_STROKE = '#1e293b'; // slate-800 — replaces invalid "currentColor"
+const ELEMENT_TEXT = '#334155'; // slate-700 for labels
 const DIMENSION_STROKE = '#F58220'; // Evita orange
 const COUNTERTOP_FILL = 'rgba(148, 163, 184, 0.15)';
 const COUNTERTOP_STROKE = '#475569';
 const NUDGE_MM = 3.175; // 1/8"
+
+/** Grid step doubles dynamically at low zoom to avoid visual density overload. */
+function gridStep(baseStepMm: number, scale: number): number {
+  let step = baseStepMm;
+  while (step * scale < 8) step *= 2; // min 8px between lines on screen
+  return step;
+}
+const GRID_STRONG_STEP = inToMm(12); // 12" accent stays fixed
 
 export function DraftCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -342,6 +352,50 @@ export function DraftCanvas() {
       z_index: 0,
     };
     addElement(row as DrawingElementRow);
+
+    // ── Auto-project to elevation ────────────────────────────────────────
+    // When a cabinet is dropped in Plan view and at least one elevation
+    // exists for this area, automatically create a matching elevation
+    // element so the two views stay linked.
+    if (currentView === 'plan') {
+      const areaElevations = elevations.filter((ev) => ev.area_id === currentAreaId);
+      if (areaElevations.length > 0) {
+        const targetElev = areaElevations[0]; // project to first elevation
+        // Elevation placement: base/tall → floor (y=0), wall → 54" AFF
+        const elevY =
+          payload.family === 'wall' ? inToMm(54) : 0;
+        // Stack horizontally: count existing cabinets in this elevation
+        const existingInElev = Object.values(elements).filter(
+          (e) =>
+            e.element_type === 'cabinet' &&
+            e.view_type === 'elevation' &&
+            e.elevation_id === targetElev.id
+        );
+        const elevX = existingInElev.reduce(
+          (acc, e) => Math.max(acc, Number(e.x_mm) + Number(e.width_mm ?? 0)),
+          0
+        );
+        const elevRow: DrawingElementInsert = {
+          id: crypto.randomUUID(),
+          drawing_id: currentDrawing.id,
+          area_id: currentAreaId,
+          elevation_id: targetElev.id,
+          view_type: 'elevation',
+          element_type: 'cabinet',
+          product_id: payload.product_id,
+          tag: null,
+          x_mm: elevX,
+          y_mm: elevY,
+          rotation_deg: 0,
+          width_mm: payload.width_mm,
+          height_mm: payload.height_mm,
+          depth_mm: payload.depth_mm,
+          props: cabinetProps as unknown as DrawingElementRow['props'],
+          z_index: 0,
+        };
+        addElement(elevRow as DrawingElementRow);
+      }
+    }
   }
 
   // ── Toolbar action handlers (Steps 7.6, 9, 10) ────────────────────────
@@ -544,34 +598,30 @@ export function DraftCanvas() {
 
   // ── Grid ───────────────────────────────────────────────────────────────
   const gridLines = useMemo(() => {
-    const stepSmall = currentView === 'plan' ? inToMm(1) : inToMm(0.5);
-    const stepLarge = inToMm(12); // 12" accent
-    // Compute world bounds visible in the stage.
+    const baseStep = currentView === 'plan' ? inToMm(1) : inToMm(0.5);
+    const step = gridStep(baseStep, stageState.scale);
+    // Compute world bounds visible in the viewport.
     const worldLeft = -stageState.x / stageState.scale;
     const worldRight = (size.width - stageState.x) / stageState.scale;
     const worldBottom = (stageState.y - size.height) / stageState.scale;
     const worldTop = stageState.y / stageState.scale;
     const lines: Array<{ points: [number, number, number, number]; strong: boolean }> = [];
-    // Cap total lines for performance
-    const startX = Math.floor(worldLeft / stepSmall) * stepSmall;
-    const endX = Math.ceil(worldRight / stepSmall) * stepSmall;
-    const startY = Math.floor(worldBottom / stepSmall) * stepSmall;
-    const endY = Math.ceil(worldTop / stepSmall) * stepSmall;
-    const stepCount = Math.max(
-      (endX - startX) / stepSmall,
-      (endY - startY) / stepSmall
-    );
-    // If zoomed way out, skip the small grid entirely
-    const drawSmall = stepCount < 400;
-    for (let x = startX; x <= endX; x += stepSmall) {
-      const strong = Math.abs(x % stepLarge) < 0.01;
-      if (!strong && !drawSmall) continue;
+    const startX = Math.floor(worldLeft / step) * step;
+    const endX = Math.ceil(worldRight / step) * step;
+    const startY = Math.floor(worldBottom / step) * step;
+    const endY = Math.ceil(worldTop / step) * step;
+    // Hard cap for safety (never > 600 lines total)
+    const maxLines = 600;
+    let count = 0;
+    for (let x = startX; x <= endX && count < maxLines; x += step) {
+      const strong = Math.abs(x % GRID_STRONG_STEP) < 0.5;
       lines.push({ points: [x, worldBottom, x, worldTop], strong });
+      count++;
     }
-    for (let y = startY; y <= endY; y += stepSmall) {
-      const strong = Math.abs(y % stepLarge) < 0.01;
-      if (!strong && !drawSmall) continue;
+    for (let y = startY; y <= endY && count < maxLines; y += step) {
+      const strong = Math.abs(y % GRID_STRONG_STEP) < 0.5;
       lines.push({ points: [worldLeft, y, worldRight, y], strong });
+      count++;
     }
     return lines;
   }, [stageState, size, currentView]);
@@ -749,6 +799,7 @@ export function DraftCanvas() {
                   product={product ?? null}
                   view={currentView}
                   selected={selectedIds.includes(el.id)}
+                  showTag={Boolean(currentDrawing?.show_position_tags)}
                   onSelect={(multi) => {
                     if (multi) toggleSelected(el.id, true);
                     else setSelected([el.id]);
@@ -847,6 +898,7 @@ function CabinetNode({
   product,
   view,
   selected,
+  showTag,
   onSelect,
   onDragEndWorld,
 }: {
@@ -854,6 +906,7 @@ function CabinetNode({
   product: import('../types').ProductsCatalogRow | null;
   view: import('../types').ViewType;
   selected: boolean;
+  showTag: boolean;
   onSelect: (multi: boolean) => void;
   onDragEndWorld: (x: number, y: number) => void;
 }) {
@@ -872,20 +925,16 @@ function CabinetNode({
       <Group
         x={Number(element.x_mm)}
         y={Number(element.y_mm)}
-        onClick={(e) => {
-          e.cancelBubble = true;
-          onSelect(e.evt.shiftKey);
-        }}
+        draggable
+        onDragEnd={(e) => onDragEndWorld(e.target.x(), e.target.y())}
+        onClick={(e) => { e.cancelBubble = true; onSelect(e.evt.shiftKey); }}
+        onMouseEnter={(e) => { const c = e.target.getStage()?.container(); if (c) c.style.cursor = 'move'; }}
+        onMouseLeave={(e) => { const c = e.target.getStage()?.container(); if (c) c.style.cursor = ''; }}
       >
-        <Rect
-          x={0}
-          y={0}
+        <Rect x={0} y={0}
           width={Number(element.width_mm ?? 600)}
           height={Number(element.height_mm ?? 760)}
-          stroke="#ef4444"
-          strokeWidth={3}
-          dash={[8, 4]}
-        />
+          stroke="#ef4444" strokeWidth={3} dash={[8, 4]} />
       </Group>
     );
   }
@@ -897,16 +946,37 @@ function CabinetNode({
     <Group
       x={Number(element.x_mm)}
       y={Number(element.y_mm)}
+      rotation={Number(element.rotation_deg ?? 0)}
       draggable
-      onDragEnd={(e) => {
-        onDragEndWorld(e.target.x(), e.target.y());
-      }}
-      onClick={(e) => {
-        e.cancelBubble = true;
-        onSelect(e.evt.shiftKey);
-      }}
+      onDragEnd={(e) => onDragEndWorld(e.target.x(), e.target.y())}
+      onClick={(e) => { e.cancelBubble = true; onSelect(e.evt.shiftKey); }}
+      onMouseEnter={(e) => { const c = e.target.getStage()?.container(); if (c) c.style.cursor = 'move'; }}
+      onMouseLeave={(e) => { const c = e.target.getStage()?.container(); if (c) c.style.cursor = ''; }}
     >
       {result?.primitives.map((prim, idx) => renderPrimitive(prim, idx))}
+      {/* Position tag (K-A1) — shown when auto-tagged and toggle is on */}
+      {showTag && element.tag && (
+        <Group x={width / 2} y={-30} scaleY={-1}>
+          <Rect
+            x={-40}
+            y={-16}
+            width={80}
+            height={24}
+            fill="white"
+            stroke={SELECTION_STROKE}
+            strokeWidth={1}
+            cornerRadius={4}
+          />
+          <Text
+            x={-36}
+            y={-12}
+            text={element.tag}
+            fontSize={16}
+            fontStyle="bold"
+            fill={SELECTION_STROKE}
+          />
+        </Group>
+      )}
       {selected && (
         <Rect
           x={-10}
@@ -1123,7 +1193,7 @@ function renderPrimitive(p: BlockPrimitive, key: number): React.ReactNode {
         y={p.y}
         width={p.width}
         height={p.height}
-        stroke="currentColor"
+        stroke={ELEMENT_STROKE}
         strokeWidth={p.strokeWidth ?? 2}
         dash={p.dash}
         fillEnabled={false}
@@ -1135,7 +1205,7 @@ function renderPrimitive(p: BlockPrimitive, key: number): React.ReactNode {
       <Line
         key={key}
         points={[...p.points]}
-        stroke="currentColor"
+        stroke={ELEMENT_STROKE}
         strokeWidth={p.strokeWidth ?? 1}
         dash={p.dash}
         lineCap="square"
@@ -1147,7 +1217,7 @@ function renderPrimitive(p: BlockPrimitive, key: number): React.ReactNode {
       <Line
         key={key}
         points={[...p.points]}
-        stroke="currentColor"
+        stroke={ELEMENT_STROKE}
         strokeWidth={p.strokeWidth ?? 1}
         closed={p.closed ?? false}
         fillEnabled={false}
@@ -1162,7 +1232,7 @@ function renderPrimitive(p: BlockPrimitive, key: number): React.ReactNode {
           text={p.text}
           fontSize={p.fontSize ?? 24}
           fontStyle={p.bold ? 'bold' : undefined}
-          fill="currentColor"
+          fill={ELEMENT_TEXT}
           align={p.align ?? 'left'}
           offsetX={p.align === 'center' ? (p.text.length * (p.fontSize ?? 24)) / 4 : 0}
         />
@@ -1175,7 +1245,7 @@ function renderPrimitive(p: BlockPrimitive, key: number): React.ReactNode {
       <Group key={key}>
         <Line
           points={[p.cx, p.cy + r, p.cx + r, p.cy, p.cx, p.cy - r, p.cx - r, p.cy]}
-          stroke="currentColor"
+          stroke={ELEMENT_STROKE}
           strokeWidth={2}
           closed
           fill="white"
@@ -1183,7 +1253,7 @@ function renderPrimitive(p: BlockPrimitive, key: number): React.ReactNode {
         {p.connectTo && (
           <Line
             points={[p.cx, p.cy - r, p.connectTo.x, p.connectTo.y]}
-            stroke="currentColor"
+            stroke={ELEMENT_STROKE}
             strokeWidth={1}
           />
         )}
@@ -1192,7 +1262,7 @@ function renderPrimitive(p: BlockPrimitive, key: number): React.ReactNode {
             text={p.code}
             fontSize={r * 0.9}
             fontStyle="bold"
-            fill="currentColor"
+            fill={ELEMENT_TEXT}
             align="center"
             offsetX={(p.code.length * r * 0.9) / 4}
             offsetY={-r * 0.4}

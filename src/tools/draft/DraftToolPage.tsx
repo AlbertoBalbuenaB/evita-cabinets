@@ -130,11 +130,11 @@ export function DraftToolPage() {
         Back to Tools
       </Link>
 
-      {/* Header bar */}
-      <div className="glass-indigo rounded-2xl p-3 flex flex-wrap items-center gap-2">
+      {/* Header bar — compact to maximize canvas height */}
+      <div className="glass-indigo rounded-xl px-3 py-1.5 flex flex-wrap items-center gap-2">
         <div className="flex-shrink-0">
-          <h1 className="text-lg font-semibold text-slate-800">Evita Draft</h1>
-          <p className="text-[11px] text-slate-500">
+          <h1 className="text-sm font-semibold text-slate-800 leading-tight">Evita Draft</h1>
+          <p className="text-[10px] text-slate-500 leading-tight">
             Floorplans &amp; elevations · AWI/NAAWS 4.0
           </p>
         </div>
@@ -234,13 +234,23 @@ export function DraftToolPage() {
 
       {/* View switcher + area/elevation selectors */}
       {currentDrawing && (
-        <div className="glass-white rounded-xl p-2 flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 bg-slate-100/80 rounded-lg p-0.5">
+        <div className="glass-white rounded-lg px-2 py-1 flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 bg-slate-100/80 rounded-md p-0.5">
             <ViewTab label="Plan" active={currentView === 'plan'} onClick={() => setCurrentView('plan')} />
             <ViewTab
               label="Elevation"
               active={currentView === 'elevation'}
-              onClick={() => setCurrentView('elevation')}
+              onClick={async () => {
+                setCurrentView('elevation');
+                // Auto-create first elevation if none exists for this area
+                if (currentAreaId && elevations.filter((e) => e.area_id === currentAreaId).length === 0) {
+                  try {
+                    await useDraftStore.getState().createElevation(currentAreaId, 'A');
+                  } catch (err) {
+                    console.error('Failed to create default elevation', err);
+                  }
+                }
+              }}
             />
           </div>
 
