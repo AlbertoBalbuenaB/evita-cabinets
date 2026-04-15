@@ -1,0 +1,15 @@
+sku,description,draft_family,bucket,reason
+460-12x12,Accessories: Panel | Filler | Toe Kick | Crown,accessory,dirty_data,width_in/height_in/depth_in all NULL in DB despite SKU encoding dimensions
+460-96x44,Accessories: Panel | Filler | Toe Kick | Crown,accessory,dirty_data,width_in/height_in/depth_in all NULL in DB despite SKU encoding dimensions
+460-96x48,Accessories: Panel | Filler | Toe Kick | Crown,accessory,dirty_data,width_in/height_in/depth_in all NULL in DB despite SKU encoding dimensions
+190-12x2x12,Floating Shelf,base,floating_shelf,Dimensions NULL; 190 series not a standard draft tool element — deferred to Phase 2
+190-24x2x12,Floating Shelf,base,floating_shelf,Dimensions NULL; 190 series not a standard draft tool element — deferred to Phase 2
+190-36x2x12,Floating Shelf,base,floating_shelf,Dimensions NULL; 190 series not a standard draft tool element — deferred to Phase 2
+190-48x2x12,Floating Shelf,base,floating_shelf,Dimensions NULL; 190 series not a standard draft tool element — deferred to Phase 2
+190-48x7x15,Floating Shelf,base,floating_shelf,Dimensions NULL; 190 series not a standard draft tool element — deferred to Phase 2
+190-60x2x12,Floating Shelf,base,floating_shelf,Dimensions NULL; 190 series not a standard draft tool element — deferred to Phase 2
+190-72x2x12,Floating Shelf,base,floating_shelf,Dimensions NULL; 190 series not a standard draft tool element — deferred to Phase 2
+190-84x2x12,Floating Shelf,base,floating_shelf,Dimensions NULL; 190 series not a standard draft tool element — deferred to Phase 2
+190-96x2x12,Floating Shelf,base,floating_shelf,Dimensions NULL; 190 series not a standard draft tool element — deferred to Phase 2
+Empty,Empty,,placeholder,Placeholder row in DB
+Test-01,Prueba,,test_data,Test row excluded via backfill rule 6h (sku !~ '^Test')

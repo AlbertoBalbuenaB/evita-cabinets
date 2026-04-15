@@ -1,7 +1,14 @@
 import { Link } from 'react-router-dom';
-import { Ruler, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { Ruler, LayoutDashboard, ArrowLeft, Pencil } from 'lucide-react';
 
 const tools = [
+  {
+    title: 'Evita Draft',
+    description: 'Floorplans and elevations with AWI/NAAWS diamond tags, bilingual PDF export',
+    icon: Pencil,
+    path: '/tools/draft',
+    color: 'violet',
+  },
   {
     title: 'Plan Viewer',
     description: 'Upload PDFs or images, calibrate scale, and take measurements',
@@ -30,6 +37,12 @@ const colorMap: Record<string, { bg: string; iconBg: string; iconText: string; b
     iconBg: 'bg-indigo-100',
     iconText: 'text-indigo-600',
     border: 'border-indigo-200',
+  },
+  violet: {
+    bg: 'hover:border-violet-300',
+    iconBg: 'bg-violet-100',
+    iconText: 'text-violet-600',
+    border: 'border-violet-200',
   },
 };
 
