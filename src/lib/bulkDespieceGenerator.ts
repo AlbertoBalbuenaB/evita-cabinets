@@ -1,13 +1,12 @@
 /**
- * Batch adapter from raw `products_catalog` rows to cut-list results. This
- * file used to own the SKU/description parsing heuristics and call the old
- * `calculateDespiece` engine directly; the refactor moved those heuristics
- * into `./cabinet/parseProductMetadata` and replaced the engine with
- * `computeCutList(CabinetConfig)`.
+ * Batch adapter from raw `products_catalog` rows to cut-list results. Thin
+ * loop over `cabinetConfigFromCatalogProduct` → `computeCutList` (plus the
+ * 460-series flat-panel special case). All SKU/description heuristics live
+ * in `./cabinet/parseProductMetadata`.
  *
  * Public types (`BulkProduct`, `BulkResult`, `BulkOutput`) and the function
- * signature (`generateBulkDespieces`) are preserved so the existing test
- * suite and any future UI wiring can consume this module unchanged.
+ * signature (`generateBulkDespieces`) are stable so any future UI wiring
+ * can consume this module unchanged.
  */
 
 import type { CutPiece } from '../types';

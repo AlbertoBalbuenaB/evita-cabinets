@@ -27,10 +27,9 @@ function optimizeDepthMm(rawMm: number): number {
  * `CabinetConfig` and returns the flat list of cut pieces in mm, tagged with
  * material role, edgeband pattern, and grain direction.
  *
- * This is a behavior-preserving port of the former `calculateDespiece` — the
- * math now operates directly in mm instead of converting from inches, but the
- * output is identical for all catalog inputs (validated by golden snapshot
- * tests).
+ * The engine operates directly in millimeters. It is agnostic to the origin
+ * of its input: today it runs on catalog-derived configs, and Phase 2 will
+ * run it on Draft Tool custom cabinets through the same entry point.
  */
 export function computeCutList(config: CabinetConfig): CutPiece[] {
   const cabinetType = toEngineFamily(config.family);

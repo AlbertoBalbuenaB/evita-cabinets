@@ -240,8 +240,8 @@ export async function buildOptimizerSetupFromQuotation(
       switch (role) {
         case 'cuerpo':
           // Legacy: if the piece name is "Back Panel" and the cabinet has a
-          // back_panel_material_id set, route there instead (matches the new
-          // despieceCalculator behavior so existing templates keep working).
+          // back_panel_material_id set, route there instead (matches the
+          // cut-list engine behavior so existing templates keep working).
           if (isLegacyBackPanel(cp.nombre) && cab.back_panel_material_id) {
             materialId = cab.back_panel_material_id;
           } else {
