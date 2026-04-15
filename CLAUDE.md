@@ -344,6 +344,8 @@ Manual chunks configured: vendor-react, vendor-supabase, vendor-xlsx, vendor-pdf
 - Solo developer — commit directly to `main` unless explicitly asked for a PR
 - Always write descriptive commit messages in English
 - Do NOT create PRs for routine changes — commit and push directly
+- **ALWAYS run `npm run typecheck` before committing any code/type changes** (skip only for pure doc/markdown commits)
+- Run `npm test` before committing changes to `lib/cabinet/`, `lib/optimizer/`, or `lib/pricing/`
 
 ---
 
