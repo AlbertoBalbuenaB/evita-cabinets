@@ -81,6 +81,7 @@ export type Database = {
           original_doors_material_price: number | null
           product_sku: string | null
           quantity: number
+          source_drawing_element_id: string | null
           subtotal: number | null
           use_back_panel_material: boolean | null
         }
@@ -123,6 +124,7 @@ export type Database = {
           original_doors_material_price?: number | null
           product_sku?: string | null
           quantity?: number
+          source_drawing_element_id?: string | null
           subtotal?: number | null
           use_back_panel_material?: boolean | null
         }
@@ -165,6 +167,7 @@ export type Database = {
           original_doors_material_price?: number | null
           product_sku?: string | null
           quantity?: number
+          source_drawing_element_id?: string | null
           subtotal?: number | null
           use_back_panel_material?: boolean | null
         }
@@ -309,6 +312,7 @@ export type Database = {
           notes: string | null
           price_list_item_id: string
           quantity: number
+          source_drawing_element_id: string | null
           subtotal: number
           unit_price: number
           updated_at: string | null
@@ -321,6 +325,7 @@ export type Database = {
           notes?: string | null
           price_list_item_id: string
           quantity?: number
+          source_drawing_element_id?: string | null
           subtotal?: number
           unit_price?: number
           updated_at?: string | null
@@ -333,6 +338,7 @@ export type Database = {
           notes?: string | null
           price_list_item_id?: string
           quantity?: number
+          source_drawing_element_id?: string | null
           subtotal?: number
           unit_price?: number
           updated_at?: string | null
@@ -363,6 +369,7 @@ export type Database = {
           notes: string | null
           price_list_item_id: string
           quantity: number
+          source_drawing_element_id: string | null
           subtotal: number
           unit_price: number
           updated_at: string | null
@@ -375,6 +382,7 @@ export type Database = {
           notes?: string | null
           price_list_item_id: string
           quantity?: number
+          source_drawing_element_id?: string | null
           subtotal?: number
           unit_price?: number
           updated_at?: string | null
@@ -387,6 +395,7 @@ export type Database = {
           notes?: string | null
           price_list_item_id?: string
           quantity?: number
+          source_drawing_element_id?: string | null
           subtotal?: number
           unit_price?: number
           updated_at?: string | null
@@ -461,6 +470,13 @@ export type Database = {
             columns: ["prefab_catalog_id"]
             isOneToOne: false
             referencedRelation: "prefab_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_prefab_items_prefab_catalog_id_fkey"
+            columns: ["prefab_catalog_id"]
+            isOneToOne: false
+            referencedRelation: "prefab_catalog_with_prices"
             referencedColumns: ["id"]
           },
         ]
@@ -803,6 +819,228 @@ export type Database = {
         }
         Relationships: []
       }
+      drawing_areas: {
+        Row: {
+          created_at: string
+          drawing_id: string
+          id: string
+          name: string
+          prefix: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          drawing_id: string
+          id?: string
+          name: string
+          prefix: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          drawing_id?: string
+          id?: string
+          name?: string
+          prefix?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawing_areas_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawing_elements: {
+        Row: {
+          area_id: string | null
+          created_at: string
+          depth_mm: number | null
+          drawing_id: string
+          element_type: string
+          elevation_id: string | null
+          height_mm: number | null
+          id: string
+          product_id: string | null
+          props: Json
+          rotation_deg: number
+          tag: string | null
+          updated_at: string
+          view_type: string
+          width_mm: number | null
+          x_mm: number
+          y_mm: number
+          z_index: number
+        }
+        Insert: {
+          area_id?: string | null
+          created_at?: string
+          depth_mm?: number | null
+          drawing_id: string
+          element_type: string
+          elevation_id?: string | null
+          height_mm?: number | null
+          id?: string
+          product_id?: string | null
+          props?: Json
+          rotation_deg?: number
+          tag?: string | null
+          updated_at?: string
+          view_type: string
+          width_mm?: number | null
+          x_mm: number
+          y_mm: number
+          z_index?: number
+        }
+        Update: {
+          area_id?: string | null
+          created_at?: string
+          depth_mm?: number | null
+          drawing_id?: string
+          element_type?: string
+          elevation_id?: string | null
+          height_mm?: number | null
+          id?: string
+          product_id?: string | null
+          props?: Json
+          rotation_deg?: number
+          tag?: string | null
+          updated_at?: string
+          view_type?: string
+          width_mm?: number | null
+          x_mm?: number
+          y_mm?: number
+          z_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawing_elements_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_elements_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_elements_elevation_id_fkey"
+            columns: ["elevation_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_elevations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_elements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawing_elevations: {
+        Row: {
+          area_id: string
+          created_at: string
+          id: string
+          letter: string
+          sort_order: number
+          wall_angle_deg: number | null
+        }
+        Insert: {
+          area_id: string
+          created_at?: string
+          id?: string
+          letter: string
+          sort_order?: number
+          wall_angle_deg?: number | null
+        }
+        Update: {
+          area_id?: string
+          created_at?: string
+          id?: string
+          letter?: string
+          sort_order?: number
+          wall_angle_deg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawing_elevations_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          export_language: string | null
+          id: string
+          lock_tags: boolean
+          name: string
+          paper_size: string | null
+          project_id: string
+          show_position_tags: boolean
+          specs: Json
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          export_language?: string | null
+          id?: string
+          lock_tags?: boolean
+          name: string
+          paper_size?: string | null
+          project_id: string
+          show_position_tags?: boolean
+          specs?: Json
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          export_language?: string | null
+          id?: string
+          lock_tags?: boolean
+          name?: string
+          paper_size?: string | null
+          project_id?: string
+          show_position_tags?: boolean
+          specs?: Json
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_movements: {
         Row: {
           created_at: string
@@ -930,47 +1168,6 @@ export type Database = {
           },
         ]
       }
-      price_change_log: {
-        Row: {
-          changed_at: string | null
-          changed_by: string | null
-          id: string
-          item_description: string
-          new_price: number
-          old_price: number
-          price_difference: number | null
-          price_list_item_id: string
-        }
-        Insert: {
-          changed_at?: string | null
-          changed_by?: string | null
-          id?: string
-          item_description: string
-          new_price: number
-          old_price: number
-          price_difference?: number | null
-          price_list_item_id: string
-        }
-        Update: {
-          changed_at?: string | null
-          changed_by?: string | null
-          id?: string
-          item_description?: string
-          new_price?: number
-          old_price?: number
-          price_difference?: number | null
-          price_list_item_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "price_change_log_price_list_item_id_fkey"
-            columns: ["price_list_item_id"]
-            isOneToOne: false
-            referencedRelation: "price_list"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       prefab_brand: {
         Row: {
           created_at: string | null
@@ -1091,6 +1288,54 @@ export type Database = {
             columns: ["prefab_catalog_id"]
             isOneToOne: false
             referencedRelation: "prefab_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prefab_catalog_price_prefab_catalog_id_fkey"
+            columns: ["prefab_catalog_id"]
+            isOneToOne: false
+            referencedRelation: "prefab_catalog_with_prices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_change_log: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          item_description: string
+          new_price: number
+          old_price: number
+          price_difference: number | null
+          price_list_item_id: string
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          item_description: string
+          new_price: number
+          old_price: number
+          price_difference?: number | null
+          price_list_item_id: string
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          item_description?: string
+          new_price?: number
+          old_price?: number
+          price_difference?: number | null
+          price_list_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_change_log_price_list_item_id_fkey"
+            columns: ["price_list_item_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
             referencedColumns: ["id"]
           },
         ]
@@ -1266,6 +1511,14 @@ export type Database = {
           description: string
           doors_fronts_edgeband: number | null
           doors_fronts_sf: number
+          draft_default_hinge: string | null
+          draft_detail_svg: string | null
+          draft_elevation_svg: string | null
+          draft_enabled: boolean
+          draft_family: string | null
+          draft_plan_svg: string | null
+          draft_series: string | null
+          draft_subfamily: string | null
           has_drawers: boolean | null
           height_in: number | null
           id: string
@@ -1293,6 +1546,14 @@ export type Database = {
           description: string
           doors_fronts_edgeband?: number | null
           doors_fronts_sf?: number
+          draft_default_hinge?: string | null
+          draft_detail_svg?: string | null
+          draft_elevation_svg?: string | null
+          draft_enabled?: boolean
+          draft_family?: string | null
+          draft_plan_svg?: string | null
+          draft_series?: string | null
+          draft_subfamily?: string | null
           has_drawers?: boolean | null
           height_in?: number | null
           id?: string
@@ -1320,6 +1581,14 @@ export type Database = {
           description?: string
           doors_fronts_edgeband?: number | null
           doors_fronts_sf?: number
+          draft_default_hinge?: string | null
+          draft_detail_svg?: string | null
+          draft_elevation_svg?: string | null
+          draft_enabled?: boolean
+          draft_family?: string | null
+          draft_plan_svg?: string | null
+          draft_series?: string | null
+          draft_subfamily?: string | null
           has_drawers?: boolean | null
           height_in?: number | null
           id?: string
@@ -2693,7 +2962,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      prefab_catalog_with_prices: {
+        Row: {
+          brand_id: string | null
+          cabinet_code: string | null
+          category: string | null
+          created_at: string | null
+          depth_in: number | null
+          description: string | null
+          dims_auto_parsed: boolean | null
+          dims_locked: boolean | null
+          height_in: number | null
+          id: string | null
+          is_active: boolean | null
+          item_type: Database["public"]["Enums"]["prefab_item_type"] | null
+          notes: string | null
+          prices: Json | null
+          updated_at: string | null
+          width_in: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prefab_catalog_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "prefab_brand"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       calculate_hardware_cost: {
@@ -2927,6 +3224,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      prefab_item_type: ["cabinet", "accessory", "linear", "panel"],
+    },
   },
 } as const
