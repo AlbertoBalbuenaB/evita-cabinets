@@ -256,20 +256,64 @@ export function DraftCanvas() {
     return () => window.removeEventListener('keydown', onKey);
   }, [selectedIds, elements, patchElement, removeElements, clearSelection]);
 
-  // Filter visible elements by the current view + area + elevation
+  // Filter visible elements by the current view + area + elevation.
+  //
+  // KEY DESIGN: Elevation is a DERIVED VIEW of the Plan, not a separate
+  // canvas. When in elevation view, we take all plan-view cabinets from
+  // the current area and project them as elevation renderings. This makes
+  // Plan ↔ Elevation inherently linked — place a cabinet in Plan and it
+  // automatically appears in Elevation at the correct height.
+  //
+  // Elevation-only elements (dimensions, tags, notes) are stored with
+  // view_type='elevation' and render alongside the projected cabinets.
   const visibleElements = useMemo(() => {
     const out: DrawingElementRow[] = [];
-    for (const el of Object.values(elements)) {
-      if (el.view_type !== currentView) continue;
-      if (currentView === 'plan') {
+
+    if (currentView === 'plan') {
+      for (const el of Object.values(elements)) {
+        if (el.view_type !== 'plan') continue;
         if (el.area_id && el.area_id !== currentAreaId) continue;
-      } else if (currentView === 'elevation') {
-        if (el.elevation_id && el.elevation_id !== currentElevationId) continue;
+        out.push(el);
       }
-      out.push(el);
+    } else if (currentView === 'elevation') {
+      // 1. Project plan cabinets into elevation coordinates
+      const planCabinets = Object.values(elements).filter(
+        (el) =>
+          el.view_type === 'plan' &&
+          el.element_type === 'cabinet' &&
+          (!el.area_id || el.area_id === currentAreaId)
+      );
+      // Sort by plan X position so they stack left-to-right
+      planCabinets.sort((a, b) => Number(a.x_mm) - Number(b.x_mm));
+
+      let elevX = 0;
+      for (const planEl of planCabinets) {
+        const product = planEl.product_id ? catalog[planEl.product_id] : null;
+        const family = product?.draft_family ?? 'base';
+        const elevY = family === 'wall' ? inToMm(54) : 0;
+        // Create a virtual elevation element (not persisted — derived on the fly)
+        const projected: DrawingElementRow = {
+          ...planEl,
+          view_type: 'elevation' as string,
+          x_mm: elevX,
+          y_mm: elevY,
+          rotation_deg: 0,
+        };
+        out.push(projected);
+        elevX += Number(planEl.width_mm ?? 0);
+      }
+
+      // 2. Also include real elevation-only elements (dimensions, tags, notes)
+      for (const el of Object.values(elements)) {
+        if (el.view_type !== 'elevation') continue;
+        if (el.element_type === 'cabinet') continue; // skip old duplicates
+        if (el.elevation_id && el.elevation_id !== currentElevationId) continue;
+        out.push(el);
+      }
     }
+
     return out.sort((a, b) => (a.z_index ?? 0) - (b.z_index ?? 0));
-  }, [elements, currentView, currentAreaId, currentElevationId]);
+  }, [elements, currentView, currentAreaId, currentElevationId, catalog]);
 
   // ── Mouse/wheel handlers ──────────────────────────────────────────────
   function handleWheel(e: Konva.KonvaEventObject<WheelEvent>) {
@@ -352,50 +396,8 @@ export function DraftCanvas() {
       z_index: 0,
     };
     addElement(row as DrawingElementRow);
-
-    // ── Auto-project to elevation ────────────────────────────────────────
-    // When a cabinet is dropped in Plan view and at least one elevation
-    // exists for this area, automatically create a matching elevation
-    // element so the two views stay linked.
-    if (currentView === 'plan') {
-      const areaElevations = elevations.filter((ev) => ev.area_id === currentAreaId);
-      if (areaElevations.length > 0) {
-        const targetElev = areaElevations[0]; // project to first elevation
-        // Elevation placement: base/tall → floor (y=0), wall → 54" AFF
-        const elevY =
-          payload.family === 'wall' ? inToMm(54) : 0;
-        // Stack horizontally: count existing cabinets in this elevation
-        const existingInElev = Object.values(elements).filter(
-          (e) =>
-            e.element_type === 'cabinet' &&
-            e.view_type === 'elevation' &&
-            e.elevation_id === targetElev.id
-        );
-        const elevX = existingInElev.reduce(
-          (acc, e) => Math.max(acc, Number(e.x_mm) + Number(e.width_mm ?? 0)),
-          0
-        );
-        const elevRow: DrawingElementInsert = {
-          id: crypto.randomUUID(),
-          drawing_id: currentDrawing.id,
-          area_id: currentAreaId,
-          elevation_id: targetElev.id,
-          view_type: 'elevation',
-          element_type: 'cabinet',
-          product_id: payload.product_id,
-          tag: null,
-          x_mm: elevX,
-          y_mm: elevY,
-          rotation_deg: 0,
-          width_mm: payload.width_mm,
-          height_mm: payload.height_mm,
-          depth_mm: payload.depth_mm,
-          props: cabinetProps as unknown as DrawingElementRow['props'],
-          z_index: 0,
-        };
-        addElement(elevRow as DrawingElementRow);
-      }
-    }
+    // Elevation representation is auto-derived from plan elements — no
+    // separate elevation element needed. See visibleElements useMemo.
   }
 
   // ── Toolbar action handlers (Steps 7.6, 9, 10) ────────────────────────
