@@ -1,30 +1,32 @@
 import { describe, it, expect } from 'vitest';
-import { calculateDespiece, type DespieceInput } from './despieceCalculator';
+import { computeCutList } from './computeCutList';
+import type { CabinetConfig } from './CabinetConfig';
+import type { CutPiece } from '../../types';
 
-function findPiece(pieces: ReturnType<typeof calculateDespiece>, nombre: string) {
+function findPiece(pieces: CutPiece[], nombre: string) {
   return pieces.find((p) => p.nombre === nombre);
 }
 
 // ── Reference Example: 101-12x30x24 base cabinet ────────────────────────────
-describe('calculateDespiece — base cabinet 101-12x30x24', () => {
-  const input: DespieceInput = {
-    heightIn: 30,
-    widthIn: 12,
-    depthIn: 24,
-    cabinetType: 'base',
-    bodyThickness: 18,
-    shelves: 1,
+describe('computeCutList — base cabinet 101-12x30x24', () => {
+  const config: CabinetConfig = {
+    widthMm: Math.round(12 * 25.4),
+    heightMm: Math.round(30 * 25.4),
+    depthMm: Math.round(24 * 25.4),
+    family: 'base',
+    boxThicknessMm: 18,
+    shelfCount: 1,
     hasDoors: true,
-    numDoors: 1,
-    doorSectionHeightIn: 0,
+    doorCount: 1,
+    doorSectionHeightMm: 0,
     hasDrawers: false,
-    numDrawers: 0,
-    drawerSectionHeightIn: 0,
+    drawerCount: 0,
+    drawerSectionHeightMm: 0,
     shelfType: 'fixed',
     optimizeDepth: true,
   };
 
-  const pieces = calculateDespiece(input);
+  const pieces = computeCutList(config);
 
   it('generates 6 pieces', () => {
     expect(pieces).toHaveLength(6);
@@ -98,25 +100,25 @@ describe('calculateDespiece — base cabinet 101-12x30x24', () => {
 });
 
 // ── Wall cabinet: side panels get {2,2,1,1} ─────────────────────────────────
-describe('calculateDespiece — wall cabinet side panels', () => {
-  const input: DespieceInput = {
-    heightIn: 15,
-    widthIn: 30,
-    depthIn: 12,
-    cabinetType: 'wall',
-    bodyThickness: 18,
-    shelves: 2,
+describe('computeCutList — wall cabinet side panels', () => {
+  const config: CabinetConfig = {
+    widthMm: Math.round(30 * 25.4),
+    heightMm: Math.round(15 * 25.4),
+    depthMm: Math.round(12 * 25.4),
+    family: 'wall',
+    boxThicknessMm: 18,
+    shelfCount: 2,
     hasDoors: true,
-    numDoors: 2,
-    doorSectionHeightIn: 0,
+    doorCount: 2,
+    doorSectionHeightMm: 0,
     hasDrawers: false,
-    numDrawers: 0,
-    drawerSectionHeightIn: 0,
+    drawerCount: 0,
+    drawerSectionHeightMm: 0,
     shelfType: 'adjustable',
     optimizeDepth: true,
   };
 
-  const pieces = calculateDespiece(input);
+  const pieces = computeCutList(config);
 
   it('Side Panels have wall cubrecanto: {2,2,1,1} (both top and bottom visible)', () => {
     const p = findPiece(pieces, 'Side Panels')!;
@@ -136,24 +138,24 @@ describe('calculateDespiece — wall cabinet side panels', () => {
 });
 
 // ── Drawer base: 3 drawers ──────────────────────────────────────────────────
-describe('calculateDespiece — drawer base (3 drawers)', () => {
-  const input: DespieceInput = {
-    heightIn: 30,
-    widthIn: 24,
-    depthIn: 24,
-    cabinetType: 'base',
-    bodyThickness: 18,
-    shelves: 0,
+describe('computeCutList — drawer base (3 drawers)', () => {
+  const config: CabinetConfig = {
+    widthMm: Math.round(24 * 25.4),
+    heightMm: Math.round(30 * 25.4),
+    depthMm: Math.round(24 * 25.4),
+    family: 'base',
+    boxThicknessMm: 18,
+    shelfCount: 0,
     hasDoors: false,
-    numDoors: 0,
-    doorSectionHeightIn: 0,
+    doorCount: 0,
+    doorSectionHeightMm: 0,
     hasDrawers: true,
-    numDrawers: 3,
-    drawerSectionHeightIn: 0,
+    drawerCount: 3,
+    drawerSectionHeightMm: 0,
     optimizeDepth: true,
   };
 
-  const pieces = calculateDespiece(input);
+  const pieces = computeCutList(config);
 
   it('generates Front Rails with qty = numDrawers', () => {
     const p = findPiece(pieces, 'Front Rails')!;
@@ -184,8 +186,6 @@ describe('calculateDespiece — drawer base (3 drawers)', () => {
     expect(p.cantidad).toBe(6);
     expect(p.veta).toBe('none');
     expect(p.cubrecanto).toEqual({ sup: 0, inf: 0, izq: 0, der: 0 });
-    // W=24" → 610mm raw → 600mm optimized, esp=18
-    // innerW = 600 - 36 = 564 (wait, W=24" → W=610→not depth, W is width)
     // W = round(24 * 25.4) = 610mm, innerW = 610 - 2*18 = 574
     // boxOuterW = innerW - SLIDE_CLEARANCE = 574 - 26 = 548
     // Drawer Box Ends = boxOuterW - 2*drawerEsp = 548 - 2*15 = 518
@@ -201,90 +201,105 @@ describe('calculateDespiece — drawer base (3 drawers)', () => {
 });
 
 // ── Depth optimization ──────────────────────────────────────────────────────
-describe('calculateDespiece — depth optimization', () => {
-  const base: DespieceInput = {
-    heightIn: 30,
-    widthIn: 12,
-    depthIn: 24,
-    cabinetType: 'base',
-    bodyThickness: 18,
-    shelves: 0,
-    hasDoors: false,
-    numDoors: 0,
-    doorSectionHeightIn: 0,
-    hasDrawers: false,
-    numDrawers: 0,
-    drawerSectionHeightIn: 0,
-  };
+describe('computeCutList — depth optimization', () => {
+  function baseConfig(overrides: Partial<CabinetConfig>): CabinetConfig {
+    return {
+      widthMm: Math.round(12 * 25.4),
+      heightMm: Math.round(30 * 25.4),
+      depthMm: Math.round(24 * 25.4),
+      family: 'base',
+      boxThicknessMm: 18,
+      shelfCount: 0,
+      hasDoors: false,
+      doorCount: 0,
+      doorSectionHeightMm: 0,
+      hasDrawers: false,
+      drawerCount: 0,
+      drawerSectionHeightMm: 0,
+      ...overrides,
+    };
+  }
 
   it('24" depth with optimizeDepth=true → 600mm', () => {
-    const pieces = calculateDespiece({ ...base, optimizeDepth: true });
+    const pieces = computeCutList(baseConfig({ optimizeDepth: true }));
     const side = findPiece(pieces, 'Side Panels')!;
     expect(side.ancho).toBe(600);
   });
 
   it('12" depth with optimizeDepth=true → 300mm', () => {
-    const pieces = calculateDespiece({ ...base, depthIn: 12, optimizeDepth: true });
+    const pieces = computeCutList(baseConfig({
+      depthMm: Math.round(12 * 25.4),
+      optimizeDepth: true,
+    }));
     const side = findPiece(pieces, 'Side Panels')!;
     expect(side.ancho).toBe(300);
   });
 
   it('16" depth with optimizeDepth=true → 400mm (1/3 sheet)', () => {
-    const pieces = calculateDespiece({ ...base, depthIn: 16, optimizeDepth: true });
+    const pieces = computeCutList(baseConfig({
+      depthMm: Math.round(16 * 25.4),
+      optimizeDepth: true,
+    }));
     const side = findPiece(pieces, 'Side Panels')!;
-    expect(side.ancho).toBe(400);  // 16"D → 400mm, not 600mm
+    expect(side.ancho).toBe(400);
 
     const top = findPiece(pieces, 'Top Panel')!;
-    expect(top.alto).toBe(382);    // 400 - 18 = 382mm
+    expect(top.alto).toBe(382);
   });
 
   it('18" depth with optimizeDepth=true → 450mm', () => {
-    const pieces = calculateDespiece({ ...base, depthIn: 18, optimizeDepth: true });
+    const pieces = computeCutList(baseConfig({
+      depthMm: Math.round(18 * 25.4),
+      optimizeDepth: true,
+    }));
     const side = findPiece(pieces, 'Side Panels')!;
     expect(side.ancho).toBe(450);
     const top = findPiece(pieces, 'Top Panel')!;
-    expect(top.alto).toBe(432);    // 450 - 18 = 432mm
+    expect(top.alto).toBe(432);
   });
 
   it('17" depth with optimizeDepth=true → 450mm (falls in 18" bucket)', () => {
-    const pieces = calculateDespiece({ ...base, depthIn: 17, optimizeDepth: true });
+    const pieces = computeCutList(baseConfig({
+      depthMm: Math.round(17 * 25.4),
+      optimizeDepth: true,
+    }));
     const side = findPiece(pieces, 'Side Panels')!;
     expect(side.ancho).toBe(450);
   });
 
   it('24" depth with optimizeDepth=false → 610mm (raw)', () => {
-    const pieces = calculateDespiece({ ...base, optimizeDepth: false });
+    const pieces = computeCutList(baseConfig({ optimizeDepth: false }));
     const side = findPiece(pieces, 'Side Panels')!;
     expect(side.ancho).toBe(610);
   });
 
   it('defaults to optimizeDepth=true when not specified', () => {
-    const pieces = calculateDespiece(base); // no optimizeDepth field
+    const pieces = computeCutList(baseConfig({}));
     const side = findPiece(pieces, 'Side Panels')!;
     expect(side.ancho).toBe(600);
   });
 });
 
 // ── Sink base cabinet ───────────────────────────────────────────────────────
-describe('calculateDespiece — sink base', () => {
-  const input: DespieceInput = {
-    heightIn: 30,
-    widthIn: 36,
-    depthIn: 24,
-    cabinetType: 'base',
-    bodyThickness: 18,
-    shelves: 2, // should be ignored for sink
+describe('computeCutList — sink base', () => {
+  const config: CabinetConfig = {
+    widthMm: Math.round(36 * 25.4),
+    heightMm: Math.round(30 * 25.4),
+    depthMm: Math.round(24 * 25.4),
+    family: 'base',
+    boxThicknessMm: 18,
+    shelfCount: 2, // should be ignored for sink
     hasDoors: true,
-    numDoors: 2,
-    doorSectionHeightIn: 0,
+    doorCount: 2,
+    doorSectionHeightMm: 0,
     hasDrawers: false,
-    numDrawers: 0,
-    drawerSectionHeightIn: 0,
+    drawerCount: 0,
+    drawerSectionHeightMm: 0,
     isSink: true,
     optimizeDepth: true,
   };
 
-  const pieces = calculateDespiece(input);
+  const pieces = computeCutList(config);
 
   it('has NO Top Panel', () => {
     expect(findPiece(pieces, 'Top Panel')).toBeUndefined();
@@ -312,25 +327,23 @@ describe('calculateDespiece — sink base', () => {
 });
 
 // ── Backward compatibility ──────────────────────────────────────────────────
-describe('calculateDespiece — backward compatibility', () => {
-  it('works without V2 fields (shelfType, optimizeDepth, isSink)', () => {
-    const pieces = calculateDespiece({
-      heightIn: 30,
-      widthIn: 12,
-      depthIn: 24,
-      cabinetType: 'base',
-      bodyThickness: 18,
-      shelves: 1,
+describe('computeCutList — default handling', () => {
+  it('works without optional fields (shelfType, optimizeDepth, isSink)', () => {
+    const pieces = computeCutList({
+      widthMm: Math.round(12 * 25.4),
+      heightMm: Math.round(30 * 25.4),
+      depthMm: Math.round(24 * 25.4),
+      family: 'base',
+      boxThicknessMm: 18,
+      shelfCount: 1,
       hasDoors: true,
-      numDoors: 1,
-      doorSectionHeightIn: 0,
+      doorCount: 1,
+      doorSectionHeightMm: 0,
       hasDrawers: false,
-      numDrawers: 0,
-      drawerSectionHeightIn: 0,
+      drawerCount: 0,
+      drawerSectionHeightMm: 0,
     });
-    // Should still produce valid output with defaults
     expect(pieces.length).toBeGreaterThan(0);
-    // Every piece should have cubrecanto and veta populated
     for (const p of pieces) {
       expect(p.cubrecanto).toBeDefined();
       expect(p.veta).toBeDefined();
@@ -338,46 +351,49 @@ describe('calculateDespiece — backward compatibility', () => {
   });
 
   it('defaults shelfType to adjustable for wall cabinets', () => {
-    const pieces = calculateDespiece({
-      heightIn: 15,
-      widthIn: 30,
-      depthIn: 12,
-      cabinetType: 'wall',
-      bodyThickness: 18,
-      shelves: 1,
+    const pieces = computeCutList({
+      widthMm: Math.round(30 * 25.4),
+      heightMm: Math.round(15 * 25.4),
+      depthMm: Math.round(12 * 25.4),
+      family: 'wall',
+      boxThicknessMm: 18,
+      shelfCount: 1,
       hasDoors: false,
-      numDoors: 0,
-      doorSectionHeightIn: 0,
+      doorCount: 0,
+      doorSectionHeightMm: 0,
       hasDrawers: false,
-      numDrawers: 0,
-      drawerSectionHeightIn: 0,
+      drawerCount: 0,
+      drawerSectionHeightMm: 0,
       // no shelfType specified — should default to adjustable
     });
     const shelf = findPiece(pieces, 'Shelves')!;
-    expect(shelf.cubrecanto).toEqual({ sup: 1, inf: 1, izq: 1, der: 1 }); // adjustable
+    expect(shelf.cubrecanto).toEqual({ sup: 1, inf: 1, izq: 1, der: 1 });
   });
 });
 
 // ── Drawer box thickness ────────────────────────────────────────────────────
-describe('calculateDespiece — drawer box thickness', () => {
-  const base: DespieceInput = {
-    heightIn: 30,
-    widthIn: 24,
-    depthIn: 24,
-    cabinetType: 'base',
-    bodyThickness: 18,
-    shelves: 0,
-    hasDoors: false,
-    numDoors: 0,
-    doorSectionHeightIn: 0,
-    hasDrawers: true,
-    numDrawers: 3,
-    drawerSectionHeightIn: 0,
-    optimizeDepth: true,
-  };
+describe('computeCutList — drawer box thickness', () => {
+  function drawerBase(overrides: Partial<CabinetConfig>): CabinetConfig {
+    return {
+      widthMm: Math.round(24 * 25.4),
+      heightMm: Math.round(30 * 25.4),
+      depthMm: Math.round(24 * 25.4),
+      family: 'base',
+      boxThicknessMm: 18,
+      shelfCount: 0,
+      hasDoors: false,
+      doorCount: 0,
+      doorSectionHeightMm: 0,
+      hasDrawers: true,
+      drawerCount: 3,
+      drawerSectionHeightMm: 0,
+      optimizeDepth: true,
+      ...overrides,
+    };
+  }
 
   it('defaults to 15mm drawer box thickness when not specified', () => {
-    const pieces = calculateDespiece(base);
+    const pieces = computeCutList(drawerBase({}));
     const ends = findPiece(pieces, 'Drawer Box Ends')!;
     // W=24"→610mm, D=24"→600mm(optimized), esp=18
     // innerW = 610 - 36 = 574, boxOuterW = 574 - 26 = 548
@@ -385,17 +401,17 @@ describe('calculateDespiece — drawer box thickness', () => {
     expect(ends.ancho).toBe(518);
   });
 
-  it('uses custom drawerBoxThickness when provided', () => {
-    const pieces = calculateDespiece({ ...base, drawerBoxThickness: 12 });
+  it('uses custom drawerBoxThicknessMm when provided', () => {
+    const pieces = computeCutList(drawerBase({ drawerBoxThicknessMm: 12 }));
     const ends = findPiece(pieces, 'Drawer Box Ends')!;
     // With drawerEsp=12: 548 - 24 = 524
     expect(ends.ancho).toBe(524);
   });
 
-  it('does NOT affect body pieces (sides, top, bottom still use bodyThickness)', () => {
-    const pieces = calculateDespiece({ ...base, drawerBoxThickness: 12 });
+  it('does NOT affect body pieces (sides, top, bottom still use boxThicknessMm)', () => {
+    const pieces = computeCutList(drawerBase({ drawerBoxThicknessMm: 12 }));
     const topPanel = findPiece(pieces, 'Top Panel')!;
-    // Top panel alto = D - esp = 600 - 18 = 582 (uses bodyThickness, not drawerBoxThickness)
+    // Top panel alto = D - esp = 600 - 18 = 582 (uses boxThicknessMm, not drawerBoxThicknessMm)
     expect(topPanel.alto).toBe(582);
   });
 });

@@ -1,4 +1,6 @@
-import type { CutPiece, Cubrecanto } from '../types';
+import type { CutPiece, Cubrecanto } from '../../types';
+import type { CabinetConfig } from './CabinetConfig';
+import { toEngineFamily } from './CabinetConfig';
 
 // ── Constants (mm) ───────────────────────────────────────────────────────────
 const DOOR_OVERLAY_GAP   = 3;   // overlay gap between door/drawer face and opening
@@ -6,26 +8,6 @@ const SLIDE_CLEARANCE    = 26;  // total width deducted for drawer slides
 const DRAWER_BACK_CLEAR  = 50;  // drawer box doesn't reach the back panel
 const DRAWER_TOP_CLEAR   = 40;  // drawer box is shorter than its face
 const RAIL_HEIGHT        = 100; // height of front rails (stretchers)
-
-export interface DespieceInput {
-  heightIn: number;
-  widthIn: number;
-  depthIn: number;
-  cabinetType: 'base' | 'wall' | 'tall';
-  bodyThickness: number;
-  shelves: number;
-  hasDoors: boolean;
-  numDoors: number;
-  doorSectionHeightIn: number;
-  hasDrawers: boolean;
-  numDrawers: number;
-  drawerSectionHeightIn: number;
-  // V2 additions (all optional for backward compatibility)
-  shelfType?: 'fixed' | 'adjustable';
-  optimizeDepth?: boolean;
-  isSink?: boolean;
-  drawerBoxThickness?: number;  // mm, default 15. Thickness for drawer box sides/ends/bottom
-}
 
 function uid(): string {
   return crypto.randomUUID();
@@ -40,24 +22,33 @@ function optimizeDepthMm(rawMm: number): number {
   return rawMm;                    // keep raw for very deep cabinets
 }
 
-export function calculateDespiece(input: DespieceInput): CutPiece[] {
-  const {
-    heightIn, widthIn, depthIn,
-    cabinetType, bodyThickness: esp,
-    shelves,
-    hasDoors, numDoors, doorSectionHeightIn,
-    hasDrawers, numDrawers, drawerSectionHeightIn,
-  } = input;
+/**
+ * Pure, deterministic (modulo piece IDs) cut-list engine. Takes a canonical
+ * `CabinetConfig` and returns the flat list of cut pieces in mm, tagged with
+ * material role, edgeband pattern, and grain direction.
+ *
+ * The engine operates directly in millimeters. It is agnostic to the origin
+ * of its input: today it runs on catalog-derived configs, and Phase 2 will
+ * run it on Draft Tool custom cabinets through the same entry point.
+ */
+export function computeCutList(config: CabinetConfig): CutPiece[] {
+  const cabinetType = toEngineFamily(config.family);
+  const esp = config.boxThicknessMm ?? 18;
+  const drawerEsp = config.drawerBoxThicknessMm ?? 15;
+  const shelfType = config.shelfType ?? (cabinetType === 'base' ? 'fixed' : 'adjustable');
+  const doOptimize = config.optimizeDepth ?? true;
+  const isSink = config.isSink ?? false;
+  const hasDoors = config.hasDoors;
+  const numDoors = config.doorCount;
+  const hasDrawers = config.hasDrawers;
+  const numDrawers = config.drawerCount;
+  const shelves = config.shelfCount;
 
-  // V2 defaults
-  const shelfType = input.shelfType ?? (cabinetType === 'base' ? 'fixed' : 'adjustable');
-  const doOptimize = input.optimizeDepth ?? true;
-  const isSink = input.isSink ?? false;
-  const drawerEsp = input.drawerBoxThickness ?? 15;
-
-  const H = Math.round(heightIn * 25.4);
-  const W = Math.round(widthIn  * 25.4);
-  const rawD = Math.round(depthIn * 25.4);
+  // Canonical mm dimensions (already rounded integers when produced by
+  // adapters via Math.round(inches * 25.4)).
+  const H = config.heightMm;
+  const W = config.widthMm;
+  const rawD = config.depthMm;
   const D = doOptimize ? optimizeDepthMm(rawD) : rawD;
 
   // Inner width (between the two side panels)
@@ -138,7 +129,9 @@ export function calculateDespiece(input: DespieceInput): CutPiece[] {
 
   // ── Doors ──────────────────────────────────────────────────────────────────
   if (hasDoors && numDoors > 0) {
-    const doorH = doorSectionHeightIn > 0 ? Math.round(doorSectionHeightIn * 25.4) : H;
+    const doorH = config.doorSectionHeightMm && config.doorSectionHeightMm > 0
+      ? config.doorSectionHeightMm
+      : H;
     add(
       'Doors',
       Math.round(W / numDoors) - DOOR_OVERLAY_GAP,
@@ -152,8 +145,10 @@ export function calculateDespiece(input: DespieceInput): CutPiece[] {
 
   // ── Drawer Boxes ───────────────────────────────────────────────────────────
   if (hasDrawers && numDrawers > 0) {
-    const drawerH_in  = drawerSectionHeightIn > 0 ? drawerSectionHeightIn : heightIn;
-    const faceHeight  = Math.round((drawerH_in / numDrawers) * 25.4);
+    const drawerSectionMm = config.drawerSectionHeightMm && config.drawerSectionHeightMm > 0
+      ? config.drawerSectionHeightMm
+      : H;
+    const faceHeight  = Math.round(drawerSectionMm / numDrawers);
     const boxOuterW   = innerW - SLIDE_CLEARANCE;   // outer width of drawer box
     const boxInnerH   = faceHeight - DRAWER_TOP_CLEAR;
     const boxDepth    = D - DRAWER_BACK_CLEAR;       // drawer box depth (guide length)

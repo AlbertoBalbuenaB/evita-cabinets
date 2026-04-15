@@ -4,7 +4,7 @@ import { Button } from './Button';
 import { Input } from './Input';
 import { CollectionSelector } from './CollectionSelector';
 import type { Product, ProductInsert, CutPiece } from '../types';
-import { calculateDespiece } from '../lib/despieceCalculator';
+import { computeCutList, type CabinetConfig } from '../lib/cabinet';
 import { EdgeBandCell } from './EdgeBandPopover';
 
 interface ProductFormModalProps {
@@ -239,24 +239,25 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
     if (cutPieces.length > 0) {
       if (!window.confirm('This will replace the current despiece. Continue?')) return;
     }
-    const pieces = calculateDespiece({
-      heightIn: H,
-      widthIn: W,
-      depthIn: D,
-      cabinetType: calcCabinetType,
-      bodyThickness: calcBodyThickness,
-      shelves: calcShelves,
+    const config: CabinetConfig = {
+      widthMm: Math.round(W * 25.4),
+      heightMm: Math.round(H * 25.4),
+      depthMm: Math.round(D * 25.4),
+      family: calcCabinetType,
       hasDoors: calcHasDoors,
-      numDoors: calcDoors,
-      doorSectionHeightIn: calcDoorSectionH,
+      doorCount: calcDoors,
+      doorSectionHeightMm: Math.round(calcDoorSectionH * 25.4),
       hasDrawers: calcHasDrawers,
-      numDrawers: calcDrawers,
-      drawerSectionHeightIn: calcDrawerSectionH,
+      drawerCount: calcDrawers,
+      drawerSectionHeightMm: Math.round(calcDrawerSectionH * 25.4),
+      shelfCount: calcShelves,
       shelfType: calcShelfType,
-      optimizeDepth: calcOptimizeDepth,
       isSink: calcIsSink,
-      drawerBoxThickness: calcDrawerBoxThickness,
-    });
+      optimizeDepth: calcOptimizeDepth,
+      boxThicknessMm: calcBodyThickness,
+      drawerBoxThicknessMm: calcDrawerBoxThickness,
+    };
+    const pieces = computeCutList(config);
     setCutPieces(pieces);
     setDespieceOpen(true);
   }
