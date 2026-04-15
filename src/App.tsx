@@ -23,6 +23,7 @@ const Suppliers = lazy(() => import('./pages/Suppliers').then(m => ({ default: m
 const SupplierPage = lazy(() => import('./pages/SupplierPage').then(m => ({ default: m.SupplierPage })));
 const ToolsHub = lazy(() => import('./pages/ToolsHub').then(m => ({ default: m.ToolsHub })));
 const PlanViewerPage = lazy(() => import('./pages/PlanViewerPage').then(m => ({ default: m.PlanViewerPage })));
+const DraftToolPage = lazy(() => import('./tools/draft/DraftToolPage').then(m => ({ default: m.DraftToolPage })));
 
 function AdminRoute({ children }: { children: ReactNode }) {
   const { member, loading } = useCurrentMember();
@@ -75,6 +76,7 @@ function App() {
             <Route path="/optimizer" element={<OptimizerPage />} />
             <Route path="/tools" element={<ToolsHub />} />
             <Route path="/tools/plan-viewer" element={<PlanViewerPage />} />
+            <Route path="/tools/draft" element={<DraftToolPage />} />
             <Route path="/suppliers/:id" element={<SupplierPage />} />
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="*" element={<Navigate to="/" replace />} />

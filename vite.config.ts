@@ -30,6 +30,8 @@ export default defineConfig({
             '@tiptap/extension-placeholder',
             '@tiptap/suggestion',
           ],
+          'vendor-konva': ['konva', 'react-konva'],
+          'vendor-svg2pdf': ['svg2pdf.js'],
         },
       },
     },
