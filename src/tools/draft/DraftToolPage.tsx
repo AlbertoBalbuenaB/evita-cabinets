@@ -120,13 +120,13 @@ export function DraftToolPage() {
   }
 
   return (
-    <div className="page-enter h-[calc(100vh-140px)] flex flex-col gap-3">
+    <div className="page-enter h-[calc(100vh-56px)] flex flex-col gap-2 px-3 sm:px-4 pt-3 pb-2">
       {/* Back link */}
       <Link
         to="/tools"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors w-fit"
+        className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors w-fit"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-3.5 w-3.5" />
         Back to Tools
       </Link>
 

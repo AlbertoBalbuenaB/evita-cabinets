@@ -473,7 +473,7 @@ export function primitivesToSvgString(
 
   const parts: string[] = [];
   parts.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX} ${minY} ${w} ${h}" fill="none" stroke="currentColor" stroke-linecap="square">`
+    `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" viewBox="${minX} ${minY} ${w} ${h}" fill="none" stroke="currentColor" stroke-linecap="square">`
   );
   // Flip y-axis so origin is lower-left.
   parts.push(`<g transform="translate(0, ${heightMm}) scale(1, -1)">`);

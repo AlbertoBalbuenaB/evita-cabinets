@@ -21,10 +21,10 @@
  *   - Selection: single click, shift-click multi, Delete key, arrow-nudge.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Stage, Layer, Rect, Line, Text, Group } from 'react-konva';
 import type Konva from 'konva';
-import { Ruler, Square, Tag as TagIcon } from 'lucide-react';
+import { Maximize2, Ruler, Square, Tag as TagIcon } from 'lucide-react';
 import { useDraftStore } from '../store/useDraftStore';
 import { useCatalog } from '../lib/useCatalog';
 import type {
@@ -43,7 +43,7 @@ import {
   renderCountertop,
   renderDimension,
 } from '../svg/blockRenderer';
-import { inToMm } from '../utils/format';
+import { inToMm, formatInchesFractional } from '../utils/format';
 import { snapCabinetOnDrop } from './snapHelpers';
 import {
   generateCountertopOutlines,
@@ -67,10 +67,12 @@ export function DraftCanvas() {
   const stageRef = useRef<Konva.Stage>(null);
   const [size, setSize] = useState({ width: 800, height: 600 });
   const [stageState, setStageState] = useState({
-    scale: 0.4, // mm → px; 0.4 ≈ 10mm per 4px
-    x: 200,
-    y: 400,
+    scale: 0.2, // provisional; replaced by fit-to-view on first render
+    x: 400,
+    y: 300,
   });
+  /** Set by the first auto-fit; prevents re-fitting on every element change. */
+  const didInitialFitRef = useRef(false);
 
   // Wall tool state (click-click)
   const [wallToolActive, setWallToolActive] = useState(false);
@@ -108,6 +110,98 @@ export function DraftCanvas() {
     obs.observe(containerRef.current);
     return () => obs.disconnect();
   }, []);
+
+  /**
+   * Compute a {scale, x, y} transform that frames the visible elements (or a
+   * sensible default 6m × 4m viewport when the drawing is empty) inside the
+   * container with a 10% margin. Keeps the y-flip convention used by the
+   * world layer (scaleY={-scale}).
+   */
+  const computeFitToView = useCallback(
+    (
+      elementsToFit: DrawingElementRow[],
+      containerW: number,
+      containerH: number
+    ) => {
+      const marginPx = 60;
+      const drawable = {
+        w: Math.max(200, containerW - marginPx * 2),
+        h: Math.max(200, containerH - marginPx * 2),
+      };
+
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      for (const el of elementsToFit) {
+        const ex = Number(el.x_mm);
+        const ey = Number(el.y_mm);
+        const ew = Number(el.width_mm ?? 0);
+        const eh = Number(el.height_mm ?? 0);
+        minX = Math.min(minX, ex);
+        minY = Math.min(minY, ey);
+        maxX = Math.max(maxX, ex + ew);
+        maxY = Math.max(maxY, ey + eh);
+      }
+      if (!Number.isFinite(minX) || maxX - minX < 10 || maxY - minY < 10) {
+        // Empty or degenerate: default 6m × 4m centered on origin.
+        const defaultW = 6000;
+        const defaultH = 4000;
+        minX = -defaultW / 2;
+        minY = -defaultH / 2;
+        maxX = defaultW / 2;
+        maxY = defaultH / 2;
+      }
+      const bboxW = maxX - minX;
+      const bboxH = maxY - minY;
+      const scale = Math.min(drawable.w / bboxW, drawable.h / bboxH, 2);
+      const cx = (minX + maxX) / 2;
+      const cy = (minY + maxY) / 2;
+      return {
+        scale,
+        // World → screen: screen.x = stageX + wx * scale. For cx to land at
+        // the container center: stageX = containerW/2 - cx * scale.
+        x: containerW / 2 - cx * scale,
+        // With scaleY=-scale: screen.y = stageY - wy * scale. For cy to land
+        // at the container center: stageY = containerH/2 + cy * scale.
+        y: containerH / 2 + cy * scale,
+      };
+    },
+    []
+  );
+
+  const fitToView = useCallback(() => {
+    const visible = Object.values(elements).filter(
+      (e) => e.view_type === currentView
+    );
+    const next = computeFitToView(visible, size.width, size.height);
+    setStageState(next);
+  }, [elements, currentView, size.width, size.height, computeFitToView]);
+
+  // First render / drawing change → auto-fit once the container has a size.
+  useEffect(() => {
+    if (didInitialFitRef.current) return;
+    if (size.width < 400 || size.height < 300) return;
+    const next = computeFitToView([], size.width, size.height);
+    setStageState(next);
+    didInitialFitRef.current = true;
+  }, [size.width, size.height, computeFitToView]);
+
+  // When the current drawing changes, re-fit to the new content.
+  useEffect(() => {
+    if (!currentDrawing) return;
+    didInitialFitRef.current = false; // allow another auto-fit
+    if (size.width < 400 || size.height < 300) return;
+    const visible = Object.values(elements).filter(
+      (e) => e.view_type === currentView
+    );
+    const next = computeFitToView(visible, size.width, size.height);
+    setStageState(next);
+    didInitialFitRef.current = true;
+    // We intentionally DON'T depend on `elements` here — auto-fit should
+    // trigger only on drawing or view change, not every element mutation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentDrawing?.id, currentView]);
 
   // Keyboard: Delete, Escape, arrow-nudge
   useEffect(() => {
@@ -445,7 +539,9 @@ export function DraftCanvas() {
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 h-full overflow-hidden rounded-2xl glass-white text-slate-700"
+      className={`relative flex-1 h-full overflow-hidden rounded-2xl glass-white text-slate-700 ${
+        wallToolActive ? 'cursor-crosshair' : ''
+      }`}
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'copy';
@@ -498,7 +594,25 @@ export function DraftCanvas() {
           <TagIcon className="h-3.5 w-3.5" />
           Auto-tag
         </button>
+        <button
+          type="button"
+          onClick={fitToView}
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium glass-white border border-slate-200/60 text-slate-700 hover:bg-white"
+          title="Fit visible elements to the viewport"
+        >
+          <Maximize2 className="h-3.5 w-3.5" />
+          Fit
+        </button>
       </div>
+
+      {/* Wall-tool hint banner */}
+      {wallToolActive && (
+        <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-lg bg-indigo-600/90 text-white text-xs shadow-lg">
+          {wallStart
+            ? 'Click to set the wall end — press Esc to cancel'
+            : 'Click to set the wall start point'}
+        </div>
+      )}
 
       <Stage
         ref={stageRef}
@@ -532,7 +646,7 @@ export function DraftCanvas() {
           ))}
         </Layer>
 
-        {/* Wall-tool preview line */}
+        {/* Wall-tool preview line + live length label */}
         {wallToolActive && wallStart && wallCursor && (
           <Layer
             listening={false}
@@ -548,6 +662,28 @@ export function DraftCanvas() {
               opacity={0.4}
               lineCap="round"
             />
+            {/* Live length label at the midpoint, unflipped for readability */}
+            {(() => {
+              const midX = (wallStart.x + wallCursor.x) / 2;
+              const midY = (wallStart.y + wallCursor.y) / 2;
+              const lengthMm = Math.hypot(
+                wallCursor.x - wallStart.x,
+                wallCursor.y - wallStart.y
+              );
+              const label = formatInchesFractional(lengthMm);
+              return (
+                <Group x={midX} y={midY} scaleY={-1}>
+                  <Text
+                    text={label}
+                    fontSize={40 / stageState.scale}
+                    fontStyle="bold"
+                    fill="#4338ca"
+                    offsetX={(label.length * (40 / stageState.scale)) / 4}
+                    offsetY={(60 / stageState.scale)}
+                  />
+                </Group>
+              );
+            })()}
           </Layer>
         )}
 

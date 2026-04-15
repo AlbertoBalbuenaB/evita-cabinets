@@ -33,9 +33,9 @@ function wallRow(
     depth_mm: null,
     props: { type: 'wall', thickness_mm: 114.3 } as unknown as DrawingElementRow['props'],
     z_index: -10,
-    created_at: null,
-    updated_at: null,
-  } as DrawingElementRow;
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  } as unknown as DrawingElementRow;
 }
 
 describe('snapCabinetOnDrop', () => {

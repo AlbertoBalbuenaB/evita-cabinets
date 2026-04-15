@@ -31,9 +31,9 @@ function cabRow(
     depth_mm: depth,
     props: { type: 'cabinet' } as unknown as DrawingElementRow['props'],
     z_index: 0,
-    created_at: null,
-    updated_at: null,
-  } as DrawingElementRow;
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  } as unknown as DrawingElementRow;
 }
 
 describe('generateCountertopOutlines', () => {

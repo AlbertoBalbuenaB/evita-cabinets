@@ -202,14 +202,14 @@ function CatalogEntry({ product }: { product: ProductsCatalogRow }) {
       className="flex items-center gap-2 p-1.5 rounded-md hover:bg-white/70 cursor-grab active:cursor-grabbing group transition-colors"
     >
       <div
-        className="w-9 h-9 flex-shrink-0 flex items-center justify-center text-slate-700"
+        className="w-11 h-11 flex-shrink-0 flex items-center justify-center overflow-hidden rounded-md bg-white/60 border border-slate-200/60 text-slate-700 p-1"
         dangerouslySetInnerHTML={{ __html: thumb }}
       />
       <div className="min-w-0 flex-1">
         <div className="text-[11px] font-mono text-slate-800 truncate">{product.sku}</div>
         <div className="text-[10px] text-slate-500 truncate">{product.description}</div>
       </div>
-      <Grip className="h-3 w-3 text-slate-300 group-hover:text-slate-500" />
+      <Grip className="h-3 w-3 text-slate-300 group-hover:text-slate-500 flex-shrink-0" />
     </li>
   );
 }
