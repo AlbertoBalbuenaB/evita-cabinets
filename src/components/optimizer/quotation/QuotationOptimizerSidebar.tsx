@@ -24,6 +24,7 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
   const pendingPieces              = useStore((s) => s.pendingPieces);
   const pendingStocks              = useStore((s) => s.pendingStocks);
   const pendingEbConfig            = useStore((s) => s.pendingEbConfig);
+  const pendingEbTypeSummary       = useStore((s) => s.pendingEbTypeSummary);
   const pendingBuiltAt             = useStore((s) => s.pendingBuiltAt);
   const pendingCabinetInstanceCount = useStore((s) => s.pendingCabinetInstanceCount);
   const globalSierra               = useStore((s) => s.globalSierra);
@@ -145,43 +146,60 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
           )}
         </section>
 
-        {/* ── Edge banding slots ─────────────────────────────── */}
+        {/* ── Edge banding types ─────────────────────────────── */}
         <section>
           <header className="flex items-center gap-1.5 mb-2">
             <Scissors className="h-3.5 w-3.5 text-blue-600" />
             <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wide">Edge Banding</h3>
           </header>
           <ul className="space-y-1">
-            {(['a', 'b', 'c'] as const).map((slot) => {
-              const cfg = pendingEbConfig[slot];
-              const isSet = cfg.id !== '';
-              const isSelected = selectedEbSlots.has(slot);
-              return (
-                <li key={slot} className={`rounded border px-2 py-1.5 text-xs ${isSet ? (isSelected ? 'border-slate-200' : 'border-dashed border-slate-300 opacity-60') : 'border-dashed border-slate-200 bg-slate-50'}`}>
-                  <label className="flex items-start gap-1.5 cursor-pointer">
-                    {isSet && (
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleEbSlot(slot)}
-                        className="mt-0.5 rounded border-slate-300 shrink-0"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono uppercase text-slate-400">{slot}</span>
-                        <span className="font-mono tabular-nums text-slate-500">
-                          {isSet ? `$${cfg.price.toFixed(2)}/m` : '—'}
-                        </span>
-                      </div>
-                      <div className={`mt-0.5 truncate ${isSet ? 'text-slate-800' : 'text-slate-400 italic'}`} title={cfg.name || 'not configured'}>
-                        {cfg.name || 'not configured'}
-                      </div>
+            {Object.keys(pendingEbTypeSummary).length > 0 ? (
+              Object.values(pendingEbTypeSummary).map((eb) => (
+                <li key={eb.plId} className="rounded border border-slate-200 px-2 py-1.5 text-xs">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase text-slate-400">{eb.roles.join(' + ')}</span>
+                      <span className="font-mono tabular-nums text-slate-500">${eb.pricePerMeter.toFixed(2)}/m</span>
                     </div>
-                  </label>
+                    <div className="mt-0.5 truncate text-slate-800" title={eb.name}>
+                      {eb.name}
+                    </div>
+                  </div>
                 </li>
-              );
-            })}
+              ))
+            ) : (
+              /* Legacy fallback: 3 fixed slots */
+              (['a', 'b', 'c'] as const).map((slot) => {
+                const cfg = pendingEbConfig[slot];
+                const isSet = cfg.id !== '';
+                const isSelected = selectedEbSlots.has(slot);
+                return (
+                  <li key={slot} className={`rounded border px-2 py-1.5 text-xs ${isSet ? (isSelected ? 'border-slate-200' : 'border-dashed border-slate-300 opacity-60') : 'border-dashed border-slate-200 bg-slate-50'}`}>
+                    <label className="flex items-start gap-1.5 cursor-pointer">
+                      {isSet && (
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleEbSlot(slot)}
+                          className="mt-0.5 rounded border-slate-300 shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono uppercase text-slate-400">{slot}</span>
+                          <span className="font-mono tabular-nums text-slate-500">
+                            {isSet ? `$${cfg.price.toFixed(2)}/m` : '—'}
+                          </span>
+                        </div>
+                        <div className={`mt-0.5 truncate ${isSet ? 'text-slate-800' : 'text-slate-400 italic'}`} title={cfg.name || 'not configured'}>
+                          {cfg.name || 'not configured'}
+                        </div>
+                      </div>
+                    </label>
+                  </li>
+                );
+              })
+            )}
           </ul>
         </section>
 
