@@ -42,7 +42,7 @@ export function computeCutList(config: CabinetConfig): CutPiece[] {
   const numDoors = config.doorCount;
   const hasDrawers = config.hasDrawers;
   const numDrawers = config.drawerCount;
-  const shelves = config.shelfCount;
+  const shelves = config.shelfCount + (config.extraShelves ?? 0);
 
   // Canonical mm dimensions (already rounded integers when produced by
   // adapters via Math.round(inches * 25.4)).

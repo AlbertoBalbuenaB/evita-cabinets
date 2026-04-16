@@ -1,4 +1,4 @@
-import type { Product, PriceListItem, HardwareItem } from '../types';
+import type { Product, PriceListItem, HardwareItem, AreaCabinet } from '../types';
 
 export function parseDimensions(dimensions: string | null | undefined): number {
   if (!dimensions) return 32;
@@ -32,6 +32,34 @@ export function calculateBackPanelMaterialCost(
   const price = material.price_with_tax || material.price;
   const pricePerSF = price / sfPerSheet;
   return backPanelSF * pricePerSF;
+}
+
+/**
+ * Compute the SF to exclude from box_sf when drawer box or shelf
+ * materials are separately assigned. Follows the same pattern as
+ * backPanelSF but derives SF from cut_pieces JSONB.
+ */
+export function computeBoxSfExclude(product: Product, cabinet: AreaCabinet): number {
+  let exclude = 0;
+  if (cabinet.use_back_panel_material && cabinet.back_panel_sf) {
+    exclude += cabinet.back_panel_sf;
+  }
+  const pieces = (product as any).cut_pieces as any[] | null;
+  if ((cabinet as any).use_drawer_box_material && pieces) {
+    exclude += pieces
+      .filter((cp: any) => cp.material === 'drawer_box')
+      .reduce((s: number, cp: any) => s + (cp.ancho * cp.alto * cp.cantidad) / 92903.04, 0);
+  }
+  if ((cabinet as any).use_shelf_material && pieces) {
+    const shelfPieces = pieces.filter((cp: any) => cp.material === 'shelf');
+    let shelfSF = shelfPieces.reduce((s: number, cp: any) => s + (cp.ancho * cp.alto * cp.cantidad) / 92903.04, 0);
+    const extraShelves = (cabinet as any).extra_shelves ?? 0;
+    if (extraShelves > 0 && shelfPieces.length > 0) {
+      shelfSF += (shelfPieces[0].ancho * shelfPieces[0].alto * extraShelves) / 92903.04;
+    }
+    exclude += shelfSF;
+  }
+  return exclude;
 }
 
 export function calculateBoxMaterialCost(
