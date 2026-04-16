@@ -270,6 +270,20 @@ export async function buildOptimizerSetupFromQuotation(
           }
           break;
         }
+        case 'drawer_box': {
+          // Use dedicated drawer box material if configured, else fall back to box.
+          const dbxId = (cab as any).drawer_box_material_id;
+          const useDbx = (cab as any).use_drawer_box_material;
+          materialId = (useDbx && dbxId) ? dbxId : cab.box_material_id;
+          break;
+        }
+        case 'shelf': {
+          // Use dedicated shelf material if configured, else fall back to box.
+          const shelfId = (cab as any).shelf_material_id;
+          const useShelf = (cab as any).use_shelf_material;
+          materialId = (useShelf && shelfId) ? shelfId : cab.box_material_id;
+          break;
+        }
         case 'custom':
           materialId = cab.box_material_id;
           warnings.push(

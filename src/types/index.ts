@@ -13,7 +13,7 @@ export interface CutPiece {
   ancho: number;    // mm
   alto: number;     // mm
   cantidad: number;
-  material: 'cuerpo' | 'frente' | 'back' | 'custom';
+  material: 'cuerpo' | 'frente' | 'back' | 'drawer_box' | 'shelf' | 'custom';
   cubrecanto?: Cubrecanto;
   veta?: 'none' | 'horizontal' | 'vertical';
 }
