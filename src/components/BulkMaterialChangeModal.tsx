@@ -614,6 +614,8 @@ export function BulkMaterialChangeModal({
               <option value="box_interior_finish">Box Interior Finish</option>
               <option value="doors_interior_finish">Doors Interior Finish</option>
               <option value="door_profile">Door Profile</option>
+              <option value="drawer_box_material">Drawer Box Material</option>
+              <option value="shelf_material">Shelf Material</option>
               <option value="hardware">Hardware</option>
             </select>
           </div>

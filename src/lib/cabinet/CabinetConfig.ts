@@ -69,6 +69,8 @@ export interface CabinetConfig {
   // ── Shelves ───────────────────────────────────────────────────────────────
   shelfCount: number;
   shelfType?: 'fixed' | 'adjustable';
+  /** Additional shelves beyond the product template default. */
+  extraShelves?: number;
 
   // ── Structural flags ──────────────────────────────────────────────────────
   isSink?: boolean;

@@ -11,6 +11,7 @@ import {
   calculateAccessoriesCost,
   calculateLaborCost,
   calculateDoorProfileCost,
+  computeBoxSfExclude,
   parseDimensions,
 } from './calculations';
 import { getSettings } from './settingsStore';
@@ -307,14 +308,15 @@ async function recalculateCabinetCosts(
   const doorsEdgeband = cabinet.doors_edgeband_id ? priceList.find(p => p.id === cabinet.doors_edgeband_id) : null;
   const doorsInteriorFinish = cabinet.doors_interior_finish_id ? priceList.find(p => p.id === cabinet.doors_interior_finish_id) : null;
 
+  const sfExclude = computeBoxSfExclude(product, cabinet);
   const boxMaterialCost = boxMaterial && boxEdgeband
-    ? calculateBoxMaterialCost(product, boxMaterial, cabinet.quantity)
+    ? calculateBoxMaterialCost(product, boxMaterial, cabinet.quantity, sfExclude)
     : 0;
   const boxEdgebandCost = boxMaterial && boxEdgeband
     ? calculateBoxEdgebandCost(product, boxEdgeband, cabinet.quantity)
     : 0;
   const boxInteriorFinishCost = boxInteriorFinish && boxMaterial && boxEdgeband
-    ? calculateInteriorFinishCost(product, boxInteriorFinish, cabinet.quantity, true)
+    ? calculateInteriorFinishCost(product, boxInteriorFinish, cabinet.quantity, true, sfExclude)
     : 0;
   const doorsMaterialCost = doorsMaterial && doorsEdgeband
     ? calculateDoorsMaterialCost(product, doorsMaterial, cabinet.quantity)

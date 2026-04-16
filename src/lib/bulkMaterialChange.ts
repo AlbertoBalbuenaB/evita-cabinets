@@ -7,6 +7,7 @@ import {
   calculateDoorsEdgebandCost,
   calculateInteriorFinishCost,
   calculateDoorProfileCost,
+  calculateBackPanelMaterialCost,
 } from './calculations';
 export type MaterialChangeType =
   | 'box_material'
@@ -15,7 +16,9 @@ export type MaterialChangeType =
   | 'doors_edgeband'
   | 'box_interior_finish'
   | 'doors_interior_finish'
-  | 'door_profile';
+  | 'door_profile'
+  | 'drawer_box_material'
+  | 'shelf_material';
   // Note: hardware is intentionally excluded — hardware is a JSON array, not a single ID.
   // Hardware bulk changes are handled by the dedicated bulkHardwareChange module.
 
@@ -95,6 +98,14 @@ export async function getMaterialsInUse(
     case 'door_profile':
       materialColumn = 'door_profile_id';
       costColumn = 'door_profile_cost';
+      break;
+    case 'drawer_box_material':
+      materialColumn = 'drawer_box_material_id';
+      costColumn = 'drawer_box_material_cost';
+      break;
+    case 'shelf_material':
+      materialColumn = 'shelf_material_id';
+      costColumn = 'shelf_material_cost';
       break;
     default:
       throw new Error(`Unknown change type: ${changeType}`);
@@ -189,6 +200,14 @@ export async function previewBulkMaterialChange(
       materialColumn = 'door_profile_id';
       costColumn = 'door_profile_cost';
       break;
+    case 'drawer_box_material':
+      materialColumn = 'drawer_box_material_id';
+      costColumn = 'drawer_box_material_cost';
+      break;
+    case 'shelf_material':
+      materialColumn = 'shelf_material_id';
+      costColumn = 'shelf_material_cost';
+      break;
     default:
       throw new Error(`Unknown change type: ${changeType}`);
   }
@@ -267,6 +286,20 @@ export async function previewBulkMaterialChange(
         case 'door_profile':
           newCost = calculateDoorProfileCost(product, newMaterial, cabinet.quantity);
           break;
+        case 'drawer_box_material': {
+          const dbxPieces = ((product as any).cut_pieces as any[] | null)?.filter((cp: any) => cp.material === 'drawer_box') ?? [];
+          const dbxSF = dbxPieces.reduce((s: number, cp: any) => s + (cp.ancho * cp.alto * cp.cantidad) / 92903.04, 0);
+          newCost = dbxSF > 0 ? calculateBackPanelMaterialCost(dbxSF * cabinet.quantity, newMaterial) : 0;
+          break;
+        }
+        case 'shelf_material': {
+          const shelfPieces = ((product as any).cut_pieces as any[] | null)?.filter((cp: any) => cp.material === 'shelf') ?? [];
+          const shelfSF = shelfPieces.reduce((s: number, cp: any) => s + (cp.ancho * cp.alto * cp.cantidad) / 92903.04, 0);
+          const extra = ((cabinet as any).extra_shelves ?? 0);
+          const extraSF = extra > 0 && shelfPieces.length > 0 ? (shelfPieces[0].ancho * shelfPieces[0].alto * extra) / 92903.04 : 0;
+          newCost = (shelfSF + extraSF) > 0 ? calculateBackPanelMaterialCost((shelfSF + extraSF) * cabinet.quantity, newMaterial) : 0;
+          break;
+        }
       }
     } catch (error) {
       console.error(`Error calculating cost for cabinet ${cabinet.id}:`, error);
@@ -386,6 +419,16 @@ export async function executeBulkMaterialChange(
         case 'door_profile':
           updates.door_profile_id = newMaterialId;
           updates.door_profile_cost = cabinet.newCost;
+          break;
+        case 'drawer_box_material':
+          updates.drawer_box_material_id = newMaterialId;
+          updates.drawer_box_material_cost = cabinet.newCost;
+          updates.use_drawer_box_material = true;
+          break;
+        case 'shelf_material':
+          updates.shelf_material_id = newMaterialId;
+          updates.shelf_material_cost = cabinet.newCost;
+          updates.use_shelf_material = true;
           break;
       }
 

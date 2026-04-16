@@ -369,6 +369,55 @@ export async function buildOptimizerSetupFromQuotation(
       cabinetProducedAnyPiece = true;
     }
 
+    // Extra shelves: duplicate the shelf template piece with the extra count.
+    const extraShelves = (cab as any).extra_shelves ?? 0;
+    if (extraShelves > 0) {
+      const shelfTemplate = cutPieces.find((cp: any) => cp.material === 'shelf');
+      if (shelfTemplate && shelfTemplate.ancho && shelfTemplate.alto) {
+        const shelfRole = 'shelf' as const;
+        const shelfMatId = ((cab as any).use_shelf_material && (cab as any).shelf_material_id)
+          ? (cab as any).shelf_material_id : cab.box_material_id;
+        if (shelfMatId) {
+          const shelfPriceRow = priceListById.get(shelfMatId);
+          if (shelfPriceRow && !isNotApply(shelfPriceRow.concept_description)) {
+            const thickness = shelfPriceRow.technical_thickness_mm ?? FALLBACK_THICKNESS_MM;
+            const key = stockKey(shelfPriceRow.id, thickness);
+            if (!stocksByKey.has(key)) {
+              const hasTechDims = shelfPriceRow.technical_width_mm != null && shelfPriceRow.technical_height_mm != null
+                && shelfPriceRow.technical_width_mm > 0 && shelfPriceRow.technical_height_mm > 0;
+              stocksByKey.set(key, {
+                id: crypto.randomUUID(),
+                nombre: `${shelfPriceRow.concept_description} ${thickness}mm`,
+                ancho: hasTechDims ? Number(shelfPriceRow.technical_width_mm) : FALLBACK_BOARD_WIDTH_MM,
+                alto: hasTechDims ? Number(shelfPriceRow.technical_height_mm) : FALLBACK_BOARD_HEIGHT_MM,
+                costo: Number(shelfPriceRow.price ?? 0),
+                sierra: DEFAULT_KERF_MM,
+                materialId: shelfPriceRow.id,
+                qty: 0,
+              });
+            }
+            pieces.push({
+              id: crypto.randomUUID(),
+              nombre: 'Shelves (extra)',
+              material: `${shelfPriceRow.concept_description} ${thickness}mm`,
+              grosor: thickness,
+              ancho: shelfTemplate.ancho,
+              alto: shelfTemplate.alto,
+              cantidad: extraShelves * (cab.quantity ?? 1),
+              veta: shelfTemplate.veta ?? 'horizontal',
+              cubrecanto: shelfTemplate.cubrecanto ?? DEFAULT_CUBRECANTO,
+              area: areaName,
+              cabinetId: cab.id,
+              areaId,
+              cutPieceRole: shelfRole,
+              sourceCutPieceId: shelfTemplate.id,
+            });
+            cabinetProducedAnyPiece = true;
+          }
+        }
+      }
+    }
+
     // Interior finish pass — duplicate cuerpo/frente pieces with the
     // surface layer material if the cabinet has one configured.
     for (const cp of cutPieces) {

@@ -11,6 +11,7 @@ import {
   calculateAccessoriesCost,
   calculateLaborCost,
   calculateDoorProfileCost,
+  computeBoxSfExclude,
 } from './calculations';
 import { getSettings } from './settingsStore';
 
@@ -424,13 +425,14 @@ async function calculateNewCost(
   priceList: PriceListItem[],
   _settings: any
 ): Promise<number> {
+  const sfExclude = computeBoxSfExclude(product, cabinet);
   switch (materialType) {
     case 'box_material':
-      return calculateBoxMaterialCost(product, material, cabinet.quantity);
+      return calculateBoxMaterialCost(product, material, cabinet.quantity, sfExclude);
     case 'box_edgeband':
       return calculateBoxEdgebandCost(product, material, cabinet.quantity);
     case 'box_interior_finish':
-      return calculateInteriorFinishCost(product, material, cabinet.quantity, true);
+      return calculateInteriorFinishCost(product, material, cabinet.quantity, true, sfExclude);
     case 'doors_material':
       return calculateDoorsMaterialCost(product, material, cabinet.quantity);
     case 'doors_edgeband':
@@ -571,14 +573,15 @@ async function recalculateCabinetCosts(
   const doorsEdgeband = cabinet.doors_edgeband_id ? priceList.find(p => p.id === cabinet.doors_edgeband_id) : null;
   const doorsInteriorFinish = cabinet.doors_interior_finish_id ? priceList.find(p => p.id === cabinet.doors_interior_finish_id) : null;
 
+  const sfExclude2 = computeBoxSfExclude(product, cabinet);
   const boxMaterialCost = boxMaterial && boxEdgeband
-    ? calculateBoxMaterialCost(product, boxMaterial, cabinet.quantity)
+    ? calculateBoxMaterialCost(product, boxMaterial, cabinet.quantity, sfExclude2)
     : 0;
   const boxEdgebandCost = boxMaterial && boxEdgeband
     ? calculateBoxEdgebandCost(product, boxEdgeband, cabinet.quantity)
     : 0;
   const boxInteriorFinishCost = boxInteriorFinish && boxMaterial && boxEdgeband
-    ? calculateInteriorFinishCost(product, boxInteriorFinish, cabinet.quantity, true)
+    ? calculateInteriorFinishCost(product, boxInteriorFinish, cabinet.quantity, true, sfExclude2)
     : 0;
   const doorsMaterialCost = doorsMaterial && doorsEdgeband
     ? calculateDoorsMaterialCost(product, doorsMaterial, cabinet.quantity)
