@@ -602,6 +602,7 @@ export function QuotationOptimizerTab({
             <CutListDetailPanel
               pieces={cutListSource.pieces}
               cabinetDetails={cutListSource.cabinetDetails}
+              onOverrideChanged={() => build()}
             />
           ) : (
             <div className="h-full flex items-center justify-center text-slate-400 text-sm">

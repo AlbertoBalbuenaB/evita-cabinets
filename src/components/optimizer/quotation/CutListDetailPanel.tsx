@@ -1,5 +1,9 @@
-import { LayoutDashboard } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronRight, LayoutDashboard, Pencil } from 'lucide-react';
 import type { Pieza } from '../../../lib/optimizer/types';
+import type { CutPiece } from '../../../types';
+import { Button } from '../../Button';
+import { CutListEditorModal } from './CutListEditorModal';
 
 export interface CabinetDisplayInfo {
   productSku: string | null;
@@ -7,11 +11,17 @@ export interface CabinetDisplayInfo {
   quantity: number;
   areaId: string;
   areaName: string;
+  /** Optional for backwards compatibility with snapshots saved before the
+   *  editable-cut-list feature. Undefined ≡ no override. */
+  hasOverride?: boolean;
 }
 
 interface Props {
   pieces: Pieza[];
   cabinetDetails: Record<string, CabinetDisplayInfo>;
+  /** Called after the user saves or resets a cut-list override, so the parent
+   *  can re-run "Build from Quotation" to refresh the panel. */
+  onOverrideChanged?: () => void | Promise<void>;
 }
 
 /**
@@ -25,61 +35,148 @@ interface Props {
  * the optimizer output. There is no editing — if something is wrong,
  * the user fixes it on the product template and clicks Rebuild.
  */
-export function CutListDetailPanel({ pieces, cabinetDetails }: Props) {
+export function CutListDetailPanel({ pieces, cabinetDetails, onOverrideChanged }: Props) {
+  const [editing, setEditing] = useState<{
+    cabinetId: string;
+    label: string;
+    pieces: CutPiece[];
+    hasOverride: boolean;
+  } | null>(null);
+
   if (pieces.length === 0) return null;
 
-  // Group pieces by cabinetId. Pieces without a cabinetId fall into
-  // a single "Unassigned" bucket (shouldn't happen in practice, but
-  // defensive coding).
-  const groups = new Map<string, Pieza[]>();
+  const NO_AREA_KEY = '(no area)';
+
+  // Two-level grouping: areaName → (cabinetId → pieces). Pieces without an
+  // areaName/cabinetId fall into the NO_AREA_KEY / '__unassigned__' buckets
+  // (defensive — shouldn't happen with a well-formed quotation).
+  const byArea = new Map<string, Map<string, Pieza[]>>();
   for (const p of pieces) {
-    const key = p.cabinetId ?? '__unassigned__';
-    const arr = groups.get(key);
+    const cabinetId = p.cabinetId ?? '__unassigned__';
+    const areaName = cabinetDetails[cabinetId]?.areaName?.trim() || NO_AREA_KEY;
+    let cabinets = byArea.get(areaName);
+    if (!cabinets) {
+      cabinets = new Map<string, Pieza[]>();
+      byArea.set(areaName, cabinets);
+    }
+    const arr = cabinets.get(cabinetId);
     if (arr) arr.push(p);
-    else groups.set(key, [p]);
+    else cabinets.set(cabinetId, [p]);
   }
 
-  // Order groups by area name, then by productSku, then by description, so
-  // the UI is stable across rebuilds.
-  const orderedGroups = Array.from(groups.entries()).sort(([aId], [bId]) => {
-    const a = cabinetDetails[aId];
-    const b = cabinetDetails[bId];
-    const aLabel = `${a?.areaName ?? 'zzz'}|${a?.productSku ?? 'zzz'}|${a?.productDescription ?? ''}`;
-    const bLabel = `${b?.areaName ?? 'zzz'}|${b?.productSku ?? 'zzz'}|${b?.productDescription ?? ''}`;
-    return aLabel.localeCompare(bLabel);
+  // Sort areas alphabetically, with NO_AREA_KEY last.
+  const orderedAreas = Array.from(byArea.entries()).sort(([a], [b]) => {
+    if (a === NO_AREA_KEY) return 1;
+    if (b === NO_AREA_KEY) return -1;
+    return a.localeCompare(b);
   });
 
-  // Open by default if 3 or fewer cabinet groups.
-  const defaultOpen = orderedGroups.length <= 3;
+  // Within each area, sort cabinets by productSku → description for stable UI.
+  const orderedAreasWithCabinets = orderedAreas.map(([areaName, cabinets]) => {
+    const sortedCabinets = Array.from(cabinets.entries()).sort(([aId], [bId]) => {
+      const a = cabinetDetails[aId];
+      const b = cabinetDetails[bId];
+      const aLabel = `${a?.productSku ?? 'zzz'}|${a?.productDescription ?? ''}`;
+      const bLabel = `${b?.productSku ?? 'zzz'}|${b?.productDescription ?? ''}`;
+      return aLabel.localeCompare(bLabel);
+    });
+    return [areaName, sortedCabinets] as const;
+  });
+
+  const totalCabinets = orderedAreasWithCabinets.reduce((sum, [, cabs]) => sum + cabs.length, 0);
+  const totalAreas = orderedAreasWithCabinets.length;
+
+  // Open by default if 3 or fewer cabinets total — preserves the prior UX.
+  const defaultOpen = totalCabinets <= 3;
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white">
       <div className="flex items-center gap-1.5 px-3 py-2 border-b border-slate-200">
         <LayoutDashboard className="h-3.5 w-3.5 text-blue-600" />
         <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wide">
-          Cut-list detail — {orderedGroups.length} cabinet{orderedGroups.length !== 1 ? 's' : ''}
+          Cut-list detail — {totalCabinets} cabinet{totalCabinets !== 1 ? 's' : ''} across {totalAreas} area{totalAreas !== 1 ? 's' : ''}
         </h3>
       </div>
-      <div className="divide-y divide-slate-100">
-        {orderedGroups.map(([cabinetId, groupPieces]) => {
+      <div>
+        {orderedAreasWithCabinets.map(([areaName, areaCabinets], areaIdx) => {
+          const areaPieceCount = areaCabinets.reduce(
+            (sum, [, cabPieces]) => sum + cabPieces.reduce((s, p) => s + p.cantidad, 0),
+            0,
+          );
+          return (
+            <details
+              key={areaName}
+              open
+              className={`group ${areaIdx > 0 ? 'border-t-2 border-slate-200/80' : ''}`}
+            >
+              <summary className="flex items-center justify-between gap-2 px-3 py-1.5 bg-slate-100/70 border-b border-slate-200/60 cursor-pointer select-none hover:bg-slate-200/60">
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <ChevronRight className="h-3 w-3 text-slate-500 shrink-0 transition-transform group-open:rotate-90" />
+                  <span className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide truncate">
+                    {areaName}
+                  </span>
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono tabular-nums shrink-0">
+                  {areaCabinets.length} cab · {areaPieceCount} piece{areaPieceCount !== 1 ? 's' : ''}
+                </span>
+              </summary>
+              <div className="divide-y divide-slate-100">
+                {areaCabinets.map(([cabinetId, groupPieces]) => {
           const info = cabinetDetails[cabinetId];
           const pieceCount = groupPieces.reduce((s, p) => s + p.cantidad, 0);
           const label = info
             ? [
                 info.productSku ?? '(no SKU)',
                 info.productDescription,
-                info.areaName,
               ].filter((s): s is string => !!s && s.length > 0).join(' — ')
             : `Cabinet ${cabinetId.slice(0, 8)}…`;
           const qtySuffix = info && info.quantity > 1 ? ` ×${info.quantity}` : '';
+          const cabinetQty = info?.quantity && info.quantity > 0 ? info.quantity : 1;
+          const editablePieces: CutPiece[] = groupPieces.map((p) => ({
+            id: p.sourceCutPieceId ?? crypto.randomUUID(),
+            nombre: p.nombre,
+            ancho: p.ancho,
+            alto: p.alto,
+            // Pieza.cantidad already includes the cabinet quantity multiplier;
+            // divide back out so the modal shows per-cabinet-instance counts.
+            cantidad: Math.max(1, Math.round(p.cantidad / cabinetQty)),
+            material: pieceRoleToMaterial(p.cutPieceRole),
+            cubrecanto: p.cubrecanto,
+            veta: p.veta,
+          }));
           return (
             <details key={cabinetId} open={defaultOpen}>
-              <summary className="cursor-pointer select-none px-3 py-2 hover:bg-slate-50 text-xs flex items-center justify-between">
-                <span className="font-medium text-slate-800 truncate">
-                  {label}{qtySuffix}
+              <summary className="cursor-pointer select-none px-3 py-2 hover:bg-slate-50 text-xs flex items-center justify-between gap-2">
+                <span className="font-medium text-slate-800 truncate flex items-center gap-2">
+                  <span className="truncate">{label}{qtySuffix}</span>
+                  {info?.hasOverride && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 shrink-0">
+                      Modified
+                    </span>
+                  )}
                 </span>
-                <span className="text-slate-400 font-mono tabular-nums ml-2 shrink-0">
-                  {pieceCount} piece{pieceCount !== 1 ? 's' : ''}
+                <span className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="!px-2 !py-1 text-[11px]"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setEditing({
+                        cabinetId,
+                        label: label,
+                        pieces: editablePieces,
+                        hasOverride: !!info?.hasOverride,
+                      });
+                    }}
+                  >
+                    <Pencil className="h-3 w-3 mr-1" />
+                    Edit
+                  </Button>
+                  <span className="text-slate-400 font-mono tabular-nums">
+                    {pieceCount} piece{pieceCount !== 1 ? 's' : ''}
+                  </span>
                 </span>
               </summary>
               <div className="px-3 pb-3 overflow-x-auto">
@@ -139,9 +236,43 @@ export function CutListDetailPanel({ pieces, cabinetDetails }: Props) {
             </details>
           );
         })}
+              </div>
+            </details>
+          );
+        })}
       </div>
+      {editing && (
+        <CutListEditorModal
+          isOpen
+          onClose={() => setEditing(null)}
+          cabinetId={editing.cabinetId}
+          cabinetLabel={editing.label}
+          initialPieces={editing.pieces}
+          hasOverride={editing.hasOverride}
+          onSaved={async () => {
+            await onOverrideChanged?.();
+          }}
+        />
+      )}
     </div>
   );
+}
+
+/** Map a Pieza.cutPieceRole to the CutPiece.material enum. The optimizer uses
+ *  an extra 'interior-finish' role that does not exist on the catalog template;
+ *  collapse it to 'custom' for the editor. */
+function pieceRoleToMaterial(role: Pieza['cutPieceRole']): CutPiece['material'] {
+  switch (role) {
+    case 'cuerpo':
+    case 'frente':
+    case 'back':
+    case 'drawer_box':
+    case 'shelf':
+    case 'custom':
+      return role;
+    default:
+      return 'custom';
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
