@@ -199,6 +199,55 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
       }
     }
 
+    // ── 2b. Supplemental edgeband — types not mapped to optimizer slots ──
+    // The optimizer only has 3 edgeband slots (a/b/c) but cubrecanto codes
+    // only produce 1 and 2 (never 3), so at most 2 types are priced by the
+    // engine. Any remaining edgeband types assigned to cabinets are collected
+    // here from the per-cabinet stored costs + price_list meters.
+    const coveredEbIds = new Set(
+      Object.values(snapshot.ebSlotToPriceListId ?? {}).filter(Boolean) as string[]
+    );
+    const uncoveredEbMap = new Map<string, { name: string; cost: number; meters: number; plId: string }>();
+    for (const area of areas) {
+      const areaQty = area.quantity ?? 1;
+      for (const cab of area.cabinets) {
+        for (const [ebIdField, ebCostField] of [
+          ['box_edgeband_id', 'box_edgeband_cost'],
+          ['doors_edgeband_id', 'doors_edgeband_cost'],
+        ] as const) {
+          const ebId = (cab as any)[ebIdField] as string | null;
+          if (!ebId || coveredEbIds.has(ebId)) continue;
+          const ebCost = ((cab as any)[ebCostField] ?? 0) * areaQty;
+          if (ebCost <= 0) continue;
+          const plItem = priceList.find(p => p.id === ebId);
+          if (!plItem || plItem.concept_description.toLowerCase().includes('not apply')) continue;
+          const pricePerMeter = plItem.price_with_tax ?? plItem.price;
+          const meters = pricePerMeter > 0 ? ebCost / pricePerMeter : 0;
+          const existing = uncoveredEbMap.get(ebId);
+          if (existing) {
+            existing.cost += ebCost;
+            existing.meters += meters;
+          } else {
+            uncoveredEbMap.set(ebId, { name: plItem.concept_description, cost: ebCost, meters, plId: plItem.id });
+          }
+        }
+      }
+    }
+    for (const [, eb] of uncoveredEbMap) {
+      if (eb.meters <= 0) continue;
+      const rollsNeeded = Math.ceil(eb.meters / ROLL_LENGTH_METERS);
+      const pricePerRoll = (eb.cost / eb.meters) * ROLL_LENGTH_METERS;
+      rows.push({
+        category: 'Edgeband',
+        concept: eb.name,
+        unit: `Roll (${ROLL_LENGTH_METERS}m)`,
+        qty: rollsNeeded,
+        price: pricePerRoll,
+        subtotal: eb.cost,
+        priceListItemId: eb.plId,
+      });
+    }
+
     // ── 3. Hardware ───────────────────────────────────────────────────────
     const hardwareMap = new Map<string, BOMRow>();
     areas.forEach(area => {
