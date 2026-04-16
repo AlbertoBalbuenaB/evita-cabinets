@@ -26,6 +26,7 @@
  */
 
 import type { AreaWithChildren, QuotationMultipliers } from '../../pricing/computeQuotationTotalsSqft';
+import { getCabinetTotalCost } from '../../pricing/getCabinetTotalCost';
 
 export interface OptimizerQuotationTotalInput {
   /** From the optimizer run: sum of board material costs. */
@@ -152,7 +153,11 @@ export function computeOptimizerQuotationTotal(
     let areaFallbackCabinets = 0;
 
     for (const cab of area.cabinets) {
-      const subtotal = typeof cab.subtotal === 'number' && Number.isFinite(cab.subtotal) ? cab.subtotal : 0;
+      // Use the live recompute from the 13 cost fields instead of `cab.subtotal`,
+      // which is a denormalized cache that can drift when a cabinet is edited
+      // without the recompute step. See src/lib/pricing/getCabinetTotalCost.ts
+      // for the failure case.
+      const subtotal = getCabinetTotalCost(cab as unknown as Record<string, unknown>);
       if (cabinetsCovered.has(cab.id)) {
         // Covered by optimizer → keep only non-material extras.
         const extras = subtotal - cabinetMaterialCost(cab as unknown as Record<string, unknown>);
