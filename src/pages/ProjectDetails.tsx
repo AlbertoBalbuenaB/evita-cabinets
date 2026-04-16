@@ -275,10 +275,17 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       });
 
       setAreas(areasWithCabinetsAndItems);
-      await updateProjectTotal(areasWithCabinetsAndItems);
+      // Let the UI render as soon as the data is in state. The rollup
+      // write-back (quotations + per-area subtotal updates) runs in the
+      // background so it doesn't hold the loading spinner. Subsequent
+      // user-initiated saves still await updateProjectTotal because the
+      // user expects the write to complete before they navigate away.
+      setLoading(false);
+      updateProjectTotal(areasWithCabinetsAndItems).catch((err) => {
+        console.error('Background rollup update failed:', err);
+      });
     } catch (error) {
       console.error('Error loading areas:', error);
-    } finally {
       setLoading(false);
     }
   }
@@ -434,18 +441,22 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         updatePayload.optimizer_total_amount = optimizerGrandTotal;
       }
 
-      await supabase
-        .from('quotations')
-        .update(updatePayload)
-        .eq('id', project.id);
-
-      for (const area of areasData) {
-        const areaTotal = totals.perAreaTotal[area.id] ?? 0;
-        await supabase
-          .from('project_areas')
-          .update({ subtotal: areaTotal })
-          .eq('id', area.id);
-      }
+      // Run the quotations update and every project_areas subtotal update
+      // in parallel — the previous sequential for-loop caused N extra
+      // round trips on every page load (one per area), which for a
+      // 10-area project added ~5 s to the Info-tab load time.
+      await Promise.all([
+        supabase
+          .from('quotations')
+          .update(updatePayload)
+          .eq('id', project.id),
+        ...areasData.map((area) =>
+          supabase
+            .from('project_areas')
+            .update({ subtotal: totals.perAreaTotal[area.id] ?? 0 })
+            .eq('id', area.id),
+        ),
+      ]);
     } catch (error) {
       console.error('Error updating totals:', error);
     }

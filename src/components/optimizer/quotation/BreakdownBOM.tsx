@@ -58,6 +58,11 @@ export interface BreakdownBOMProps {
   };
   areas: EnrichedArea[];
   quotation: Quotation;
+  /** Price list fetched by the parent (QuotationOptimizerTab) so the
+   *  fetch can run in parallel with the optimizer store init instead of
+   *  waiting for this component to mount. When `null` we fall back to
+   *  fetching locally — backwards compatible. */
+  priceList?: PriceListItem[] | null;
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -96,13 +101,19 @@ const ROLL_LENGTH_METERS = 150;
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps) {
-  const [priceList, setPriceList] = useState<PriceListItem[]>([]);
-  const [loadingPrices, setLoadingPrices] = useState(true);
+export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceListProp }: BreakdownBOMProps) {
+  // Prop convention: `undefined` means no parent provided one (use local
+  // fetch as fallback); `null` means parent is fetching (wait); array means
+  // parent-fetched and ready. Arrays from the parent short-circuit the
+  // local fetch, which saves a whole Supabase round-trip on Breakdown open.
+  const hasProp = priceListProp !== undefined;
+  const [priceListLocal, setPriceListLocal] = useState<PriceListItem[]>([]);
+  const [loadingLocalPrices, setLoadingLocalPrices] = useState(!hasProp);
   const [exporting, setExporting] = useState(false);
   const exchangeRate = useSettingsStore(s => s.settings.exchangeRateUsdToMxn);
 
   useEffect(() => {
+    if (hasProp) return;
     let cancelled = false;
     (async () => {
       try {
@@ -120,15 +131,18 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
           from += PAGE;
         }
         if (!cancelled) {
-          setPriceList(all);
-          setLoadingPrices(false);
+          setPriceListLocal(all);
+          setLoadingLocalPrices(false);
         }
       } catch {
-        if (!cancelled) setLoadingPrices(false);
+        if (!cancelled) setLoadingLocalPrices(false);
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [hasProp]);
+
+  const priceList = hasProp ? (priceListProp ?? []) : priceListLocal;
+  const loadingPrices = hasProp ? priceListProp === null : loadingLocalPrices;
 
   // ── BOM aggregation ──────────────────────────────────────────────────────
   const bom = useMemo<BOMRow[] | null>(() => {
