@@ -35,7 +35,7 @@ export type EngineFamily = 'base' | 'wall' | 'tall';
  *   2 = Type B (Doors & Fronts EB)
  *   3 = Type C (reserved / overflow)
  */
-export type EdgebandType = 0 | 1 | 2 | 3;
+export type EdgebandType = 0 | 1 | 2 | 3 | 4;
 
 export interface CabinetConfig {
   // ── Identity ──────────────────────────────────────────────────────────────

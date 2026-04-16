@@ -570,6 +570,46 @@ export async function buildOptimizerSetupFromQuotation(
       }
     }
 
+    // Code 3 → drawer box edgeband (falls back to box EB if not set)
+    const dbxEbId = (cab as any).drawer_box_edgeband_id;
+    const effectiveDbxEbId = dbxEbId || cab.box_edgeband_id;
+    if (effectiveDbxEbId) {
+      const row = priceListById.get(effectiveDbxEbId);
+      if (row && !isNotApply(row.concept_description)) {
+        const pricePerMeter = row.price_with_tax ?? row.price ?? 0;
+        cabMap[3] = { pricePerMeter: Number(pricePerMeter), plId: row.id, name: row.concept_description };
+        const existing = ebTypeSummaryMap.get(row.id);
+        if (existing) {
+          existing._roles.add('box');
+        } else {
+          ebTypeSummaryMap.set(row.id, {
+            name: row.concept_description, pricePerMeter: Number(pricePerMeter),
+            plId: row.id, roles: [], _roles: new Set(['box']),
+          });
+        }
+      }
+    }
+
+    // Code 4 → shelf edgeband (falls back to box EB if not set)
+    const shelfEbId = (cab as any).shelf_edgeband_id;
+    const effectiveShelfEbId = shelfEbId || cab.box_edgeband_id;
+    if (effectiveShelfEbId) {
+      const row = priceListById.get(effectiveShelfEbId);
+      if (row && !isNotApply(row.concept_description)) {
+        const pricePerMeter = row.price_with_tax ?? row.price ?? 0;
+        cabMap[4] = { pricePerMeter: Number(pricePerMeter), plId: row.id, name: row.concept_description };
+        const existing = ebTypeSummaryMap.get(row.id);
+        if (existing) {
+          existing._roles.add('box');
+        } else {
+          ebTypeSummaryMap.set(row.id, {
+            name: row.concept_description, pricePerMeter: Number(pricePerMeter),
+            plId: row.id, roles: [], _roles: new Set(['box']),
+          });
+        }
+      }
+    }
+
     if (Object.keys(cabMap).length > 0) {
       ebCabinetMap[cab.id] = cabMap;
     }

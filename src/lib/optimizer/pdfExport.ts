@@ -3,7 +3,7 @@ import { PIECE_COLORS } from './engine';
 import { fmtDim, fmtNum } from './units';
 import { EbConfig, EbCabinetMap, OptimizationResult, UnitSystem } from './types';
 
-const EB_LABELS: Record<number, string> = { 1: 'A', 2: 'B', 3: 'C' };
+const EB_LABELS: Record<number, string> = { 1: 'A', 2: 'B', 3: 'C', 4: 'D' };
 
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
@@ -88,6 +88,7 @@ const i18n: Record<PdfLang, Record<string, string>> = {
     typeASolid: 'Type A (solid)',
     typeBDashed: 'Type B (dashed)',
     typeCDotted: 'Type C (dotted)',
+    typeDDashDot: 'Type D (dash-dot)',
     total: 'Total',
     linearM: 'linear m',
     ebWasteNote: 'Note: Each side includes +3cm waste allowance.',
@@ -133,6 +134,7 @@ const i18n: Record<PdfLang, Record<string, string>> = {
     typeASolid: 'Tipo A (continuo)',
     typeBDashed: 'Tipo B (discontinuo)',
     typeCDotted: 'Tipo C (punteado)',
+    typeDDashDot: 'Tipo D (guión-punto)',
     total: 'Total',
     linearM: 'm lineales',
     ebWasteNote: 'Nota: Cada lado incluye +3cm de desperdicio.',
@@ -369,9 +371,11 @@ export async function exportOptimizerPDF(
       const drawEB = (type: number, x1: number, y1: number, x2: number, y2: number) => {
         if (!type) return;
         doc.setDrawColor(30, 30, 30); doc.setLineWidth(0.5);
-        if (type === 1) (doc as any).setLineDash([]);
-        else if (type === 2) (doc as any).setLineDash([1.5, 0.8]);
-        else (doc as any).setLineDash([0.5, 0.5]);
+        if (type === 1) (doc as any).setLineDash([]);           // A: solid
+        else if (type === 2) (doc as any).setLineDash([1.5, 0.8]); // B: dashed
+        else if (type === 3) (doc as any).setLineDash([0.5, 0.5]); // C: dotted
+        else if (type === 4) (doc as any).setLineDash([2, 0.5, 0.5, 0.5]); // D: dash-dot
+        else (doc as any).setLineDash([0.3, 0.3]);              // fallback
         doc.line(x1, y1, x2, y2); (doc as any).setLineDash([]);
       };
       drawEB(edges.top, px + inset, py + inset, px + pw - inset, py + inset);
