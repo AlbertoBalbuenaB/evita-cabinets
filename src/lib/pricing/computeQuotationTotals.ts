@@ -105,21 +105,6 @@ export interface QuotationTotals {
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Sum a single per-cabinet field across all cabinets in all areas, weighted
- *  by area.quantity. Used for byCategory aggregation. Cabinets with no value
- *  for the field contribute 0. */
-function sumCabinetField(areas: AreaWithChildren[], field: string): number {
-  let total = 0;
-  for (const area of areas) {
-    const qty = area.quantity ?? 1;
-    for (const cab of area.cabinets) {
-      const v = (cab as unknown as Record<string, unknown>)[field];
-      if (typeof v === 'number' && Number.isFinite(v)) total += v * qty;
-    }
-  }
-  return total;
-}
-
 /** Sum item.subtotal across an area's items. */
 function sumAreaItems(area: AreaWithChildren): number {
   return area.items.reduce((s, i) => s + i.subtotal, 0);
@@ -145,56 +130,62 @@ function sumAreaCabinets(area: AreaWithChildren): number {
 /** Build the byCategory breakdown. In optimizer mode, boards/edgeband come
  *  from the optimizer run; everything else comes from the per-cabinet fields
  *  (so the values reflect the actual data the user entered, regardless of
- *  pricing mode). */
+ *  pricing mode).
+ *
+ *  Single-pass implementation: reads all 15 per-cabinet cost fields in one
+ *  traversal instead of 14 separate `sumCabinetField` calls, each of which
+ *  would iterate every cabinet. */
 function buildByCategory(
   areas: AreaWithChildren[],
   optimizer?: QuotationTotalsInput['optimizerRun'],
 ): QuotationTotalsByCategory {
-  // Cabinet-derived categories — the same per-area-quantity aggregation rule
-  // as the per-cabinet "extras" math in computeOptimizerQuotationTotal.
-  const sumPerArea = (perAreaFn: (a: AreaWithChildren) => number) =>
-    areas.reduce((s, a) => s + perAreaFn(a) * (a.quantity ?? 1), 0);
+  let boxMat = 0, boxEb = 0, boxIf = 0;
+  let doorsMat = 0, doorsEb = 0, doorsIf = 0;
+  let backMat = 0;
+  let drawerMat = 0, drawerEb = 0;
+  let shelfMat = 0, shelfEb = 0;
+  let hardware = 0, accessories = 0, labor = 0, doorProfile = 0;
+  let itemsTotal = 0, countertopsTotal = 0, closetItemsTotal = 0, prefabItemsTotal = 0;
 
-  const itemsTotal       = sumPerArea(sumAreaItems);
-  const countertopsTotal = sumPerArea(sumAreaCountertops);
-  const closetItemsTotal = sumPerArea(sumAreaClosets);
-  const prefabItemsTotal = sumPerArea(sumAreaPrefabs);
+  const read = (cab: unknown, field: string): number => {
+    const v = (cab as Record<string, unknown>)[field];
+    return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+  };
 
-  const hardware       = sumCabinetField(areas, 'hardware_cost');
-  const accessories    = sumCabinetField(areas, 'accessories_cost');
-  const labor          = sumCabinetField(areas, 'labor_cost');
-  const doorProfile    = sumCabinetField(areas, 'door_profile_cost');
-  const interiorFinish =
-    sumCabinetField(areas, 'box_interior_finish_cost') +
-    sumCabinetField(areas, 'doors_interior_finish_cost');
-
-  // Boards + edgeband: optimizer run actuals when in optimizer mode, else
-  // the sum of the ft²-estimated per-cabinet material/edgeband fields.
-  let boards: number;
-  let edgeband: number;
-  if (optimizer) {
-    boards = optimizer.materialCost;
-    edgeband = optimizer.edgebandCost;
-  } else {
-    boards =
-      sumCabinetField(areas, 'box_material_cost') +
-      sumCabinetField(areas, 'doors_material_cost') +
-      sumCabinetField(areas, 'back_panel_material_cost') +
-      sumCabinetField(areas, 'drawer_box_material_cost') +
-      sumCabinetField(areas, 'shelf_material_cost');
-    edgeband =
-      sumCabinetField(areas, 'box_edgeband_cost') +
-      sumCabinetField(areas, 'doors_edgeband_cost') +
-      sumCabinetField(areas, 'drawer_box_edgeband_cost') +
-      sumCabinetField(areas, 'shelf_edgeband_cost');
+  for (const area of areas) {
+    const qty = area.quantity ?? 1;
+    for (const c of area.cabinets) {
+      boxMat      += read(c, 'box_material_cost')          * qty;
+      boxEb       += read(c, 'box_edgeband_cost')          * qty;
+      boxIf       += read(c, 'box_interior_finish_cost')   * qty;
+      doorsMat    += read(c, 'doors_material_cost')        * qty;
+      doorsEb     += read(c, 'doors_edgeband_cost')        * qty;
+      doorsIf     += read(c, 'doors_interior_finish_cost') * qty;
+      backMat     += read(c, 'back_panel_material_cost')   * qty;
+      drawerMat   += read(c, 'drawer_box_material_cost')   * qty;
+      drawerEb    += read(c, 'drawer_box_edgeband_cost')   * qty;
+      shelfMat    += read(c, 'shelf_material_cost')        * qty;
+      shelfEb     += read(c, 'shelf_edgeband_cost')        * qty;
+      hardware    += read(c, 'hardware_cost')              * qty;
+      accessories += read(c, 'accessories_cost')           * qty;
+      labor       += read(c, 'labor_cost')                 * qty;
+      doorProfile += read(c, 'door_profile_cost')          * qty;
+    }
+    itemsTotal       += sumAreaItems(area)       * qty;
+    countertopsTotal += sumAreaCountertops(area) * qty;
+    closetItemsTotal += sumAreaClosets(area)     * qty;
+    prefabItemsTotal += sumAreaPrefabs(area)     * qty;
   }
+
+  const boards   = optimizer ? optimizer.materialCost : (boxMat + doorsMat + backMat + drawerMat + shelfMat);
+  const edgeband = optimizer ? optimizer.edgebandCost : (boxEb + doorsEb + drawerEb + shelfEb);
 
   return {
     boards,
     edgeband,
     hardware,
     accessories,
-    interiorFinish,
+    interiorFinish: boxIf + doorsIf,
     doorProfile,
     labor,
     items: itemsTotal,

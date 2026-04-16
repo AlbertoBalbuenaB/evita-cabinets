@@ -377,26 +377,17 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
       },
     });
 
-    const totalLaborCost = areas.reduce((sum, area) => {
-      const qty = area.quantity ?? 1;
-      return sum + area.cabinets.reduce((s, c) => s + (c.labor_cost ?? 0) * qty, 0);
-    }, 0);
-
-    // Use the BOM row sum as the authoritative materials cost so the summary
-    // matches the BOM table exactly. price / tax / grand total stay as
-    // computed by computeOptimizerQuotationTotal (they are the pricing truth).
-    const bomTotal = bom.reduce((s, r) => s + r.subtotal, 0);
+    // Displayed Materials / Subtotal / Profit come from the unified totals so
+    // Breakdown converges with the Info tab exactly. The BOM table footer
+    // (bomTotal) is a separate sourcing view and keeps its own sum.
+    const labor = totals.byCategory.labor;
     return {
-      materialsCostOnly:  bomTotal,
-      totalLaborCost,
-      materialsSubtotal:  bomTotal + totalLaborCost,
-      // Risk and profit are now displayed as separate lines (matching the Info
-      // tab) instead of folded into a single Profit Margin number. Profit is
-      // back-derived as `price - subtotal - risk` so it stays consistent with
-      // whatever computeOptimizerQuotationTotal produced for `price`.
+      materialsCostOnly:  totals.materialsSubtotal - labor,
+      totalLaborCost:     labor,
+      materialsSubtotal:  totals.materialsSubtotal,
       riskFactorPct:      riskPct,
       riskAmount:         totals.riskAmount,
-      profitMarginAmount: totals.price - (bomTotal + totalLaborCost) - totals.riskAmount,
+      profitMarginAmount: totals.profitAmount,
       price:              totals.price,
       tariffAmount:       totals.tariffAmount,
       referralAmount:     totals.referralAmount,
