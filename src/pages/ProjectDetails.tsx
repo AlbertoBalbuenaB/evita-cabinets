@@ -1357,6 +1357,10 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       projectTotal:         totals.fullProjectTotal,
       perAreaCabinetSubtotal,
       installDeliveryMxn:   installDeliveryMxnLocal,
+      // Per-category breakdown — consumed by ProjectCharts so its
+      // "Project Value" KPI and materials breakdown agree with the
+      // Info tab's Materials Subtotal.
+      byCategory:           totals.byCategory,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -2283,6 +2287,8 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                           perAreaCabinetSubtotal: quotationView.perAreaCabinetSubtotal,
                           boardsCost: Number(activeOptimizerRun.material_cost ?? 0),
                           edgebandCost: Number(activeOptimizerRun.edgeband_cost ?? 0),
+                          byCategory: quotationView.byCategory,
+                          materialsSubtotal: quotationView.materialsSubtotal,
                         }
                       : undefined
                   }

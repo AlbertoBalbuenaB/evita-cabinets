@@ -40,6 +40,24 @@ interface ProjectChartsProps {
     boardsCost: number;
     /** Edgeband cost from the active run. */
     edgebandCost: number;
+    /** Full per-category breakdown from the unified totals. Mandatory for
+     *  the materials breakdown + Project Value KPI to agree with Info. */
+    byCategory: {
+      boards: number;
+      edgeband: number;
+      hardware: number;
+      accessories: number;
+      interiorFinish: number;
+      doorProfile: number;
+      labor: number;
+      items: number;
+      countertops: number;
+      closetItems: number;
+      prefabItems: number;
+    };
+    /** Materials subtotal from the unified totals — the authoritative
+     *  "Project Value" number. Matches Info's Materials Subtotal exactly. */
+    materialsSubtotal: number;
   };
 }
 
@@ -157,23 +175,29 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
       taxes: totalProjectTaxes,
     };
 
-    // In optimizer mode, replace the six sqft sheet-material categories
-    // (Box Material / Edgeband / Interior and Doors Material / Edgeband /
-    // Interior) with two optimizer-sourced rows: Boards + Edgeband.
-    // Hardware / Labor / Countertops / Items / Prefab Closets stay
-    // unchanged because the optimizer doesn't touch those categories.
-    // The legacy "Taxes" heuristic only round-trips in sqft mode, so it's
-    // dropped in optimizer mode.
+    // In optimizer mode, read every category directly from the unified
+    // `byCategory` breakdown (same source the Info tab uses), so Analytics
+    // agrees with Info's Materials Subtotal to the cent. Categories that
+    // were previously missing from the optimizer-mode breakdown and caused
+    // the "Project Value" to diverge: Accessories, Interior Finish,
+    // Door Profile, Prefab Items. All included now.
+    //
+    // In sqft mode the legacy per-category view is kept — it's the
+    // pre-existing breakdown and changing it is out of scope for this fix.
     const materialsBreakdown = (
       isOptimizerMode
         ? [
-            { name: 'Boards (optimizer)', cost: optimizerOverrides!.boardsCost, color: 'bg-blue-500' },
-            { name: 'Edgeband (optimizer)', cost: optimizerOverrides!.edgebandCost, color: 'bg-amber-500' },
-            { name: 'Hardware', cost: materialsCosts.hardware, color: 'bg-amber-600' },
-            { name: 'Countertops', cost: totalCountertopsCost, color: 'bg-orange-500' },
-            { name: 'Prefab Closets', cost: totalClosetItemsCost, color: 'bg-teal-500' },
-            { name: 'Individual Items', cost: totalItemsCost, color: 'bg-green-500' },
-            { name: 'Labor', cost: materialsCosts.labor, color: 'bg-slate-500' },
+            { name: 'Boards (optimizer)',   cost: optimizerOverrides!.byCategory.boards,         color: 'bg-blue-500' },
+            { name: 'Edgeband (optimizer)', cost: optimizerOverrides!.byCategory.edgeband,       color: 'bg-amber-500' },
+            { name: 'Interior Finish',      cost: optimizerOverrides!.byCategory.interiorFinish, color: 'bg-blue-300' },
+            { name: 'Door Profile',         cost: optimizerOverrides!.byCategory.doorProfile,    color: 'bg-green-400' },
+            { name: 'Hardware',             cost: optimizerOverrides!.byCategory.hardware,       color: 'bg-amber-600' },
+            { name: 'Accessories',          cost: optimizerOverrides!.byCategory.accessories,    color: 'bg-green-300' },
+            { name: 'Countertops',          cost: optimizerOverrides!.byCategory.countertops,    color: 'bg-orange-500' },
+            { name: 'Prefab Closets',       cost: optimizerOverrides!.byCategory.closetItems,    color: 'bg-teal-500' },
+            { name: 'Prefab Items',         cost: optimizerOverrides!.byCategory.prefabItems,    color: 'bg-red-500' },
+            { name: 'Individual Items',     cost: optimizerOverrides!.byCategory.items,          color: 'bg-green-500' },
+            { name: 'Labor',                cost: optimizerOverrides!.byCategory.labor,          color: 'bg-slate-500' },
           ]
         : [
             { name: 'Box Material', cost: materialsCosts.boxMaterial, color: 'bg-blue-500' },
@@ -191,7 +215,14 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
           ]
     ).filter((item) => item.cost > 0);
 
-    const totalCost = materialsBreakdown.reduce((sum, item) => sum + item.cost, 0);
+    // In optimizer mode, the "Project Value" KPI is the authoritative
+    // materialsSubtotal from the unified totals — this includes the ft²
+    // fallback for cabinets the optimizer couldn't pack (mixed mode),
+    // which a simple sum of breakdown categories would miss. In sqft mode
+    // keep the legacy behaviour (sum of breakdown).
+    const totalCost = isOptimizerMode
+      ? optimizerOverrides!.materialsSubtotal
+      : materialsBreakdown.reduce((sum, item) => sum + item.cost, 0);
     const maxAreaCost = Math.max(...areasCosts.map((a) => a.total), 1);
     const maxMaterialCost = Math.max(...materialsBreakdown.map((m) => m.cost), 1);
 

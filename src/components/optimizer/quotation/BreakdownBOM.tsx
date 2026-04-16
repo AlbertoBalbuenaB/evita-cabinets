@@ -47,6 +47,14 @@ export interface BreakdownBOMProps {
   loadedRun: {
     snapshot: OptimizerRunSnapshot;
     result: OptimizationResult;
+    /** DB-persisted material_cost for the active run. When present, used
+     *  as the `materialCost` input to computeQuotationTotals so Breakdown
+     *  agrees with Info (which also reads from the DB row). Falls back
+     *  to `result.totalCost` when absent (legacy or in-memory-only). */
+    materialCostDb?: number;
+    /** DB-persisted edgeband_cost, same rationale as materialCostDb.
+     *  Falls back to the live recompute from snapshot + ebConfig. */
+    edgebandCostDb?: number;
   };
   areas: EnrichedArea[];
   quotation: Quotation;
@@ -347,12 +355,15 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
 
     // Proportional tariffable-materials allocation (mirrors the rule used
     // by ProjectDetails so the Breakdown BOM summary agrees with the
-    // UI and the PDF exports).
+    // UI and the PDF exports). Reads edgebandByCabinet from the persisted
+    // snapshot — same source Info uses — so the tariff allocation matches
+    // exactly; falling back to the live recompute only if the snapshot
+    // predates the edgebandCostByCabinet field.
     const tariffableMaterialsCost = computeOptimizerTariffableMaterialsCost({
       result,
       snapshot,
       areasData: normalisedAreas,
-      edgebandByCabinet: ebResult.perCabinet,
+      edgebandByCabinet: snapshot.edgebandCostByCabinet ?? ebResult.perCabinet,
     });
 
     const riskAppliesOptimizer = quotation.risk_factor_applies_optimizer ?? false;
@@ -370,8 +381,12 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
         riskFactorPct:    riskPct,
       },
       optimizerRun: {
-        materialCost: result.totalCost,
-        edgebandCost: ebResult.totalCost,
+        // Prefer the DB-persisted values so Breakdown's totals agree with
+        // Info (Info reads the same optimizer_runs row). Only fall back to
+        // the live recompute when we don't have them (rare — in-memory
+        // pending runs that were never saved).
+        materialCost: loadedRun.materialCostDb ?? result.totalCost,
+        edgebandCost: loadedRun.edgebandCostDb ?? ebResult.totalCost,
         cabinetsCovered,
         tariffableMaterialsCost,
       },
