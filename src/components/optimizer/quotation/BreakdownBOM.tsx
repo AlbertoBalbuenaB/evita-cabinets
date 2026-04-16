@@ -97,22 +97,26 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const PAGE = 1000;
-      let all: PriceListItem[] = [];
-      let from = 0;
-      while (true) {
-        const { data, error } = await supabase
-          .from('price_list')
-          .select('*')
-          .range(from, from + PAGE - 1);
-        if (error || !data || data.length === 0) break;
-        all = all.concat(data);
-        if (data.length < PAGE) break;
-        from += PAGE;
-      }
-      if (!cancelled) {
-        setPriceList(all);
-        setLoadingPrices(false);
+      try {
+        const PAGE = 1000;
+        let all: PriceListItem[] = [];
+        let from = 0;
+        while (true) {
+          const { data, error } = await supabase
+            .from('price_list')
+            .select('*')
+            .range(from, from + PAGE - 1);
+          if (error || !data || data.length === 0) break;
+          all = all.concat(data);
+          if (data.length < PAGE) break;
+          from += PAGE;
+        }
+        if (!cancelled) {
+          setPriceList(all);
+          setLoadingPrices(false);
+        }
+      } catch {
+        if (!cancelled) setLoadingPrices(false);
       }
     })();
     return () => { cancelled = true; };
