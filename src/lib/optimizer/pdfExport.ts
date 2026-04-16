@@ -506,11 +506,7 @@ export async function exportOptimizerPDF(
         const pKey = `${p.piece.id}-${p.x}-${p.y}`;
         const letter = pieceLetterMap.get(pKey) || '';
 
-        // Build sheet list grouped by parent board group, so duplicate
-        // physical sheets that share a layout collapse with the same range
-        // shown on the board page footer (e.g. "S1-3×2" means 2 copies of
-        // the piece appear in the layout printed as sheets 1, 2 and 3).
-        // Truncate after 4 entries to keep the cell readable.
+        // Build sheet list — truncate after 3 entries to prevent column overflow.
         const groupCounts = new Map<BoardGroup, number>();
         kindItems.forEach(it => {
           const g = groupByOriginalIdx.get(it.boardIdx);
@@ -520,7 +516,7 @@ export async function exportOptimizerPDF(
         const groupEntries = Array.from(groupCounts.entries())
           .sort(([a], [b]) => a.firstIdx - b.firstIdx);
         let sheetText = groupEntries
-          .slice(0, 4)
+          .slice(0, 3)
           .map(([g, c]) => {
             const label = g.count > 1
               ? `S${g.firstIdx + 1}-${g.firstIdx + g.count}`
@@ -528,7 +524,7 @@ export async function exportOptimizerPDF(
             return c > 1 ? `${label}×${c}` : label;
           })
           .join(',');
-        if (groupEntries.length > 4) sheetText += `,+${groupEntries.length - 4}`;
+        if (groupEntries.length > 3) sheetText += `,+${groupEntries.length - 3}`;
 
         [
           [letter, 'center'],
@@ -549,6 +545,30 @@ export async function exportOptimizerPDF(
         });
         y += 4.5;
       });
+
+      // Per-area Edge Banding legend (when ebCabinetMap is available)
+      if (ebCabinetMap && Object.keys(ebCabinetMap).length > 0) {
+        // Find unique EB types used in this area's pieces
+        const areaEbTypes = new Map<number, string>();
+        items.forEach(it => {
+          const cabEb = it.piece.piece.cabinetId ? ebCabinetMap[it.piece.piece.cabinetId] : undefined;
+          if (!cabEb) return;
+          for (const [code, info] of Object.entries(cabEb)) {
+            if (!areaEbTypes.has(Number(code))) areaEbTypes.set(Number(code), info.name);
+          }
+        });
+        if (areaEbTypes.size > 0) {
+          doc.setFontSize(6.5); doc.setFont('Helvetica', 'italic'); doc.setTextColor(100, 116, 139);
+          const legend = Array.from(areaEbTypes.entries())
+            .sort(([a], [b]) => a - b)
+            .map(([code, name]) => `${EB_LABELS[code] || code} = ${name}`)
+            .join('  |  ');
+          doc.text(`Edge Banding: ${legend}`, 25, y);
+          y += 4;
+          doc.setFont('Helvetica', 'normal');
+        }
+      }
+
       y += 5;
     });
     return y;

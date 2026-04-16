@@ -275,6 +275,8 @@ export async function executeBulkHardwareChange(
         (currentCabinet.doors_edgeband_cost || 0) +
         (currentCabinet.doors_interior_finish_cost || 0) +
         (currentCabinet.back_panel_material_cost || 0) +
+        (currentCabinet.drawer_box_material_cost || 0) +
+        (currentCabinet.shelf_material_cost || 0) +
         cabinet.newCost +
         (currentCabinet.accessories_cost || 0) +
         (currentCabinet.door_profile_cost || 0) +
