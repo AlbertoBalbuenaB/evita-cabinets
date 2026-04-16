@@ -27,6 +27,7 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
   const pendingEbTypeSummary       = useStore((s) => s.pendingEbTypeSummary);
   const pendingBuiltAt             = useStore((s) => s.pendingBuiltAt);
   const pendingCabinetInstanceCount = useStore((s) => s.pendingCabinetInstanceCount);
+  const pendingCabinetDetails      = useStore((s) => s.pendingCabinetDetails);
   const globalSierra               = useStore((s) => s.globalSierra);
   const minOffcut                  = useStore((s) => s.minOffcut);
   const boardTrim                  = useStore((s) => s.boardTrim);
@@ -62,7 +63,10 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
 
   const totalPieceCount = pendingPieces.reduce((s, p) => s + p.cantidad, 0);
   const uniqueCabinets  = new Set(pendingPieces.map((p) => p.cabinetId).filter(Boolean)).size;
-  const uniqueAreas     = new Set(pendingPieces.map((p) => p.areaId).filter(Boolean)).size;
+  const uniqueAreas     = new Set([
+    ...pendingPieces.map((p) => p.areaId).filter(Boolean),
+    ...Object.values(pendingCabinetDetails).map((d) => d.areaId),
+  ]).size;
 
   return (
     <div className="h-full overflow-y-auto bg-white border-r border-slate-200">

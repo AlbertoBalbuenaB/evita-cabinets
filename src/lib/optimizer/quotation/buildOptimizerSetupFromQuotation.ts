@@ -285,10 +285,7 @@ export async function buildOptimizerSetupFromQuotation(
           break;
         }
         case 'custom':
-          materialId = cab.box_material_id;
-          warnings.push(
-            `Cabinet "${cab.product_sku ?? cab.id}" in area "${areaName}": cut piece "${cp.nombre}" has material=custom and was routed to box material.`,
-          );
+          materialId = cab.doors_material_id ?? cab.box_material_id;
           break;
       }
 
