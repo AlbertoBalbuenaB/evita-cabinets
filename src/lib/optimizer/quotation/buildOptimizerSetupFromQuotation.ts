@@ -182,6 +182,10 @@ export async function buildOptimizerSetupFromQuotation(
     if (c.doors_edgeband_id)           priceListIds.add(c.doors_edgeband_id);
     if (c.box_interior_finish_id)      priceListIds.add(c.box_interior_finish_id);
     if (c.doors_interior_finish_id)    priceListIds.add(c.doors_interior_finish_id);
+    if ((c as any).drawer_box_material_id) priceListIds.add((c as any).drawer_box_material_id);
+    if ((c as any).shelf_material_id)      priceListIds.add((c as any).shelf_material_id);
+    if ((c as any).drawer_box_edgeband_id) priceListIds.add((c as any).drawer_box_edgeband_id);
+    if ((c as any).shelf_edgeband_id)      priceListIds.add((c as any).shelf_edgeband_id);
   }
 
   const priceListById = new Map<string, PriceListRow>();

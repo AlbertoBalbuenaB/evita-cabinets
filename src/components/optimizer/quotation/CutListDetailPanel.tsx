@@ -152,10 +152,12 @@ function RoleBadge({ role }: { role: Pieza['cutPieceRole'] }) {
   // Mirrors the tint convention from ProductFormModal and ProductItem so
   // the visual language is consistent across cut-list surfaces.
   const styles: Record<string, { bg: string; text: string; label: string }> = {
-    cuerpo: { bg: 'bg-blue-100',    text: 'text-blue-800',    label: 'Box'   },
-    frente: { bg: 'bg-amber-100',   text: 'text-amber-800',   label: 'Door'  },
-    back:   { bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Back'  },
-    custom: { bg: 'bg-slate-100',   text: 'text-slate-700',   label: 'Custom'},
+    cuerpo:     { bg: 'bg-blue-100',    text: 'text-blue-800',    label: 'Box'        },
+    frente:     { bg: 'bg-amber-100',   text: 'text-amber-800',   label: 'Door'       },
+    back:       { bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Back'       },
+    drawer_box: { bg: 'bg-teal-100',    text: 'text-teal-800',    label: 'Drawer Box' },
+    shelf:      { bg: 'bg-violet-100',  text: 'text-violet-800',  label: 'Shelf'      },
+    custom:     { bg: 'bg-slate-100',   text: 'text-slate-700',   label: 'Custom'     },
   };
   const key = role ?? 'custom';
   const cfg = styles[key] ?? styles.custom;
