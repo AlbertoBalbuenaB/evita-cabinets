@@ -267,7 +267,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
               const hardwareItem = priceList.find((p) => p.id === hardwareId);
               if (hardwareItem) {
                 const hwQuantity = (hw.quantity_per_cabinet || hw.quantity || 1) * effectiveQty;
-                const hwCost = hardwareItem.price * hwQuantity;
+                const hwCost = (hardwareItem.price_with_tax ?? hardwareItem.price) * hwQuantity;
                 const key = hardwareId;
                 if (!hardwareMap.has(key)) {
                   hardwareMap.set(key, { name: hardwareItem.concept_description, quantity: hwQuantity, cost: hwCost });
@@ -288,7 +288,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
               const accessoryItem = priceList.find((p) => p.id === accessoryId);
               if (accessoryItem) {
                 const accQuantity = (acc.quantity_per_cabinet || 1) * effectiveQty;
-                const accCost = accessoryItem.price * accQuantity;
+                const accCost = (accessoryItem.price_with_tax ?? accessoryItem.price) * accQuantity;
                 const key = accessoryId;
                 if (!accessoriesMap.has(key)) {
                   accessoriesMap.set(key, { name: accessoryItem.concept_description, quantity: accQuantity, cost: accCost });
