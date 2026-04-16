@@ -77,15 +77,37 @@ export interface OptimizerQuotationTotal {
 }
 
 /**
- * Fields on `area_cabinets` that the optimizer replaces (the "4 material slots").
- * These are subtracted from `cabinet.subtotal` to obtain the non-material
- * extras that must be added on top of the optimizer boards + edgeband.
+ * Fields on `area_cabinets` that the optimizer physically replaces. Every
+ * material/edgeband cost listed here corresponds to a `cutPieceRole` the
+ * optimizer cuts and prices in `materialCost + edgebandCost`, so we MUST
+ * subtract them from `cabinet.subtotal` to avoid double-counting them on
+ * top of the optimizer's own board/edgeband totals.
+ *
+ * Originally only `box` and `doors` (the "4 material slots"). The
+ * 2026-04-16 schema split added `back_panel_*`, `drawer_box_*` and
+ * `shelf_*` as independent slots; the cut-piece engine emits pieces
+ * tagged with those roles ('back' / 'drawer_box' / 'shelf') and
+ * `buildOptimizerSetupFromQuotation` routes them to the correct
+ * material price, so the optimizer's `materialCost` already covers
+ * those boards. Subtracting the ft²-estimated cost fields here keeps
+ * the Info-tab Materials Subtotal from double-counting them.
+ *
+ * Fields intentionally NOT listed (the optimizer does NOT replace them
+ * — they remain in `extras` on top of optimizer boards):
+ *   - box_interior_finish_cost, doors_interior_finish_cost
+ *   - door_profile_cost
+ *   - hardware / accessories / labor (handled separately)
  */
 export const MATERIAL_FIELDS = [
   'box_material_cost',
   'box_edgeband_cost',
   'doors_material_cost',
   'doors_edgeband_cost',
+  'back_panel_material_cost',
+  'drawer_box_material_cost',
+  'drawer_box_edgeband_cost',
+  'shelf_material_cost',
+  'shelf_edgeband_cost',
 ] as const;
 
 export function cabinetMaterialCost(cab: Record<string, unknown>): number {
