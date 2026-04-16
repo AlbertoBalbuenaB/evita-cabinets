@@ -389,6 +389,8 @@ export function QuotationBOM({ areas, projectId, quotation }: QuotationBOMProps)
       prefabItems: a.prefabItems ?? [],
     }));
 
+    const riskPct = (quotation as any).risk_factor_applies_sqft !== false
+      ? ((quotation as any).risk_factor_percentage ?? 0) : 0;
     const totals = computeQuotationTotalsSqft(areasNorm, {
       profitMultiplier:  quotation.profit_multiplier        ?? 0,
       tariffMultiplier:  quotation.tariff_multiplier        ?? 0,
@@ -396,6 +398,7 @@ export function QuotationBOM({ areas, projectId, quotation }: QuotationBOMProps)
       taxPercentage:     quotation.tax_percentage           ?? 0,
       installDeliveryMxn,
       otherExpenses:     quotation.other_expenses           ?? 0,
+      riskFactorPct:     riskPct,
     });
 
     const totalLaborCost = areas.reduce((sum, area) => {

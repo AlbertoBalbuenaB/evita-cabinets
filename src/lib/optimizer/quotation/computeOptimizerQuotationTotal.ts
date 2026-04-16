@@ -67,6 +67,7 @@ export interface OptimizerQuotationTotal {
   nonCabinetSubtotal: number;
   /** Total "materials" subtotal used in the quotation formula. */
   materialsSubtotal: number;
+  riskAmount: number;
   price: number;
   tariffableSubtotal: number;
   tariffAmount: number;
@@ -177,9 +178,15 @@ export function computeOptimizerQuotationTotal(
     weightedFallbackCabinets +
     weightedNonCabinet;
 
+  const riskPct = m.riskFactorPct ?? 0;
+  const riskAmount = riskPct > 0
+    ? materialsSubtotal * (riskPct / 100)
+    : 0;
+  const adjustedSubtotal = materialsSubtotal + riskAmount;
+
   const price = m.profitMultiplier > 0 && m.profitMultiplier < 1
-    ? materialsSubtotal / (1 - m.profitMultiplier)
-    : materialsSubtotal;
+    ? adjustedSubtotal / (1 - m.profitMultiplier)
+    : adjustedSubtotal;
 
   // Tariffable subtotal mirrors the sqft approach but with the optimizer
   // materials substituted in. The key rule is: tariff only applies to the
@@ -217,6 +224,7 @@ export function computeOptimizerQuotationTotal(
     fallbackCabinetsSubtotal,
     nonCabinetSubtotal,
     materialsSubtotal,
+    riskAmount,
     price,
     tariffableSubtotal,
     tariffAmount,

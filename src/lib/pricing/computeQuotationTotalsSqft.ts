@@ -58,10 +58,13 @@ export interface QuotationMultipliers {
   installDeliveryMxn: number;
   /** Lump-sum other expenses in MXN. */
   otherExpenses: number;
+  /** Risk factor percentage (e.g. 5 for 5%). Applied before profit gross-up. Default 0. */
+  riskFactorPct?: number;
 }
 
 export interface QuotationTotalsSqft {
   materialsSubtotal: number;
+  riskAmount: number;
   price: number;
   tariffableSubtotal: number;
   tariffAmount: number;
@@ -94,9 +97,15 @@ export function computeQuotationTotalsSqft(
     return sum + sumAreaChildren(area) * qty;
   }, 0);
 
+  const riskPct = m.riskFactorPct ?? 0;
+  const riskAmount = riskPct > 0
+    ? materialsSubtotal * (riskPct / 100)
+    : 0;
+  const adjustedSubtotal = materialsSubtotal + riskAmount;
+
   const price = m.profitMultiplier > 0 && m.profitMultiplier < 1
-    ? materialsSubtotal / (1 - m.profitMultiplier)
-    : materialsSubtotal;
+    ? adjustedSubtotal / (1 - m.profitMultiplier)
+    : adjustedSubtotal;
 
   const tariffableSubtotal = areasData.reduce((sum, area) => {
     if (area.applies_tariff !== true) return sum;
@@ -123,6 +132,7 @@ export function computeQuotationTotalsSqft(
 
   return {
     materialsSubtotal,
+    riskAmount,
     price,
     tariffableSubtotal,
     tariffAmount,
