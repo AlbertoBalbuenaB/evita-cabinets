@@ -212,14 +212,19 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
     const shelfMaterialCost = shelfMat && totalShelfSF > 0
       ? calculateBackPanelMaterialCost(totalShelfSF * quantity, shelfMat) : 0;
 
+    // Subtract drawer box / shelf SF from box material when using separate materials
+    const sfToExclude = backPanelSF
+      + (useDrawerBoxMaterial ? drawerBoxSF : 0)
+      + (useShelfMaterial ? totalShelfSF : 0);
+
     const boxMaterialCost = boxMaterial && boxEdgeband
-      ? calculateBoxMaterialCost(selectedProduct, boxMaterial, quantity, backPanelSF)
+      ? calculateBoxMaterialCost(selectedProduct, boxMaterial, quantity, sfToExclude)
       : 0;
     const boxEdgebandCost = boxMaterial && boxEdgeband
       ? calculateBoxEdgebandCost(selectedProduct, boxEdgeband, quantity)
       : 0;
     const boxInteriorFinishCost = boxInteriorFinish && boxMaterial && boxEdgeband
-      ? calculateInteriorFinishCost(selectedProduct, boxInteriorFinish, quantity, true, backPanelSF)
+      ? calculateInteriorFinishCost(selectedProduct, boxInteriorFinish, quantity, true, sfToExclude)
       : 0;
 
     const doorsMaterialCost = doorsMaterial && doorsEdgeband
