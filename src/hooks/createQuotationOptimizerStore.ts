@@ -429,6 +429,12 @@ export function getQuotationOptimizerStore(
           activeRunId: active?.id ?? null,
           isStale: active?.is_stale ?? false,
           isSaving: false,
+          // Populate loadedRun immediately so BreakdownBOM renders
+          // without requiring a page reload.
+          loadedRun: {
+            snapshot,
+            result: state.pendingResult!,
+          },
         });
 
         return runId;
