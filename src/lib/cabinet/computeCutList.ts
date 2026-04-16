@@ -122,8 +122,8 @@ export function computeCutList(config: CabinetConfig): CutPiece[] {
       ? D - esp
       : D - 2 * esp;
     const shelfCb: Cubrecanto = shelfType === 'adjustable'
-      ? { sup: 1, inf: 1, izq: 1, der: 1 }   // all 4 sides
-      : { sup: 1, inf: 0, izq: 0, der: 0 };   // front edge only
+      ? { sup: 4, inf: 4, izq: 4, der: 4 }   // all 4 sides — code 4 = shelf EB
+      : { sup: 4, inf: 0, izq: 0, der: 0 };   // front edge only
     add('Shelves', innerW, shelfDepth, shelves, 'shelf', shelfCb, 'horizontal');
   }
 
@@ -157,9 +157,9 @@ export function computeCutList(config: CabinetConfig): CutPiece[] {
     add('Drawer Faces', W - DOOR_OVERLAY_GAP, faceHeight, numDrawers, 'frente',
       { sup: 2, inf: 2, izq: 2, der: 2 }, 'vertical');
 
-    // Drawer Box Sides (2 per drawer, running front-to-back)
+    // Drawer Box Sides (2 per drawer, running front-to-back) — code 3 = drawer box EB
     add('Drawer Box Sides', boxDepth, boxInnerH, numDrawers * 2, 'drawer_box',
-      { sup: 1, inf: 1, izq: 0, der: 0 }, 'horizontal');
+      { sup: 3, inf: 3, izq: 0, der: 0 }, 'horizontal');
 
     // Drawer Box Ends (front & back of the box, between the sides) — uses drawerEsp (15mm)
     add('Drawer Box Ends', boxOuterW - 2 * drawerEsp, boxInnerH, numDrawers * 2, 'drawer_box',

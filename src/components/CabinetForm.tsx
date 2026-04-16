@@ -89,9 +89,11 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
 
   const [useDrawerBoxMaterial, setUseDrawerBoxMaterial] = useState((cabinet as any)?.use_drawer_box_material ?? false);
   const [drawerBoxMaterialId, setDrawerBoxMaterialId] = useState((cabinet as any)?.drawer_box_material_id || '');
+  const [drawerBoxEdgebandId, setDrawerBoxEdgebandId] = useState((cabinet as any)?.drawer_box_edgeband_id || '');
 
   const [useShelfMaterial, setUseShelfMaterial] = useState((cabinet as any)?.use_shelf_material ?? false);
   const [shelfMaterialId, setShelfMaterialId] = useState((cabinet as any)?.shelf_material_id || '');
+  const [shelfEdgebandId, setShelfEdgebandId] = useState((cabinet as any)?.shelf_edgeband_id || '');
   const [extraShelves, setExtraShelves] = useState((cabinet as any)?.extra_shelves ?? 0);
 
   const [doorProfileId, setDoorProfileId] = useState(cabinet?.door_profile_id || '');
@@ -373,9 +375,11 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       use_drawer_box_material: useDrawerBoxMaterial,
       drawer_box_material_id: useDrawerBoxMaterial ? drawerBoxMaterialId : null,
       drawer_box_material_cost: costs.drawerBoxMaterialCost,
+      drawer_box_edgeband_id: useDrawerBoxMaterial && drawerBoxEdgebandId ? drawerBoxEdgebandId : null,
       use_shelf_material: useShelfMaterial,
       shelf_material_id: useShelfMaterial ? shelfMaterialId : null,
       shelf_material_cost: costs.shelfMaterialCost,
+      shelf_edgeband_id: useShelfMaterial && shelfEdgebandId ? shelfEdgebandId : null,
       extra_shelves: extraShelves,
     };
 
@@ -767,7 +771,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   </label>
                 </div>
                 {useDrawerBoxMaterial && (
-                  <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 mt-2">
+                  <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 mt-2 space-y-3">
                     <AutocompleteSelect
                       label="Drawer Box Material"
                       placeholder="Select drawer box material..."
@@ -778,6 +782,16 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                         label: `${item.concept_description} - ${formatCurrency(item.price)}/${item.unit}`,
                       }))}
                       required={useDrawerBoxMaterial}
+                    />
+                    <AutocompleteSelect
+                      label="Drawer Box Edgeband"
+                      placeholder="Select edgeband..."
+                      value={drawerBoxEdgebandId}
+                      onChange={setDrawerBoxEdgebandId}
+                      options={edgebandMaterials.map((item) => ({
+                        value: item.id,
+                        label: `${item.concept_description} - ${item.dimensions} - ${formatCurrency(item.price)}/${item.unit}`,
+                      }))}
                     />
                   </div>
                 )}
@@ -805,7 +819,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                 </label>
               </div>
               {useShelfMaterial && (
-                <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 mt-2">
+                <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 mt-2 space-y-3">
                   <AutocompleteSelect
                     label="Shelf Material"
                     placeholder="Select shelf material..."
@@ -816,6 +830,16 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                       label: `${item.concept_description} - ${formatCurrency(item.price)}/${item.unit}`,
                     }))}
                     required={useShelfMaterial}
+                  />
+                  <AutocompleteSelect
+                    label="Shelf Edgeband"
+                    placeholder="Select edgeband..."
+                    value={shelfEdgebandId}
+                    onChange={setShelfEdgebandId}
+                    options={edgebandMaterials.map((item) => ({
+                      value: item.id,
+                      label: `${item.concept_description} - ${item.dimensions} - ${formatCurrency(item.price)}/${item.unit}`,
+                    }))}
                   />
                 </div>
               )}

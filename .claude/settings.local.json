@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "mcp__62ffc546-0d48-41b0-ba43-4834bba6a0b3__execute_sql"
+    ]
+  }
+}

@@ -189,5 +189,5 @@ export interface EbTypeSummary {
   name: string;
   pricePerMeter: number;
   plId: string;
-  roles: ('box' | 'doors')[];
+  roles: ('box' | 'doors' | 'drawer_box' | 'shelf')[];
 }
