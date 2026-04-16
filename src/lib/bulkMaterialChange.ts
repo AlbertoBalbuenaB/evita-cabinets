@@ -399,6 +399,8 @@ export async function executeBulkMaterialChange(
           (changeType === 'doors_interior_finish' ? updates.doors_interior_finish_cost : currentCabinet.doors_interior_finish_cost || 0) +
           (changeType === 'door_profile' ? updates.door_profile_cost : currentCabinet.door_profile_cost || 0) +
           (currentCabinet.back_panel_material_cost || 0) +
+          (currentCabinet.drawer_box_material_cost || 0) +
+          (currentCabinet.shelf_material_cost || 0) +
           (currentCabinet.hardware_cost || 0) +
           (currentCabinet.accessories_cost || 0) +
           (currentCabinet.labor_cost || 0);

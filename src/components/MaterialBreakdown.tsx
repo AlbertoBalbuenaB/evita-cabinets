@@ -131,6 +131,8 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
     let totalItemsCost = 0;
     let totalClosetItemsCost = 0;
     let totalDoorProfileCost = 0;
+    let totalDrawerBoxMaterialCost = 0;
+    let totalShelfMaterialCost = 0;
     let totalPrefabItemsCost = 0;
 
     const allCountertops: AreaCountertop[] = [];
@@ -304,6 +306,8 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
 
         totalLaborCost += (cabinet.labor_cost ?? 0) * areaQty;
         totalDoorProfileCost += (cabinet.door_profile_cost || 0) * areaQty;
+        totalDrawerBoxMaterialCost += ((cabinet as any).drawer_box_material_cost || 0) * areaQty;
+        totalShelfMaterialCost += ((cabinet as any).shelf_material_cost || 0) * areaQty;
       });
 
       area.countertops.forEach((ct) => {
@@ -388,7 +392,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
       totalBoxCost + totalDoorsCost + totalBackPanelCost + totalEdgebandCost +
       totalHardwareCost + totalAccessoriesCost + totalLaborCost +
       totalCountertopsCost + totalItemsCost + totalClosetItemsCost +
-      totalDoorProfileCost + totalPrefabItemsCost;
+      totalDoorProfileCost + totalDrawerBoxMaterialCost + totalShelfMaterialCost + totalPrefabItemsCost;
 
     return {
       boxMaterials,

@@ -87,6 +87,13 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
   const [backPanelWidthInches, setBackPanelWidthInches] = useState(cabinet?.back_panel_width_inches || 0);
   const [backPanelHeightInches, setBackPanelHeightInches] = useState(cabinet?.back_panel_height_inches || 0);
 
+  const [useDrawerBoxMaterial, setUseDrawerBoxMaterial] = useState((cabinet as any)?.use_drawer_box_material ?? false);
+  const [drawerBoxMaterialId, setDrawerBoxMaterialId] = useState((cabinet as any)?.drawer_box_material_id || '');
+
+  const [useShelfMaterial, setUseShelfMaterial] = useState((cabinet as any)?.use_shelf_material ?? false);
+  const [shelfMaterialId, setShelfMaterialId] = useState((cabinet as any)?.shelf_material_id || '');
+  const [extraShelves, setExtraShelves] = useState((cabinet as any)?.extra_shelves ?? 0);
+
   const [doorProfileId, setDoorProfileId] = useState(cabinet?.door_profile_id || '');
 
   const backPanelSF = useBackPanelMaterial && backPanelWidthInches && backPanelHeightInches
@@ -181,6 +188,30 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       ? calculateBackPanelMaterialCost(backPanelSF, backPanelMaterial)
       : 0;
 
+    // Drawer box & shelf SF from cut_pieces (mm² → ft²)
+    const cutPieces = selectedProduct.cut_pieces as any[] | null;
+    const drawerBoxSF = cutPieces
+      ?.filter((cp: any) => cp.material === 'drawer_box')
+      ?.reduce((s: number, cp: any) => s + ((cp.ancho * cp.alto * cp.cantidad) / 92903.04), 0) ?? 0;
+    const shelfSFBase = cutPieces
+      ?.filter((cp: any) => cp.material === 'shelf')
+      ?.reduce((s: number, cp: any) => s + ((cp.ancho * cp.alto * cp.cantidad) / 92903.04), 0) ?? 0;
+    // Extra shelves: each has same dims as the first shelf piece
+    const shelfPiece = cutPieces?.find((cp: any) => cp.material === 'shelf');
+    const extraShelfSF = shelfPiece && extraShelves > 0
+      ? (shelfPiece.ancho * shelfPiece.alto * extraShelves) / 92903.04 : 0;
+    const totalShelfSF = shelfSFBase + extraShelfSF;
+
+    const drawerBoxMat = useDrawerBoxMaterial && drawerBoxMaterialId
+      ? priceList.find((p) => p.id === drawerBoxMaterialId) : null;
+    const drawerBoxMaterialCost = drawerBoxMat && drawerBoxSF > 0
+      ? calculateBackPanelMaterialCost(drawerBoxSF * quantity, drawerBoxMat) : 0;
+
+    const shelfMat = useShelfMaterial && shelfMaterialId
+      ? priceList.find((p) => p.id === shelfMaterialId) : null;
+    const shelfMaterialCost = shelfMat && totalShelfSF > 0
+      ? calculateBackPanelMaterialCost(totalShelfSF * quantity, shelfMat) : 0;
+
     const boxMaterialCost = boxMaterial && boxEdgeband
       ? calculateBoxMaterialCost(selectedProduct, boxMaterial, quantity, backPanelSF)
       : 0;
@@ -218,6 +249,8 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       doorsEdgebandCost +
       doorsInteriorFinishCost +
       backPanelMaterialCost +
+      drawerBoxMaterialCost +
+      shelfMaterialCost +
       hardwareCost +
       accessoriesCost +
       laborCost +
@@ -231,6 +264,8 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       doorsEdgebandCost,
       doorsInteriorFinishCost,
       backPanelMaterialCost,
+      drawerBoxMaterialCost,
+      shelfMaterialCost,
       hardwareCost,
       accessoriesCost,
       laborCost,
@@ -330,6 +365,13 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
       original_back_panel_material_price: backPanelMaterial?.price || null,
       door_profile_id: doorProfileId || null,
       door_profile_cost: costs.doorProfileCost,
+      use_drawer_box_material: useDrawerBoxMaterial,
+      drawer_box_material_id: useDrawerBoxMaterial ? drawerBoxMaterialId : null,
+      drawer_box_material_cost: costs.drawerBoxMaterialCost,
+      use_shelf_material: useShelfMaterial,
+      shelf_material_id: useShelfMaterial ? shelfMaterialId : null,
+      shelf_material_cost: costs.shelfMaterialCost,
+      extra_shelves: extraShelves,
     };
 
 
@@ -696,6 +738,93 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                 )}
                 </div>
               )}
+
+              {/* ── Drawer Box Material ────────────────────────── */}
+              {selectedProduct && (selectedProduct as any).num_drawers > 0 && (
+                <>
+                <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 mt-4">
+                  <label className="flex items-start space-x-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={useDrawerBoxMaterial}
+                      onChange={(e) => setUseDrawerBoxMaterial(e.target.checked)}
+                      className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500 mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-teal-600" />
+                        <span className="text-sm font-medium text-slate-700">Use Different Material for Drawer Box</span>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-1">
+                        Specify a different material for drawer box components (sides, ends, bottom). Default uses Box Construction material.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+                {useDrawerBoxMaterial && (
+                  <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 mt-2">
+                    <AutocompleteSelect
+                      label="Drawer Box Material"
+                      placeholder="Select drawer box material..."
+                      value={drawerBoxMaterialId}
+                      onChange={setDrawerBoxMaterialId}
+                      options={sheetMaterials.map((item) => ({
+                        value: item.id,
+                        label: `${item.concept_description} - ${formatCurrency(item.price)}/${item.unit}`,
+                      }))}
+                      required={useDrawerBoxMaterial}
+                    />
+                  </div>
+                )}
+                </>
+              )}
+
+              {/* ── Shelf Material + Extra Shelves ─────────────── */}
+              <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 mt-4">
+                <label className="flex items-start space-x-2 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={useShelfMaterial}
+                    onChange={(e) => setUseShelfMaterial(e.target.checked)}
+                    className="w-4 h-4 text-violet-600 border-slate-300 rounded focus:ring-violet-500 mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-violet-600" />
+                      <span className="text-sm font-medium text-slate-700">Use Different Material for Shelves</span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1">
+                      Specify a different material for shelves. Default uses Box Construction material.
+                    </p>
+                  </div>
+                </label>
+              </div>
+              {useShelfMaterial && (
+                <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 mt-2">
+                  <AutocompleteSelect
+                    label="Shelf Material"
+                    placeholder="Select shelf material..."
+                    value={shelfMaterialId}
+                    onChange={setShelfMaterialId}
+                    options={sheetMaterials.map((item) => ({
+                      value: item.id,
+                      label: `${item.concept_description} - ${formatCurrency(item.price)}/${item.unit}`,
+                    }))}
+                    required={useShelfMaterial}
+                  />
+                </div>
+              )}
+              <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 mt-2">
+                <Input
+                  label="Extra Shelves"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={extraShelves || ''}
+                  onChange={(e) => setExtraShelves(parseInt(e.target.value) || 0)}
+                />
+                <p className="text-xs text-slate-500 mt-1">Additional shelves beyond the product default.</p>
+              </div>
             </div>
 
             <div className="border border-slate-200 rounded-lg">

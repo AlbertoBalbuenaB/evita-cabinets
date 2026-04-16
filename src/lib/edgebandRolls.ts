@@ -211,6 +211,8 @@ export async function recalculateAreaEdgebandCosts(areaId: string): Promise<bool
         cost.doorsEdgebandCost +
         (cabinet.doors_interior_finish_cost ?? 0) +
         (cabinet.back_panel_material_cost || 0) +
+        (cabinet.drawer_box_material_cost || 0) +
+        (cabinet.shelf_material_cost || 0) +
         (cabinet.hardware_cost ?? 0) +
         cabinet.accessories_cost +
         (cabinet.labor_cost ?? 0) +
