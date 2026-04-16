@@ -3,7 +3,17 @@ import { BarChart3, Package, Truck, TrendingUp, DollarSign, Layers, Boxes } from
 import { formatCurrency } from '../lib/calculations';
 import { countActualCabinets } from '../lib/cabinetFilters';
 import { calculateAreaBoxesAndPallets } from '../lib/boxesAndPallets';
+import { getCabinetTotalCost } from '../lib/pricing/getCabinetTotalCost';
 import type { ProjectArea, AreaCabinet, AreaItem, AreaCountertop, AreaClosetItem, Product } from '../types';
+
+/** Live recompute of a cabinet's total cost; falls back to the cached
+ *  `subtotal` field for legacy data. Mirrors the rule used by
+ *  computeQuotationTotalsSqft / computeOptimizerQuotationTotal so the
+ *  Analytics tab agrees with the Info and Breakdown tabs. */
+function cabSubtotal(c: AreaCabinet): number {
+  const live = getCabinetTotalCost(c as unknown as Record<string, unknown>);
+  return live > 0 ? live : (c.subtotal ?? 0);
+}
 
 type EnrichedArea = ProjectArea & {
   cabinets: AreaCabinet[];
@@ -83,7 +93,7 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
           (cabinet.box_material_cost ?? 0) + (cabinet.box_edgeband_cost ?? 0) + (cabinet.box_interior_finish_cost ?? 0) +
           (cabinet.doors_material_cost ?? 0) + (cabinet.doors_edgeband_cost ?? 0) + (cabinet.doors_interior_finish_cost ?? 0) +
           (cabinet.hardware_cost ?? 0);
-        const taxAmount = (cabinet.subtotal ?? 0) - (cabinet.labor_cost ?? 0) - totalBaseCost;
+        const taxAmount = cabSubtotal(cabinet) - (cabinet.labor_cost ?? 0) - totalBaseCost;
         return sum + Math.max(0, taxAmount);
       }, 0) * areaQty;
     };
@@ -96,7 +106,7 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
       // non-material extras + ft² fallback for skipped cabinets).
       const cabinetsTotal = isOptimizerMode
         ? (optimizerOverrides!.perAreaCabinetSubtotal[area.id] ?? 0) * areaQty
-        : (area.cabinets || []).reduce((sum, c) => sum + (c.subtotal ?? 0), 0) * areaQty;
+        : (area.cabinets || []).reduce((sum, c) => sum + cabSubtotal(c), 0) * areaQty;
       const itemsTotal = (area.items || []).reduce((sum, i) => sum + i.subtotal, 0) * areaQty;
       const countertopsTotal = (area.countertops || []).reduce((sum, ct) => sum + ct.subtotal, 0) * areaQty;
       const closetItemsTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0) * areaQty;
@@ -201,7 +211,7 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
           0,
         )
       : areas.reduce(
-          (sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.subtotal ?? 0), 0) * (area.quantity ?? 1),
+          (sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + cabSubtotal(c), 0) * (area.quantity ?? 1),
           0
         );
     const avgCostPerCabinet = totalCabinets > 0 ? cabinetsCost / totalCabinets : 0;

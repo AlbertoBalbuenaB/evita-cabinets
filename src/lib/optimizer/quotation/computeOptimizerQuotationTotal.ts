@@ -153,11 +153,14 @@ export function computeOptimizerQuotationTotal(
     let areaFallbackCabinets = 0;
 
     for (const cab of area.cabinets) {
-      // Use the live recompute from the 13 cost fields instead of `cab.subtotal`,
-      // which is a denormalized cache that can drift when a cabinet is edited
-      // without the recompute step. See src/lib/pricing/getCabinetTotalCost.ts
-      // for the failure case.
-      const subtotal = getCabinetTotalCost(cab as unknown as Record<string, unknown>);
+      // Prefer the live recompute from the 15 cost fields; fall back to
+      // `cab.subtotal` when all of them are zero/missing (legacy data +
+      // lightweight test fixtures). The denormalized `subtotal` field can
+      // drift when a cabinet is edited and the recompute step is missed;
+      // the helper makes this self-healing for real data.
+      // See src/lib/pricing/getCabinetTotalCost.ts.
+      const live = getCabinetTotalCost(cab as unknown as Record<string, unknown>);
+      const subtotal = live > 0 ? live : (cab.subtotal ?? 0);
       if (cabinetsCovered.has(cab.id)) {
         // Covered by optimizer → keep only non-material extras.
         const extras = subtotal - cabinetMaterialCost(cab as unknown as Record<string, unknown>);

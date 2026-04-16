@@ -26,8 +26,7 @@ import { calculateAreaBoxesAndPallets } from '../lib/boxesAndPallets';
 import { useSettingsStore } from '../lib/settingsStore';
 import { recalculateAreaEdgebandCosts } from '../lib/edgebandRolls';
 import { recalculateAreaSheetMaterialCosts } from '../lib/sheetMaterials';
-import { computeQuotationTotalsSqft } from '../lib/pricing/computeQuotationTotalsSqft';
-import { computeOptimizerQuotationTotal } from '../lib/optimizer/quotation/computeOptimizerQuotationTotal';
+import { computeQuotationTotals } from '../lib/pricing/computeQuotationTotals';
 import {
   computeOptimizerAreaSubtotals,
   computeOptimizerTariffableMaterialsCost,
@@ -306,17 +305,20 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     const _referralRate = opts?.referralRate ?? referralRate;
     const _otherExpenses = opts?.otherExpenses ?? otherExpenses;
 
-    // Math is delegated to a pure helper to keep the rollup testable and
-    // to share it with the optimizer-pricing path (Phase 7). The wrapper
+    // Math is delegated to the unified pricing helper. The wrapper
     // remains responsible for Supabase writes.
-    const totals = computeQuotationTotalsSqft(areasData, {
-      profitMultiplier:  _profitMultiplier,
-      tariffMultiplier:  _tariffMultiplier,
-      referralRate:      _referralRate,
-      taxPercentage:     _taxPercentage,
-      installDeliveryMxn: _installDeliveryMxn,
-      otherExpenses:     _otherExpenses,
-      riskFactorPct:     riskFactorAppliesSqft ? riskFactorPct : 0,
+    const totals = computeQuotationTotals({
+      pricingMethod: 'sqft',
+      areasData,
+      multipliers: {
+        profitMultiplier:  _profitMultiplier,
+        tariffMultiplier:  _tariffMultiplier,
+        referralRate:      _referralRate,
+        taxPercentage:     _taxPercentage,
+        installDeliveryMxn: _installDeliveryMxn,
+        otherExpenses:     _otherExpenses,
+        riskFactorPct:     riskFactorAppliesSqft ? riskFactorPct : 0,
+      },
     });
     const sqftProjectTotal = totals.fullProjectTotal;
 
@@ -386,12 +388,9 @@ const [isEditingDate, setIsEditingDate] = useState(false);
               edgebandByCabinet: snapshot?.edgebandCostByCabinet ?? {},
             });
 
-            const optTotals = computeOptimizerQuotationTotal({
-              materialCost: Number(run.material_cost ?? 0),
-              edgebandCost: Number(run.edgeband_cost ?? 0),
+            const optTotals = computeQuotationTotals({
+              pricingMethod: 'optimizer',
               areasData,
-              cabinetsCovered,
-              tariffableMaterialsCost,
               multipliers: {
                 profitMultiplier:  _profitMultiplier,
                 tariffMultiplier:  _tariffMultiplier,
@@ -400,6 +399,12 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 installDeliveryMxn: _installDeliveryMxn,
                 otherExpenses:     _otherExpenses,
                 riskFactorPct:     riskFactorAppliesOptimizer ? riskFactorPct : 0,
+              },
+              optimizerRun: {
+                materialCost: Number(run.material_cost ?? 0),
+                edgebandCost: Number(run.edgeband_cost ?? 0),
+                cabinetsCovered,
+                tariffableMaterialsCost,
               },
             });
             optimizerGrandTotal = optTotals.fullProjectTotal;
@@ -1244,161 +1249,114 @@ const [isEditingDate, setIsEditingDate] = useState(false);
    */
   const quotationView = useMemo(() => {
     const installDeliveryMxnLocal = installDelivery * exchangeRate;
-    const sqftMultipliers = {
+    const baseMultipliers = {
       profitMultiplier,
       tariffMultiplier,
       referralRate,
       taxPercentage,
       installDeliveryMxn: installDeliveryMxnLocal,
       otherExpenses,
-      riskFactorPct: riskFactorAppliesSqft ? riskFactorPct : 0,
-    };
-    const optimizerMultipliers = {
-      ...sqftMultipliers,
-      riskFactorPct: riskFactorAppliesOptimizer ? riskFactorPct : 0,
+      riskFactorPct: 0,
     };
 
-    // Always compute sqft as the baseline.
-    const sqft = computeQuotationTotalsSqft(areas, sqftMultipliers);
-
-    // Per-area cabinet-only subtotals (without × quantity) for area cards.
-    const sqftPerAreaCabinetSubtotal: Record<string, number> = {};
-    for (const area of areas) {
-      sqftPerAreaCabinetSubtotal[area.id] = area.cabinets.reduce(
-        (s, c) => s + (c.subtotal ?? 0),
-        0,
-      );
-    }
-
-    // Aggregated ft² subtotals by category (kept for the Info-tab breakdown).
-    const cabinetsSubtotalSqft = areas.reduce(
-      (sum, area) => sum + sqftPerAreaCabinetSubtotal[area.id] * (area.quantity ?? 1),
-      0,
-    );
-    const itemsSubtotal = areas.reduce(
-      (sum, area) => sum + area.items.reduce((s, i) => s + i.subtotal, 0) * (area.quantity ?? 1),
-      0,
-    );
-    const countertopsSubtotal = areas.reduce(
-      (sum, area) => sum + area.countertops.reduce((s, ct) => s + ct.subtotal, 0) * (area.quantity ?? 1),
-      0,
-    );
-    const closetItemsSubtotal = areas.reduce(
-      (sum, area) =>
-        sum +
-        (area.closetItems || []).reduce((s, ci) => s + ci.subtotal_mxn, 0) *
-          (area.quantity ?? 1),
-      0,
-    );
-    const prefabItemsSubtotal = areas.reduce(
-      (sum, area) =>
-        sum +
-        (area.prefabItems || []).reduce((s, pi) => s + pi.cost_mxn, 0) *
-          (area.quantity ?? 1),
-      0,
-    );
-
-    // Try to compute optimizer-mode totals.
-    let optCabinetsSubtotal = cabinetsSubtotalSqft;
-    let optMaterialsSubtotal = sqft.materialsSubtotal;
-    let optPrice = sqft.price;
-    let optTariffAmount = sqft.tariffAmount;
-    let optReferralAmount = sqft.referralAmount;
-    let optTaxAmount = sqft.taxAmount;
-    let optFullProjectTotal = sqft.fullProjectTotal;
-    let optPerAreaCabinetSubtotal = { ...sqftPerAreaCabinetSubtotal };
+    // Try optimizer mode first when requested + a run is loaded; fall back to
+    // sqft on any error or when no run exists. Avoids flashing zeros mid-load.
+    let totals: ReturnType<typeof computeQuotationTotals>;
     let optimizerReady = false;
 
-    if (activeOptimizerRun) {
+    if (pricingMethod === 'optimizer' && activeOptimizerRun) {
       try {
         const snapshot = activeOptimizerRun.snapshot as unknown as OptimizerRunSnapshot;
         const result = activeOptimizerRun.result as unknown as OptimizationResult;
         const cabinetsCovered = new Set<string>(snapshot?.cabinetsCovered ?? []);
-
-        // Proportional tariffable-materials share — mirrors the rule used
-        // by `updateProjectTotal` so the UI and the persisted total agree.
         const tariffableMaterialsCost = computeOptimizerTariffableMaterialsCost({
           result,
           snapshot,
           areasData: areas,
           edgebandByCabinet: snapshot?.edgebandCostByCabinet ?? {},
         });
-
-        const opt = computeOptimizerQuotationTotal({
-          materialCost: Number(activeOptimizerRun.material_cost ?? 0),
-          edgebandCost: Number(activeOptimizerRun.edgeband_cost ?? 0),
+        totals = computeQuotationTotals({
+          pricingMethod: 'optimizer',
           areasData: areas,
-          cabinetsCovered,
-          tariffableMaterialsCost,
-          multipliers: optimizerMultipliers,
+          multipliers: { ...baseMultipliers, riskFactorPct: riskFactorAppliesOptimizer ? riskFactorPct : 0 },
+          optimizerRun: {
+            materialCost: Number(activeOptimizerRun.material_cost ?? 0),
+            edgebandCost: Number(activeOptimizerRun.edgeband_cost ?? 0),
+            cabinetsCovered,
+            tariffableMaterialsCost,
+          },
         });
+        optimizerReady = true;
+      } catch (err) {
+        console.warn('[quotationView] optimizer totals failed; falling back to sqft:', err);
+        totals = computeQuotationTotals({
+          pricingMethod: 'sqft',
+          areasData: areas,
+          multipliers: { ...baseMultipliers, riskFactorPct: riskFactorAppliesSqft ? riskFactorPct : 0 },
+        });
+      }
+    } else {
+      totals = computeQuotationTotals({
+        pricingMethod: 'sqft',
+        areasData: areas,
+        multipliers: { ...baseMultipliers, riskFactorPct: riskFactorAppliesSqft ? riskFactorPct : 0 },
+      });
+    }
 
-        optMaterialsSubtotal = opt.materialsSubtotal;
-        optPrice = opt.price;
-        optTariffAmount = opt.tariffAmount;
-        optReferralAmount = opt.referralAmount;
-        optTaxAmount = opt.taxAmount;
-        optFullProjectTotal = opt.fullProjectTotal;
-        optCabinetsSubtotal =
-          opt.optimizerMaterialsCost + opt.coveredCabinetExtras + opt.fallbackCabinetsSubtotal;
-
-        // Per-area cabinet subtotals sourced from the optimizer run.
+    // In optimizer mode, replace per-area cabinet subtotals with the
+    // optimizer-attributed values (boards + edgeband + extras per area).
+    // The unified function computes per-area sums from cabinet fields, but
+    // the area cards expect optimizer-attributed shares.
+    let perAreaCabinetSubtotal = totals.perAreaCabinetSubtotal;
+    if (optimizerReady && activeOptimizerRun) {
+      try {
+        const snapshot = activeOptimizerRun.snapshot as unknown as OptimizerRunSnapshot;
+        const result = activeOptimizerRun.result as unknown as OptimizationResult;
         const perAreaOpt = computeOptimizerAreaSubtotals({
           snapshot,
           result,
           areasData: areas,
-          cabinetsCovered,
+          cabinetsCovered: new Set<string>(snapshot?.cabinetsCovered ?? []),
         });
+        const replaced: Record<string, number> = { ...perAreaCabinetSubtotal };
         for (const area of areas) {
-          optPerAreaCabinetSubtotal[area.id] =
-            perAreaOpt[area.id]?.cabinetsSubtotal ?? sqftPerAreaCabinetSubtotal[area.id] ?? 0;
+          replaced[area.id] =
+            perAreaOpt[area.id]?.cabinetsSubtotal ?? perAreaCabinetSubtotal[area.id] ?? 0;
         }
-        optimizerReady = true;
-      } catch (err) {
-        console.warn('[quotationView] optimizer totals failed; falling back to sqft:', err);
-        optimizerReady = false;
+        perAreaCabinetSubtotal = replaced;
+      } catch {
+        // Keep the unified fallback if attribution fails.
       }
     }
 
-    // In optimizer mode without a loaded run we render ft² values so we
-    // never flash zeros — the STALE/LOADING badge communicates the state.
-    const useOptimizer = pricingMethod === 'optimizer' && optimizerReady;
-
-    const cabinetsSubtotal = useOptimizer ? optCabinetsSubtotal : cabinetsSubtotalSqft;
-    const materialsSubtotal = useOptimizer ? optMaterialsSubtotal : sqft.materialsSubtotal;
-    const riskAmount = useOptimizer
-      ? (riskFactorAppliesOptimizer ? materialsSubtotal * (riskFactorPct / 100) : 0)
-      : sqft.riskAmount;
-    const price = useOptimizer ? optPrice : sqft.price;
-    const profitAmount = price - materialsSubtotal - riskAmount;
-    const tariffAmount = useOptimizer ? optTariffAmount : sqft.tariffAmount;
-    const referralAmount = useOptimizer ? optReferralAmount : sqft.referralAmount;
-    const taxAmount = useOptimizer ? optTaxAmount : sqft.taxAmount;
-    const projectTotal = useOptimizer ? optFullProjectTotal : sqft.fullProjectTotal;
-    const perAreaCabinetSubtotal = useOptimizer
-      ? optPerAreaCabinetSubtotal
-      : sqftPerAreaCabinetSubtotal;
+    // cabinetsSubtotal = materials minus everything that's not a cabinet.
+    const cabinetsSubtotal =
+      totals.materialsSubtotal -
+      totals.byCategory.items -
+      totals.byCategory.countertops -
+      totals.byCategory.closetItems -
+      totals.byCategory.prefabItems;
 
     return {
       method: pricingMethod,
-      usingOptimizer: useOptimizer,
+      usingOptimizer: optimizerReady,
       isStale: optimizerIsStale,
       activeRun: activeOptimizerRun,
       cabinetsSubtotal,
-      itemsSubtotal,
-      countertopsSubtotal,
-      closetItemsSubtotal,
-      prefabItemsSubtotal,
-      materialsSubtotal,
-      riskAmount,
-      price,
-      profitAmount,
-      tariffAmount,
-      referralAmount,
-      taxAmount,
-      projectTotal,
+      itemsSubtotal:        totals.byCategory.items,
+      countertopsSubtotal:  totals.byCategory.countertops,
+      closetItemsSubtotal:  totals.byCategory.closetItems,
+      prefabItemsSubtotal:  totals.byCategory.prefabItems,
+      materialsSubtotal:    totals.materialsSubtotal,
+      riskAmount:           totals.riskAmount,
+      price:                totals.price,
+      profitAmount:         totals.profitAmount,
+      tariffAmount:         totals.tariffAmount,
+      referralAmount:       totals.referralAmount,
+      taxAmount:            totals.taxAmount,
+      projectTotal:         totals.fullProjectTotal,
       perAreaCabinetSubtotal,
-      installDeliveryMxn: installDeliveryMxnLocal,
+      installDeliveryMxn:   installDeliveryMxnLocal,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

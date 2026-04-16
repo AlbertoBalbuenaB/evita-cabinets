@@ -22,7 +22,7 @@ import { formatCurrency } from '../../../lib/calculations';
 import { supabase } from '../../../lib/supabase';
 import { useSettingsStore } from '../../../lib/settingsStore';
 import { computeEdgebandCost } from '../../../lib/optimizer/quotation/computeEdgebandCost';
-import { computeOptimizerQuotationTotal } from '../../../lib/optimizer/quotation/computeOptimizerQuotationTotal';
+import { computeQuotationTotals } from '../../../lib/pricing/computeQuotationTotals';
 import { computeOptimizerTariffableMaterialsCost } from '../../../lib/optimizer/quotation/computeOptimizerAreaSubtotals';
 import type { OptimizerRunSnapshot } from '../../../lib/optimizer/quotation/types';
 import type { OptimizationResult } from '../../../lib/optimizer/types';
@@ -357,12 +357,9 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
 
     const riskAppliesOptimizer = quotation.risk_factor_applies_optimizer ?? false;
     const riskPct = riskAppliesOptimizer ? (quotation.risk_factor_percentage ?? 0) : 0;
-    const totals = computeOptimizerQuotationTotal({
-      materialCost:   result.totalCost,
-      edgebandCost:   ebResult.totalCost,
-      areasData:      normalisedAreas,
-      cabinetsCovered,
-      tariffableMaterialsCost,
+    const totals = computeQuotationTotals({
+      pricingMethod: 'optimizer',
+      areasData: normalisedAreas,
       multipliers: {
         profitMultiplier: quotation.profit_multiplier        ?? 0,
         tariffMultiplier: quotation.tariff_multiplier        ?? 0,
@@ -371,6 +368,12 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
         installDeliveryMxn,
         otherExpenses:    quotation.other_expenses           ?? 0,
         riskFactorPct:    riskPct,
+      },
+      optimizerRun: {
+        materialCost: result.totalCost,
+        edgebandCost: ebResult.totalCost,
+        cabinetsCovered,
+        tariffableMaterialsCost,
       },
     });
 
