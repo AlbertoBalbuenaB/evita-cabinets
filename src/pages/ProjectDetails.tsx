@@ -976,6 +976,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         areaNames,
         1.0,
         lang,
+        snapshot.ebCabinetMap,
       );
     } catch (err) {
       console.error('[handlePrintCutList] export failed:', err);
