@@ -145,28 +145,54 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
     }
 
     // ── 2. Edgeband ───────────────────────────────────────────────────────
+    // Per-cabinet pricing: uses ebCabinetMap when available (new snapshots)
+    // to price each piece at its cabinet's actual edgeband rate. Falls back
+    // to the legacy 3-slot system for old snapshots without ebCabinetMap.
     const ebPriceBySlot = {
       a: snapshot.ebConfig?.a?.price ?? 0,
       b: snapshot.ebConfig?.b?.price ?? 0,
       c: snapshot.ebConfig?.c?.price ?? 0,
     };
-    const ebResult = computeEdgebandCost(snapshot.pieces, ebPriceBySlot);
-    for (const slot of ['a', 'b', 'c'] as const) {
-      const { meters } = ebResult.perSlot[slot];
-      if (meters <= 0) continue;
-      const ebConfig = snapshot.ebConfig?.[slot];
-      if (!ebConfig || !ebConfig.name || ebConfig.name.toLowerCase().includes('not apply')) continue;
-      const rollsNeeded = Math.ceil(meters / ROLL_LENGTH_METERS);
-      const pricePerRoll = (ebConfig.price ?? 0) * ROLL_LENGTH_METERS;
-      rows.push({
-        category: 'Edgeband',
-        concept: ebConfig.name,
-        unit: `Roll (${ROLL_LENGTH_METERS}m)`,
-        qty: rollsNeeded,
-        price: pricePerRoll,
-        subtotal: rollsNeeded * pricePerRoll,
-        priceListItemId: snapshot.ebSlotToPriceListId?.[slot] ?? null,
-      });
+    const ebResult = computeEdgebandCost(snapshot.pieces, ebPriceBySlot, snapshot.ebCabinetMap);
+
+    // Prefer per-type breakdown (accurate for N edgeband types)
+    const hasPerType = Object.keys(ebResult.perEdgebandType).length > 0;
+    if (hasPerType) {
+      for (const [plId, eb] of Object.entries(ebResult.perEdgebandType)) {
+        if (eb.meters <= 0) continue;
+        if (eb.name.toLowerCase().includes('not apply')) continue;
+        const rollsNeeded = Math.ceil(eb.meters / ROLL_LENGTH_METERS);
+        const pricePerMeter = eb.meters > 0 ? eb.cost / eb.meters : 0;
+        const pricePerRoll = pricePerMeter * ROLL_LENGTH_METERS;
+        rows.push({
+          category: 'Edgeband',
+          concept: eb.name,
+          unit: `Roll (${ROLL_LENGTH_METERS}m)`,
+          qty: rollsNeeded,
+          price: pricePerRoll,
+          subtotal: rollsNeeded * pricePerRoll,
+          priceListItemId: plId,
+        });
+      }
+    } else {
+      // Legacy fallback: iterate 3 fixed slots
+      for (const slot of ['a', 'b', 'c'] as const) {
+        const { meters } = ebResult.perSlot[slot];
+        if (meters <= 0) continue;
+        const ebConfig = snapshot.ebConfig?.[slot];
+        if (!ebConfig || !ebConfig.name || ebConfig.name.toLowerCase().includes('not apply')) continue;
+        const rollsNeeded = Math.ceil(meters / ROLL_LENGTH_METERS);
+        const pricePerRoll = (ebConfig.price ?? 0) * ROLL_LENGTH_METERS;
+        rows.push({
+          category: 'Edgeband',
+          concept: ebConfig.name,
+          unit: `Roll (${ROLL_LENGTH_METERS}m)`,
+          qty: rollsNeeded,
+          price: pricePerRoll,
+          subtotal: rollsNeeded * pricePerRoll,
+          priceListItemId: snapshot.ebSlotToPriceListId?.[slot] ?? null,
+        });
+      }
     }
 
     // ── 3. Hardware ───────────────────────────────────────────────────────

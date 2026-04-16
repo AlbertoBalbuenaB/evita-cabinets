@@ -34,6 +34,8 @@ import type {
   Pieza,
   StockSize,
   EbConfig,
+  EbCabinetMap,
+  EbTypeSummary,
   OptimizationResult,
   EngineMode,
   OptimizationObjective,
@@ -79,6 +81,8 @@ export interface QuotationOptimizerState {
   pendingStocks: StockSize[];
   pendingEbConfig: EbConfig;
   pendingEbSlotToPriceListId: Record<'a' | 'b' | 'c', string | null>;
+  pendingEbCabinetMap: EbCabinetMap;
+  pendingEbTypeSummary: Record<string, EbTypeSummary>;
   pendingCabinetsCovered: Set<string>;
   pendingCabinetsSkipped: Array<{ id: string; reason: string }>;
   pendingCabinetInstanceCount: number;
@@ -182,6 +186,8 @@ export function getQuotationOptimizerStore(
       c: { id: '', name: '', price: 0 },
     },
     pendingEbSlotToPriceListId: { a: null, b: null, c: null },
+    pendingEbCabinetMap: {},
+    pendingEbTypeSummary: {},
     pendingCabinetsCovered: new Set<string>(),
     pendingCabinetsSkipped: [],
     pendingCabinetInstanceCount: 0,
@@ -251,6 +257,8 @@ export function getQuotationOptimizerStore(
           pendingStocks:             result.stocks,
           pendingEbConfig:           result.ebConfig,
           pendingEbSlotToPriceListId: result.ebSlotToPriceListId,
+          pendingEbCabinetMap:       result.ebCabinetMap,
+          pendingEbTypeSummary:      result.ebTypeSummary,
           pendingCabinetsCovered:    result.cabinetsCovered,
           pendingCabinetsSkipped:    result.cabinetsSkipped,
           pendingCabinetInstanceCount: result.cabinetsInstanceCount,
@@ -335,7 +343,7 @@ export function getQuotationOptimizerStore(
           b: state.selectedEbSlots.has('b') ? (state.pendingEbConfig.b.price ?? 0) : 0,
           c: state.selectedEbSlots.has('c') ? (state.pendingEbConfig.c.price ?? 0) : 0,
         };
-        const edgeband = computeEdgebandCost(state.pendingPieces, ebPriceBySlot);
+        const edgeband = computeEdgebandCost(state.pendingPieces, ebPriceBySlot, state.pendingEbCabinetMap);
 
         // Per-area attribution (Phase 3 pure fn).
         const areaAttribution = attributeBoardsToAreas(state.pendingResult);
@@ -378,6 +386,8 @@ export function getQuotationOptimizerStore(
           areaAttribution,
           cabinetAttribution,
           edgebandCostByCabinet: edgeband.perCabinet,
+          ebCabinetMap:          state.pendingEbCabinetMap,
+          ebTypeSummary:         state.pendingEbTypeSummary,
           warnings:              state.pendingWarnings,
           cabinetsCovered:       Array.from(state.pendingCabinetsCovered),
           cabinetsSkipped:       state.pendingCabinetsSkipped,

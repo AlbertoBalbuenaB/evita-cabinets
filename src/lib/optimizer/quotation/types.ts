@@ -8,7 +8,7 @@
  * store, and UI components alike.
  */
 
-import type { Pieza, StockSize, EbConfig, OptimizationResult } from '../types';
+import type { Pieza, StockSize, EbConfig, EbCabinetMap, EbTypeSummary, OptimizationResult } from '../types';
 
 /** Frozen snapshot of everything needed to re-render a saved optimizer run. */
 export interface OptimizerRunSnapshot {
@@ -42,6 +42,17 @@ export interface OptimizerRunSnapshot {
 
   /** Per-cabinet edge band cost (for cost substitution). */
   edgebandCostByCabinet: Record<string, number>;
+
+  /**
+   * Per-cabinet edgeband price lookup — maps cabinetId → cubrecanto code →
+   * { pricePerMeter, plId, name }. When present, `computeEdgebandCost` uses
+   * this instead of the global 3-slot `ebConfig` for pricing. Optional for
+   * backward compat with snapshots created before this field existed.
+   */
+  ebCabinetMap?: EbCabinetMap;
+
+  /** Summary of all distinct edgeband types across the quotation. */
+  ebTypeSummary?: Record<string, EbTypeSummary>;
 
   /** Warnings surfaced to the user at build time. */
   warnings: string[];

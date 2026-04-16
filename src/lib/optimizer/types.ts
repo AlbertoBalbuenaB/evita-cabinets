@@ -26,7 +26,7 @@ export interface Pieza {
   /** Quotation-pricing tagging: project_areas.id (for per-area board attribution) */
   areaId?: string;
   /** Quotation-pricing tagging: original CutPiece role for cost-side mapping */
-  cutPieceRole?: 'cuerpo' | 'frente' | 'back' | 'custom' | 'interior-finish';
+  cutPieceRole?: 'cuerpo' | 'frente' | 'back' | 'drawer_box' | 'shelf' | 'custom' | 'interior-finish';
   /** Quotation-pricing tagging: source CutPiece.id for traceability back to template */
   sourceCutPieceId?: string;
   // internal index assigned before optimization
@@ -165,4 +165,29 @@ export interface EbConfig {
   a: EbTypeConfig;
   b: EbTypeConfig;
   c: EbTypeConfig;
+}
+
+/**
+ * Per-cabinet edgeband price lookup.
+ *
+ * Maps cabinetId → cubrecanto code → edgeband info. This replaces the
+ * 3-fixed-slot system for pricing purposes — each piece is priced at its
+ * cabinet's actual edgeband assignment instead of a single global rate
+ * per slot. Supports N distinct edgeband types across a quotation.
+ *
+ * Cubrecanto codes: 1 = box construction, 2 = doors/fronts.
+ * (Future: 3 = drawer box, 4 = shelf.)
+ */
+export type EbCabinetMap = Record<string, Record<number, {
+  pricePerMeter: number;
+  plId: string;
+  name: string;
+}>>;
+
+/** Summary of all distinct edgeband types found across a quotation. */
+export interface EbTypeSummary {
+  name: string;
+  pricePerMeter: number;
+  plId: string;
+  roles: ('box' | 'doors')[];
 }

@@ -3,13 +3,14 @@ import { Package, Ruler, Wrench, Hammer as HammerIcon, ListChecks, Layers, Chevr
 import { formatCurrency } from '../lib/calculations';
 import { supabase } from '../lib/supabase';
 import { fetchAllProducts } from '../lib/fetchAllProducts';
-import type { AreaCabinet, Product, PriceListItem, AreaItem, AreaCountertop, ProjectArea, AreaClosetItem } from '../types';
+import type { AreaCabinet, Product, PriceListItem, AreaItem, AreaCountertop, ProjectArea, AreaClosetItem, AreaPrefabItem } from '../types';
 
 type EnrichedArea = ProjectArea & {
   cabinets: AreaCabinet[];
   items: AreaItem[];
   countertops: AreaCountertop[];
   closetItems?: AreaClosetItem[];
+  prefabItems?: AreaPrefabItem[];
 };
 
 interface MaterialBreakdownProps {
@@ -129,6 +130,8 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
     let totalCountertopsCost = 0;
     let totalItemsCost = 0;
     let totalClosetItemsCost = 0;
+    let totalDoorProfileCost = 0;
+    let totalPrefabItemsCost = 0;
 
     const allCountertops: AreaCountertop[] = [];
     const allItems: AreaItem[] = [];
@@ -264,7 +267,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
               const hardwareItem = priceList.find((p) => p.id === hardwareId);
               if (hardwareItem) {
                 const hwQuantity = (hw.quantity_per_cabinet || hw.quantity || 1) * effectiveQty;
-                const hwCost = hardwareItem.price * hwQuantity;
+                const hwCost = (hardwareItem.price_with_tax ?? hardwareItem.price) * hwQuantity;
                 const key = hardwareId;
                 if (!hardwareMap.has(key)) {
                   hardwareMap.set(key, { name: hardwareItem.concept_description, quantity: hwQuantity, cost: hwCost });
@@ -285,7 +288,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
               const accessoryItem = priceList.find((p) => p.id === accessoryId);
               if (accessoryItem) {
                 const accQuantity = (acc.quantity_per_cabinet || 1) * effectiveQty;
-                const accCost = accessoryItem.price * accQuantity;
+                const accCost = (accessoryItem.price_with_tax ?? accessoryItem.price) * accQuantity;
                 const key = accessoryId;
                 if (!accessoriesMap.has(key)) {
                   accessoriesMap.set(key, { name: accessoryItem.concept_description, quantity: accQuantity, cost: accCost });
@@ -300,6 +303,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
         }
 
         totalLaborCost += (cabinet.labor_cost ?? 0) * areaQty;
+        totalDoorProfileCost += (cabinet.door_profile_cost || 0) * areaQty;
       });
 
       area.countertops.forEach((ct) => {
@@ -316,6 +320,10 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
 
       (area.closetItems || []).forEach((ci) => {
         totalClosetItemsCost += ci.subtotal_mxn * areaQty;
+      });
+
+      (area.prefabItems || []).forEach((pi) => {
+        totalPrefabItemsCost += pi.cost_mxn * areaQty;
       });
     });
 
@@ -346,13 +354,20 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
         mergedEdgebands.set(eb.edgebandName, { ...eb });
       }
     });
-    mergedEdgebands.forEach((eb) => {
-      if (eb.edgebandName.toLowerCase().includes('not apply') || eb.cost <= 0) {
-        mergedEdgebands.delete(eb.edgebandName);
+    mergedEdgebands.forEach((eb, key) => {
+      if (eb.edgebandName.toLowerCase().includes('not apply') || eb.totalMeters <= 0) {
+        mergedEdgebands.delete(key);
         return;
       }
       eb.rollsNeeded = Math.ceil(eb.totalMeters / ROLL_LENGTH_METERS);
       eb.totalMetersRounded = eb.rollsNeeded * ROLL_LENGTH_METERS;
+      // Fallback: recalculate cost from price_list when pre-computed cabinet cost is 0
+      if (eb.cost <= 0) {
+        const plItem = priceList.find((p) => p.concept_description === eb.edgebandName);
+        if (plItem) {
+          eb.cost = eb.totalMetersRounded * (plItem.price_with_tax || plItem.price);
+        }
+      }
     });
 
     const hardware = Array.from(hardwareMap.values()).filter(
@@ -372,7 +387,8 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
     const grandTotal =
       totalBoxCost + totalDoorsCost + totalBackPanelCost + totalEdgebandCost +
       totalHardwareCost + totalAccessoriesCost + totalLaborCost +
-      totalCountertopsCost + totalItemsCost + totalClosetItemsCost;
+      totalCountertopsCost + totalItemsCost + totalClosetItemsCost +
+      totalDoorProfileCost + totalPrefabItemsCost;
 
     return {
       boxMaterials,
@@ -396,6 +412,8 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
         countertops: totalCountertopsCost,
         items: totalItemsCost,
         closetItems: totalClosetItemsCost,
+        doorProfile: totalDoorProfileCost,
+        prefabItems: totalPrefabItemsCost,
         grand: grandTotal,
       },
     };
@@ -734,9 +752,11 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
             { label: 'Hardware', value: totals.hardware },
             ...(totals.accessories > 0 ? [{ label: 'Accessories', value: totals.accessories }] : []),
             { label: 'Labor', value: totals.labor },
+            ...(totals.doorProfile > 0 ? [{ label: 'Door Profile', value: totals.doorProfile }] : []),
             ...(totals.countertops > 0 ? [{ label: 'Countertops', value: totals.countertops }] : []),
             ...(totals.items > 0 ? [{ label: 'Individual Items', value: totals.items }] : []),
             ...(totals.closetItems > 0 ? [{ label: 'Prefab Closets', value: totals.closetItems }] : []),
+            ...(totals.prefabItems > 0 ? [{ label: 'Prefab Items', value: totals.prefabItems }] : []),
           ].map((row, idx) => (
             <div key={idx}>
               <div className="text-xs text-slate-400 mb-0.5">{row.label}</div>

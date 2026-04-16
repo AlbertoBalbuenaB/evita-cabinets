@@ -67,24 +67,35 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
     }
 
     // Edgeband: run computeEdgebandCost over ALL pieces.
+    // Per-cabinet pricing when ebCabinetMap is available (new snapshots).
     const prices = {
       a: snapshot.ebConfig?.a?.price ?? 0,
       b: snapshot.ebConfig?.b?.price ?? 0,
       c: snapshot.ebConfig?.c?.price ?? 0,
     };
-    const ebResult = computeEdgebandCost(snapshot.pieces, prices);
+    const ebResult = computeEdgebandCost(snapshot.pieces, prices, snapshot.ebCabinetMap);
     const edgebandRows: Array<{ name: string; meters: number; rolls: number; cost: number }> = [];
-    for (const slot of ['a', 'b', 'c'] as const) {
-      const { meters, cost } = ebResult.perSlot[slot];
-      if (meters <= 0) continue;
-      const cfg = snapshot.ebConfig?.[slot];
-      if (!cfg || !cfg.name || cfg.name.toLowerCase().includes('not apply')) continue;
-      edgebandRows.push({
-        name: cfg.name,
-        meters,
-        rolls: Math.ceil(meters / ROLL_LENGTH_METERS),
-        cost,
-      });
+    const hasPerType = Object.keys(ebResult.perEdgebandType).length > 0;
+    if (hasPerType) {
+      for (const [, eb] of Object.entries(ebResult.perEdgebandType)) {
+        if (eb.meters <= 0) continue;
+        if (eb.name.toLowerCase().includes('not apply')) continue;
+        edgebandRows.push({
+          name: eb.name,
+          meters: eb.meters,
+          rolls: Math.ceil(eb.meters / ROLL_LENGTH_METERS),
+          cost: eb.cost,
+        });
+      }
+    } else {
+      // Legacy fallback: iterate 3 fixed slots
+      for (const slot of ['a', 'b', 'c'] as const) {
+        const { meters, cost } = ebResult.perSlot[slot];
+        if (meters <= 0) continue;
+        const cfg = snapshot.ebConfig?.[slot];
+        if (!cfg || !cfg.name || cfg.name.toLowerCase().includes('not apply')) continue;
+        edgebandRows.push({ name: cfg.name, meters, rolls: Math.ceil(meters / ROLL_LENGTH_METERS), cost });
+      }
     }
 
     // Hardware, Accessories, Items, Countertops: aggregate across areas.

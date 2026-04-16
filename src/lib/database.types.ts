@@ -67,6 +67,11 @@ export type Database = {
           doors_interior_finish_id: string | null
           doors_material_cost: number | null
           doors_material_id: string | null
+          drawer_box_edgeband_cost: number | null
+          drawer_box_edgeband_id: string | null
+          drawer_box_material_cost: number | null
+          drawer_box_material_id: string | null
+          extra_shelves: number | null
           hardware: Json | null
           hardware_cost: number | null
           id: string
@@ -81,9 +86,15 @@ export type Database = {
           original_doors_material_price: number | null
           product_sku: string | null
           quantity: number
+          shelf_edgeband_cost: number | null
+          shelf_edgeband_id: string | null
+          shelf_material_cost: number | null
+          shelf_material_id: string | null
           source_drawing_element_id: string | null
           subtotal: number | null
           use_back_panel_material: boolean | null
+          use_drawer_box_material: boolean | null
+          use_shelf_material: boolean | null
         }
         Insert: {
           accessories?: Json
@@ -110,6 +121,11 @@ export type Database = {
           doors_interior_finish_id?: string | null
           doors_material_cost?: number | null
           doors_material_id?: string | null
+          drawer_box_edgeband_cost?: number | null
+          drawer_box_edgeband_id?: string | null
+          drawer_box_material_cost?: number | null
+          drawer_box_material_id?: string | null
+          extra_shelves?: number | null
           hardware?: Json | null
           hardware_cost?: number | null
           id?: string
@@ -124,9 +140,15 @@ export type Database = {
           original_doors_material_price?: number | null
           product_sku?: string | null
           quantity?: number
+          shelf_edgeband_cost?: number | null
+          shelf_edgeband_id?: string | null
+          shelf_material_cost?: number | null
+          shelf_material_id?: string | null
           source_drawing_element_id?: string | null
           subtotal?: number | null
           use_back_panel_material?: boolean | null
+          use_drawer_box_material?: boolean | null
+          use_shelf_material?: boolean | null
         }
         Update: {
           accessories?: Json
@@ -153,6 +175,11 @@ export type Database = {
           doors_interior_finish_id?: string | null
           doors_material_cost?: number | null
           doors_material_id?: string | null
+          drawer_box_edgeband_cost?: number | null
+          drawer_box_edgeband_id?: string | null
+          drawer_box_material_cost?: number | null
+          drawer_box_material_id?: string | null
+          extra_shelves?: number | null
           hardware?: Json | null
           hardware_cost?: number | null
           id?: string
@@ -167,9 +194,15 @@ export type Database = {
           original_doors_material_price?: number | null
           product_sku?: string | null
           quantity?: number
+          shelf_edgeband_cost?: number | null
+          shelf_edgeband_id?: string | null
+          shelf_material_cost?: number | null
+          shelf_material_id?: string | null
           source_drawing_element_id?: string | null
           subtotal?: number | null
           use_back_panel_material?: boolean | null
+          use_drawer_box_material?: boolean | null
+          use_shelf_material?: boolean | null
         }
         Relationships: [
           {
@@ -229,11 +262,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "area_cabinets_drawer_box_edgeband_id_fkey"
+            columns: ["drawer_box_edgeband_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_cabinets_drawer_box_material_id_fkey"
+            columns: ["drawer_box_material_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "area_cabinets_product_sku_fkey"
             columns: ["product_sku"]
             isOneToOne: false
             referencedRelation: "products_catalog"
             referencedColumns: ["sku"]
+          },
+          {
+            foreignKeyName: "area_cabinets_shelf_edgeband_id_fkey"
+            columns: ["shelf_edgeband_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_cabinets_shelf_material_id_fkey"
+            columns: ["shelf_material_id"]
+            isOneToOne: false
+            referencedRelation: "price_list"
+            referencedColumns: ["id"]
           },
         ]
       }

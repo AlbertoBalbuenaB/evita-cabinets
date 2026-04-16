@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import { PIECE_COLORS } from './engine';
 import { fmtDim, fmtNum } from './units';
-import { EbConfig, OptimizationResult, UnitSystem } from './types';
+import { EbConfig, EbCabinetMap, OptimizationResult, UnitSystem } from './types';
 
 const EB_LABELS: Record<number, string> = { 1: 'A', 2: 'B', 3: 'C' };
 
@@ -148,6 +148,7 @@ export async function exportOptimizerPDF(
   areas?: string[],
   labelScale: number = 1,
   lang: PdfLang = 'en',
+  ebCabinetMap?: EbCabinetMap,
 ): Promise<void> {
   const t = i18n[lang];
   const dateFmt = lang === 'es' ? 'es-MX' : 'en-US';
@@ -455,7 +456,9 @@ export async function exportOptimizerPDF(
 
   // ── Shared cut list rendering function ─────────────────────
   // 13 columns: # Name Qty W H Sheets Rot Grain T B L R Material
-  const colX = [10, 22, 52, 62, 75, 88, 110, 122, 135, 143, 151, 159, 200];
+  // Cols: # Name Qty W H Sheets Rot Grain T B L R Material
+  // Sheets left-aligned to prevent overflow into Height column
+  const colX = [10, 22, 52, 62, 75, 91, 112, 124, 135, 143, 151, 159, 200];
   const allPieces: { piece: typeof result.boards[0]['placed'][0]; boardIdx: number; board: typeof result.boards[0] }[] = [];
   result.boards.forEach((board, boardIdx) => board.placed.forEach(piece => allPieces.push({ piece, boardIdx, board })));
 
@@ -481,7 +484,7 @@ export async function exportOptimizerPDF(
       y += 7;
       doc.setFontSize(7); doc.setTextColor(71, 85, 105); doc.setFont('Helvetica', 'bold');
       ['#', t.name, t.qty, t.width, t.height, t.sheets, t.rot, t.grain, 'T', 'B', 'L', 'R', t.material].forEach((h, i) => {
-        doc.text(h, colX[i], y, { align: i === 1 || i === 12 ? 'left' : 'center' });
+        doc.text(h, colX[i], y, { align: i === 1 || i === 5 || i === 12 ? 'left' : 'center' });
       });
       y += 5;
       doc.setFont('Helvetica', 'normal');
@@ -533,7 +536,7 @@ export async function exportOptimizerPDF(
           [String(kindItems.length), 'center'],
           [fmtNum(p.piece.ancho, unit), 'center'],
           [fmtNum(p.piece.alto, unit), 'center'],
-          [sheetText, 'center'],
+          [sheetText, 'left'],
           [p.rotated ? t.yes : '—', 'center'],
           [p.piece.veta === 'none' ? '—' : p.piece.veta === 'horizontal' ? 'H' : 'V', 'center'],
           [cb.sup > 0 ? EB_LABELS[cb.sup] : '—', 'center'],
@@ -568,27 +571,67 @@ export async function exportOptimizerPDF(
     doc.text(t.ebSummary, 20, cutListY);
     cutListY += 8;
 
-    const byType: Record<number, number> = { 1: 0, 2: 0, 3: 0 };
-    result.boards.forEach(b => b.placed.forEach(p => {
-      const cb = p.piece.cubrecanto;
-      (['sup', 'inf', 'izq', 'der'] as const).forEach(side => {
-        const tt = cb[side];
-        if (tt > 0) byType[tt] = (byType[tt] || 0) + ((side === 'sup' || side === 'inf') ? p.piece.ancho + 30 : p.piece.alto + 30);
-      });
-    }));
-
     doc.setFontSize(9); doc.setFont('Helvetica', 'normal'); doc.setTextColor(50, 50, 50);
-    const ebNames: Record<number, string> = {
-      1: ebConfig?.a?.name ? `${t.typeASolid.split('(')[0].trim()} — ${ebConfig.a.name}` : t.typeASolid,
-      2: ebConfig?.b?.name ? `${t.typeBDashed.split('(')[0].trim()} — ${ebConfig.b.name}` : t.typeBDashed,
-      3: ebConfig?.c?.name ? `${t.typeCDotted.split('(')[0].trim()} — ${ebConfig.c.name}` : t.typeCDotted,
-    };
-    [1, 2, 3].forEach(tt => {
-      if (byType[tt] > 0) {
-        doc.text(`${ebNames[tt]}: ${(byType[tt] / 1000).toFixed(2)} m`, 25, cutListY);
+
+    // Per-type summary: group actual meters by edgeband price_list item
+    // using ebCabinetMap for accurate per-piece attribution.
+    if (ebCabinetMap && Object.keys(ebCabinetMap).length > 0) {
+      const ebTotals = new Map<string, { name: string; meters: number }>();
+      result.boards.forEach(b => b.placed.forEach(p => {
+        const cb = p.piece.cubrecanto;
+        const cabEb = p.piece.cabinetId ? ebCabinetMap[p.piece.cabinetId] : undefined;
+        (['sup', 'inf', 'izq', 'der'] as const).forEach(side => {
+          const code = cb[side];
+          if (code <= 0) return;
+          const lengthMm = (side === 'sup' || side === 'inf') ? p.piece.ancho + 30 : p.piece.alto + 30;
+          const ebInfo = cabEb?.[code];
+          if (ebInfo) {
+            const existing = ebTotals.get(ebInfo.plId);
+            if (existing) { existing.meters += lengthMm; }
+            else { ebTotals.set(ebInfo.plId, { name: ebInfo.name, meters: lengthMm }); }
+          } else {
+            // Fallback to slot label for pieces without per-cabinet mapping
+            const slot = code === 1 ? 'a' : code === 2 ? 'b' : 'c';
+            const name = ebConfig?.[slot]?.name || `Type ${EB_LABELS[code] || code}`;
+            const key = `slot-${slot}`;
+            const existing = ebTotals.get(key);
+            if (existing) { existing.meters += lengthMm; }
+            else { ebTotals.set(key, { name, meters: lengthMm }); }
+          }
+        });
+      }));
+
+      const lineStyles = ['(solid)', '(dashed)', '(dotted)', '(dash-dot)', '(double)'];
+      let typeIdx = 0;
+      for (const [, eb] of ebTotals) {
+        const label = `Type ${String.fromCharCode(65 + typeIdx)} ${lineStyles[typeIdx] || ''} — ${eb.name}`;
+        doc.text(`${label}: ${(eb.meters / 1000).toFixed(2)} m`, 25, cutListY);
         cutListY += 5;
+        typeIdx++;
       }
-    });
+    } else {
+      // Legacy: 3-slot summary
+      const byType: Record<number, number> = { 1: 0, 2: 0, 3: 0 };
+      result.boards.forEach(b => b.placed.forEach(p => {
+        const cb = p.piece.cubrecanto;
+        (['sup', 'inf', 'izq', 'der'] as const).forEach(side => {
+          const tt = cb[side];
+          if (tt > 0) byType[tt] = (byType[tt] || 0) + ((side === 'sup' || side === 'inf') ? p.piece.ancho + 30 : p.piece.alto + 30);
+        });
+      }));
+      const ebNames: Record<number, string> = {
+        1: ebConfig?.a?.name ? `${t.typeASolid.split('(')[0].trim()} — ${ebConfig.a.name}` : t.typeASolid,
+        2: ebConfig?.b?.name ? `${t.typeBDashed.split('(')[0].trim()} — ${ebConfig.b.name}` : t.typeBDashed,
+        3: ebConfig?.c?.name ? `${t.typeCDotted.split('(')[0].trim()} — ${ebConfig.c.name}` : t.typeCDotted,
+      };
+      [1, 2, 3].forEach(tt => {
+        if (byType[tt] > 0) {
+          doc.text(`${ebNames[tt]}: ${(byType[tt] / 1000).toFixed(2)} m`, 25, cutListY);
+          cutListY += 5;
+        }
+      });
+    }
+
     doc.setFont('Helvetica', 'bold');
     doc.text(`${t.total}: ${(totalEB / 1000).toFixed(2)} ${t.linearM}`, 25, cutListY);
     cutListY += 5;

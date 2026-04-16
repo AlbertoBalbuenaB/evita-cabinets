@@ -25,7 +25,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Pieza, StockSize, EbConfig, EbTypeConfig } from '../types';
+import type { Pieza, StockSize, EbConfig, EbTypeConfig, EbCabinetMap, EbTypeSummary } from '../types';
 import type { CutPiece, Cubrecanto } from '../../../types';
 import type { Database } from '../../database.types';
 
@@ -66,6 +66,10 @@ export interface BuildResult {
   }>;
   /** Cabinet ids skipped (e.g. no cut_pieces) — fall back to ft² pricing. */
   cabinetsSkipped: Array<{ id: string; reason: string }>;
+  /** Per-cabinet edgeband price lookup for accurate per-piece pricing. */
+  ebCabinetMap: EbCabinetMap;
+  /** Summary of all distinct edgeband types across the quotation. */
+  ebTypeSummary: Record<string, EbTypeSummary>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -149,6 +153,8 @@ export async function buildOptimizerSetupFromQuotation(
       cabinetsInstanceCount: 0,
       cabinetDetails: {},
       cabinetsSkipped,
+      ebCabinetMap: {},
+      ebTypeSummary: {},
     };
   }
 
@@ -262,6 +268,20 @@ export async function buildOptimizerSetupFromQuotation(
           } else {
             materialId = cab.box_material_id;
           }
+          break;
+        }
+        case 'drawer_box': {
+          // Use dedicated drawer box material if configured, else fall back to box.
+          const dbxId = (cab as any).drawer_box_material_id;
+          const useDbx = (cab as any).use_drawer_box_material;
+          materialId = (useDbx && dbxId) ? dbxId : cab.box_material_id;
+          break;
+        }
+        case 'shelf': {
+          // Use dedicated shelf material if configured, else fall back to box.
+          const shelfId = (cab as any).shelf_material_id;
+          const useShelf = (cab as any).use_shelf_material;
+          materialId = (useShelf && shelfId) ? shelfId : cab.box_material_id;
           break;
         }
         case 'custom':
@@ -437,27 +457,9 @@ export async function buildOptimizerSetupFromQuotation(
     }
   }
 
-  // 5. Assign edgeband price_list ids to slots by ROLE (deterministic).
-  // Slot a (cubrecanto 1) = Box Construction EB
-  // Slot b (cubrecanto 2) = Doors & Fronts EB
-  // Slot c (cubrecanto 3) = Reserved (any overflow)
+  // 5. Legacy slot assignment (backward compat for sidebar display / old runs).
   const boxEbId = ebByRole.box.size > 0 ? Array.from(ebByRole.box)[0] : null;
-  // Fall back to box EB if no doors EB is set (handles closets/doorless cabinets
-  // where side panels have cubrecanto=2 on visible edges).
   const doorsEbId = ebByRole.doors.size > 0 ? Array.from(ebByRole.doors)[0] : boxEbId;
-
-  if (ebByRole.box.size > 1) {
-    warnings.push(
-      `This quotation uses ${ebByRole.box.size} distinct Box Construction edgebands. Only the first will be used for slot a pricing.`,
-    );
-  }
-  if (ebByRole.doors.size > 1) {
-    warnings.push(
-      `This quotation uses ${ebByRole.doors.size} distinct Doors & Fronts edgebands. Only the first will be used for slot b pricing.`,
-    );
-  }
-
-  // Collect any additional EB ids not covered by box/doors (rare — custom pieces with type C)
   const usedEbIds = new Set([boxEbId, doorsEbId].filter(Boolean));
   const extraEbIds = [...ebByRole.box, ...ebByRole.doors].filter(id => !usedEbIds.has(id));
   const slotCId = extraEbIds.length > 0 ? extraEbIds[0] : null;
@@ -474,6 +476,65 @@ export async function buildOptimizerSetupFromQuotation(
     c: ebSlotFromPriceList(priceListById, ebSlotToPriceListId.c),
   };
 
+  // 6. Per-cabinet edgeband price map — supports N distinct types.
+  // Each cabinet maps cubrecanto code → its actual edgeband price/name/id.
+  const ebCabinetMap: EbCabinetMap = {};
+  const ebTypeSummaryMap = new Map<string, EbTypeSummary & { _roles: Set<string> }>();
+
+  for (const cab of cabinets) {
+    if (!cabinetsCovered.has(cab.id)) continue;
+    const cabMap: Record<number, { pricePerMeter: number; plId: string; name: string }> = {};
+
+    // Code 1 → box construction edgeband
+    if (cab.box_edgeband_id) {
+      const row = priceListById.get(cab.box_edgeband_id);
+      if (row && !isNotApply(row.concept_description)) {
+        const pricePerMeter = row.price_with_tax ?? row.price ?? 0;
+        cabMap[1] = { pricePerMeter: Number(pricePerMeter), plId: row.id, name: row.concept_description };
+        const existing = ebTypeSummaryMap.get(row.id);
+        if (existing) {
+          existing._roles.add('box');
+        } else {
+          ebTypeSummaryMap.set(row.id, {
+            name: row.concept_description, pricePerMeter: Number(pricePerMeter),
+            plId: row.id, roles: [], _roles: new Set(['box']),
+          });
+        }
+      }
+    }
+
+    // Code 2 → doors / fronts edgeband
+    if (cab.doors_edgeband_id) {
+      const row = priceListById.get(cab.doors_edgeband_id);
+      if (row && !isNotApply(row.concept_description)) {
+        const pricePerMeter = row.price_with_tax ?? row.price ?? 0;
+        cabMap[2] = { pricePerMeter: Number(pricePerMeter), plId: row.id, name: row.concept_description };
+        const existing = ebTypeSummaryMap.get(row.id);
+        if (existing) {
+          existing._roles.add('doors');
+        } else {
+          ebTypeSummaryMap.set(row.id, {
+            name: row.concept_description, pricePerMeter: Number(pricePerMeter),
+            plId: row.id, roles: [], _roles: new Set(['doors']),
+          });
+        }
+      }
+    }
+
+    if (Object.keys(cabMap).length > 0) {
+      ebCabinetMap[cab.id] = cabMap;
+    }
+  }
+
+  // Finalize summary (convert Set to array for JSON serialization)
+  const ebTypeSummary: Record<string, EbTypeSummary> = {};
+  for (const [plId, entry] of ebTypeSummaryMap) {
+    ebTypeSummary[plId] = {
+      name: entry.name, pricePerMeter: entry.pricePerMeter,
+      plId: entry.plId, roles: Array.from(entry._roles) as ('box' | 'doors')[],
+    };
+  }
+
   return {
     pieces,
     stocks: Array.from(stocksByKey.values()),
@@ -484,6 +545,8 @@ export async function buildOptimizerSetupFromQuotation(
     cabinetsInstanceCount,
     cabinetDetails,
     cabinetsSkipped,
+    ebCabinetMap,
+    ebTypeSummary,
   };
 }
 
