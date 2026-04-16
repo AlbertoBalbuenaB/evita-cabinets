@@ -355,6 +355,8 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
       edgebandByCabinet: ebResult.perCabinet,
     });
 
+    const riskAppliesOptimizer = quotation.risk_factor_applies_optimizer ?? false;
+    const riskPct = riskAppliesOptimizer ? (quotation.risk_factor_percentage ?? 0) : 0;
     const totals = computeOptimizerQuotationTotal({
       materialCost:   result.totalCost,
       edgebandCost:   ebResult.totalCost,
@@ -368,6 +370,7 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
         taxPercentage:    quotation.tax_percentage           ?? 0,
         installDeliveryMxn,
         otherExpenses:    quotation.other_expenses           ?? 0,
+        riskFactorPct:    riskPct,
       },
     });
 
@@ -384,7 +387,13 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
       materialsCostOnly:  bomTotal,
       totalLaborCost,
       materialsSubtotal:  bomTotal + totalLaborCost,
-      profitMarginAmount: totals.price - (bomTotal + totalLaborCost),
+      // Risk and profit are now displayed as separate lines (matching the Info
+      // tab) instead of folded into a single Profit Margin number. Profit is
+      // back-derived as `price - subtotal - risk` so it stays consistent with
+      // whatever computeOptimizerQuotationTotal produced for `price`.
+      riskFactorPct:      riskPct,
+      riskAmount:         totals.riskAmount,
+      profitMarginAmount: totals.price - (bomTotal + totalLaborCost) - totals.riskAmount,
       price:              totals.price,
       tariffAmount:       totals.tariffAmount,
       referralAmount:     totals.referralAmount,
@@ -548,6 +557,13 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
                 <SummaryDivider />
                 <SummaryRow label="Subtotal"         value={costSummary.materialsSubtotal} bold />
 
+                {costSummary.riskAmount > 0 && (
+                  <SummaryRow
+                    label={`Risk Factor (${costSummary.riskFactorPct}%)`}
+                    value={costSummary.riskAmount}
+                    muted
+                  />
+                )}
                 {costSummary.profitMarginAmount > 0 && (
                   <>
                     <SummaryRow label="Profit Margin" value={costSummary.profitMarginAmount} muted />
