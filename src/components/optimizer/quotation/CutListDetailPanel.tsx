@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, Pencil } from 'lucide-react';
+import { ChevronRight, LayoutDashboard, Pencil } from 'lucide-react';
 import type { Pieza } from '../../../lib/optimizer/types';
 import type { CutPiece } from '../../../types';
 import { Button } from '../../Button';
@@ -104,18 +104,22 @@ export function CutListDetailPanel({ pieces, cabinetDetails, onOverrideChanged }
             0,
           );
           return (
-            <section
+            <details
               key={areaName}
-              className={areaIdx > 0 ? 'border-t-2 border-slate-200/80' : ''}
+              open
+              className={`group ${areaIdx > 0 ? 'border-t-2 border-slate-200/80' : ''}`}
             >
-              <div className="flex items-center justify-between gap-2 px-3 py-1.5 bg-slate-100/70 border-b border-slate-200/60">
-                <span className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide truncate">
-                  {areaName}
+              <summary className="flex items-center justify-between gap-2 px-3 py-1.5 bg-slate-100/70 border-b border-slate-200/60 cursor-pointer select-none hover:bg-slate-200/60">
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <ChevronRight className="h-3 w-3 text-slate-500 shrink-0 transition-transform group-open:rotate-90" />
+                  <span className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide truncate">
+                    {areaName}
+                  </span>
                 </span>
                 <span className="text-[10px] text-slate-500 font-mono tabular-nums shrink-0">
                   {areaCabinets.length} cab · {areaPieceCount} piece{areaPieceCount !== 1 ? 's' : ''}
                 </span>
-              </div>
+              </summary>
               <div className="divide-y divide-slate-100">
                 {areaCabinets.map(([cabinetId, groupPieces]) => {
           const info = cabinetDetails[cabinetId];
@@ -233,7 +237,7 @@ export function CutListDetailPanel({ pieces, cabinetDetails, onOverrideChanged }
           );
         })}
               </div>
-            </section>
+            </details>
           );
         })}
       </div>
