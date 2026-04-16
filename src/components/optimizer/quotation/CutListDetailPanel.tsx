@@ -45,47 +45,85 @@ export function CutListDetailPanel({ pieces, cabinetDetails, onOverrideChanged }
 
   if (pieces.length === 0) return null;
 
-  // Group pieces by cabinetId. Pieces without a cabinetId fall into
-  // a single "Unassigned" bucket (shouldn't happen in practice, but
-  // defensive coding).
-  const groups = new Map<string, Pieza[]>();
+  const NO_AREA_KEY = '(no area)';
+
+  // Two-level grouping: areaName → (cabinetId → pieces). Pieces without an
+  // areaName/cabinetId fall into the NO_AREA_KEY / '__unassigned__' buckets
+  // (defensive — shouldn't happen with a well-formed quotation).
+  const byArea = new Map<string, Map<string, Pieza[]>>();
   for (const p of pieces) {
-    const key = p.cabinetId ?? '__unassigned__';
-    const arr = groups.get(key);
+    const cabinetId = p.cabinetId ?? '__unassigned__';
+    const areaName = cabinetDetails[cabinetId]?.areaName?.trim() || NO_AREA_KEY;
+    let cabinets = byArea.get(areaName);
+    if (!cabinets) {
+      cabinets = new Map<string, Pieza[]>();
+      byArea.set(areaName, cabinets);
+    }
+    const arr = cabinets.get(cabinetId);
     if (arr) arr.push(p);
-    else groups.set(key, [p]);
+    else cabinets.set(cabinetId, [p]);
   }
 
-  // Order groups by area name, then by productSku, then by description, so
-  // the UI is stable across rebuilds.
-  const orderedGroups = Array.from(groups.entries()).sort(([aId], [bId]) => {
-    const a = cabinetDetails[aId];
-    const b = cabinetDetails[bId];
-    const aLabel = `${a?.areaName ?? 'zzz'}|${a?.productSku ?? 'zzz'}|${a?.productDescription ?? ''}`;
-    const bLabel = `${b?.areaName ?? 'zzz'}|${b?.productSku ?? 'zzz'}|${b?.productDescription ?? ''}`;
-    return aLabel.localeCompare(bLabel);
+  // Sort areas alphabetically, with NO_AREA_KEY last.
+  const orderedAreas = Array.from(byArea.entries()).sort(([a], [b]) => {
+    if (a === NO_AREA_KEY) return 1;
+    if (b === NO_AREA_KEY) return -1;
+    return a.localeCompare(b);
   });
 
-  // Open by default if 3 or fewer cabinet groups.
-  const defaultOpen = orderedGroups.length <= 3;
+  // Within each area, sort cabinets by productSku → description for stable UI.
+  const orderedAreasWithCabinets = orderedAreas.map(([areaName, cabinets]) => {
+    const sortedCabinets = Array.from(cabinets.entries()).sort(([aId], [bId]) => {
+      const a = cabinetDetails[aId];
+      const b = cabinetDetails[bId];
+      const aLabel = `${a?.productSku ?? 'zzz'}|${a?.productDescription ?? ''}`;
+      const bLabel = `${b?.productSku ?? 'zzz'}|${b?.productDescription ?? ''}`;
+      return aLabel.localeCompare(bLabel);
+    });
+    return [areaName, sortedCabinets] as const;
+  });
+
+  const totalCabinets = orderedAreasWithCabinets.reduce((sum, [, cabs]) => sum + cabs.length, 0);
+  const totalAreas = orderedAreasWithCabinets.length;
+
+  // Open by default if 3 or fewer cabinets total — preserves the prior UX.
+  const defaultOpen = totalCabinets <= 3;
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white">
       <div className="flex items-center gap-1.5 px-3 py-2 border-b border-slate-200">
         <LayoutDashboard className="h-3.5 w-3.5 text-blue-600" />
         <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wide">
-          Cut-list detail — {orderedGroups.length} cabinet{orderedGroups.length !== 1 ? 's' : ''}
+          Cut-list detail — {totalCabinets} cabinet{totalCabinets !== 1 ? 's' : ''} across {totalAreas} area{totalAreas !== 1 ? 's' : ''}
         </h3>
       </div>
-      <div className="divide-y divide-slate-100">
-        {orderedGroups.map(([cabinetId, groupPieces]) => {
+      <div>
+        {orderedAreasWithCabinets.map(([areaName, areaCabinets], areaIdx) => {
+          const areaPieceCount = areaCabinets.reduce(
+            (sum, [, cabPieces]) => sum + cabPieces.reduce((s, p) => s + p.cantidad, 0),
+            0,
+          );
+          return (
+            <section
+              key={areaName}
+              className={areaIdx > 0 ? 'border-t-2 border-slate-200/80' : ''}
+            >
+              <div className="flex items-center justify-between gap-2 px-3 py-1.5 bg-slate-100/70 border-b border-slate-200/60">
+                <span className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide truncate">
+                  {areaName}
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono tabular-nums shrink-0">
+                  {areaCabinets.length} cab · {areaPieceCount} piece{areaPieceCount !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {areaCabinets.map(([cabinetId, groupPieces]) => {
           const info = cabinetDetails[cabinetId];
           const pieceCount = groupPieces.reduce((s, p) => s + p.cantidad, 0);
           const label = info
             ? [
                 info.productSku ?? '(no SKU)',
                 info.productDescription,
-                info.areaName,
               ].filter((s): s is string => !!s && s.length > 0).join(' — ')
             : `Cabinet ${cabinetId.slice(0, 8)}…`;
           const qtySuffix = info && info.quantity > 1 ? ` ×${info.quantity}` : '';
@@ -192,6 +230,10 @@ export function CutListDetailPanel({ pieces, cabinetDetails, onOverrideChanged }
                 </table>
               </div>
             </details>
+          );
+        })}
+              </div>
+            </section>
           );
         })}
       </div>
