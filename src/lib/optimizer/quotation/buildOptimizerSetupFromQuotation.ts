@@ -63,6 +63,8 @@ export interface BuildResult {
     quantity: number;
     areaId: string;
     areaName: string;
+    /** True when the cabinet has a per-cabinet cut_pieces override applied. */
+    hasOverride: boolean;
   }>;
   /** Cabinet ids skipped (e.g. no cut_pieces) — fall back to ft² pricing. */
   cabinetsSkipped: Array<{ id: string; reason: string }>;
@@ -212,7 +214,11 @@ export async function buildOptimizerSetupFromQuotation(
     const areaName = cab.project_areas.name;
 
     const product = cab.product_sku ? productsBySku.get(cab.product_sku) : null;
-    const cutPieces = parseCutPieces(product?.cut_pieces);
+    // Prefer per-cabinet override (editable cut list) over the product template.
+    const overridePieces = parseCutPieces(cab.cut_piece_overrides);
+    const cutPieces = overridePieces.length > 0
+      ? overridePieces
+      : parseCutPieces(product?.cut_pieces);
 
     if (cutPieces.length === 0) {
       cabinetsSkipped.push({
@@ -486,6 +492,7 @@ export async function buildOptimizerSetupFromQuotation(
         quantity: qty,
         areaId: cab.project_areas.id,
         areaName: cab.project_areas.name,
+        hasOverride: overridePieces.length > 0,
       };
     } else if (!cabinetsSkipped.some((s) => s.id === cab.id)) {
       // All cut_pieces had materials set to "Not Apply" or missing links.
@@ -500,6 +507,7 @@ export async function buildOptimizerSetupFromQuotation(
         quantity: qty,
         areaId: cab.project_areas.id,
         areaName: cab.project_areas.name,
+        hasOverride: overridePieces.length > 0,
       };
       warnings.push(
         `Cabinet "${cab.product_sku ?? cab.id}" in area "${areaName}": all cut pieces have no board material (materials may be set to "Not Apply"). Covered as hardware-only — no boards generated.`,

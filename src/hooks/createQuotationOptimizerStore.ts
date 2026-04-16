@@ -92,6 +92,7 @@ export interface QuotationOptimizerState {
     quantity: number;
     areaId: string;
     areaName: string;
+    hasOverride?: boolean;
   }>;
   pendingWarnings: string[];
   pendingResult: OptimizationResult | null;

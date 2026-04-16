@@ -1,5 +1,9 @@
-import { LayoutDashboard } from 'lucide-react';
+import { useState } from 'react';
+import { LayoutDashboard, Pencil } from 'lucide-react';
 import type { Pieza } from '../../../lib/optimizer/types';
+import type { CutPiece } from '../../../types';
+import { Button } from '../../Button';
+import { CutListEditorModal } from './CutListEditorModal';
 
 export interface CabinetDisplayInfo {
   productSku: string | null;
@@ -7,11 +11,17 @@ export interface CabinetDisplayInfo {
   quantity: number;
   areaId: string;
   areaName: string;
+  /** Optional for backwards compatibility with snapshots saved before the
+   *  editable-cut-list feature. Undefined ≡ no override. */
+  hasOverride?: boolean;
 }
 
 interface Props {
   pieces: Pieza[];
   cabinetDetails: Record<string, CabinetDisplayInfo>;
+  /** Called after the user saves or resets a cut-list override, so the parent
+   *  can re-run "Build from Quotation" to refresh the panel. */
+  onOverrideChanged?: () => void | Promise<void>;
 }
 
 /**
@@ -25,7 +35,14 @@ interface Props {
  * the optimizer output. There is no editing — if something is wrong,
  * the user fixes it on the product template and clicks Rebuild.
  */
-export function CutListDetailPanel({ pieces, cabinetDetails }: Props) {
+export function CutListDetailPanel({ pieces, cabinetDetails, onOverrideChanged }: Props) {
+  const [editing, setEditing] = useState<{
+    cabinetId: string;
+    label: string;
+    pieces: CutPiece[];
+    hasOverride: boolean;
+  } | null>(null);
+
   if (pieces.length === 0) return null;
 
   // Group pieces by cabinetId. Pieces without a cabinetId fall into
@@ -72,14 +89,52 @@ export function CutListDetailPanel({ pieces, cabinetDetails }: Props) {
               ].filter((s): s is string => !!s && s.length > 0).join(' — ')
             : `Cabinet ${cabinetId.slice(0, 8)}…`;
           const qtySuffix = info && info.quantity > 1 ? ` ×${info.quantity}` : '';
+          const cabinetQty = info?.quantity && info.quantity > 0 ? info.quantity : 1;
+          const editablePieces: CutPiece[] = groupPieces.map((p) => ({
+            id: p.sourceCutPieceId ?? crypto.randomUUID(),
+            nombre: p.nombre,
+            ancho: p.ancho,
+            alto: p.alto,
+            // Pieza.cantidad already includes the cabinet quantity multiplier;
+            // divide back out so the modal shows per-cabinet-instance counts.
+            cantidad: Math.max(1, Math.round(p.cantidad / cabinetQty)),
+            material: pieceRoleToMaterial(p.cutPieceRole),
+            cubrecanto: p.cubrecanto,
+            veta: p.veta,
+          }));
           return (
             <details key={cabinetId} open={defaultOpen}>
-              <summary className="cursor-pointer select-none px-3 py-2 hover:bg-slate-50 text-xs flex items-center justify-between">
-                <span className="font-medium text-slate-800 truncate">
-                  {label}{qtySuffix}
+              <summary className="cursor-pointer select-none px-3 py-2 hover:bg-slate-50 text-xs flex items-center justify-between gap-2">
+                <span className="font-medium text-slate-800 truncate flex items-center gap-2">
+                  <span className="truncate">{label}{qtySuffix}</span>
+                  {info?.hasOverride && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 shrink-0">
+                      Modified
+                    </span>
+                  )}
                 </span>
-                <span className="text-slate-400 font-mono tabular-nums ml-2 shrink-0">
-                  {pieceCount} piece{pieceCount !== 1 ? 's' : ''}
+                <span className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="!px-2 !py-1 text-[11px]"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setEditing({
+                        cabinetId,
+                        label: label,
+                        pieces: editablePieces,
+                        hasOverride: !!info?.hasOverride,
+                      });
+                    }}
+                  >
+                    <Pencil className="h-3 w-3 mr-1" />
+                    Edit
+                  </Button>
+                  <span className="text-slate-400 font-mono tabular-nums">
+                    {pieceCount} piece{pieceCount !== 1 ? 's' : ''}
+                  </span>
                 </span>
               </summary>
               <div className="px-3 pb-3 overflow-x-auto">
@@ -140,8 +195,38 @@ export function CutListDetailPanel({ pieces, cabinetDetails }: Props) {
           );
         })}
       </div>
+      {editing && (
+        <CutListEditorModal
+          isOpen
+          onClose={() => setEditing(null)}
+          cabinetId={editing.cabinetId}
+          cabinetLabel={editing.label}
+          initialPieces={editing.pieces}
+          hasOverride={editing.hasOverride}
+          onSaved={async () => {
+            await onOverrideChanged?.();
+          }}
+        />
+      )}
     </div>
   );
+}
+
+/** Map a Pieza.cutPieceRole to the CutPiece.material enum. The optimizer uses
+ *  an extra 'interior-finish' role that does not exist on the catalog template;
+ *  collapse it to 'custom' for the editor. */
+function pieceRoleToMaterial(role: Pieza['cutPieceRole']): CutPiece['material'] {
+  switch (role) {
+    case 'cuerpo':
+    case 'frente':
+    case 'back':
+    case 'drawer_box':
+    case 'shelf':
+    case 'custom':
+      return role;
+    default:
+      return 'custom';
+  }
 }
 
 // ─────────────────────────────────────────────────────────────

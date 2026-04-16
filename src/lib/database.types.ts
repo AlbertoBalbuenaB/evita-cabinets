@@ -58,6 +58,7 @@ export type Database = {
           box_material_cost: number | null
           box_material_id: string | null
           created_at: string | null
+          cut_piece_overrides: Json | null
           display_order: number | null
           door_profile_cost: number
           door_profile_id: string | null
@@ -112,6 +113,7 @@ export type Database = {
           box_material_cost?: number | null
           box_material_id?: string | null
           created_at?: string | null
+          cut_piece_overrides?: Json | null
           display_order?: number | null
           door_profile_cost?: number
           door_profile_id?: string | null
@@ -166,6 +168,7 @@ export type Database = {
           box_material_cost?: number | null
           box_material_id?: string | null
           created_at?: string | null
+          cut_piece_overrides?: Json | null
           display_order?: number | null
           door_profile_cost?: number
           door_profile_id?: string | null
