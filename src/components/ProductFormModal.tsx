@@ -821,15 +821,19 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                                 prev.map((p) => p.id === piece.id ? { ...p, material: e.target.value as CutPiece['material'] } : p)
                               )}
                               className={`px-1.5 py-0.5 rounded text-xs font-medium border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 ${
-                                piece.material === 'cuerpo'  ? 'bg-blue-100 text-blue-800' :
-                                piece.material === 'frente'  ? 'bg-amber-100 text-amber-800' :
-                                piece.material === 'back'    ? 'bg-emerald-100 text-emerald-800' :
-                                                               'bg-slate-100 text-slate-700'
+                                piece.material === 'cuerpo'      ? 'bg-blue-100 text-blue-800' :
+                                piece.material === 'frente'      ? 'bg-amber-100 text-amber-800' :
+                                piece.material === 'back'        ? 'bg-emerald-100 text-emerald-800' :
+                                piece.material === 'drawer_box'  ? 'bg-teal-100 text-teal-800' :
+                                piece.material === 'shelf'       ? 'bg-violet-100 text-violet-800' :
+                                                                   'bg-slate-100 text-slate-700'
                               }`}
                             >
                               <option value="cuerpo">Box Construction</option>
                               <option value="frente">Doors &amp; Fronts</option>
                               <option value="back">Back Panel</option>
+                              <option value="drawer_box">Drawer Box</option>
+                              <option value="shelf">Shelf</option>
                               <option value="custom">Custom</option>
                             </select>
                           </td>

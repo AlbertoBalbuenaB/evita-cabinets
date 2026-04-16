@@ -740,7 +740,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
               )}
 
               {/* ── Drawer Box Material ────────────────────────── */}
-              {selectedProduct && (selectedProduct as any).num_drawers > 0 && (
+              {selectedProduct && selectedProduct.has_drawers && (
                 <>
                 <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 mt-4">
                   <label className="flex items-start space-x-2 cursor-pointer group">
