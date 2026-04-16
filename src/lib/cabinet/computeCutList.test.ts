@@ -76,14 +76,14 @@ describe('computeCutList — base cabinet 101-12x30x24', () => {
     expect(p.veta).toBe('horizontal');
   });
 
-  it('Shelves: 269×564, qty 1, cuerpo, cb {1,0,0,0} (fixed), veta horizontal', () => {
+  it('Shelves: 269×564, qty 1, shelf, cb {4,0,0,0} (fixed), veta horizontal', () => {
     const p = findPiece(pieces, 'Shelves')!;
     expect(p).toBeDefined();
     expect(p.ancho).toBe(269);
     expect(p.alto).toBe(564);
     expect(p.cantidad).toBe(1);
-    expect(p.material).toBe('cuerpo');
-    expect(p.cubrecanto).toEqual({ sup: 1, inf: 0, izq: 0, der: 0 });
+    expect(p.material).toBe('shelf');
+    expect(p.cubrecanto).toEqual({ sup: 4, inf: 0, izq: 0, der: 0 });
     expect(p.veta).toBe('horizontal');
   });
 
@@ -126,9 +126,9 @@ describe('computeCutList — wall cabinet side panels', () => {
     expect(p.veta).toBe('vertical');
   });
 
-  it('Adjustable shelves have all-4-sides cubrecanto: {1,1,1,1}', () => {
+  it('Adjustable shelves have all-4-sides cubrecanto: {4,4,4,4}', () => {
     const p = findPiece(pieces, 'Shelves')!;
-    expect(p.cubrecanto).toEqual({ sup: 1, inf: 1, izq: 1, der: 1 });
+    expect(p.cubrecanto).toEqual({ sup: 4, inf: 4, izq: 4, der: 4 });
     expect(p.cantidad).toBe(2);
   });
 
@@ -178,7 +178,7 @@ describe('computeCutList — drawer base (3 drawers)', () => {
     const p = findPiece(pieces, 'Drawer Box Sides')!;
     expect(p.cantidad).toBe(6);
     expect(p.veta).toBe('horizontal');
-    expect(p.cubrecanto).toEqual({ sup: 1, inf: 1, izq: 0, der: 0 });
+    expect(p.cubrecanto).toEqual({ sup: 3, inf: 3, izq: 0, der: 0 });
   });
 
   it('Drawer Box Ends: qty = 6, veta none, cb all-0, uses 15mm drawerBoxThickness', () => {
@@ -367,7 +367,7 @@ describe('computeCutList — default handling', () => {
       // no shelfType specified — should default to adjustable
     });
     const shelf = findPiece(pieces, 'Shelves')!;
-    expect(shelf.cubrecanto).toEqual({ sup: 1, inf: 1, izq: 1, der: 1 });
+    expect(shelf.cubrecanto).toEqual({ sup: 4, inf: 4, izq: 4, der: 4 });
   });
 });
 

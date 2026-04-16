@@ -127,6 +127,9 @@ export function ProjectDetails({ project: initialProject, parentProject, onBack 
   const [installDelivery, setInstallDelivery] = useState((project as any).install_delivery_usd || 0);
   const [installDeliveryPerBox, setInstallDeliveryPerBox] = useState((project as any).install_delivery_per_box_usd || 0);
   const [referralRate, setReferralRate] = useState(project.referral_currency_rate || 0);
+  const [riskFactorPct, setRiskFactorPct] = useState((project as any).risk_factor_percentage || 0);
+  const [riskFactorAppliesSqft, setRiskFactorAppliesSqft] = useState((project as any).risk_factor_applies_sqft ?? true);
+  const [riskFactorAppliesOptimizer, setRiskFactorAppliesOptimizer] = useState((project as any).risk_factor_applies_optimizer ?? true);
   const [savingTemplateCabinet, setSavingTemplateCabinet] = useState<AreaCabinet | null>(null);
   const [priceList, setPriceList] = useState<PriceListItem[]>([]);
   const [areaMaterialsVisible, setAreaMaterialsVisible] = useState<Record<string, boolean>>({});
@@ -313,6 +316,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       taxPercentage:     _taxPercentage,
       installDeliveryMxn: _installDeliveryMxn,
       otherExpenses:     _otherExpenses,
+      riskFactorPct:     riskFactorAppliesSqft ? riskFactorPct : 0,
     });
     const sqftProjectTotal = totals.fullProjectTotal;
 
@@ -395,6 +399,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 taxPercentage:     _taxPercentage,
                 installDeliveryMxn: _installDeliveryMxn,
                 otherExpenses:     _otherExpenses,
+                riskFactorPct:     riskFactorAppliesOptimizer ? riskFactorPct : 0,
               },
             });
             optimizerGrandTotal = optTotals.fullProjectTotal;
@@ -1239,17 +1244,22 @@ const [isEditingDate, setIsEditingDate] = useState(false);
    */
   const quotationView = useMemo(() => {
     const installDeliveryMxnLocal = installDelivery * exchangeRate;
-    const multipliers = {
+    const sqftMultipliers = {
       profitMultiplier,
       tariffMultiplier,
       referralRate,
       taxPercentage,
       installDeliveryMxn: installDeliveryMxnLocal,
       otherExpenses,
+      riskFactorPct: riskFactorAppliesSqft ? riskFactorPct : 0,
+    };
+    const optimizerMultipliers = {
+      ...sqftMultipliers,
+      riskFactorPct: riskFactorAppliesOptimizer ? riskFactorPct : 0,
     };
 
     // Always compute sqft as the baseline.
-    const sqft = computeQuotationTotalsSqft(areas, multipliers);
+    const sqft = computeQuotationTotalsSqft(areas, sqftMultipliers);
 
     // Per-area cabinet-only subtotals (without × quantity) for area cards.
     const sqftPerAreaCabinetSubtotal: Record<string, number> = {};
@@ -1320,7 +1330,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           areasData: areas,
           cabinetsCovered,
           tariffableMaterialsCost,
-          multipliers,
+          multipliers: optimizerMultipliers,
         });
 
         optMaterialsSubtotal = opt.materialsSubtotal;
@@ -1356,8 +1366,11 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
     const cabinetsSubtotal = useOptimizer ? optCabinetsSubtotal : cabinetsSubtotalSqft;
     const materialsSubtotal = useOptimizer ? optMaterialsSubtotal : sqft.materialsSubtotal;
+    const riskAmount = useOptimizer
+      ? (riskFactorAppliesOptimizer ? materialsSubtotal * (riskFactorPct / 100) : 0)
+      : sqft.riskAmount;
     const price = useOptimizer ? optPrice : sqft.price;
-    const profitAmount = price - materialsSubtotal;
+    const profitAmount = price - materialsSubtotal - riskAmount;
     const tariffAmount = useOptimizer ? optTariffAmount : sqft.tariffAmount;
     const referralAmount = useOptimizer ? optReferralAmount : sqft.referralAmount;
     const taxAmount = useOptimizer ? optTaxAmount : sqft.taxAmount;
@@ -1377,6 +1390,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       closetItemsSubtotal,
       prefabItemsSubtotal,
       materialsSubtotal,
+      riskAmount,
       price,
       profitAmount,
       tariffAmount,
@@ -1407,6 +1421,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   const closetItemsSubtotal = quotationView.closetItemsSubtotal;
   const prefabItemsSubtotal = quotationView.prefabItemsSubtotal;
   const materialsSubtotal = quotationView.materialsSubtotal;
+  const riskAmount = quotationView.riskAmount;
   const price = quotationView.price;
   const profitAmount = quotationView.profitAmount;
   const tariffAmount = quotationView.tariffAmount;
@@ -1449,6 +1464,9 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           install_delivery_per_box_usd: installDeliveryPerBox,
           install_delivery: installDeliveryMxn,
           referral_currency_rate: referralRate,
+          risk_factor_percentage: riskFactorPct,
+          risk_factor_applies_sqft: riskFactorAppliesSqft,
+          risk_factor_applies_optimizer: riskFactorAppliesOptimizer,
           total_amount: projectTotal,
           disclaimer_tariff_info: disclaimerTariffInfo,
           disclaimer_price_validity: disclaimerPriceValidity,
@@ -1469,6 +1487,9 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         other_expenses: otherExpenses,
         other_expenses_label: otherExpensesLabel,
         referral_currency_rate: referralRate,
+        risk_factor_percentage: riskFactorPct,
+        risk_factor_applies_sqft: riskFactorAppliesSqft,
+        risk_factor_applies_optimizer: riskFactorAppliesOptimizer,
         total_amount: projectTotal,
         disclaimer_tariff_info: disclaimerTariffInfo,
         disclaimer_price_validity: disclaimerPriceValidity,
@@ -2000,6 +2021,37 @@ const [isEditingDate, setIsEditingDate] = useState(false);
             </div>
           </div>
 
+          {/* ── Risk Factor ─────────────────────────────────────── */}
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <label className="block text-sm font-medium text-slate-700 mb-1">Risk Factor %</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.5"
+              value={riskFactorPct}
+              onChange={(e) => setRiskFactorPct(parseFloat(e.target.value) || 0)}
+              onBlur={updateProjectCosts}
+              className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="5"
+            />
+            <div className="flex gap-4 mt-2">
+              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                <input type="checkbox" checked={riskFactorAppliesSqft} onChange={(e) => { setRiskFactorAppliesSqft(e.target.checked); }} className="rounded border-slate-300" />
+                Apply to ft²
+              </label>
+              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                <input type="checkbox" checked={riskFactorAppliesOptimizer} onChange={(e) => { setRiskFactorAppliesOptimizer(e.target.checked); }} className="rounded border-slate-300" />
+                Apply to Optimizer
+              </label>
+            </div>
+            {riskFactorPct > 0 && (
+              <p className="mt-1 text-xs text-slate-500">
+                Adds {riskFactorPct}% to materials subtotal before profit gross-up
+              </p>
+            )}
+          </div>
+
           <div className="mt-4 pt-4 border-t border-slate-200">
             <div className="flex justify-between items-center">
               <div>
@@ -2009,6 +2061,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <p className="text-sm text-slate-600">Prefab Cabinets Subtotal:</p>
                 <p className="text-sm text-slate-600">Individual Items Subtotal:</p>
                 <p className="text-sm text-slate-600 mt-2 pt-2 border-t border-slate-300">Materials Subtotal:</p>
+                {riskFactorPct > 0 && <p className="text-sm text-amber-700">Risk Factor ({riskFactorPct}%):</p>}
                 {profitMultiplier > 0 && <p className="text-sm text-slate-600">Profit ({(profitMultiplier * 100).toFixed(1)}%):</p>}
                 <p className="text-sm font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">Price:</p>
                 {tariffMultiplier > 0 && <p className="text-sm text-slate-600">Tariff ({(tariffMultiplier * 100).toFixed(2)}%):</p>}
@@ -2025,6 +2078,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <p className="text-sm font-medium text-slate-700">{formatPrice(prefabItemsSubtotal)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(itemsSubtotal)}</p>
                 <p className="text-sm font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(materialsSubtotal)}</p>
+                {riskFactorPct > 0 && <p className="text-sm font-medium text-amber-700">{formatPrice(riskAmount)}</p>}
                 {profitMultiplier > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(profitAmount)}</p>}
                 <p className="text-sm font-bold text-blue-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(price)}</p>
                 {tariffMultiplier > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(tariffAmount)}</p>}

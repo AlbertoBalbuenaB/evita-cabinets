@@ -2449,6 +2449,9 @@ export type Database = {
           project_type: string
           quote_date: string
           referral_currency_rate: number | null
+          risk_factor_applies_optimizer: boolean | null
+          risk_factor_applies_sqft: boolean | null
+          risk_factor_percentage: number | null
           status: string | null
           tariff_multiplier: number | null
           tax_percentage: number | null
@@ -2486,6 +2489,9 @@ export type Database = {
           project_type?: string
           quote_date?: string
           referral_currency_rate?: number | null
+          risk_factor_applies_optimizer?: boolean | null
+          risk_factor_applies_sqft?: boolean | null
+          risk_factor_percentage?: number | null
           status?: string | null
           tariff_multiplier?: number | null
           tax_percentage?: number | null
@@ -2523,6 +2529,9 @@ export type Database = {
           project_type?: string
           quote_date?: string
           referral_currency_rate?: number | null
+          risk_factor_applies_optimizer?: boolean | null
+          risk_factor_applies_sqft?: boolean | null
+          risk_factor_percentage?: number | null
           status?: string | null
           tariff_multiplier?: number | null
           tax_percentage?: number | null
