@@ -34,6 +34,10 @@ const KbSupplierPage = lazy(() => import('./pages/kb/KbSupplierPage').then(m => 
 const KbAudit = lazy(() => import('./pages/kb/KbAudit').then(m => ({ default: m.KbAudit })));
 const WikiHub = lazy(() => import('./pages/wiki/WikiHub').then(m => ({ default: m.WikiHub })));
 const WikiArticlePage = lazy(() => import('./pages/wiki/WikiArticlePage').then(m => ({ default: m.WikiArticlePage })));
+const WikiNew = lazy(() => import('./pages/wiki/WikiNew').then(m => ({ default: m.WikiNew })));
+const WikiProposals = lazy(() => import('./pages/wiki/WikiProposals').then(m => ({ default: m.WikiProposals })));
+const WikiProposalPage = lazy(() => import('./pages/wiki/WikiProposalPage').then(m => ({ default: m.WikiProposalPage })));
+const WikiAudit = lazy(() => import('./pages/wiki/WikiAudit').then(m => ({ default: m.WikiAudit })));
 
 function AdminRoute({ children }: { children: ReactNode }) {
   const { member, loading } = useCurrentMember();
@@ -97,6 +101,10 @@ function App() {
             <Route path="/kb/suppliers/:slug" element={<KbSupplierPage />} />
             <Route path="/kb/:slug" element={<KbEntryPage />} />
             <Route path="/kb" element={<KbHub />} />
+            <Route path="/wiki/new" element={<WikiNew />} />
+            <Route path="/wiki/audit" element={<AdminRoute><WikiAudit /></AdminRoute>} />
+            <Route path="/wiki/proposals/:id" element={<WikiProposalPage />} />
+            <Route path="/wiki/proposals" element={<WikiProposals />} />
             <Route path="/wiki/:slug" element={<WikiArticlePage />} />
             <Route path="/wiki" element={<WikiHub />} />
             <Route path="*" element={<Navigate to="/" replace />} />
