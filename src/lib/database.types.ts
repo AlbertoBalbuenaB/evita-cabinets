@@ -1165,6 +1165,487 @@ export type Database = {
           },
         ]
       }
+      kb_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          diff_json: Json | null
+          entry_id: string | null
+          id: string
+          proposal_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          diff_json?: Json | null
+          entry_id?: string | null
+          id?: string
+          proposal_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          diff_json?: Json | null
+          entry_id?: string | null
+          id?: string
+          proposal_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_audit_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_audit_log_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "kb_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_audit_log_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "kb_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          section_num: string | null
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          section_num?: string | null
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          section_num?: string | null
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "kb_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_comments: {
+        Row: {
+          author_id: string
+          body_tiptap: Json
+          created_at: string
+          entry_id: string | null
+          id: string
+          parent_id: string | null
+          proposal_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body_tiptap: Json
+          created_at?: string
+          entry_id?: string | null
+          id?: string
+          parent_id?: string | null
+          proposal_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body_tiptap?: Json
+          created_at?: string
+          entry_id?: string | null
+          id?: string
+          parent_id?: string | null
+          proposal_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_comments_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "kb_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "kb_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_comments_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "kb_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_entries: {
+        Row: {
+          body_md: string
+          category_id: string
+          created_at: string
+          created_by: string | null
+          current_version: number
+          enrichment_notes: string | null
+          entry_type: string
+          id: string
+          last_edited_by: string | null
+          needs_enrichment: boolean
+          price_item_refs: string[]
+          product_refs: string[]
+          search_tsv: unknown
+          slug: string
+          status: string
+          structured_data: Json
+          supplier_ids: string[]
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body_md?: string
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          current_version?: number
+          enrichment_notes?: string | null
+          entry_type: string
+          id?: string
+          last_edited_by?: string | null
+          needs_enrichment?: boolean
+          price_item_refs?: string[]
+          product_refs?: string[]
+          search_tsv?: unknown
+          slug: string
+          status?: string
+          structured_data?: Json
+          supplier_ids?: string[]
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body_md?: string
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          current_version?: number
+          enrichment_notes?: string | null
+          entry_type?: string
+          id?: string
+          last_edited_by?: string | null
+          needs_enrichment?: boolean
+          price_item_refs?: string[]
+          product_refs?: string[]
+          search_tsv?: unknown
+          slug?: string
+          status?: string
+          structured_data?: Json
+          supplier_ids?: string[]
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_entries_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "kb_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_entries_last_edited_by_fkey"
+            columns: ["last_edited_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_entry_versions: {
+        Row: {
+          body_md: string
+          category_id: string
+          created_at: string
+          edit_summary: string | null
+          edited_by: string | null
+          entry_id: string
+          entry_type: string
+          id: string
+          price_item_refs: string[]
+          product_refs: string[]
+          slug: string
+          structured_data: Json
+          supplier_ids: string[]
+          tags: string[]
+          title: string
+          version_num: number
+        }
+        Insert: {
+          body_md: string
+          category_id: string
+          created_at?: string
+          edit_summary?: string | null
+          edited_by?: string | null
+          entry_id: string
+          entry_type: string
+          id?: string
+          price_item_refs: string[]
+          product_refs: string[]
+          slug: string
+          structured_data: Json
+          supplier_ids: string[]
+          tags: string[]
+          title: string
+          version_num: number
+        }
+        Update: {
+          body_md?: string
+          category_id?: string
+          created_at?: string
+          edit_summary?: string | null
+          edited_by?: string | null
+          entry_id?: string
+          entry_type?: string
+          id?: string
+          price_item_refs?: string[]
+          product_refs?: string[]
+          slug?: string
+          structured_data?: Json
+          supplier_ids?: string[]
+          tags?: string[]
+          title?: string
+          version_num?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_entry_versions_edited_by_fkey"
+            columns: ["edited_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_entry_versions_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "kb_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_proposals: {
+        Row: {
+          author_id: string
+          base_version: number | null
+          created_at: string
+          description_md: string | null
+          id: string
+          kind: string
+          merged_at: string | null
+          merged_version: number | null
+          proposed_body_md: string | null
+          proposed_category_id: string | null
+          proposed_entry_type: string | null
+          proposed_price_item_refs: string[] | null
+          proposed_product_refs: string[] | null
+          proposed_slug: string | null
+          proposed_structured_data: Json | null
+          proposed_supplier_ids: string[] | null
+          proposed_tags: string[] | null
+          proposed_title: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          state: string
+          summary: string
+          target_entry_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          base_version?: number | null
+          created_at?: string
+          description_md?: string | null
+          id?: string
+          kind: string
+          merged_at?: string | null
+          merged_version?: number | null
+          proposed_body_md?: string | null
+          proposed_category_id?: string | null
+          proposed_entry_type?: string | null
+          proposed_price_item_refs?: string[] | null
+          proposed_product_refs?: string[] | null
+          proposed_slug?: string | null
+          proposed_structured_data?: Json | null
+          proposed_supplier_ids?: string[] | null
+          proposed_tags?: string[] | null
+          proposed_title?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          state?: string
+          summary: string
+          target_entry_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          base_version?: number | null
+          created_at?: string
+          description_md?: string | null
+          id?: string
+          kind?: string
+          merged_at?: string | null
+          merged_version?: number | null
+          proposed_body_md?: string | null
+          proposed_category_id?: string | null
+          proposed_entry_type?: string | null
+          proposed_price_item_refs?: string[] | null
+          proposed_product_refs?: string[] | null
+          proposed_slug?: string | null
+          proposed_structured_data?: Json | null
+          proposed_supplier_ids?: string[] | null
+          proposed_tags?: string[] | null
+          proposed_title?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          state?: string
+          summary?: string
+          target_entry_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_proposals_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_proposals_proposed_category_id_fkey"
+            columns: ["proposed_category_id"]
+            isOneToOne: false
+            referencedRelation: "kb_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_proposals_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_proposals_target_entry_id_fkey"
+            columns: ["target_entry_id"]
+            isOneToOne: false
+            referencedRelation: "kb_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_suppliers: {
+        Row: {
+          categories: string[]
+          contact: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          notes_md: string
+          ops_supplier_id: string | null
+          search_tsv: unknown
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          categories?: string[]
+          contact?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          notes_md?: string
+          ops_supplier_id?: string | null
+          search_tsv?: unknown
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          categories?: string[]
+          contact?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes_md?: string
+          ops_supplier_id?: string | null
+          search_tsv?: unknown
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_suppliers_ops_supplier_id_fkey"
+            columns: ["ops_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           actor_id: string | null
@@ -3097,6 +3578,7 @@ export type Database = {
         Returns: number
       }
       create_project_snapshot: { Args: { p_project_id: string }; Returns: Json }
+      current_member_id: { Args: never; Returns: string }
       evita_hardware_bulk_update:
         | {
             Args: {
@@ -3155,6 +3637,7 @@ export type Database = {
           usage_date: string
         }[]
       }
+      is_admin: { Args: never; Returns: boolean }
       refresh_project_price_staleness: {
         Args: { p_project_id: string }
         Returns: undefined
@@ -3163,6 +3646,8 @@ export type Database = {
         Args: { p_hardware_array: Json; p_hardware_id: string }
         Returns: Json
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       update_hardware_in_cabinet: {
         Args: {
           p_hardware_array: Json
