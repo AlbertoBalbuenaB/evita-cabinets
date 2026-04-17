@@ -31,8 +31,40 @@ import {
   computeOptimizerAreaSubtotals,
   computeOptimizerTariffableMaterialsCost,
 } from '../lib/optimizer/quotation/computeOptimizerAreaSubtotals';
+import {
+  computeEdgebandRollsCost,
+  type EbSlotMeta,
+} from '../lib/optimizer/quotation/computeEdgebandCost';
 import type { OptimizerRunSnapshot } from '../lib/optimizer/quotation/types';
 import type { OptimizationResult } from '../lib/optimizer/types';
+
+/** Extract the slot → plId+name metadata from an optimizer snapshot so
+ *  `computeEdgebandCost` / `computeEdgebandRollsCost` can attribute
+ *  fallback-priced pieces (cabinets missing from ebCabinetMap) to the
+ *  right edgeband type. Returns `ebPriceBySlot` too since both sites
+ *  need it. Keeps the 3 call sites in this file tidy. */
+function extractEbSnapshotInputs(snapshot: OptimizerRunSnapshot): {
+  ebPriceBySlot: Record<'a' | 'b' | 'c', number>;
+  ebSlotMeta: EbSlotMeta;
+} {
+  const ebPriceBySlot = {
+    a: snapshot.ebConfig?.a?.price ?? 0,
+    b: snapshot.ebConfig?.b?.price ?? 0,
+    c: snapshot.ebConfig?.c?.price ?? 0,
+  };
+  const ebSlotMeta: EbSlotMeta = {
+    a: snapshot.ebConfig?.a?.id && snapshot.ebConfig?.a?.name
+      ? { plId: snapshot.ebConfig.a.id, name: snapshot.ebConfig.a.name }
+      : undefined,
+    b: snapshot.ebConfig?.b?.id && snapshot.ebConfig?.b?.name
+      ? { plId: snapshot.ebConfig.b.id, name: snapshot.ebConfig.b.name }
+      : undefined,
+    c: snapshot.ebConfig?.c?.id && snapshot.ebConfig?.c?.name
+      ? { plId: snapshot.ebConfig.c.id, name: snapshot.ebConfig.c.name }
+      : undefined,
+  };
+  return { ebPriceBySlot, ebSlotMeta };
+}
 import { exportOptimizerPDF, type PdfLang } from '../lib/optimizer/pdfExport';
 import { QuotationOptimizerTab } from '../components/optimizer/quotation/QuotationOptimizerTab';
 import { OptimizerRunsAnalytics } from '../components/optimizer/quotation/OptimizerRunsAnalytics';
@@ -395,6 +427,14 @@ const [isEditingDate, setIsEditingDate] = useState(false);
               edgebandByCabinet: snapshot?.edgebandCostByCabinet ?? {},
             });
 
+            const { ebPriceBySlot, ebSlotMeta } = extractEbSnapshotInputs(snapshot);
+            const edgebandRollsCost = computeEdgebandRollsCost(
+              snapshot.pieces,
+              ebPriceBySlot,
+              snapshot.ebCabinetMap,
+              ebSlotMeta,
+            );
+
             const optTotals = computeQuotationTotals({
               pricingMethod: 'optimizer',
               areasData,
@@ -409,7 +449,11 @@ const [isEditingDate, setIsEditingDate] = useState(false);
               },
               optimizerRun: {
                 materialCost: Number(run.material_cost ?? 0),
-                edgebandCost: Number(run.edgeband_cost ?? 0),
+                // Rolls-based (whole rolls per edgeband type). Mirrors ft²
+                // mode and makes Materials Cost reconcile exactly with the
+                // BOM footer. The DB column `edgeband_cost` stays as the
+                // meters × price historical value.
+                edgebandCost: edgebandRollsCost,
                 cabinetsCovered,
                 tariffableMaterialsCost,
               },
@@ -1286,13 +1330,22 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           areasData: areas,
           edgebandByCabinet: snapshot?.edgebandCostByCabinet ?? {},
         });
+        const { ebPriceBySlot, ebSlotMeta } = extractEbSnapshotInputs(snapshot);
+        const edgebandRollsCost = computeEdgebandRollsCost(
+          snapshot.pieces,
+          ebPriceBySlot,
+          snapshot.ebCabinetMap,
+          ebSlotMeta,
+        );
         totals = computeQuotationTotals({
           pricingMethod: 'optimizer',
           areasData: areas,
           multipliers: { ...baseMultipliers, riskFactorPct: riskFactorAppliesOptimizer ? riskFactorPct : 0 },
           optimizerRun: {
             materialCost: Number(activeOptimizerRun.material_cost ?? 0),
-            edgebandCost: Number(activeOptimizerRun.edgeband_cost ?? 0),
+            // Rolls-based (see updateProjectTotal for the rationale). Keeps
+            // Info in sync with the BOM footer.
+            edgebandCost: edgebandRollsCost,
             cabinetsCovered,
             tariffableMaterialsCost,
           },
@@ -2296,8 +2349,6 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                     pricingMethod === 'optimizer' && activeOptimizerRun
                       ? {
                           perAreaCabinetSubtotal: quotationView.perAreaCabinetSubtotal,
-                          boardsCost: Number(activeOptimizerRun.material_cost ?? 0),
-                          edgebandCost: Number(activeOptimizerRun.edgeband_cost ?? 0),
                           byCategory: quotationView.byCategory,
                           materialsSubtotal: quotationView.materialsSubtotal,
                         }

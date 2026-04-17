@@ -21,7 +21,11 @@ import { ShoppingCart, FileText } from 'lucide-react';
 import { formatCurrency } from '../../../lib/calculations';
 import { supabase } from '../../../lib/supabase';
 import { useSettingsStore } from '../../../lib/settingsStore';
-import { computeEdgebandCost } from '../../../lib/optimizer/quotation/computeEdgebandCost';
+import {
+  computeEdgebandCost,
+  computeEdgebandRollsCost,
+  type EbSlotMeta,
+} from '../../../lib/optimizer/quotation/computeEdgebandCost';
 import { computeQuotationTotals } from '../../../lib/pricing/computeQuotationTotals';
 import { computeOptimizerTariffableMaterialsCost } from '../../../lib/optimizer/quotation/computeOptimizerAreaSubtotals';
 import type { OptimizerRunSnapshot } from '../../../lib/optimizer/quotation/types';
@@ -202,7 +206,26 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
       b: snapshot.ebConfig?.b?.price ?? 0,
       c: snapshot.ebConfig?.c?.price ?? 0,
     };
-    const ebResult = computeEdgebandCost(snapshot.pieces, ebPriceBySlot, snapshot.ebCabinetMap);
+    // Slot → plId+name lookup so fallback-priced pieces (cabinets missing
+    // from ebCabinetMap) still aggregate into perEdgebandType and appear in
+    // the BOM. Without this, they silently drop out of the displayed total.
+    const ebSlotMeta: EbSlotMeta = {
+      a: snapshot.ebConfig?.a?.id && snapshot.ebConfig?.a?.name
+        ? { plId: snapshot.ebConfig.a.id, name: snapshot.ebConfig.a.name }
+        : undefined,
+      b: snapshot.ebConfig?.b?.id && snapshot.ebConfig?.b?.name
+        ? { plId: snapshot.ebConfig.b.id, name: snapshot.ebConfig.b.name }
+        : undefined,
+      c: snapshot.ebConfig?.c?.id && snapshot.ebConfig?.c?.name
+        ? { plId: snapshot.ebConfig.c.id, name: snapshot.ebConfig.c.name }
+        : undefined,
+    };
+    const ebResult = computeEdgebandCost(
+      snapshot.pieces,
+      ebPriceBySlot,
+      snapshot.ebCabinetMap,
+      ebSlotMeta,
+    );
 
     // Prefer per-type breakdown (accurate for N edgeband types)
     const hasPerType = Object.keys(ebResult.perEdgebandType).length > 0;
@@ -530,7 +553,25 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
       b: snapshot.ebConfig?.b?.price ?? 0,
       c: snapshot.ebConfig?.c?.price ?? 0,
     };
-    const ebResult = computeEdgebandCost(snapshot.pieces, ebPriceBySlot);
+    // Same slot meta used in the BOM aggregation above — keeps the fallback
+    // pieces (cabinets missing from ebCabinetMap) counted consistently.
+    const ebSlotMeta: EbSlotMeta = {
+      a: snapshot.ebConfig?.a?.id && snapshot.ebConfig?.a?.name
+        ? { plId: snapshot.ebConfig.a.id, name: snapshot.ebConfig.a.name }
+        : undefined,
+      b: snapshot.ebConfig?.b?.id && snapshot.ebConfig?.b?.name
+        ? { plId: snapshot.ebConfig.b.id, name: snapshot.ebConfig.b.name }
+        : undefined,
+      c: snapshot.ebConfig?.c?.id && snapshot.ebConfig?.c?.name
+        ? { plId: snapshot.ebConfig.c.id, name: snapshot.ebConfig.c.name }
+        : undefined,
+    };
+    const ebResult = computeEdgebandCost(
+      snapshot.pieces,
+      ebPriceBySlot,
+      snapshot.ebCabinetMap,
+      ebSlotMeta,
+    );
     const cabinetsCovered = new Set(snapshot.cabinetsCovered);
     const installDeliveryMxn = (quotation.install_delivery_usd ?? 0) * (exchangeRate || 1);
 
@@ -565,12 +606,21 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
         riskFactorPct:    riskPct,
       },
       optimizerRun: {
-        // Prefer the DB-persisted values so Breakdown's totals agree with
-        // Info (Info reads the same optimizer_runs row). Only fall back to
-        // the live recompute when we don't have them (rare — in-memory
-        // pending runs that were never saved).
+        // Boards cost: DB-persisted value (computed at optimizer save time
+        // from result.boards × stock.costo; Info reads the same row).
         materialCost: loadedRun.materialCostDb ?? result.totalCost,
-        edgebandCost: loadedRun.edgebandCostDb ?? ebResult.totalCost,
+        // Edgeband cost: whole-roll rounding per edgeband type, mirroring
+        // ft² mode (edgeband is sold by the roll). The DB-persisted
+        // edgeband_cost is meters × price — kept for history but NOT used
+        // for pricing since it would underprice the roll-denominated
+        // purchase cost. Info and this path use the same computation so
+        // Materials Cost converges exactly with the BOM footer.
+        edgebandCost: computeEdgebandRollsCost(
+          snapshot.pieces,
+          ebPriceBySlot,
+          snapshot.ebCabinetMap,
+          ebSlotMeta,
+        ),
         cabinetsCovered,
         tariffableMaterialsCost,
       },

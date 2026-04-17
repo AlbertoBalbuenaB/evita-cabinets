@@ -36,10 +36,6 @@ interface ProjectChartsProps {
   optimizerOverrides?: {
     /** From `quotationView.perAreaCabinetSubtotal` — per-area cabinet cost in optimizer mode (no quantity multiplier). */
     perAreaCabinetSubtotal: Record<string, number>;
-    /** Board material cost from the active run. */
-    boardsCost: number;
-    /** Edgeband cost from the active run. */
-    edgebandCost: number;
     /** Full per-category breakdown from the unified totals. Mandatory for
      *  the materials breakdown + Project Value KPI to agree with Info. */
     byCategory: {
