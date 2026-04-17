@@ -28,6 +28,7 @@ export function KbProposalPage() {
   const [error, setError]       = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
+  const [diffMode, setDiffMode]     = useState<'line' | 'word'>('line');
 
   useEffect(() => {
     fetchTaxonomy();
@@ -243,11 +244,29 @@ export function KbProposalPage() {
 
       {(proposal.proposed_body_md !== null || target) && (
         <div className="glass-white rounded-2xl p-4 sm:p-5">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wide">Diff — body</h3>
+          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">Diff — body</h3>
+            <div className="inline-flex rounded-lg border border-slate-200/70 overflow-hidden text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => setDiffMode('line')}
+                className={`px-2.5 py-1 ${diffMode === 'line' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+              >
+                Line
+              </button>
+              <button
+                type="button"
+                onClick={() => setDiffMode('word')}
+                className={`px-2.5 py-1 ${diffMode === 'word' ? 'bg-indigo-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+              >
+                Word
+              </button>
+            </div>
+          </div>
           <KbDiffViewer
             before={diffBody.before}
             after={diffBody.after}
-            mode="line"
+            mode={diffMode}
             label={{
               before: proposal.kind === 'create' ? '(nuevo)' : `current v${target?.current_version ?? '?'}`,
               after: `proposed`,

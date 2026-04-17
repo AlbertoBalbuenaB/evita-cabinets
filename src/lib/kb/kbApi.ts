@@ -1,6 +1,7 @@
 import { supabase } from '../supabase';
 import type { Database } from '../database.types';
 import type {
+  KbAuditRow,
   KbCategory,
   KbComment,
   KbEntry,
@@ -243,6 +244,16 @@ export function plainTextToTiptap(text: string): Record<string, unknown> {
       content: [{ type: 'text', text: p }],
     })),
   };
+}
+
+export async function fetchAuditLog(limit = 100): Promise<KbAuditRow[]> {
+  const { data, error } = await supabase
+    .from('kb_audit_log')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
 }
 
 export async function fetchMemberNames(): Promise<Record<string, string>> {

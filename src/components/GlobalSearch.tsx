@@ -8,6 +8,8 @@ import {
   DollarSign,
   Loader2,
   X,
+  BookOpen,
+  Building2,
 } from 'lucide-react';
 import { useGlobalSearch, type SearchResult } from '../hooks/useGlobalSearch';
 
@@ -60,6 +62,18 @@ const CATEGORY_CONFIG = {
     iconColor: 'text-amber-500',
     bgColor: 'bg-amber-50',
   },
+  kbEntries: {
+    label: 'Knowledge Base',
+    icon: BookOpen,
+    iconColor: 'text-indigo-500',
+    bgColor: 'bg-indigo-50',
+  },
+  kbSuppliers: {
+    label: 'Suppliers',
+    icon: Building2,
+    iconColor: 'text-teal-500',
+    bgColor: 'bg-teal-50',
+  },
 } as const;
 
 const RESULT_ICON: Record<SearchResult['type'], React.ElementType> = {
@@ -67,6 +81,8 @@ const RESULT_ICON: Record<SearchResult['type'], React.ElementType> = {
   quotation: FileText,
   cabinet: Package,
   price_item: DollarSign,
+  kb_entry: BookOpen,
+  kb_supplier: Building2,
 };
 
 export function GlobalSearch({ open, onClose }: GlobalSearchProps) {
@@ -128,13 +144,13 @@ export function GlobalSearch({ open, onClose }: GlobalSearchProps) {
 
   // Build ordered sections for rendering
   const sections = (
-    ['projects', 'quotations', 'cabinets', 'priceItems'] as const
+    ['projects', 'quotations', 'cabinets', 'priceItems', 'kbEntries', 'kbSuppliers'] as const
   ).filter((key) => results[key].length > 0);
 
   // Compute flat index offset per section for activeIndex matching
   const sectionOffsets: Record<string, number> = {};
   let offset = 0;
-  for (const key of ['projects', 'quotations', 'cabinets', 'priceItems'] as const) {
+  for (const key of ['projects', 'quotations', 'cabinets', 'priceItems', 'kbEntries', 'kbSuppliers'] as const) {
     sectionOffsets[key] = offset;
     offset += results[key].length;
   }

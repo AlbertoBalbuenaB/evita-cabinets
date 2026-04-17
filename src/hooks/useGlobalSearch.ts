@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 
 export interface SearchResult {
   id: string;
-  type: 'project' | 'quotation' | 'cabinet' | 'price_item';
+  type: 'project' | 'quotation' | 'cabinet' | 'price_item' | 'kb_entry' | 'kb_supplier';
   title: string;
   subtitle: string;
   url: string;
@@ -15,6 +15,8 @@ export interface SearchResults {
   quotations: SearchResult[];
   cabinets: SearchResult[];
   priceItems: SearchResult[];
+  kbEntries: SearchResult[];
+  kbSuppliers: SearchResult[];
 }
 
 const EMPTY_RESULTS: SearchResults = {
@@ -22,6 +24,8 @@ const EMPTY_RESULTS: SearchResults = {
   quotations: [],
   cabinets: [],
   priceItems: [],
+  kbEntries: [],
+  kbSuppliers: [],
 };
 
 export function useGlobalSearch() {
@@ -48,7 +52,7 @@ export function useGlobalSearch() {
       const cancelled = () => abortRef.current;
 
       try {
-        const [projectsRes, quotationsRes, cabinetsRes, priceItemsRes] = await Promise.all([
+        const [projectsRes, quotationsRes, cabinetsRes, priceItemsRes, kbEntriesRes, kbSuppliersRes] = await Promise.all([
           supabase
             .from('projects')
             .select('id, name, customer, address, project_type, status')
@@ -68,6 +72,18 @@ export function useGlobalSearch() {
             .from('price_list')
             .select('id, concept_description, type, sku_code, unit')
             .or(`concept_description.ilike.%${q}%,sku_code.ilike.%${q}%`)
+            .limit(5),
+          supabase
+            .from('kb_entries')
+            .select('id, slug, title, entry_type')
+            .neq('status', 'archived')
+            .or(`title.ilike.%${q}%,slug.ilike.%${q}%`)
+            .limit(5),
+          supabase
+            .from('kb_suppliers')
+            .select('id, slug, name, categories')
+            .eq('is_active', true)
+            .ilike('name', `%${q}%`)
             .limit(5),
         ]);
 
@@ -109,7 +125,25 @@ export function useGlobalSearch() {
           badge: pi.type ?? undefined,
         }));
 
-        setResults({ projects, quotations, cabinets, priceItems });
+        const kbEntries: SearchResult[] = (kbEntriesRes.data ?? []).map((e) => ({
+          id: e.id,
+          type: 'kb_entry',
+          title: e.title,
+          subtitle: e.slug,
+          url: `/kb/${e.slug}`,
+          badge: e.entry_type ?? undefined,
+        }));
+
+        const kbSuppliers: SearchResult[] = (kbSuppliersRes.data ?? []).map((s) => ({
+          id: s.id,
+          type: 'kb_supplier',
+          title: s.name,
+          subtitle: (s.categories ?? []).join(' · '),
+          url: `/kb/suppliers/${s.slug}`,
+          badge: 'supplier',
+        }));
+
+        setResults({ projects, quotations, cabinets, priceItems, kbEntries, kbSuppliers });
       } catch {
         if (!cancelled()) setResults(EMPTY_RESULTS);
       } finally {
@@ -136,6 +170,8 @@ export function useGlobalSearch() {
     ...results.quotations,
     ...results.cabinets,
     ...results.priceItems,
+    ...results.kbEntries,
+    ...results.kbSuppliers,
   ];
 
   const hasResults = allResults.length > 0;
