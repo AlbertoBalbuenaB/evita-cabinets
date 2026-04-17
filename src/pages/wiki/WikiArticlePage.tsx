@@ -7,11 +7,13 @@ import { fetchMemberNames } from '../../lib/kb/kbApi';
 import { History } from 'lucide-react';
 import { KbMarkdownViewer } from '../../components/kb/KbMarkdownViewer';
 import { Button } from '../../components/Button';
+import { pickText, useLocaleStore } from '../../lib/localeStore';
 import type { WikiArticle, WikiArticleVersion } from '../../lib/wiki/wikiTypes';
 
 export function WikiArticlePage() {
   const { slug } = useParams<{ slug: string }>();
   const { categories, fetchTaxonomy } = useWikiStore();
+  const { locale } = useLocaleStore();
   const [article, setArticle] = useState<WikiArticle | null>(null);
   const [versions, setVersions] = useState<WikiArticleVersion[]>([]);
   const [memberNames, setMemberNames] = useState<Record<string, string>>({});
@@ -70,6 +72,10 @@ export function WikiArticlePage() {
   }
 
   const category = categories.find((c) => c.id === article.category_id);
+  const title = pickText(article, 'title', locale);
+  const summary = pickText(article, 'summary', locale);
+  const body = pickText(article, 'body_md', locale);
+  const categoryName = category ? pickText(category, 'name', locale) : '';
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
@@ -80,7 +86,7 @@ export function WikiArticlePage() {
         {category && (
           <>
             <span className="text-slate-400">/</span>
-            <span className="text-slate-600">{category.name}</span>
+            <span className="text-slate-600">{categoryName}</span>
           </>
         )}
       </div>
@@ -92,7 +98,7 @@ export function WikiArticlePage() {
               <Library className="w-5 h-5 text-violet-600" />
               <span className="text-xs uppercase tracking-wide text-slate-600 font-semibold">Wiki article</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{article.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{title}</h1>
           </div>
           <Link to={`/wiki/new?edit=${encodeURIComponent(article.slug)}`}>
             <Button variant="secondary" size="sm">
@@ -101,8 +107,8 @@ export function WikiArticlePage() {
             </Button>
           </Link>
         </div>
-        {article.summary && (
-          <p className="text-sm text-slate-700 mt-2">{article.summary}</p>
+        {summary && (
+          <p className="text-sm text-slate-700 mt-2">{summary}</p>
         )}
         <div className="mt-3 flex items-center gap-2 flex-wrap text-xs text-slate-600">
           <span className="font-mono">v{article.current_version}</span>
@@ -130,7 +136,7 @@ export function WikiArticlePage() {
       </div>
 
       <div className="glass-white rounded-2xl p-5 sm:p-6 section-enter">
-        <KbMarkdownViewer source={article.body_md} />
+        <KbMarkdownViewer source={body} />
       </div>
 
       {versions.length > 0 && (

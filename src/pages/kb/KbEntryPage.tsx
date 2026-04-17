@@ -11,12 +11,14 @@ import { useKbStore } from '../../lib/kb/kbStore';
 import { KbMarkdownViewer } from '../../components/kb/KbMarkdownViewer';
 import { KbStructuredPanel } from '../../components/kb/KbStructuredPanel';
 import { KbSupplierChip } from '../../components/kb/KbSupplierChip';
+import { pickText, useLocaleStore } from '../../lib/localeStore';
 import { KbVersionTimeline } from '../../components/kb/KbVersionTimeline';
 import type { KbEntry, KbEntryVersion } from '../../lib/kb/kbTypes';
 
 export function KbEntryPage() {
   const { slug } = useParams<{ slug: string }>();
   const { categories, suppliers, fetchTaxonomy } = useKbStore();
+  const { locale } = useLocaleStore();
   const [entry, setEntry] = useState<KbEntry | null>(null);
   const [versions, setVersions] = useState<KbEntryVersion[]>([]);
   const [memberNames, setMemberNames] = useState<Record<string, string>>({});
@@ -76,6 +78,9 @@ export function KbEntryPage() {
 
   const category = categories.find((c) => c.id === entry.category_id);
   const entrySuppliers = suppliers.filter((s) => entry.supplier_ids.includes(s.id));
+  const title = pickText(entry, 'title', locale);
+  const categoryName = category ? pickText(category, 'name', locale) : '';
+  const body = pickText(entry, 'body_md', locale);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
@@ -88,7 +93,7 @@ export function KbEntryPage() {
             <span className="text-slate-400">/</span>
             <span className="text-slate-600">
               {category.section_num && <span className="font-mono mr-1">{category.section_num}</span>}
-              {category.name}
+              {categoryName}
             </span>
           </>
         )}
@@ -97,7 +102,7 @@ export function KbEntryPage() {
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{entry.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{title}</h1>
             <div className="mt-2 flex items-center gap-2 flex-wrap text-xs text-slate-600">
               <span className="font-mono px-2 py-0.5 rounded bg-indigo-100/70 text-indigo-800">{entry.entry_type}</span>
               <span>·</span>
@@ -188,7 +193,7 @@ export function KbEntryPage() {
       )}
 
       <div className="glass-white rounded-2xl p-5 sm:p-6 section-enter">
-        <KbMarkdownViewer source={entry.body_md} />
+        <KbMarkdownViewer source={body} />
       </div>
 
       <KbStructuredPanel data={entry.structured_data} />
