@@ -26,6 +26,7 @@
  */
 
 import type { AreaWithChildren, QuotationMultipliers } from '../../pricing/computeQuotationTotalsSqft';
+import { getCabinetTotalCost } from '../../pricing/getCabinetTotalCost';
 
 export interface OptimizerQuotationTotalInput {
   /** From the optimizer run: sum of board material costs. */
@@ -77,15 +78,37 @@ export interface OptimizerQuotationTotal {
 }
 
 /**
- * Fields on `area_cabinets` that the optimizer replaces (the "4 material slots").
- * These are subtracted from `cabinet.subtotal` to obtain the non-material
- * extras that must be added on top of the optimizer boards + edgeband.
+ * Fields on `area_cabinets` that the optimizer physically replaces. Every
+ * material/edgeband cost listed here corresponds to a `cutPieceRole` the
+ * optimizer cuts and prices in `materialCost + edgebandCost`, so we MUST
+ * subtract them from `cabinet.subtotal` to avoid double-counting them on
+ * top of the optimizer's own board/edgeband totals.
+ *
+ * Originally only `box` and `doors` (the "4 material slots"). The
+ * 2026-04-16 schema split added `back_panel_*`, `drawer_box_*` and
+ * `shelf_*` as independent slots; the cut-piece engine emits pieces
+ * tagged with those roles ('back' / 'drawer_box' / 'shelf') and
+ * `buildOptimizerSetupFromQuotation` routes them to the correct
+ * material price, so the optimizer's `materialCost` already covers
+ * those boards. Subtracting the ft²-estimated cost fields here keeps
+ * the Info-tab Materials Subtotal from double-counting them.
+ *
+ * Fields intentionally NOT listed (the optimizer does NOT replace them
+ * — they remain in `extras` on top of optimizer boards):
+ *   - box_interior_finish_cost, doors_interior_finish_cost
+ *   - door_profile_cost
+ *   - hardware / accessories / labor (handled separately)
  */
 export const MATERIAL_FIELDS = [
   'box_material_cost',
   'box_edgeband_cost',
   'doors_material_cost',
   'doors_edgeband_cost',
+  'back_panel_material_cost',
+  'drawer_box_material_cost',
+  'drawer_box_edgeband_cost',
+  'shelf_material_cost',
+  'shelf_edgeband_cost',
 ] as const;
 
 export function cabinetMaterialCost(cab: Record<string, unknown>): number {
@@ -130,7 +153,14 @@ export function computeOptimizerQuotationTotal(
     let areaFallbackCabinets = 0;
 
     for (const cab of area.cabinets) {
-      const subtotal = typeof cab.subtotal === 'number' && Number.isFinite(cab.subtotal) ? cab.subtotal : 0;
+      // Prefer the live recompute from the 15 cost fields; fall back to
+      // `cab.subtotal` when all of them are zero/missing (legacy data +
+      // lightweight test fixtures). The denormalized `subtotal` field can
+      // drift when a cabinet is edited and the recompute step is missed;
+      // the helper makes this self-healing for real data.
+      // See src/lib/pricing/getCabinetTotalCost.ts.
+      const live = getCabinetTotalCost(cab as unknown as Record<string, unknown>);
+      const subtotal = live > 0 ? live : (cab.subtotal ?? 0);
       if (cabinetsCovered.has(cab.id)) {
         // Covered by optimizer → keep only non-material extras.
         const extras = subtotal - cabinetMaterialCost(cab as unknown as Record<string, unknown>);

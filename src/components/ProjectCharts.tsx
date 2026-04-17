@@ -3,7 +3,17 @@ import { BarChart3, Package, Truck, TrendingUp, DollarSign, Layers, Boxes } from
 import { formatCurrency } from '../lib/calculations';
 import { countActualCabinets } from '../lib/cabinetFilters';
 import { calculateAreaBoxesAndPallets } from '../lib/boxesAndPallets';
+import { getCabinetTotalCost } from '../lib/pricing/getCabinetTotalCost';
 import type { ProjectArea, AreaCabinet, AreaItem, AreaCountertop, AreaClosetItem, Product } from '../types';
+
+/** Live recompute of a cabinet's total cost; falls back to the cached
+ *  `subtotal` field for legacy data. Mirrors the rule used by
+ *  computeQuotationTotalsSqft / computeOptimizerQuotationTotal so the
+ *  Analytics tab agrees with the Info and Breakdown tabs. */
+function cabSubtotal(c: AreaCabinet): number {
+  const live = getCabinetTotalCost(c as unknown as Record<string, unknown>);
+  return live > 0 ? live : (c.subtotal ?? 0);
+}
 
 type EnrichedArea = ProjectArea & {
   cabinets: AreaCabinet[];
@@ -26,10 +36,24 @@ interface ProjectChartsProps {
   optimizerOverrides?: {
     /** From `quotationView.perAreaCabinetSubtotal` — per-area cabinet cost in optimizer mode (no quantity multiplier). */
     perAreaCabinetSubtotal: Record<string, number>;
-    /** Board material cost from the active run. */
-    boardsCost: number;
-    /** Edgeband cost from the active run. */
-    edgebandCost: number;
+    /** Full per-category breakdown from the unified totals. Mandatory for
+     *  the materials breakdown + Project Value KPI to agree with Info. */
+    byCategory: {
+      boards: number;
+      edgeband: number;
+      hardware: number;
+      accessories: number;
+      interiorFinish: number;
+      doorProfile: number;
+      labor: number;
+      items: number;
+      countertops: number;
+      closetItems: number;
+      prefabItems: number;
+    };
+    /** Materials subtotal from the unified totals — the authoritative
+     *  "Project Value" number. Matches Info's Materials Subtotal exactly. */
+    materialsSubtotal: number;
   };
 }
 
@@ -83,7 +107,7 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
           (cabinet.box_material_cost ?? 0) + (cabinet.box_edgeband_cost ?? 0) + (cabinet.box_interior_finish_cost ?? 0) +
           (cabinet.doors_material_cost ?? 0) + (cabinet.doors_edgeband_cost ?? 0) + (cabinet.doors_interior_finish_cost ?? 0) +
           (cabinet.hardware_cost ?? 0);
-        const taxAmount = (cabinet.subtotal ?? 0) - (cabinet.labor_cost ?? 0) - totalBaseCost;
+        const taxAmount = cabSubtotal(cabinet) - (cabinet.labor_cost ?? 0) - totalBaseCost;
         return sum + Math.max(0, taxAmount);
       }, 0) * areaQty;
     };
@@ -96,7 +120,7 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
       // non-material extras + ft² fallback for skipped cabinets).
       const cabinetsTotal = isOptimizerMode
         ? (optimizerOverrides!.perAreaCabinetSubtotal[area.id] ?? 0) * areaQty
-        : (area.cabinets || []).reduce((sum, c) => sum + (c.subtotal ?? 0), 0) * areaQty;
+        : (area.cabinets || []).reduce((sum, c) => sum + cabSubtotal(c), 0) * areaQty;
       const itemsTotal = (area.items || []).reduce((sum, i) => sum + i.subtotal, 0) * areaQty;
       const countertopsTotal = (area.countertops || []).reduce((sum, ct) => sum + ct.subtotal, 0) * areaQty;
       const closetItemsTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0) * areaQty;
@@ -147,23 +171,29 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
       taxes: totalProjectTaxes,
     };
 
-    // In optimizer mode, replace the six sqft sheet-material categories
-    // (Box Material / Edgeband / Interior and Doors Material / Edgeband /
-    // Interior) with two optimizer-sourced rows: Boards + Edgeband.
-    // Hardware / Labor / Countertops / Items / Prefab Closets stay
-    // unchanged because the optimizer doesn't touch those categories.
-    // The legacy "Taxes" heuristic only round-trips in sqft mode, so it's
-    // dropped in optimizer mode.
+    // In optimizer mode, read every category directly from the unified
+    // `byCategory` breakdown (same source the Info tab uses), so Analytics
+    // agrees with Info's Materials Subtotal to the cent. Categories that
+    // were previously missing from the optimizer-mode breakdown and caused
+    // the "Project Value" to diverge: Accessories, Interior Finish,
+    // Door Profile, Prefab Items. All included now.
+    //
+    // In sqft mode the legacy per-category view is kept — it's the
+    // pre-existing breakdown and changing it is out of scope for this fix.
     const materialsBreakdown = (
       isOptimizerMode
         ? [
-            { name: 'Boards (optimizer)', cost: optimizerOverrides!.boardsCost, color: 'bg-blue-500' },
-            { name: 'Edgeband (optimizer)', cost: optimizerOverrides!.edgebandCost, color: 'bg-amber-500' },
-            { name: 'Hardware', cost: materialsCosts.hardware, color: 'bg-amber-600' },
-            { name: 'Countertops', cost: totalCountertopsCost, color: 'bg-orange-500' },
-            { name: 'Prefab Closets', cost: totalClosetItemsCost, color: 'bg-teal-500' },
-            { name: 'Individual Items', cost: totalItemsCost, color: 'bg-green-500' },
-            { name: 'Labor', cost: materialsCosts.labor, color: 'bg-slate-500' },
+            { name: 'Boards (optimizer)',   cost: optimizerOverrides!.byCategory.boards,         color: 'bg-blue-500' },
+            { name: 'Edgeband (optimizer)', cost: optimizerOverrides!.byCategory.edgeband,       color: 'bg-amber-500' },
+            { name: 'Interior Finish',      cost: optimizerOverrides!.byCategory.interiorFinish, color: 'bg-blue-300' },
+            { name: 'Door Profile',         cost: optimizerOverrides!.byCategory.doorProfile,    color: 'bg-green-400' },
+            { name: 'Hardware',             cost: optimizerOverrides!.byCategory.hardware,       color: 'bg-amber-600' },
+            { name: 'Accessories',          cost: optimizerOverrides!.byCategory.accessories,    color: 'bg-green-300' },
+            { name: 'Countertops',          cost: optimizerOverrides!.byCategory.countertops,    color: 'bg-orange-500' },
+            { name: 'Prefab Closets',       cost: optimizerOverrides!.byCategory.closetItems,    color: 'bg-teal-500' },
+            { name: 'Prefab Items',         cost: optimizerOverrides!.byCategory.prefabItems,    color: 'bg-red-500' },
+            { name: 'Individual Items',     cost: optimizerOverrides!.byCategory.items,          color: 'bg-green-500' },
+            { name: 'Labor',                cost: optimizerOverrides!.byCategory.labor,          color: 'bg-slate-500' },
           ]
         : [
             { name: 'Box Material', cost: materialsCosts.boxMaterial, color: 'bg-blue-500' },
@@ -181,7 +211,14 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
           ]
     ).filter((item) => item.cost > 0);
 
-    const totalCost = materialsBreakdown.reduce((sum, item) => sum + item.cost, 0);
+    // In optimizer mode, the "Project Value" KPI is the authoritative
+    // materialsSubtotal from the unified totals — this includes the ft²
+    // fallback for cabinets the optimizer couldn't pack (mixed mode),
+    // which a simple sum of breakdown categories would miss. In sqft mode
+    // keep the legacy behaviour (sum of breakdown).
+    const totalCost = isOptimizerMode
+      ? optimizerOverrides!.materialsSubtotal
+      : materialsBreakdown.reduce((sum, item) => sum + item.cost, 0);
     const maxAreaCost = Math.max(...areasCosts.map((a) => a.total), 1);
     const maxMaterialCost = Math.max(...materialsBreakdown.map((m) => m.cost), 1);
 
@@ -201,7 +238,7 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
           0,
         )
       : areas.reduce(
-          (sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + (c.subtotal ?? 0), 0) * (area.quantity ?? 1),
+          (sum, area) => sum + (area.cabinets || []).reduce((s, c) => s + cabSubtotal(c), 0) * (area.quantity ?? 1),
           0
         );
     const avgCostPerCabinet = totalCabinets > 0 ? cabinetsCost / totalCabinets : 0;

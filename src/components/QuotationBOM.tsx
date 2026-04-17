@@ -4,7 +4,7 @@ import { formatCurrency } from '../lib/calculations';
 import { supabase } from '../lib/supabase';
 import { fetchAllProducts } from '../lib/fetchAllProducts';
 import { useSettingsStore } from '../lib/settingsStore';
-import { computeQuotationTotalsSqft } from '../lib/pricing/computeQuotationTotalsSqft';
+import { computeQuotationTotals } from '../lib/pricing/computeQuotationTotals';
 import type {
   Product,
   PriceListItem,
@@ -391,14 +391,18 @@ export function QuotationBOM({ areas, projectId, quotation }: QuotationBOMProps)
 
     const riskPct = (quotation as any).risk_factor_applies_sqft !== false
       ? ((quotation as any).risk_factor_percentage ?? 0) : 0;
-    const totals = computeQuotationTotalsSqft(areasNorm, {
-      profitMultiplier:  quotation.profit_multiplier        ?? 0,
-      tariffMultiplier:  quotation.tariff_multiplier        ?? 0,
-      referralRate:      quotation.referral_currency_rate   ?? 0,
-      taxPercentage:     quotation.tax_percentage           ?? 0,
-      installDeliveryMxn,
-      otherExpenses:     quotation.other_expenses           ?? 0,
-      riskFactorPct:     riskPct,
+    const totals = computeQuotationTotals({
+      pricingMethod: 'sqft',
+      areasData: areasNorm,
+      multipliers: {
+        profitMultiplier:  quotation.profit_multiplier        ?? 0,
+        tariffMultiplier:  quotation.tariff_multiplier        ?? 0,
+        referralRate:      quotation.referral_currency_rate   ?? 0,
+        taxPercentage:     quotation.tax_percentage           ?? 0,
+        installDeliveryMxn,
+        otherExpenses:     quotation.other_expenses           ?? 0,
+        riskFactorPct:     riskPct,
+      },
     });
 
     const totalLaborCost = areas.reduce((sum, area) => {

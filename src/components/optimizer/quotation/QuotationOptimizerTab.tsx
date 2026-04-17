@@ -57,6 +57,7 @@ import type {
   AreaCountertop,
   AreaClosetItem,
   Quotation,
+  PriceListItem,
 } from '../../../types';
 
 type EnrichedArea = ProjectArea & {
@@ -130,6 +131,36 @@ export function QuotationOptimizerTab({
   onPricingMethodChange: parentOnPricingMethodChange,
 }: Props) {
   const useStore = useMemo(() => getQuotationOptimizerStore(quotationId), [quotationId]);
+
+  // Fetch the price list once at this level so it runs in parallel with the
+  // store's listRuns/loadActiveRun, instead of waiting for BreakdownBOM to
+  // mount (which happens only after loadedRun arrives). Shaves several
+  // seconds off the Breakdown tab first-paint.
+  const [priceList, setPriceList] = useState<PriceListItem[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const PAGE = 1000;
+        let all: PriceListItem[] = [];
+        let from = 0;
+        while (true) {
+          const { data, error } = await supabase
+            .from('price_list')
+            .select('*')
+            .range(from, from + PAGE - 1);
+          if (error || !data || data.length === 0) break;
+          all = all.concat(data as PriceListItem[]);
+          if (data.length < PAGE) break;
+          from += PAGE;
+        }
+        if (!cancelled) setPriceList(all);
+      } catch {
+        if (!cancelled) setPriceList([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Reactive slices from the per-quotation store.
   const isBuilding        = useStore((s) => s.isBuilding);
@@ -641,6 +672,7 @@ export function QuotationOptimizerTab({
             loadedRun={loadedRun}
             areas={areas}
             quotation={quotation}
+            priceList={priceList}
           />
         </div>
       )}

@@ -74,6 +74,14 @@ export interface QuotationOptimizerState {
   loadedRun: {
     snapshot: OptimizerRunSnapshot;
     result: OptimizationResult;
+    /** DB-persisted material_cost (boards) for this run. When present,
+     *  consumers should use this instead of `result.totalCost` so that
+     *  Breakdown pricing agrees with Info (which also reads from the
+     *  optimizer_runs row, not from the recomputed snapshot). */
+    materialCostDb?: number;
+    /** DB-persisted edgeband_cost for this run. Same rationale as
+     *  materialCostDb — keeps Breakdown's totals in lockstep with Info. */
+    edgebandCostDb?: number;
   } | null;
 
   // Pending build (not yet saved as a run)
@@ -431,10 +439,14 @@ export function getQuotationOptimizerStore(
           isStale: active?.is_stale ?? false,
           isSaving: false,
           // Populate loadedRun immediately so BreakdownBOM renders
-          // without requiring a page reload.
+          // without requiring a page reload. Include the just-persisted
+          // kpis so Breakdown reads the same material/edgeband cost
+          // values the DB now holds (Info reads the same row).
           loadedRun: {
             snapshot,
             result: state.pendingResult!,
+            materialCostDb: kpis.materialCost,
+            edgebandCostDb: kpis.edgebandCost,
           },
         });
 
@@ -456,7 +468,12 @@ export function getQuotationOptimizerStore(
         const snapshot = row.snapshot as unknown as OptimizerRunSnapshot;
         const result   = row.result   as unknown as OptimizationResult;
         set({
-          loadedRun: { snapshot, result },
+          loadedRun: {
+            snapshot,
+            result,
+            materialCostDb: Number(row.material_cost ?? 0),
+            edgebandCostDb: Number(row.edgeband_cost ?? 0),
+          },
           // Reflect the loaded run's settings in the sidebar.
           globalSierra:     snapshot.settings.sierra,
           minOffcut:        snapshot.settings.minOffcut,

@@ -106,7 +106,6 @@ export function CutListDetailPanel({ pieces, cabinetDetails, onOverrideChanged }
           return (
             <details
               key={areaName}
-              open
               className={`group ${areaIdx > 0 ? 'border-t-2 border-slate-200/80' : ''}`}
             >
               <summary className="flex items-center justify-between gap-2 px-3 py-1.5 bg-slate-100/70 border-b border-slate-200/60 cursor-pointer select-none hover:bg-slate-200/60">

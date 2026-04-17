@@ -35,16 +35,33 @@ export interface EdgebandCostResult {
   perEdgebandType: Record<string, { name: string; plId: string; meters: number; cost: number }>;
 }
 
+/** Optional plId + name lookup for legacy `ebPriceBySlot` fallback. When a
+ *  piece falls to the fallback branch (cabinetId not present in
+ *  `ebCabinetMap`) and `ebSlotMeta[slot]` is provided, the cost still goes
+ *  into `perEdgebandType` under the provided plId — otherwise those meters
+ *  are invisible to any downstream consumer that iterates `perEdgebandType`
+ *  (e.g. the BOM table). Use the owning snapshot's `ebConfig` /
+ *  `ebSlotToPriceListId` to populate. */
+export interface EbSlotMeta {
+  a?: { plId: string; name: string };
+  b?: { plId: string; name: string };
+  c?: { plId: string; name: string };
+}
+
 /**
  * @param pieces          The tagged Pieza[] fed to the optimizer.
  * @param ebPriceBySlot   Price per linear meter for each slot (legacy fallback).
  * @param ebCabinetMap    Per-cabinet edgeband price lookup (new). When provided,
  *                        takes priority over `ebPriceBySlot` for each piece.
+ * @param ebSlotMeta      Slot → plId+name lookup used when a piece falls to the
+ *                        legacy fallback, so those meters still aggregate into
+ *                        `perEdgebandType` for BOM display.
  */
 export function computeEdgebandCost(
   pieces: Pieza[],
   ebPriceBySlot: Record<'a' | 'b' | 'c', number>,
   ebCabinetMap?: EbCabinetMap,
+  ebSlotMeta?: EbSlotMeta,
 ): EdgebandCostResult {
   const perCabinet: Record<string, number> = {};
   const perSlot: Record<'a' | 'b' | 'c', { meters: number; cost: number }> = {
@@ -93,6 +110,14 @@ export function computeEdgebandCost(
           slotCode === 3 ? 'c' : null;
         if (!slot) continue;
         price = ebPriceBySlot[slot] ?? 0;
+        // Promote the fallback pieces into `perEdgebandType` when caller
+        // supplies the slot → plId+name lookup, so the BOM doesn't silently
+        // drop them.
+        const meta = ebSlotMeta?.[slot];
+        if (meta) {
+          ebPlId = meta.plId;
+          ebName = meta.name;
+        }
       }
 
       const cost = meters * price;
@@ -128,4 +153,46 @@ export function computeEdgebandCost(
   }
 
   return { totalCost, totalMeters, perCabinet, perSlot, perEdgebandType };
+}
+
+/**
+ * Edgeband cost computed as whole rolls per edgeband type.
+ *
+ * Each distinct edgeband (grouped by `plId` in `perEdgebandType`) is
+ * rounded up to whole rolls of `rollLengthMeters` (default 150m) and
+ * priced at `pricePerMeter × rollLengthMeters`. Mirrors the rolls-based
+ * accounting used in ft² pricing (edgeband is sold by the roll; you pay
+ * for whole rolls even if you don't use them completely).
+ *
+ * Expected to be the `edgebandCost` input to `computeQuotationTotals` in
+ * optimizer mode so that Materials Cost and the BOM footer reconcile to
+ * the same number. The raw `meters × price` total is still available via
+ * `computeEdgebandCost(...).totalCost` for historical / diagnostic use.
+ *
+ * Important: each edgeband type is rounded INDEPENDENTLY. 4 types of
+ * 100 meters each = 4 rolls, not 2 (= 400m / 150 rounded up).
+ */
+export function computeEdgebandRollsCost(
+  pieces: Pieza[],
+  ebPriceBySlot: Record<'a' | 'b' | 'c', number>,
+  ebCabinetMap?: EbCabinetMap,
+  ebSlotMeta?: EbSlotMeta,
+  rollLengthMeters: number = 150,
+): number {
+  const { perEdgebandType } = computeEdgebandCost(
+    pieces,
+    ebPriceBySlot,
+    ebCabinetMap,
+    ebSlotMeta,
+  );
+  let total = 0;
+  for (const eb of Object.values(perEdgebandType)) {
+    if (eb.meters <= 0) continue;
+    // Skip "Not Apply" edgebands so they don't contribute cost.
+    if (eb.name.toLowerCase().includes('not apply')) continue;
+    const pricePerMeter = eb.cost / eb.meters;
+    const rollsNeeded = Math.ceil(eb.meters / rollLengthMeters);
+    total += rollsNeeded * pricePerMeter * rollLengthMeters;
+  }
+  return total;
 }

@@ -28,6 +28,7 @@ import type {
   AreaClosetItem,
   AreaPrefabItem,
 } from '../../types';
+import { getCabinetTotalCost } from './getCabinetTotalCost';
 
 export interface AreaWithChildren extends ProjectArea {
   cabinets: AreaCabinet[];
@@ -76,11 +77,16 @@ export interface QuotationTotalsSqft {
 }
 
 function sumAreaChildren(area: AreaWithChildren): number {
-  // AreaCabinet.subtotal is `number | null` in the DB schema; treat null as 0
-  // to match the pre-existing inline behavior in ProjectDetails (which relied
-  // on JS `null + number = NaN` being filtered out by upstream UI guards).
-  // The other three subtotal fields are `number` in the app types.
-  const cabinetsTotal    = area.cabinets.reduce((s, c) => s + (c.subtotal ?? 0), 0);
+  // Cabinets: prefer the live recompute from the 15 cost fields via
+  // getCabinetTotalCost; fall back to `cab.subtotal` only when all those
+  // fields are zero/missing (legacy data + lightweight test fixtures).
+  // The denormalized `subtotal` field can drift when a cabinet is edited
+  // and the recompute step is missed; the helper makes this self-healing
+  // for real data. See src/lib/pricing/getCabinetTotalCost.ts.
+  const cabinetsTotal    = area.cabinets.reduce((s, c) => {
+    const live = getCabinetTotalCost(c as unknown as Record<string, unknown>);
+    return s + (live > 0 ? live : (c.subtotal ?? 0));
+  }, 0);
   const itemsTotal       = area.items.reduce((s, i) => s + i.subtotal, 0);
   const countertopsTotal = area.countertops.reduce((s, ct) => s + ct.subtotal, 0);
   const closetItemsTotal = area.closetItems.reduce((s, ci) => s + ci.subtotal_mxn, 0);

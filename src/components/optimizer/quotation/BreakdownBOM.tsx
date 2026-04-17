@@ -21,8 +21,12 @@ import { ShoppingCart, FileText } from 'lucide-react';
 import { formatCurrency } from '../../../lib/calculations';
 import { supabase } from '../../../lib/supabase';
 import { useSettingsStore } from '../../../lib/settingsStore';
-import { computeEdgebandCost } from '../../../lib/optimizer/quotation/computeEdgebandCost';
-import { computeOptimizerQuotationTotal } from '../../../lib/optimizer/quotation/computeOptimizerQuotationTotal';
+import {
+  computeEdgebandCost,
+  computeEdgebandRollsCost,
+  type EbSlotMeta,
+} from '../../../lib/optimizer/quotation/computeEdgebandCost';
+import { computeQuotationTotals } from '../../../lib/pricing/computeQuotationTotals';
 import { computeOptimizerTariffableMaterialsCost } from '../../../lib/optimizer/quotation/computeOptimizerAreaSubtotals';
 import type { OptimizerRunSnapshot } from '../../../lib/optimizer/quotation/types';
 import type { OptimizationResult } from '../../../lib/optimizer/types';
@@ -33,6 +37,7 @@ import type {
   AreaItem,
   AreaCountertop,
   AreaClosetItem,
+  AreaPrefabItem,
   Quotation,
 } from '../../../types';
 
@@ -41,37 +46,72 @@ type EnrichedArea = ProjectArea & {
   items: AreaItem[];
   countertops: AreaCountertop[];
   closetItems?: AreaClosetItem[];
+  prefabItems?: AreaPrefabItem[];
 };
 
 export interface BreakdownBOMProps {
   loadedRun: {
     snapshot: OptimizerRunSnapshot;
     result: OptimizationResult;
+    /** DB-persisted material_cost for the active run. When present, used
+     *  as the `materialCost` input to computeQuotationTotals so Breakdown
+     *  agrees with Info (which also reads from the DB row). Falls back
+     *  to `result.totalCost` when absent (legacy or in-memory-only). */
+    materialCostDb?: number;
+    /** DB-persisted edgeband_cost, same rationale as materialCostDb.
+     *  Falls back to the live recompute from snapshot + ebConfig. */
+    edgebandCostDb?: number;
   };
   areas: EnrichedArea[];
   quotation: Quotation;
+  /** Price list fetched by the parent (QuotationOptimizerTab) so the
+   *  fetch can run in parallel with the optimizer store init instead of
+   *  waiting for this component to mount. When `null` we fall back to
+   *  fetching locally — backwards compatible. */
+  priceList?: PriceListItem[] | null;
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type BOMCategory = 'Boards' | 'Edgeband' | 'Hardware' | 'Accessories' | 'Items' | 'Countertops';
+type BOMCategory =
+  | 'Boards'
+  | 'Edgeband'
+  | 'Hardware'
+  | 'Accessories'
+  | 'Interior Finish'
+  | 'Door Profile'
+  | 'Items'
+  | 'Countertops'
+  | 'Closet Items'
+  | 'Prefab Items'
+  | 'Fallback Cabinets';
 
 const CATEGORY_ORDER: BOMCategory[] = [
   'Boards',
   'Edgeband',
   'Hardware',
   'Accessories',
+  'Interior Finish',
+  'Door Profile',
   'Items',
   'Countertops',
+  'Closet Items',
+  'Prefab Items',
+  'Fallback Cabinets',
 ];
 
 const CATEGORY_COLORS: Record<BOMCategory, string> = {
-  'Boards':       'bg-amber-50 text-amber-800',
-  'Edgeband':     'bg-purple-50 text-purple-800',
-  'Hardware':     'bg-slate-100 text-slate-700',
-  'Accessories':  'bg-green-50 text-green-800',
-  'Items':        'bg-orange-50 text-orange-800',
-  'Countertops':  'bg-teal-50 text-teal-800',
+  'Boards':            'bg-amber-50 text-amber-800',
+  'Edgeband':          'bg-purple-50 text-purple-800',
+  'Hardware':          'bg-slate-100 text-slate-700',
+  'Accessories':       'bg-green-50 text-green-800',
+  'Interior Finish':   'bg-sky-50 text-sky-800',
+  'Door Profile':      'bg-indigo-50 text-indigo-800',
+  'Items':             'bg-orange-50 text-orange-800',
+  'Countertops':       'bg-teal-50 text-teal-800',
+  'Closet Items':      'bg-pink-50 text-pink-800',
+  'Prefab Items':      'bg-red-50 text-red-800',
+  'Fallback Cabinets': 'bg-yellow-50 text-yellow-800',
 };
 
 interface BOMRow {
@@ -88,13 +128,19 @@ const ROLL_LENGTH_METERS = 150;
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps) {
-  const [priceList, setPriceList] = useState<PriceListItem[]>([]);
-  const [loadingPrices, setLoadingPrices] = useState(true);
+export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceListProp }: BreakdownBOMProps) {
+  // Prop convention: `undefined` means no parent provided one (use local
+  // fetch as fallback); `null` means parent is fetching (wait); array means
+  // parent-fetched and ready. Arrays from the parent short-circuit the
+  // local fetch, which saves a whole Supabase round-trip on Breakdown open.
+  const hasProp = priceListProp !== undefined;
+  const [priceListLocal, setPriceListLocal] = useState<PriceListItem[]>([]);
+  const [loadingLocalPrices, setLoadingLocalPrices] = useState(!hasProp);
   const [exporting, setExporting] = useState(false);
   const exchangeRate = useSettingsStore(s => s.settings.exchangeRateUsdToMxn);
 
   useEffect(() => {
+    if (hasProp) return;
     let cancelled = false;
     (async () => {
       try {
@@ -112,15 +158,18 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
           from += PAGE;
         }
         if (!cancelled) {
-          setPriceList(all);
-          setLoadingPrices(false);
+          setPriceListLocal(all);
+          setLoadingLocalPrices(false);
         }
       } catch {
-        if (!cancelled) setLoadingPrices(false);
+        if (!cancelled) setLoadingLocalPrices(false);
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [hasProp]);
+
+  const priceList = hasProp ? (priceListProp ?? []) : priceListLocal;
+  const loadingPrices = hasProp ? priceListProp === null : loadingLocalPrices;
 
   // ── BOM aggregation ──────────────────────────────────────────────────────
   const bom = useMemo<BOMRow[] | null>(() => {
@@ -157,7 +206,26 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
       b: snapshot.ebConfig?.b?.price ?? 0,
       c: snapshot.ebConfig?.c?.price ?? 0,
     };
-    const ebResult = computeEdgebandCost(snapshot.pieces, ebPriceBySlot, snapshot.ebCabinetMap);
+    // Slot → plId+name lookup so fallback-priced pieces (cabinets missing
+    // from ebCabinetMap) still aggregate into perEdgebandType and appear in
+    // the BOM. Without this, they silently drop out of the displayed total.
+    const ebSlotMeta: EbSlotMeta = {
+      a: snapshot.ebConfig?.a?.id && snapshot.ebConfig?.a?.name
+        ? { plId: snapshot.ebConfig.a.id, name: snapshot.ebConfig.a.name }
+        : undefined,
+      b: snapshot.ebConfig?.b?.id && snapshot.ebConfig?.b?.name
+        ? { plId: snapshot.ebConfig.b.id, name: snapshot.ebConfig.b.name }
+        : undefined,
+      c: snapshot.ebConfig?.c?.id && snapshot.ebConfig?.c?.name
+        ? { plId: snapshot.ebConfig.c.id, name: snapshot.ebConfig.c.name }
+        : undefined,
+    };
+    const ebResult = computeEdgebandCost(
+      snapshot.pieces,
+      ebPriceBySlot,
+      snapshot.ebCabinetMap,
+      ebSlotMeta,
+    );
 
     // Prefer per-type breakdown (accurate for N edgeband types)
     const hasPerType = Object.keys(ebResult.perEdgebandType).length > 0;
@@ -325,6 +393,153 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
     });
     countertopsMap.forEach(row => { if (row.qty > 0) rows.push(row); });
 
+    // ── 7. Interior Finish ────────────────────────────────────────────────
+    // Aggregated cost of interior finish (applied to box + doors) across
+    // every cabinet × area quantity. Surfaced as a single BOM row so that
+    // the BOM total matches the "Materials Cost" line in the Cost Summary
+    // (which derives from totals.byCategory.interiorFinish).
+    let interiorFinishTotal = 0;
+    areas.forEach(area => {
+      const areaQty = area.quantity ?? 1;
+      area.cabinets.forEach(cabinet => {
+        interiorFinishTotal +=
+          ((cabinet.box_interior_finish_cost ?? 0) +
+            (cabinet.doors_interior_finish_cost ?? 0)) * areaQty;
+      });
+    });
+    if (interiorFinishTotal > 0) {
+      rows.push({
+        category: 'Interior Finish',
+        concept: 'Box + Doors Interior Finish',
+        unit: 'project',
+        qty: 1,
+        price: interiorFinishTotal,
+        subtotal: interiorFinishTotal,
+        priceListItemId: null,
+      });
+    }
+
+    // ── 8. Door Profile ───────────────────────────────────────────────────
+    let doorProfileTotal = 0;
+    areas.forEach(area => {
+      const areaQty = area.quantity ?? 1;
+      area.cabinets.forEach(cabinet => {
+        doorProfileTotal += (cabinet.door_profile_cost ?? 0) * areaQty;
+      });
+    });
+    if (doorProfileTotal > 0) {
+      rows.push({
+        category: 'Door Profile',
+        concept: 'Door Profile',
+        unit: 'project',
+        qty: 1,
+        price: doorProfileTotal,
+        subtotal: doorProfileTotal,
+        priceListItemId: null,
+      });
+    }
+
+    // ── 9. Closet Items (Evita Plus/Premium) ─────────────────────────────
+    const closetItemsMap = new Map<string, BOMRow>();
+    areas.forEach(area => {
+      const areaQty = area.quantity ?? 1;
+      (area.closetItems ?? []).forEach(ci => {
+        const qty = (ci.quantity ?? 1) * areaQty;
+        const lineTotal = (ci.subtotal_mxn ?? 0) * areaQty;
+        if (lineTotal <= 0) return;
+        const concept =
+          ci.catalog_item?.description ??
+          ci.catalog_item?.cabinet_code ??
+          `Closet ${ci.closet_catalog_id?.slice(0, 8) ?? ''}`;
+        const key = `${ci.closet_catalog_id}|${ci.unit_price_mxn}`;
+        if (closetItemsMap.has(key)) {
+          const row = closetItemsMap.get(key)!;
+          row.qty += qty;
+          row.subtotal += lineTotal;
+        } else {
+          closetItemsMap.set(key, {
+            category: 'Closet Items',
+            concept,
+            unit: 'pcs',
+            qty,
+            price: qty > 0 ? lineTotal / qty : 0,
+            subtotal: lineTotal,
+            priceListItemId: null,
+          });
+        }
+      });
+    });
+    closetItemsMap.forEach(row => { if (row.subtotal > 0) rows.push(row); });
+
+    // ── 10. Prefab Items (Venus / Northville) ─────────────────────────────
+    const prefabItemsMap = new Map<string, BOMRow>();
+    areas.forEach(area => {
+      const areaQty = area.quantity ?? 1;
+      (area.prefabItems ?? []).forEach(pi => {
+        const qty = (pi.quantity ?? 1) * areaQty;
+        const lineTotal = (pi.cost_mxn ?? 0) * areaQty;
+        if (lineTotal <= 0) return;
+        const concept =
+          pi.catalog_item?.description ??
+          pi.catalog_item?.cabinet_code ??
+          `Prefab ${pi.prefab_catalog_id?.slice(0, 8) ?? ''}`;
+        const key = `${pi.prefab_catalog_id}|${pi.finish}|${pi.cost_usd}`;
+        if (prefabItemsMap.has(key)) {
+          const row = prefabItemsMap.get(key)!;
+          row.qty += qty;
+          row.subtotal += lineTotal;
+        } else {
+          prefabItemsMap.set(key, {
+            category: 'Prefab Items',
+            concept,
+            unit: 'pcs',
+            qty,
+            price: qty > 0 ? lineTotal / qty : 0,
+            subtotal: lineTotal,
+            priceListItemId: null,
+          });
+        }
+      });
+    });
+    prefabItemsMap.forEach(row => { if (row.subtotal > 0) rows.push(row); });
+
+    // ── 11. Fallback Cabinets (mixed mode — not packed by optimizer) ─────
+    // Raw board + edgeband cost for cabinets the optimizer couldn't pack.
+    // Other categories (hardware, labor, interior finish, etc.) are already
+    // aggregated in their own rows — this row is ONLY the ft²-estimated
+    // board/edgeband cost that the optimizer's `Boards` and `Edgeband`
+    // rows miss for uncovered cabinets.
+    const cabinetsCovered = new Set(snapshot.cabinetsCovered);
+    let fallbackMatTotal = 0;
+    areas.forEach(area => {
+      const areaQty = area.quantity ?? 1;
+      area.cabinets.forEach(cabinet => {
+        if (cabinetsCovered.has(cabinet.id)) return;
+        fallbackMatTotal +=
+          ((cabinet.box_material_cost ?? 0) +
+            (cabinet.box_edgeband_cost ?? 0) +
+            (cabinet.doors_material_cost ?? 0) +
+            (cabinet.doors_edgeband_cost ?? 0) +
+            (cabinet.back_panel_material_cost ?? 0) +
+            (cabinet.drawer_box_material_cost ?? 0) +
+            (cabinet.drawer_box_edgeband_cost ?? 0) +
+            (cabinet.shelf_material_cost ?? 0) +
+            (cabinet.shelf_edgeband_cost ?? 0)) *
+          areaQty;
+      });
+    });
+    if (fallbackMatTotal > 0) {
+      rows.push({
+        category: 'Fallback Cabinets',
+        concept: 'Cabinets not packed by optimizer (ft² boards + edgeband)',
+        unit: 'project',
+        qty: 1,
+        price: fallbackMatTotal,
+        subtotal: fallbackMatTotal,
+        priceListItemId: null,
+      });
+    }
+
     return rows;
   }, [loadedRun, areas, priceList, loadingPrices]);
 
@@ -338,7 +553,25 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
       b: snapshot.ebConfig?.b?.price ?? 0,
       c: snapshot.ebConfig?.c?.price ?? 0,
     };
-    const ebResult = computeEdgebandCost(snapshot.pieces, ebPriceBySlot);
+    // Same slot meta used in the BOM aggregation above — keeps the fallback
+    // pieces (cabinets missing from ebCabinetMap) counted consistently.
+    const ebSlotMeta: EbSlotMeta = {
+      a: snapshot.ebConfig?.a?.id && snapshot.ebConfig?.a?.name
+        ? { plId: snapshot.ebConfig.a.id, name: snapshot.ebConfig.a.name }
+        : undefined,
+      b: snapshot.ebConfig?.b?.id && snapshot.ebConfig?.b?.name
+        ? { plId: snapshot.ebConfig.b.id, name: snapshot.ebConfig.b.name }
+        : undefined,
+      c: snapshot.ebConfig?.c?.id && snapshot.ebConfig?.c?.name
+        ? { plId: snapshot.ebConfig.c.id, name: snapshot.ebConfig.c.name }
+        : undefined,
+    };
+    const ebResult = computeEdgebandCost(
+      snapshot.pieces,
+      ebPriceBySlot,
+      snapshot.ebCabinetMap,
+      ebSlotMeta,
+    );
     const cabinetsCovered = new Set(snapshot.cabinetsCovered);
     const installDeliveryMxn = (quotation.install_delivery_usd ?? 0) * (exchangeRate || 1);
 
@@ -347,20 +580,22 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
 
     // Proportional tariffable-materials allocation (mirrors the rule used
     // by ProjectDetails so the Breakdown BOM summary agrees with the
-    // UI and the PDF exports).
+    // UI and the PDF exports). Reads edgebandByCabinet from the persisted
+    // snapshot — same source Info uses — so the tariff allocation matches
+    // exactly; falling back to the live recompute only if the snapshot
+    // predates the edgebandCostByCabinet field.
     const tariffableMaterialsCost = computeOptimizerTariffableMaterialsCost({
       result,
       snapshot,
       areasData: normalisedAreas,
-      edgebandByCabinet: ebResult.perCabinet,
+      edgebandByCabinet: snapshot.edgebandCostByCabinet ?? ebResult.perCabinet,
     });
 
-    const totals = computeOptimizerQuotationTotal({
-      materialCost:   result.totalCost,
-      edgebandCost:   ebResult.totalCost,
-      areasData:      normalisedAreas,
-      cabinetsCovered,
-      tariffableMaterialsCost,
+    const riskAppliesOptimizer = quotation.risk_factor_applies_optimizer ?? false;
+    const riskPct = riskAppliesOptimizer ? (quotation.risk_factor_percentage ?? 0) : 0;
+    const totals = computeQuotationTotals({
+      pricingMethod: 'optimizer',
+      areasData: normalisedAreas,
       multipliers: {
         profitMultiplier: quotation.profit_multiplier        ?? 0,
         tariffMultiplier: quotation.tariff_multiplier        ?? 0,
@@ -368,23 +603,40 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
         taxPercentage:    quotation.tax_percentage           ?? 0,
         installDeliveryMxn,
         otherExpenses:    quotation.other_expenses           ?? 0,
+        riskFactorPct:    riskPct,
+      },
+      optimizerRun: {
+        // Boards cost: DB-persisted value (computed at optimizer save time
+        // from result.boards × stock.costo; Info reads the same row).
+        materialCost: loadedRun.materialCostDb ?? result.totalCost,
+        // Edgeband cost: whole-roll rounding per edgeband type, mirroring
+        // ft² mode (edgeband is sold by the roll). The DB-persisted
+        // edgeband_cost is meters × price — kept for history but NOT used
+        // for pricing since it would underprice the roll-denominated
+        // purchase cost. Info and this path use the same computation so
+        // Materials Cost converges exactly with the BOM footer.
+        edgebandCost: computeEdgebandRollsCost(
+          snapshot.pieces,
+          ebPriceBySlot,
+          snapshot.ebCabinetMap,
+          ebSlotMeta,
+        ),
+        cabinetsCovered,
+        tariffableMaterialsCost,
       },
     });
 
-    const totalLaborCost = areas.reduce((sum, area) => {
-      const qty = area.quantity ?? 1;
-      return sum + area.cabinets.reduce((s, c) => s + (c.labor_cost ?? 0) * qty, 0);
-    }, 0);
-
-    // Use the BOM row sum as the authoritative materials cost so the summary
-    // matches the BOM table exactly. price / tax / grand total stay as
-    // computed by computeOptimizerQuotationTotal (they are the pricing truth).
-    const bomTotal = bom.reduce((s, r) => s + r.subtotal, 0);
+    // Displayed Materials / Subtotal / Profit come from the unified totals so
+    // Breakdown converges with the Info tab exactly. The BOM table footer
+    // (bomTotal) is a separate sourcing view and keeps its own sum.
+    const labor = totals.byCategory.labor;
     return {
-      materialsCostOnly:  bomTotal,
-      totalLaborCost,
-      materialsSubtotal:  bomTotal + totalLaborCost,
-      profitMarginAmount: totals.price - (bomTotal + totalLaborCost),
+      materialsCostOnly:  totals.materialsSubtotal - labor,
+      totalLaborCost:     labor,
+      materialsSubtotal:  totals.materialsSubtotal,
+      riskFactorPct:      riskPct,
+      riskAmount:         totals.riskAmount,
+      profitMarginAmount: totals.profitAmount,
       price:              totals.price,
       tariffAmount:       totals.tariffAmount,
       referralAmount:     totals.referralAmount,
@@ -548,6 +800,13 @@ export function BreakdownBOM({ loadedRun, areas, quotation }: BreakdownBOMProps)
                 <SummaryDivider />
                 <SummaryRow label="Subtotal"         value={costSummary.materialsSubtotal} bold />
 
+                {costSummary.riskAmount > 0 && (
+                  <SummaryRow
+                    label={`Risk Factor (${costSummary.riskFactorPct}%)`}
+                    value={costSummary.riskAmount}
+                    muted
+                  />
+                )}
                 {costSummary.profitMarginAmount > 0 && (
                   <>
                     <SummaryRow label="Profit Margin" value={costSummary.profitMarginAmount} muted />
