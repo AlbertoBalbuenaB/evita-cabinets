@@ -31,6 +31,7 @@ const KbNew = lazy(() => import('./pages/kb/KbNew').then(m => ({ default: m.KbNe
 const KbProposals = lazy(() => import('./pages/kb/KbProposals').then(m => ({ default: m.KbProposals })));
 const KbProposalPage = lazy(() => import('./pages/kb/KbProposalPage').then(m => ({ default: m.KbProposalPage })));
 const KbSupplierPage = lazy(() => import('./pages/kb/KbSupplierPage').then(m => ({ default: m.KbSupplierPage })));
+const KbAudit = lazy(() => import('./pages/kb/KbAudit').then(m => ({ default: m.KbAudit })));
 
 function AdminRoute({ children }: { children: ReactNode }) {
   const { member, loading } = useCurrentMember();
@@ -88,6 +89,7 @@ function App() {
             <Route path="/suppliers/:id" element={<SupplierPage />} />
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/kb/new" element={<KbNew />} />
+            <Route path="/kb/audit" element={<AdminRoute><KbAudit /></AdminRoute>} />
             <Route path="/kb/proposals/:id" element={<KbProposalPage />} />
             <Route path="/kb/proposals" element={<KbProposals />} />
             <Route path="/kb/suppliers/:slug" element={<KbSupplierPage />} />

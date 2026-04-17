@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, AlertCircle, GitPullRequest, Plus } from 'lucide-react';
+import { BookOpen, AlertCircle, GitPullRequest, Plus, Shield } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { useKbStore } from '../../lib/kb/kbStore';
+import { useCurrentMember } from '../../lib/useCurrentMember';
 import { searchEntries } from '../../lib/kb/kbApi';
 import { KbSearchBar } from '../../components/kb/KbSearchBar';
 import { KbEntryCard } from '../../components/kb/KbEntryCard';
@@ -11,6 +12,8 @@ import type { KbEntryListItem } from '../../lib/kb/kbTypes';
 
 export function KbHub() {
   const { categories, suppliers, fetchTaxonomy, isLoaded } = useKbStore();
+  const { member } = useCurrentMember();
+  const isAdmin = member?.role === 'admin';
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [entries, setEntries] = useState<KbEntryListItem[]>([]);
@@ -59,6 +62,14 @@ export function KbHub() {
             <div className="flex items-start justify-between gap-2 flex-wrap">
               <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Knowledge Base</h1>
               <div className="flex gap-2">
+                {isAdmin && (
+                  <Link to="/kb/audit">
+                    <Button variant="ghost" size="sm">
+                      <Shield className="w-4 h-4 mr-1.5" />
+                      Audit
+                    </Button>
+                  </Link>
+                )}
                 <Link to="/kb/proposals">
                   <Button variant="ghost" size="sm">
                     <GitPullRequest className="w-4 h-4 mr-1.5" />
