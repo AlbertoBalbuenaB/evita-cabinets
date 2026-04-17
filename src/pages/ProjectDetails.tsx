@@ -915,7 +915,10 @@ const [isEditingDate, setIsEditingDate] = useState(false);
    * (the Print button pill in FloatingActionBar); the printed PDF stays
    * agnostic so clients don't see how prices were computed.
    */
-  async function resolveOptimizerAreaSubtotals(): Promise<Record<string, number> | undefined> {
+  async function resolveOptimizerAreaSubtotals(): Promise<{
+    subtotals: Record<string, number>;
+    tariffBase: Record<string, number>;
+  } | undefined> {
     try {
       const { data: q } = await supabase
         .from('quotations')
@@ -963,16 +966,16 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
       // The per-area edgebandCost above is meters × price (from
       // snapshot.edgebandCostByCabinet). The quotation totals displayed in
-      // Info / Breakdown / Analytics use whole-roll pricing (ft²-style),
-      // so the PDF's per-area sums would end up ~$6k short otherwise and
-      // the printed Grand Total wouldn't match the UI.
+      // Info / Breakdown / Analytics use whole-roll pricing (ft²-style) for
+      // materialsSubtotal / Price / Grand Total, so the PDF's per-area
+      // sums need the rolls delta added — otherwise the printed Grand Total
+      // runs ~$6k short.
       //
-      // Compute the rolls-based total once and distribute the delta
-      // proportionally across areas by their meters-based edgeband share.
-      // If all edgeband is in one area (common), the entire delta lands
-      // there. Fallback: if meters-based edgeband is 0 but rolls-based
-      // isn't (all pieces outside ebCabinetMap), spread by boards cost
-      // instead so the delta still lands somewhere.
+      // HOWEVER, the UI's tariffable pool is built via
+      // `computeOptimizerTariffableMaterialsCost`, which uses meters-edgeband
+      // (not rolls). So the tariff base must stay meters-based, while the
+      // price base must use rolls-adjusted values. Return BOTH maps so the
+      // USD PDF can tariff the meters base and price the rolls base.
       const { ebPriceBySlot, ebSlotMeta } = extractEbSnapshotInputs(snapshot);
       const totalEdgebandRolls = computeEdgebandRollsCost(
         snapshot.pieces,
@@ -987,27 +990,28 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       const rollsDelta = totalEdgebandRolls - totalEdgebandMeters;
 
       const subtotals: Record<string, number> = {};
-      if (Math.abs(rollsDelta) > 0.01) {
-        const denom = totalEdgebandMeters > 0
-          ? totalEdgebandMeters
-          : Object.values(perArea).reduce((s, a) => s + a.boardsCost, 0);
-        if (denom > 0) {
-          for (const [areaId, v] of Object.entries(perArea)) {
-            const weight = (totalEdgebandMeters > 0 ? v.edgebandCost : v.boardsCost) / denom;
-            subtotals[areaId] = v.cabinetsSubtotal + rollsDelta * weight;
-          }
+      const tariffBase: Record<string, number> = {};
+      const hasDelta = Math.abs(rollsDelta) > 0.01;
+      const denom = hasDelta
+        ? (totalEdgebandMeters > 0
+            ? totalEdgebandMeters
+            : Object.values(perArea).reduce((s, a) => s + a.boardsCost, 0))
+        : 0;
+
+      for (const [areaId, v] of Object.entries(perArea)) {
+        // Tariff base = pre-rolls (meters) subtotal, mirroring the UI's
+        // tariffableMaterialsCost which uses meters edgeband.
+        tariffBase[areaId] = v.cabinetsSubtotal;
+        // Price base = tariff base + that area's share of the rolls delta.
+        if (hasDelta && denom > 0) {
+          const weight = (totalEdgebandMeters > 0 ? v.edgebandCost : v.boardsCost) / denom;
+          subtotals[areaId] = v.cabinetsSubtotal + rollsDelta * weight;
         } else {
-          for (const [areaId, v] of Object.entries(perArea)) {
-            subtotals[areaId] = v.cabinetsSubtotal;
-          }
-        }
-      } else {
-        for (const [areaId, v] of Object.entries(perArea)) {
           subtotals[areaId] = v.cabinetsSubtotal;
         }
       }
 
-      return subtotals;
+      return { subtotals, tariffBase };
     } catch (err) {
       console.error(
         '[resolveOptimizerAreaSubtotals] failed; PDF will fall back to ft²:',
@@ -1018,24 +1022,26 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   }
 
   async function handlePrint() {
-    const optimizerAreaSubtotals = await resolveOptimizerAreaSubtotals();
+    const resolved = await resolveOptimizerAreaSubtotals();
     await printQuotation(project, areas, products, priceList, {
       pdfProjectName: isPdfNameModified ? pdfProjectName : undefined,
       pdfCustomer: isPdfCustomerModified ? pdfCustomer : undefined,
       pdfAddress: isPdfAddressModified ? pdfAddress : undefined,
       pdfProjectBrief: isPdfBriefModified ? pdfProjectBrief : undefined,
-      optimizerAreaSubtotals,
+      optimizerAreaSubtotals: resolved?.subtotals,
+      optimizerAreaSubtotalsTariffBase: resolved?.tariffBase,
     });
   }
 
   async function handlePrintUSD() {
-    const optimizerAreaSubtotals = await resolveOptimizerAreaSubtotals();
+    const resolved = await resolveOptimizerAreaSubtotals();
     await printQuotationUSD(project, areas, exchangeRate, products, priceList, disclaimerTariffInfo, disclaimerPriceValidity, {
       pdfProjectName: isPdfNameModified ? pdfProjectName : undefined,
       pdfCustomer: isPdfCustomerModified ? pdfCustomer : undefined,
       pdfAddress: isPdfAddressModified ? pdfAddress : undefined,
       pdfProjectBrief: isPdfBriefModified ? pdfProjectBrief : undefined,
-      optimizerAreaSubtotals,
+      optimizerAreaSubtotals: resolved?.subtotals,
+      optimizerAreaSubtotalsTariffBase: resolved?.tariffBase,
     });
   }
 

@@ -29,6 +29,18 @@ export interface PDFOverrides {
    * (`FloatingActionBar` pill on the Print button).
    */
   optimizerAreaSubtotals?: Record<string, number>;
+  /**
+   * Optimizer-mode override: per-area cabinet subtotal in MXN, pre-quantity,
+   * WITHOUT the rolls-vs-meters edgeband adjustment. Used as the base for
+   * the tariff calculation in `printQuotationUSD` so the printed tariff
+   * matches what Info / Breakdown / Analytics show in the UI (`computeOptimizerTariffableMaterialsCost`
+   * uses meters-edgeband, not rolls, when building tariffableSubtotal).
+   *
+   * When undefined, the PDF falls back to `optimizerAreaSubtotals` for
+   * tariff too — behavior equivalent to "tariff the rolls-based subtotal",
+   * which over-tariffs the rolls overhead by ~tariffMultiplier.
+   */
+  optimizerAreaSubtotalsTariffBase?: Record<string, number>;
 }
 
 export async function printQuotation(
@@ -643,22 +655,37 @@ export async function printQuotationUSD(
     if (typeof override === 'number' && Number.isFinite(override)) return override;
     return area.cabinets.reduce((s, c) => s + (c.subtotal ?? 0), 0);
   };
+  // Tariff uses the pre-rolls subtotal so it matches the UI (which builds
+  // tariffableSubtotal from meters-edgeband via
+  // computeOptimizerTariffableMaterialsCost). Falls back to the adjusted
+  // override — and then to the ft² sum — when the caller didn't supply
+  // a separate tariff base (i.e. legacy callers or pre-rolls-fix runs).
+  const resolveAreaCabinetsTariffBase = (area: ProjectArea & { cabinets: AreaCabinet[] }) => {
+    const preRolls = overrides.optimizerAreaSubtotalsTariffBase?.[area.id];
+    if (typeof preRolls === 'number' && Number.isFinite(preRolls)) return preRolls;
+    return resolveAreaCabinetsTotal(area);
+  };
 
   // First pass: calculate original prices, tariffs, and taxes (NOT inflated)
   const baseAreaData = areas.map(area => {
     const qty = area.quantity ?? 1;
     const areaCabinetsTotal = resolveAreaCabinetsTotal(area);
+    const areaCabinetsTariffBase = resolveAreaCabinetsTariffBase(area);
     const areaItemsTotal = area.items.reduce((sum, i) => sum + i.subtotal, 0);
     const areaClosetTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
     const areaPrefabTotal = (area.prefabItems || []).reduce((sum, pi) => sum + pi.cost_mxn, 0);
     const areaMaterialsSubtotal = (areaCabinetsTotal + areaItemsTotal + areaClosetTotal + areaPrefabTotal) * qty;
+    // Tariff base excludes the rolls-vs-meters edgeband overhead — items /
+    // closets / prefabs still count at face value since the UI taxes them
+    // the same way.
+    const areaMaterialsTariffBase = (areaCabinetsTariffBase + areaItemsTotal + areaClosetTotal + areaPrefabTotal) * qty;
 
     const areaPrice = profitMultiplier > 0 && profitMultiplier < 1
       ? areaMaterialsSubtotal / (1 - profitMultiplier)
       : areaMaterialsSubtotal;
 
     // Calculate tariff and tax based on ORIGINAL price (not inflated), only when flag is enabled
-    const areaTariff = area.applies_tariff === true ? areaMaterialsSubtotal * tariffMultiplier : 0;
+    const areaTariff = area.applies_tariff === true ? areaMaterialsTariffBase * tariffMultiplier : 0;
     const areaTax = (areaPrice + areaTariff) * (taxPercentage / 100);
 
     return {
@@ -669,10 +696,58 @@ export async function printQuotationUSD(
     };
   });
 
-  const totalBasePrice = baseAreaData.reduce((sum, a) => sum + a.basePrice, 0);
+  const areasBasePrice = baseAreaData.reduce((sum, a) => sum + a.basePrice, 0);
   // install_delivery in DB is stored in MXN (= install_delivery_usd * exchangeRate)
   // Use it directly since all other calculations in this function are in MXN
   const installDeliveryMxn = project.install_delivery || 0;
+
+  // Countertops aggregation — tracked BEFORE referral distribution because
+  // (a) countertops in tariffable areas must contribute to the tariff
+  //     pool (UI's computeQuotationTotals treats them this way), and
+  // (b) their base price has to be part of the total price basis used by
+  //     the referral formula, otherwise the referral pool is undercounted
+  //     whenever a project has countertops.
+  interface USDCountertopGroupBase {
+    itemName: string;
+    qty: number;
+    unit: string;
+    subtotalMXN: number;
+    subtotalMXNTariffable: number;
+  }
+  const usdCountertopGroupMap = new Map<string, USDCountertopGroupBase>();
+  for (const area of areas) {
+    const isTariffable = area.applies_tariff === true;
+    for (const ct of area.countertops) {
+      const existing = usdCountertopGroupMap.get(ct.item_name);
+      const plItem = priceList.find(p => p.id === ct.price_list_item_id);
+      const unit = plItem?.unit || '';
+      if (existing) {
+        existing.qty += ct.quantity;
+        existing.subtotalMXN += ct.subtotal;
+        if (isTariffable) existing.subtotalMXNTariffable += ct.subtotal;
+      } else {
+        usdCountertopGroupMap.set(ct.item_name, {
+          itemName: ct.item_name,
+          qty: ct.quantity,
+          unit,
+          subtotalMXN: ct.subtotal,
+          subtotalMXNTariffable: isTariffable ? ct.subtotal : 0,
+        });
+      }
+    }
+  }
+  const countertopGroupsBase = Array.from(usdCountertopGroupMap.values()).map(g => {
+    const groupPrice = profitMultiplier > 0 && profitMultiplier < 1
+      ? g.subtotalMXN / (1 - profitMultiplier)
+      : g.subtotalMXN;
+    const groupTariff = g.subtotalMXNTariffable * tariffMultiplier;
+    return { ...g, groupPrice, groupTariff };
+  });
+  const countertopsBasePrice = countertopGroupsBase.reduce((s, g) => s + g.groupPrice, 0);
+
+  // Total price basis covers BOTH areas and countertops — must match the
+  // UI's `price` which is derived from the full materialsSubtotal.
+  const totalBasePrice = areasBasePrice + countertopsBasePrice;
   const totalReferralAmount = (totalBasePrice + installDeliveryMxn) * referralRate;
 
   // Second pass: distribute referral fee proportionally and recalculate tax including referral
@@ -722,29 +797,25 @@ export async function printQuotationUSD(
     tax: number;
     total: number;
   }
-  const usdCountertopGroupMap = new Map<string, { itemName: string; qty: number; unit: string; subtotalMXN: number }>();
-  for (const area of areas) {
-    for (const ct of area.countertops) {
-      const existing = usdCountertopGroupMap.get(ct.item_name);
-      const plItem = priceList.find(p => p.id === ct.price_list_item_id);
-      const unit = plItem?.unit || '';
-      if (existing) {
-        existing.qty += ct.quantity;
-        existing.subtotalMXN += ct.subtotal;
-      } else {
-        usdCountertopGroupMap.set(ct.item_name, { itemName: ct.item_name, qty: ct.quantity, unit, subtotalMXN: ct.subtotal });
-      }
-    }
-  }
-  const usdCountertopGroups: USDCountertopGroup[] = Array.from(usdCountertopGroupMap.values()).map(g => {
-    const groupPrice = profitMultiplier > 0 && profitMultiplier < 1
-      ? g.subtotalMXN / (1 - profitMultiplier)
-      : g.subtotalMXN;
-    const referralPortion = totalBasePrice > 0 ? (groupPrice / totalBasePrice) * totalReferralAmount : 0;
-    const displayPrice = groupPrice + referralPortion;
-    const groupTax = displayPrice * (taxPercentage / 100);
-    const groupTotal = displayPrice + groupTax;
-    return { itemName: g.itemName, qty: g.qty, unit: g.unit, displayPrice, tariff: 0, tax: groupTax, total: groupTotal };
+  // Now distribute the referral over each countertop group, apply the
+  // tariff already computed against the tariffable-subtotal, and add
+  // tax on the FULL base (price + tariff + referral) — matching the
+  // per-area formula so Σ areaRow.total + Σ countertopGroup.total +
+  // install + other = UI fullProjectTotal.
+  const usdCountertopGroups: USDCountertopGroup[] = countertopGroupsBase.map(g => {
+    const referralPortion = totalBasePrice > 0 ? (g.groupPrice / totalBasePrice) * totalReferralAmount : 0;
+    const displayPrice = g.groupPrice + referralPortion;
+    const groupTax = (g.groupPrice + g.groupTariff + referralPortion) * (taxPercentage / 100);
+    const groupTotal = displayPrice + g.groupTariff + groupTax;
+    return {
+      itemName: g.itemName,
+      qty: g.qty,
+      unit: g.unit,
+      displayPrice,
+      tariff: g.groupTariff,
+      tax: groupTax,
+      total: groupTotal,
+    };
   });
 
   const totalCountertopGroupsTotal = usdCountertopGroups.reduce((sum, g) => sum + g.total, 0);
