@@ -33,6 +33,7 @@ import type {
   AreaItem,
   AreaCountertop,
   AreaClosetItem,
+  AreaPrefabItem,
   Quotation,
 } from '../../../types';
 
@@ -41,6 +42,7 @@ type EnrichedArea = ProjectArea & {
   items: AreaItem[];
   countertops: AreaCountertop[];
   closetItems?: AreaClosetItem[];
+  prefabItems?: AreaPrefabItem[];
 };
 
 export interface BreakdownBOMProps {
@@ -67,24 +69,45 @@ export interface BreakdownBOMProps {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type BOMCategory = 'Boards' | 'Edgeband' | 'Hardware' | 'Accessories' | 'Items' | 'Countertops';
+type BOMCategory =
+  | 'Boards'
+  | 'Edgeband'
+  | 'Hardware'
+  | 'Accessories'
+  | 'Interior Finish'
+  | 'Door Profile'
+  | 'Items'
+  | 'Countertops'
+  | 'Closet Items'
+  | 'Prefab Items'
+  | 'Fallback Cabinets';
 
 const CATEGORY_ORDER: BOMCategory[] = [
   'Boards',
   'Edgeband',
   'Hardware',
   'Accessories',
+  'Interior Finish',
+  'Door Profile',
   'Items',
   'Countertops',
+  'Closet Items',
+  'Prefab Items',
+  'Fallback Cabinets',
 ];
 
 const CATEGORY_COLORS: Record<BOMCategory, string> = {
-  'Boards':       'bg-amber-50 text-amber-800',
-  'Edgeband':     'bg-purple-50 text-purple-800',
-  'Hardware':     'bg-slate-100 text-slate-700',
-  'Accessories':  'bg-green-50 text-green-800',
-  'Items':        'bg-orange-50 text-orange-800',
-  'Countertops':  'bg-teal-50 text-teal-800',
+  'Boards':            'bg-amber-50 text-amber-800',
+  'Edgeband':          'bg-purple-50 text-purple-800',
+  'Hardware':          'bg-slate-100 text-slate-700',
+  'Accessories':       'bg-green-50 text-green-800',
+  'Interior Finish':   'bg-sky-50 text-sky-800',
+  'Door Profile':      'bg-indigo-50 text-indigo-800',
+  'Items':             'bg-orange-50 text-orange-800',
+  'Countertops':       'bg-teal-50 text-teal-800',
+  'Closet Items':      'bg-pink-50 text-pink-800',
+  'Prefab Items':      'bg-red-50 text-red-800',
+  'Fallback Cabinets': 'bg-yellow-50 text-yellow-800',
 };
 
 interface BOMRow {
@@ -346,6 +369,153 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
       });
     });
     countertopsMap.forEach(row => { if (row.qty > 0) rows.push(row); });
+
+    // ── 7. Interior Finish ────────────────────────────────────────────────
+    // Aggregated cost of interior finish (applied to box + doors) across
+    // every cabinet × area quantity. Surfaced as a single BOM row so that
+    // the BOM total matches the "Materials Cost" line in the Cost Summary
+    // (which derives from totals.byCategory.interiorFinish).
+    let interiorFinishTotal = 0;
+    areas.forEach(area => {
+      const areaQty = area.quantity ?? 1;
+      area.cabinets.forEach(cabinet => {
+        interiorFinishTotal +=
+          ((cabinet.box_interior_finish_cost ?? 0) +
+            (cabinet.doors_interior_finish_cost ?? 0)) * areaQty;
+      });
+    });
+    if (interiorFinishTotal > 0) {
+      rows.push({
+        category: 'Interior Finish',
+        concept: 'Box + Doors Interior Finish',
+        unit: 'project',
+        qty: 1,
+        price: interiorFinishTotal,
+        subtotal: interiorFinishTotal,
+        priceListItemId: null,
+      });
+    }
+
+    // ── 8. Door Profile ───────────────────────────────────────────────────
+    let doorProfileTotal = 0;
+    areas.forEach(area => {
+      const areaQty = area.quantity ?? 1;
+      area.cabinets.forEach(cabinet => {
+        doorProfileTotal += (cabinet.door_profile_cost ?? 0) * areaQty;
+      });
+    });
+    if (doorProfileTotal > 0) {
+      rows.push({
+        category: 'Door Profile',
+        concept: 'Door Profile',
+        unit: 'project',
+        qty: 1,
+        price: doorProfileTotal,
+        subtotal: doorProfileTotal,
+        priceListItemId: null,
+      });
+    }
+
+    // ── 9. Closet Items (Evita Plus/Premium) ─────────────────────────────
+    const closetItemsMap = new Map<string, BOMRow>();
+    areas.forEach(area => {
+      const areaQty = area.quantity ?? 1;
+      (area.closetItems ?? []).forEach(ci => {
+        const qty = (ci.quantity ?? 1) * areaQty;
+        const lineTotal = (ci.subtotal_mxn ?? 0) * areaQty;
+        if (lineTotal <= 0) return;
+        const concept =
+          ci.catalog_item?.description ??
+          ci.catalog_item?.cabinet_code ??
+          `Closet ${ci.closet_catalog_id?.slice(0, 8) ?? ''}`;
+        const key = `${ci.closet_catalog_id}|${ci.unit_price_mxn}`;
+        if (closetItemsMap.has(key)) {
+          const row = closetItemsMap.get(key)!;
+          row.qty += qty;
+          row.subtotal += lineTotal;
+        } else {
+          closetItemsMap.set(key, {
+            category: 'Closet Items',
+            concept,
+            unit: 'pcs',
+            qty,
+            price: qty > 0 ? lineTotal / qty : 0,
+            subtotal: lineTotal,
+            priceListItemId: null,
+          });
+        }
+      });
+    });
+    closetItemsMap.forEach(row => { if (row.subtotal > 0) rows.push(row); });
+
+    // ── 10. Prefab Items (Venus / Northville) ─────────────────────────────
+    const prefabItemsMap = new Map<string, BOMRow>();
+    areas.forEach(area => {
+      const areaQty = area.quantity ?? 1;
+      (area.prefabItems ?? []).forEach(pi => {
+        const qty = (pi.quantity ?? 1) * areaQty;
+        const lineTotal = (pi.cost_mxn ?? 0) * areaQty;
+        if (lineTotal <= 0) return;
+        const concept =
+          pi.catalog_item?.description ??
+          pi.catalog_item?.cabinet_code ??
+          `Prefab ${pi.prefab_catalog_id?.slice(0, 8) ?? ''}`;
+        const key = `${pi.prefab_catalog_id}|${pi.finish}|${pi.cost_usd}`;
+        if (prefabItemsMap.has(key)) {
+          const row = prefabItemsMap.get(key)!;
+          row.qty += qty;
+          row.subtotal += lineTotal;
+        } else {
+          prefabItemsMap.set(key, {
+            category: 'Prefab Items',
+            concept,
+            unit: 'pcs',
+            qty,
+            price: qty > 0 ? lineTotal / qty : 0,
+            subtotal: lineTotal,
+            priceListItemId: null,
+          });
+        }
+      });
+    });
+    prefabItemsMap.forEach(row => { if (row.subtotal > 0) rows.push(row); });
+
+    // ── 11. Fallback Cabinets (mixed mode — not packed by optimizer) ─────
+    // Raw board + edgeband cost for cabinets the optimizer couldn't pack.
+    // Other categories (hardware, labor, interior finish, etc.) are already
+    // aggregated in their own rows — this row is ONLY the ft²-estimated
+    // board/edgeband cost that the optimizer's `Boards` and `Edgeband`
+    // rows miss for uncovered cabinets.
+    const cabinetsCovered = new Set(snapshot.cabinetsCovered);
+    let fallbackMatTotal = 0;
+    areas.forEach(area => {
+      const areaQty = area.quantity ?? 1;
+      area.cabinets.forEach(cabinet => {
+        if (cabinetsCovered.has(cabinet.id)) return;
+        fallbackMatTotal +=
+          ((cabinet.box_material_cost ?? 0) +
+            (cabinet.box_edgeband_cost ?? 0) +
+            (cabinet.doors_material_cost ?? 0) +
+            (cabinet.doors_edgeband_cost ?? 0) +
+            (cabinet.back_panel_material_cost ?? 0) +
+            (cabinet.drawer_box_material_cost ?? 0) +
+            (cabinet.drawer_box_edgeband_cost ?? 0) +
+            (cabinet.shelf_material_cost ?? 0) +
+            (cabinet.shelf_edgeband_cost ?? 0)) *
+          areaQty;
+      });
+    });
+    if (fallbackMatTotal > 0) {
+      rows.push({
+        category: 'Fallback Cabinets',
+        concept: 'Cabinets not packed by optimizer (ft² boards + edgeband)',
+        unit: 'project',
+        qty: 1,
+        price: fallbackMatTotal,
+        subtotal: fallbackMatTotal,
+        priceListItemId: null,
+      });
+    }
 
     return rows;
   }, [loadedRun, areas, priceList, loadingPrices]);
