@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   computeEdgebandCost,
   computeEdgebandRollsCost,
+  EB_TRIM_LOSS_PER_SIDE_M,
   type EbSlotMeta,
 } from './computeEdgebandCost';
 import type { Pieza, EbCabinetMap } from '../types';
@@ -42,13 +43,14 @@ describe('computeEdgebandCost — fallback pieces + ebSlotMeta', () => {
 
     const result = computeEdgebandCost(pieces, ebPriceBySlot, ebCabinetMap, ebSlotMeta);
 
-    // 1000mm top side = 1m. Cost = 1 * 8.3 = 8.3.
-    expect(result.totalMeters).toBeCloseTo(1.0, 6);
-    expect(result.totalCost).toBeCloseTo(8.3, 6);
+    // 1000mm top side + 6cm edgebander trim loss = 1.06m. Cost = 1.06 * 8.3.
+    const expectedM = 1.0 + EB_TRIM_LOSS_PER_SIDE_M;
+    expect(result.totalMeters).toBeCloseTo(expectedM, 6);
+    expect(result.totalCost).toBeCloseTo(expectedM * 8.3, 6);
     // perEdgebandType MUST contain the fallback piece under plId 'pl-a'.
     expect(result.perEdgebandType['pl-a']).toBeDefined();
-    expect(result.perEdgebandType['pl-a'].meters).toBeCloseTo(1.0, 6);
-    expect(result.perEdgebandType['pl-a'].cost).toBeCloseTo(8.3, 6);
+    expect(result.perEdgebandType['pl-a'].meters).toBeCloseTo(expectedM, 6);
+    expect(result.perEdgebandType['pl-a'].cost).toBeCloseTo(expectedM * 8.3, 6);
   });
 
   it('aggregates mapped + fallback pieces under the same plId when both route there', () => {
@@ -80,12 +82,56 @@ describe('computeEdgebandCost — fallback pieces + ebSlotMeta', () => {
 
     const result = computeEdgebandCost(pieces, ebPriceBySlot, ebCabinetMap, ebSlotMeta);
 
-    // Total meters: 1.0 (mapped) + 0.5 (fallback) = 1.5
-    expect(result.totalMeters).toBeCloseTo(1.5, 6);
-    expect(result.totalCost).toBeCloseTo(1.5 * 8.3, 6);
+    // 2 edged sides total, each adds EB_TRIM_LOSS_PER_SIDE_M.
+    // Total meters: (1.0 + trim) + (0.5 + trim) = 1.5 + 2 × trim
+    const expectedM = 1.5 + 2 * EB_TRIM_LOSS_PER_SIDE_M;
+    expect(result.totalMeters).toBeCloseTo(expectedM, 6);
+    expect(result.totalCost).toBeCloseTo(expectedM * 8.3, 6);
     // Both pieces fold into the same plId bucket.
     expect(Object.keys(result.perEdgebandType)).toEqual(['pl-a']);
-    expect(result.perEdgebandType['pl-a'].meters).toBeCloseTo(1.5, 6);
+    expect(result.perEdgebandType['pl-a'].meters).toBeCloseTo(expectedM, 6);
+  });
+
+  it('applies edgebander trim loss per edged side, scaled by cantidad', () => {
+    // Single piece with all 4 sides edged and cantidad = 3.
+    // Raw perimeter: (1000+1000+500+500)/1000 = 3.0m per piece × 3 = 9.0m
+    // Trim loss: 4 sides × 0.06m × 3 qty = 0.72m
+    // Expected total: 9.72m
+    const pieces: Pieza[] = [
+      makePiece({
+        id: 'p1',
+        cabinetId: 'c1',
+        ancho: 1000,
+        alto: 500,
+        cantidad: 3,
+        cubrecanto: { sup: 1, inf: 1, izq: 1, der: 1 },
+      }),
+    ];
+    const ebCabinetMap: EbCabinetMap = {
+      c1: { 1: { plId: 'pl-a', name: 'Box EB', pricePerMeter: 10 } },
+    };
+    const result = computeEdgebandCost(pieces, { a: 0, b: 0, c: 0 }, ebCabinetMap);
+    const rawPerimeterM = 3.0 * 3;
+    const trimLossM = 4 * EB_TRIM_LOSS_PER_SIDE_M * 3;
+    expect(result.totalMeters).toBeCloseTo(rawPerimeterM + trimLossM, 6);
+    expect(result.totalCost).toBeCloseTo((rawPerimeterM + trimLossM) * 10, 6);
+  });
+
+  it('does not add trim loss to sides with slotCode = 0', () => {
+    // No edged sides → no trim loss, zero meters.
+    const pieces: Pieza[] = [
+      makePiece({
+        id: 'p1',
+        cabinetId: 'c1',
+        ancho: 1000,
+        alto: 500,
+        cantidad: 1,
+        cubrecanto: { sup: 0, inf: 0, izq: 0, der: 0 },
+      }),
+    ];
+    const result = computeEdgebandCost(pieces, { a: 8.3, b: 0, c: 0 });
+    expect(result.totalMeters).toBe(0);
+    expect(result.totalCost).toBe(0);
   });
 });
 

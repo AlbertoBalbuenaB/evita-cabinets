@@ -19,6 +19,22 @@
 
 import type { Pieza, EbCabinetMap } from '../types';
 
+/**
+ * Trim loss consumed by the edgebander per edged side of a piece.
+ *
+ * The machine requires ~3cm of leader material at the entry and another ~3cm
+ * at the exit of each pass (glue-up + flush-trim cycle). Every piece-side
+ * flagged with cubrecanto therefore consumes its own length PLUS ~6cm of
+ * physical waste. Applied per side (not per piece) so that pieces with
+ * multiple edged sides scale correctly.
+ *
+ * Optimizer-only: ft² pricing relies on `product.box_edgeband` /
+ * `product.doors_fronts_edgeband` as declared meters, so it is not injected
+ * there to avoid double-charging if those declared values already include
+ * machine waste.
+ */
+export const EB_TRIM_LOSS_PER_SIDE_M = 0.06;
+
 export interface EdgebandCostResult {
   /** Total edge banding cost in the same currency as the eb slot prices. */
   totalCost: number;
@@ -92,7 +108,7 @@ export function computeEdgebandCost(
     for (const { slotCode, lengthMm } of sides) {
       if (slotCode <= 0) continue;
 
-      const meters = (lengthMm / 1000) * p.cantidad;
+      const meters = (lengthMm / 1000 + EB_TRIM_LOSS_PER_SIDE_M) * p.cantidad;
       let price: number;
       let ebPlId: string | null = null;
       let ebName: string | null = null;
