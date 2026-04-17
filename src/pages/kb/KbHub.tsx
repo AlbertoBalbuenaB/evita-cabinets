@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, AlertCircle, GitPullRequest, Plus, Shield } from 'lucide-react';
+import { BookOpen, AlertCircle, GitPullRequest, Plus, Shield, Library } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { useKbStore } from '../../lib/kb/kbStore';
 import { useCurrentMember } from '../../lib/useCurrentMember';
@@ -62,6 +62,12 @@ export function KbHub() {
             <div className="flex items-start justify-between gap-2 flex-wrap">
               <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Knowledge Base</h1>
               <div className="flex gap-2">
+                <Link to="/wiki">
+                  <Button variant="ghost" size="sm">
+                    <Library className="w-4 h-4 mr-1.5" />
+                    Wiki
+                  </Button>
+                </Link>
                 {isAdmin && (
                   <Link to="/kb/audit">
                     <Button variant="ghost" size="sm">

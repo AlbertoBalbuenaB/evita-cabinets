@@ -169,6 +169,33 @@ const KB_TOOLS = [
   },
 ];
 
+const WIKI_TOOLS = [
+  {
+    name: 'search_wiki',
+    description: 'Search the internal Evita Wiki (long-form articles: assembly techniques, safety/EPP, quality control, training, shop floor workflow). Call this when the user asks HOW to do something in production (how to install, how to align, protocols, checklists, procedures) — as opposed to numeric policy/constants which live in search_kb.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Free-text query in Spanish or English. e.g. "correderas ocultas", "EPP", "alineación de puertas".' },
+        category: { type: 'string', description: 'Optional category slug filter: welcome, assembly, safety, quality, training, workflow.' },
+        limit: { type: 'integer', description: 'Max results (default 6).' }
+      },
+      required: ['query']
+    }
+  },
+  {
+    name: 'get_wiki_article',
+    description: 'Fetch the full body of a Wiki article by slug. Use after search_wiki when the user needs detailed step-by-step procedures, checklists, or tolerances. Quote verbatim.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        slug: { type: 'string', description: 'Article slug, e.g. "assembly-correderas-ocultas".' }
+      },
+      required: ['slug']
+    }
+  },
+];
+
 const MODIFICATION_TOOLS = [
   {
     name: 'get_area_cabinets',
@@ -733,6 +760,86 @@ async function executeTool(name: string, input: any, sb: any, projectId: string 
           price_item_refs: data.price_item_refs,
           needs_enrichment: data.needs_enrichment,
           enrichment_notes: data.enrichment_notes,
+          version: data.current_version,
+          updated_at: data.updated_at,
+        });
+      }
+
+      case 'search_wiki': {
+        const q = String(input.query ?? '').trim();
+        const limit = Math.min(Math.max(Number(input.limit ?? 6), 1), 20);
+        let builder = sb.from('wiki_articles')
+          .select('id, slug, title, summary, category_id, body_md, tags, reading_time_min, updated_at')
+          .neq('status', 'archived')
+          .limit(limit);
+        if (input.category) {
+          const { data: catRow } = await sb.from('wiki_categories')
+            .select('id').eq('slug', input.category).maybeSingle();
+          if (catRow) builder = builder.eq('category_id', catRow.id);
+        }
+        let rows: any[] = [];
+        if (q) {
+          const fts = await builder.textSearch('search_tsv', q, { type: 'websearch', config: 'spanish' });
+          if (!fts.error && fts.data && fts.data.length > 0) rows = fts.data;
+          if (rows.length === 0) {
+            const fb = await sb.from('wiki_articles')
+              .select('id, slug, title, summary, category_id, body_md, tags, reading_time_min, updated_at')
+              .neq('status', 'archived')
+              .or(`title.ilike.%${q}%,slug.ilike.%${q}%,summary.ilike.%${q}%`)
+              .limit(limit);
+            if (!fb.error && fb.data) rows = fb.data;
+          }
+        } else {
+          const { data } = await builder.order('updated_at', { ascending: false });
+          rows = data ?? [];
+        }
+        const catIds = [...new Set(rows.map((r) => r.category_id).filter(Boolean))];
+        const { data: cats } = catIds.length
+          ? await sb.from('wiki_categories').select('id, slug, name').in('id', catIds)
+          : { data: [] as any[] };
+        const catById = new Map<string, any>();
+        (cats ?? []).forEach((c: any) => catById.set(c.id, c));
+        const results = rows.map((r) => {
+          const body = String(r.body_md ?? '').replace(/\s+/g, ' ').trim();
+          const lower = q ? body.toLowerCase() : '';
+          const hit = q ? lower.indexOf(q.toLowerCase()) : -1;
+          const start = hit >= 0 ? Math.max(0, hit - 60) : 0;
+          const end   = hit >= 0 ? Math.min(body.length, hit + q.length + 140) : Math.min(body.length, 220);
+          const snippet = body.slice(start, end) + (end < body.length ? '…' : '');
+          const cat = catById.get(r.category_id);
+          return {
+            slug: r.slug,
+            title: r.title,
+            summary: r.summary,
+            category_slug: cat?.slug ?? null,
+            category_name: cat?.name ?? null,
+            snippet,
+            tags: r.tags ?? [],
+            reading_time_min: r.reading_time_min,
+            updated_at: r.updated_at,
+          };
+        });
+        return JSON.stringify({ count: results.length, results });
+      }
+
+      case 'get_wiki_article': {
+        if (!input.slug) return JSON.stringify({ error: 'slug required' });
+        const { data, error } = await sb.from('wiki_articles')
+          .select('id, slug, title, summary, category_id, body_md, tags, reading_time_min, current_version, status, updated_at')
+          .eq('slug', input.slug)
+          .maybeSingle();
+        if (error) return JSON.stringify({ error: error.message });
+        if (!data) return JSON.stringify({ error: 'not_found' });
+        const { data: catRow } = await sb.from('wiki_categories')
+          .select('slug, name').eq('id', data.category_id).maybeSingle();
+        return JSON.stringify({
+          slug: data.slug,
+          title: data.title,
+          summary: data.summary,
+          category: catRow ?? null,
+          body_md: data.body_md,
+          tags: data.tags,
+          reading_time_min: data.reading_time_min,
           version: data.current_version,
           updated_at: data.updated_at,
         });
@@ -1602,6 +1709,7 @@ EVERY time you mention a material from search_materials results: [[material:MATE
 EVERY time you mention a prefab SKU (Venus / Northville) from search_prefab_catalog results: [[prefab:PREFAB_UUID|Display Name]]
 EVERY time you cite a KB entry from search_kb / get_kb_entry results: [[kb:SLUG|Display Name]]
 EVERY time you mention a supplier from search_suppliers_kb results: [[supplier:SLUG|Name]]
+EVERY time you cite a Wiki article from search_wiki / get_wiki_article results: [[wiki:SLUG|Title]]
 
 Examples:
 - "The quotation [[quotation:abc-123/def-456|Kitchen Premium]] has 5 areas."
@@ -1610,6 +1718,7 @@ Examples:
 - "Venus [[prefab:77d2-...|B24]] is $223 USD in Houston Frost."
 - "Box waste is ×1.10 per [[kb:rules-project-constants|project constants]]."
 - "[[supplier:barcocinas|Barcocinas]] supplies the Plus line."
+- "Para instalar correderas ocultas, ver [[wiki:assembly-correderas-ocultas|el procedimiento en el Wiki]]."
 
 The [project_id:...] and [quotation_id:...] tags in LIVE DATA are your source for these IDs.
 NEVER output raw UUIDs or [id:...] tags directly in your response — always wrap them as links.
@@ -1626,6 +1735,19 @@ If search_kb returns a relevant entry, either:
 
 Never paraphrase the exact values of FX (17), waste multipliers (box ×1.10, door ×1.60),
 labor costs ($400 box / $600 door), or material UUIDs — quote them exactly as stored.
+
+=== WIKI — HOW-TO / ASSEMBLY / SAFETY ===
+For questions about HOW to do something on the shop floor (installing hardware,
+aligning doors, QC checklists, EPP, packaging protocols, training procedures),
+call search_wiki FIRST. Then use get_wiki_article to quote the full step list
+if the user needs actionable detail.
+
+The Wiki and the KB are complementary:
+  - KB = numeric policy, prices, material IDs, cubrecanto patterns, constants.
+  - Wiki = long-form narrative — "how", "protocol", "training", "checklist".
+
+When both are relevant, cite both (e.g., [[wiki:assembly-correderas-ocultas|procedimiento]]
++ [[kb:hardware-slides|costo de correderas]]).
 
 === PROJECT MANAGEMENT QUERIES ===
 For questions about tasks, pending tasks, overdue tasks, project documents, notes, or activity log:
@@ -1801,6 +1923,7 @@ Style: Auto-detect EN/ES. Always show the full breakdown table. Say explicitly i
       ...SEARCH_TOOLS,
       ...KNOWLEDGE_TOOLS,
       ...KB_TOOLS,
+      ...WIKI_TOOLS,
       ...INVENTORY_TOOLS,
       ...PURCHASE_READ_TOOLS,
       ...OPTIMIZER_TOOLS,

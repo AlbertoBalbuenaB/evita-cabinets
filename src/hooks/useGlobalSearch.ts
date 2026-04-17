@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 
 export interface SearchResult {
   id: string;
-  type: 'project' | 'quotation' | 'cabinet' | 'price_item' | 'kb_entry' | 'kb_supplier';
+  type: 'project' | 'quotation' | 'cabinet' | 'price_item' | 'kb_entry' | 'kb_supplier' | 'wiki_article';
   title: string;
   subtitle: string;
   url: string;
@@ -17,6 +17,7 @@ export interface SearchResults {
   priceItems: SearchResult[];
   kbEntries: SearchResult[];
   kbSuppliers: SearchResult[];
+  wikiArticles: SearchResult[];
 }
 
 const EMPTY_RESULTS: SearchResults = {
@@ -26,6 +27,7 @@ const EMPTY_RESULTS: SearchResults = {
   priceItems: [],
   kbEntries: [],
   kbSuppliers: [],
+  wikiArticles: [],
 };
 
 export function useGlobalSearch() {
@@ -52,7 +54,7 @@ export function useGlobalSearch() {
       const cancelled = () => abortRef.current;
 
       try {
-        const [projectsRes, quotationsRes, cabinetsRes, priceItemsRes, kbEntriesRes, kbSuppliersRes] = await Promise.all([
+        const [projectsRes, quotationsRes, cabinetsRes, priceItemsRes, kbEntriesRes, kbSuppliersRes, wikiArticlesRes] = await Promise.all([
           supabase
             .from('projects')
             .select('id, name, customer, address, project_type, status')
@@ -84,6 +86,12 @@ export function useGlobalSearch() {
             .select('id, slug, name, categories')
             .eq('is_active', true)
             .ilike('name', `%${q}%`)
+            .limit(5),
+          supabase
+            .from('wiki_articles')
+            .select('id, slug, title, summary')
+            .neq('status', 'archived')
+            .or(`title.ilike.%${q}%,slug.ilike.%${q}%,summary.ilike.%${q}%`)
             .limit(5),
         ]);
 
@@ -143,7 +151,16 @@ export function useGlobalSearch() {
           badge: 'supplier',
         }));
 
-        setResults({ projects, quotations, cabinets, priceItems, kbEntries, kbSuppliers });
+        const wikiArticles: SearchResult[] = (wikiArticlesRes.data ?? []).map((a) => ({
+          id: a.id,
+          type: 'wiki_article',
+          title: a.title,
+          subtitle: a.summary ?? a.slug,
+          url: `/wiki/${a.slug}`,
+          badge: 'wiki',
+        }));
+
+        setResults({ projects, quotations, cabinets, priceItems, kbEntries, kbSuppliers, wikiArticles });
       } catch {
         if (!cancelled()) setResults(EMPTY_RESULTS);
       } finally {
@@ -172,6 +189,7 @@ export function useGlobalSearch() {
     ...results.priceItems,
     ...results.kbEntries,
     ...results.kbSuppliers,
+    ...results.wikiArticles,
   ];
 
   const hasResults = allResults.length > 0;

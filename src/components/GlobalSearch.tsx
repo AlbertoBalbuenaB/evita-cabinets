@@ -10,6 +10,7 @@ import {
   X,
   BookOpen,
   Building2,
+  Library,
 } from 'lucide-react';
 import { useGlobalSearch, type SearchResult } from '../hooks/useGlobalSearch';
 
@@ -74,6 +75,12 @@ const CATEGORY_CONFIG = {
     iconColor: 'text-teal-500',
     bgColor: 'bg-teal-50',
   },
+  wikiArticles: {
+    label: 'Wiki',
+    icon: Library,
+    iconColor: 'text-violet-500',
+    bgColor: 'bg-violet-50',
+  },
 } as const;
 
 const RESULT_ICON: Record<SearchResult['type'], React.ElementType> = {
@@ -83,6 +90,7 @@ const RESULT_ICON: Record<SearchResult['type'], React.ElementType> = {
   price_item: DollarSign,
   kb_entry: BookOpen,
   kb_supplier: Building2,
+  wiki_article: Library,
 };
 
 export function GlobalSearch({ open, onClose }: GlobalSearchProps) {
@@ -144,13 +152,13 @@ export function GlobalSearch({ open, onClose }: GlobalSearchProps) {
 
   // Build ordered sections for rendering
   const sections = (
-    ['projects', 'quotations', 'cabinets', 'priceItems', 'kbEntries', 'kbSuppliers'] as const
+    ['projects', 'quotations', 'cabinets', 'priceItems', 'kbEntries', 'kbSuppliers', 'wikiArticles'] as const
   ).filter((key) => results[key].length > 0);
 
   // Compute flat index offset per section for activeIndex matching
   const sectionOffsets: Record<string, number> = {};
   let offset = 0;
-  for (const key of ['projects', 'quotations', 'cabinets', 'priceItems', 'kbEntries', 'kbSuppliers'] as const) {
+  for (const key of ['projects', 'quotations', 'cabinets', 'priceItems', 'kbEntries', 'kbSuppliers', 'wikiArticles'] as const) {
     sectionOffsets[key] = offset;
     offset += results[key].length;
   }
