@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { FileText, Clock } from 'lucide-react';
 import type { WikiArticleListItem, WikiCategory } from '../../lib/wiki/wikiTypes';
+import { pickText, useLocaleStore } from '../../lib/localeStore';
 
 interface WikiArticleCardProps {
   article: WikiArticleListItem;
@@ -8,6 +9,10 @@ interface WikiArticleCardProps {
 }
 
 export function WikiArticleCard({ article, category }: WikiArticleCardProps) {
+  const { locale } = useLocaleStore();
+  const title = pickText(article, 'title', locale);
+  const summary = pickText(article, 'summary', locale);
+  const categoryName = category ? pickText(category, 'name', locale) : '';
   return (
     <Link
       to={`/wiki/${article.slug}`}
@@ -16,14 +21,14 @@ export function WikiArticleCard({ article, category }: WikiArticleCardProps) {
       <div className="flex items-start gap-2 mb-2">
         <FileText className="w-4 h-4 text-violet-500 flex-shrink-0 mt-0.5" />
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-slate-900">{article.title}</h3>
-          {article.summary && (
-            <p className="text-xs text-slate-600 mt-1 line-clamp-2">{article.summary}</p>
+          <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+          {summary && (
+            <p className="text-xs text-slate-600 mt-1 line-clamp-2">{summary}</p>
           )}
         </div>
       </div>
       <div className="flex items-center gap-2 text-xs text-slate-500 mt-2 flex-wrap">
-        {category?.name && <span>{category.name}</span>}
+        {categoryName && <span>{categoryName}</span>}
         {article.reading_time_min != null && (
           <>
             <span className="text-slate-400">·</span>

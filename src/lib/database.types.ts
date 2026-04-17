@@ -1221,8 +1221,10 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          description_en: string | null
           id: string
           name: string
+          name_en: string | null
           parent_id: string | null
           section_num: string | null
           slug: string
@@ -1231,8 +1233,10 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          description_en?: string | null
           id?: string
           name: string
+          name_en?: string | null
           parent_id?: string | null
           section_num?: string | null
           slug: string
@@ -1241,8 +1245,10 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          description_en?: string | null
           id?: string
           name?: string
+          name_en?: string | null
           parent_id?: string | null
           section_num?: string | null
           slug?: string
@@ -1323,6 +1329,7 @@ export type Database = {
       kb_entries: {
         Row: {
           body_md: string
+          body_md_en: string | null
           category_id: string
           created_at: string
           created_by: string | null
@@ -1341,10 +1348,12 @@ export type Database = {
           supplier_ids: string[]
           tags: string[]
           title: string
+          title_en: string | null
           updated_at: string
         }
         Insert: {
           body_md?: string
+          body_md_en?: string | null
           category_id: string
           created_at?: string
           created_by?: string | null
@@ -1363,10 +1372,12 @@ export type Database = {
           supplier_ids?: string[]
           tags?: string[]
           title: string
+          title_en?: string | null
           updated_at?: string
         }
         Update: {
           body_md?: string
+          body_md_en?: string | null
           category_id?: string
           created_at?: string
           created_by?: string | null
@@ -1385,6 +1396,7 @@ export type Database = {
           supplier_ids?: string[]
           tags?: string[]
           title?: string
+          title_en?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1604,7 +1616,9 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          name_en: string | null
           notes_md: string
+          notes_md_en: string | null
           ops_supplier_id: string | null
           search_tsv: unknown
           slug: string
@@ -1617,7 +1631,9 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          name_en?: string | null
           notes_md?: string
+          notes_md_en?: string | null
           ops_supplier_id?: string | null
           search_tsv?: unknown
           slug: string
@@ -1630,7 +1646,9 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          name_en?: string | null
           notes_md?: string
+          notes_md_en?: string | null
           ops_supplier_id?: string | null
           search_tsv?: unknown
           slug?: string
@@ -3580,6 +3598,7 @@ export type Database = {
       wiki_articles: {
         Row: {
           body_md: string
+          body_md_en: string | null
           category_id: string
           created_at: string
           created_by: string | null
@@ -3591,12 +3610,15 @@ export type Database = {
           slug: string
           status: string
           summary: string | null
+          summary_en: string | null
           tags: string[]
           title: string
+          title_en: string | null
           updated_at: string
         }
         Insert: {
           body_md?: string
+          body_md_en?: string | null
           category_id: string
           created_at?: string
           created_by?: string | null
@@ -3608,12 +3630,15 @@ export type Database = {
           slug: string
           status?: string
           summary?: string | null
+          summary_en?: string | null
           tags?: string[]
           title: string
+          title_en?: string | null
           updated_at?: string
         }
         Update: {
           body_md?: string
+          body_md_en?: string | null
           category_id?: string
           created_at?: string
           created_by?: string | null
@@ -3625,8 +3650,10 @@ export type Database = {
           slug?: string
           status?: string
           summary?: string | null
+          summary_en?: string | null
           tags?: string[]
           title?: string
+          title_en?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -3709,9 +3736,11 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          description_en: string | null
           icon: string | null
           id: string
           name: string
+          name_en: string | null
           parent_id: string | null
           slug: string
           sort_order: number
@@ -3719,9 +3748,11 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          description_en?: string | null
           icon?: string | null
           id?: string
           name: string
+          name_en?: string | null
           parent_id?: string | null
           slug: string
           sort_order?: number
@@ -3729,9 +3760,11 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          description_en?: string | null
           icon?: string | null
           id?: string
           name?: string
+          name_en?: string | null
           parent_id?: string | null
           slug?: string
           sort_order?: number

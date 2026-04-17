@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Library, ExternalLink, Plus, GitPullRequest, Shield, Tag, X } from 'lucide-react';
+import { pickText, useLocaleStore } from '../../lib/localeStore';
 import { Link } from 'react-router-dom';
 import { useWikiStore } from '../../lib/wiki/wikiStore';
 import { useCurrentMember } from '../../lib/useCurrentMember';
@@ -12,6 +13,7 @@ import type { WikiArticleListItem } from '../../lib/wiki/wikiTypes';
 export function WikiHub() {
   const { categories, fetchTaxonomy, isLoaded } = useWikiStore();
   const { member } = useCurrentMember();
+  const { locale } = useLocaleStore();
   const isAdmin = member?.role === 'admin';
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
@@ -137,7 +139,7 @@ export function WikiHub() {
                     : 'glass-white text-slate-700 border-slate-200/70 hover:bg-violet-50'
                 }`}
               >
-                {cat.name}
+                {pickText(cat, 'name', locale)}
               </button>
             );
           })}

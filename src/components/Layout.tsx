@@ -20,6 +20,7 @@ import { GlobalSearch } from './GlobalSearch';
 import { NotificationPanel } from './NotificationPanel';
 import { useCurrentMember } from '../lib/useCurrentMember';
 import { useNotifications } from '../lib/useNotifications';
+import { useLocaleStore } from '../lib/localeStore';
 
 interface LayoutProps {
   children: ReactNode;
@@ -33,6 +34,7 @@ export function Layout({ children, onLogout }: LayoutProps) {
   const { pathname } = useLocation();
   const { member } = useCurrentMember();
   const { unreadCount } = useNotifications();
+  const { locale, toggle: toggleLocale } = useLocaleStore();
   const isAdmin = member?.role === 'admin';
 
   useEffect(() => {
@@ -130,6 +132,15 @@ export function Layout({ children, onLogout }: LayoutProps) {
                   <SettingsIcon className="h-4 w-4" />
                 </Link>
               )}
+
+              <button
+                onClick={toggleLocale}
+                className="hidden sm:inline-flex items-center justify-center px-2 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all duration-150 min-w-[36px]"
+                title={locale === 'es' ? 'Switch to English' : 'Cambiar a Español'}
+                aria-label="Toggle locale"
+              >
+                {locale === 'es' ? 'EN' : 'ES'}
+              </button>
 
               <button
                 onClick={() => setNotifOpen((v) => !v)}

@@ -9,10 +9,12 @@ import {
 import { KbMarkdownViewer } from '../../components/kb/KbMarkdownViewer';
 import { KbEntryCard } from '../../components/kb/KbEntryCard';
 import type { KbEntryListItem, KbSupplier } from '../../lib/kb/kbTypes';
+import { pickText, useLocaleStore } from '../../lib/localeStore';
 
 export function KbSupplierPage() {
   const { slug } = useParams<{ slug: string }>();
   const { categories, fetchTaxonomy } = useKbStore();
+  const { locale } = useLocaleStore();
   const [supplier, setSupplier] = useState<KbSupplier | null>(null);
   const [entries, setEntries]   = useState<KbEntryListItem[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -84,7 +86,7 @@ export function KbSupplierPage() {
               <Building2 className="w-5 h-5 text-emerald-600" />
               <span className="text-xs uppercase tracking-wide text-slate-600 font-semibold">Supplier</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{supplier.name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{pickText(supplier, 'name', locale)}</h1>
             {supplier.categories && supplier.categories.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {supplier.categories.map((c) => (
@@ -106,11 +108,14 @@ export function KbSupplierPage() {
         </div>
       </div>
 
-      {supplier.notes_md && supplier.notes_md.trim().length > 0 && (
-        <div className="glass-white rounded-2xl p-5 sm:p-6 section-enter">
-          <KbMarkdownViewer source={supplier.notes_md} />
-        </div>
-      )}
+      {(() => {
+        const notes = pickText(supplier, 'notes_md', locale);
+        return notes && notes.trim().length > 0 ? (
+          <div className="glass-white rounded-2xl p-5 sm:p-6 section-enter">
+            <KbMarkdownViewer source={notes} />
+          </div>
+        ) : null;
+      })()}
 
       <div>
         <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">

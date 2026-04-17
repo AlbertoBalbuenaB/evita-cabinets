@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { AlertCircle, FileText } from 'lucide-react';
 import type { KbCategory, KbEntryListItem } from '../../lib/kb/kbTypes';
+import { pickText, useLocaleStore } from '../../lib/localeStore';
 
 interface KbEntryCardProps {
   entry: KbEntryListItem;
@@ -8,6 +9,9 @@ interface KbEntryCardProps {
 }
 
 export function KbEntryCard({ entry, category }: KbEntryCardProps) {
+  const { locale } = useLocaleStore();
+  const title = pickText(entry, 'title', locale);
+  const categoryName = category ? pickText(category, 'name', locale) : '';
   return (
     <Link
       to={`/kb/${entry.slug}`}
@@ -16,7 +20,7 @@ export function KbEntryCard({ entry, category }: KbEntryCardProps) {
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 min-w-0">
           <FileText className="w-4 h-4 text-indigo-500 flex-shrink-0" />
-          <h3 className="text-sm font-semibold text-slate-900 truncate">{entry.title}</h3>
+          <h3 className="text-sm font-semibold text-slate-900 truncate">{title}</h3>
         </div>
         {entry.needs_enrichment && (
           <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" aria-label="Needs enrichment" />
@@ -24,7 +28,7 @@ export function KbEntryCard({ entry, category }: KbEntryCardProps) {
       </div>
       <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
         {category?.section_num && <span className="font-mono">{category.section_num}</span>}
-        {category?.name && <span>· {category.name}</span>}
+        {categoryName && <span>· {categoryName}</span>}
         <span className="text-slate-400">·</span>
         <span className="text-slate-500 font-mono text-[10px]">{entry.entry_type}</span>
       </div>
