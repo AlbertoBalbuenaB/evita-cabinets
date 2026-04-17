@@ -129,6 +129,46 @@ const KNOWLEDGE_TOOLS = [
   },
 ];
 
+const KB_TOOLS = [
+  {
+    name: 'search_kb',
+    description: 'Search the internal Evita Knowledge Base (policy, finishes, cubrecantos, hardware, production rules, constants, glossary). Returns ranked results with slug + snippet. ALWAYS call this FIRST for questions about: waste multipliers, labor costs, FX, material IDs, CDS series, plywood rules, cut-list edgeband patterns, finish lines (Plus/Premium/Elite), supplier references, and anything that sounds like an internal rule or policy.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Free-text query in Spanish or English. e.g. "desperdicio box", "Plus finish", "CDS 100 series"' },
+        category: { type: 'string', description: 'Optional category slug filter: finishes, edge-bands, toe-kicks, hardware, panels-shelves, glass-aluminum, countertops, blinds, production, costs, rules, glossary' },
+        entry_type: { type: 'string', description: 'Optional filter: finish, edge_band, toe_kick, hardware, panel, shelf, countertop, blind, cost_constant, rule, glossary, general' },
+        limit: { type: 'integer', description: 'Max results (default 8).' }
+      },
+      required: ['query']
+    }
+  },
+  {
+    name: 'get_kb_entry',
+    description: 'Fetch the full body of a KB entry by slug. Use when search_kb returned a relevant entry and you need the full content to answer accurately (numeric constants, verbatim tables, nested rules). Quote numbers exactly from the returned body_md.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        slug: { type: 'string', description: 'Entry slug, e.g. "rules-project-constants", "finishes-plus"' }
+      },
+      required: ['slug']
+    }
+  },
+  {
+    name: 'search_suppliers_kb',
+    description: 'Search KB suppliers by name or category. Returns slug + notes. Use when user asks who supplies X, what lines a supplier serves, or needs contact context. Cite with [[supplier:slug|Name]].',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Supplier name or category keyword. e.g. "Blum", "barcocinas", "hardware", "textiles"' },
+        limit: { type: 'integer', description: 'Max results (default 5).' }
+      },
+      required: ['query']
+    }
+  },
+];
+
 const MODIFICATION_TOOLS = [
   {
     name: 'get_area_cabinets',
@@ -599,6 +639,137 @@ async function executeTool(name: string, input: any, sb: any, projectId: string 
             finishes: prices.map((p: any) => ({ finish: p.finish, cost_usd: p.cost_usd })),
           };
         });
+        return JSON.stringify({ count: results.length, results });
+      }
+
+      case 'search_kb': {
+        const q = String(input.query ?? '').trim();
+        const limit = Math.min(Math.max(Number(input.limit ?? 8), 1), 30);
+        let builder = sb.from('kb_entries')
+          .select('id, slug, title, entry_type, category_id, body_md, tags, needs_enrichment, updated_at')
+          .neq('status', 'archived')
+          .limit(limit);
+        if (input.category) {
+          const { data: catRow } = await sb.from('kb_categories')
+            .select('id').eq('slug', input.category).maybeSingle();
+          if (catRow) builder = builder.eq('category_id', catRow.id);
+        }
+        if (input.entry_type) builder = builder.eq('entry_type', input.entry_type);
+
+        let rows: any[] = [];
+        if (q) {
+          const fts = await builder.textSearch('search_tsv', q, { type: 'websearch', config: 'spanish' });
+          if (!fts.error && fts.data && fts.data.length > 0) rows = fts.data;
+          if (rows.length === 0) {
+            const fallback = await sb.from('kb_entries')
+              .select('id, slug, title, entry_type, category_id, body_md, tags, needs_enrichment, updated_at')
+              .neq('status', 'archived')
+              .or(`title.ilike.%${q}%,slug.ilike.%${q}%`)
+              .limit(limit);
+            if (!fallback.error && fallback.data) rows = fallback.data;
+          }
+        } else {
+          const { data } = await builder.order('updated_at', { ascending: false });
+          rows = data ?? [];
+        }
+
+        const catIds = [...new Set(rows.map((r) => r.category_id).filter(Boolean))];
+        const { data: cats } = catIds.length
+          ? await sb.from('kb_categories').select('id, slug, section_num').in('id', catIds)
+          : { data: [] as any[] };
+        const catBySlug = new Map<string, any>();
+        (cats ?? []).forEach((c: any) => catBySlug.set(c.id, c));
+
+        const results = rows.map((r) => {
+          const body = String(r.body_md ?? '').replace(/\s+/g, ' ').trim();
+          const lower = q ? body.toLowerCase() : '';
+          const hit = q ? lower.indexOf(q.toLowerCase()) : -1;
+          const snippetStart = hit >= 0 ? Math.max(0, hit - 60) : 0;
+          const snippetEnd = hit >= 0 ? Math.min(body.length, hit + q.length + 120) : Math.min(body.length, 200);
+          const snippet = body.slice(snippetStart, snippetEnd) + (snippetEnd < body.length ? '…' : '');
+          const cat = catBySlug.get(r.category_id);
+          return {
+            id: r.id,
+            slug: r.slug,
+            title: r.title,
+            entry_type: r.entry_type,
+            category_slug: cat?.slug ?? null,
+            section_num: cat?.section_num ?? null,
+            snippet,
+            tags: r.tags ?? [],
+            needs_enrichment: !!r.needs_enrichment,
+            updated_at: r.updated_at,
+          };
+        });
+        return JSON.stringify({ count: results.length, results });
+      }
+
+      case 'get_kb_entry': {
+        if (!input.slug) return JSON.stringify({ error: 'slug required' });
+        const { data, error } = await sb.from('kb_entries')
+          .select('id, slug, title, entry_type, category_id, body_md, structured_data, tags, supplier_ids, product_refs, price_item_refs, needs_enrichment, enrichment_notes, current_version, status, updated_at')
+          .eq('slug', input.slug)
+          .maybeSingle();
+        if (error) return JSON.stringify({ error: error.message });
+        if (!data) return JSON.stringify({ error: 'not_found' });
+
+        const [catRes, supRes] = await Promise.all([
+          sb.from('kb_categories').select('slug, name, section_num').eq('id', data.category_id).maybeSingle(),
+          data.supplier_ids?.length
+            ? sb.from('kb_suppliers').select('slug, name').in('id', data.supplier_ids)
+            : Promise.resolve({ data: [] as any[] }),
+        ]);
+
+        return JSON.stringify({
+          slug: data.slug,
+          title: data.title,
+          entry_type: data.entry_type,
+          category: catRes.data ?? null,
+          body_md: data.body_md,
+          structured_data: data.structured_data,
+          tags: data.tags,
+          suppliers: (supRes.data ?? []).map((s: any) => ({ slug: s.slug, name: s.name })),
+          product_refs: data.product_refs,
+          price_item_refs: data.price_item_refs,
+          needs_enrichment: data.needs_enrichment,
+          enrichment_notes: data.enrichment_notes,
+          version: data.current_version,
+          updated_at: data.updated_at,
+        });
+      }
+
+      case 'search_suppliers_kb': {
+        const q = String(input.query ?? '').trim();
+        const limit = Math.min(Math.max(Number(input.limit ?? 5), 1), 20);
+        let rows: any[] = [];
+        if (q) {
+          const fts = await sb.from('kb_suppliers')
+            .select('id, slug, name, categories, notes_md, is_active')
+            .eq('is_active', true)
+            .textSearch('search_tsv', q, { type: 'websearch', config: 'spanish' })
+            .limit(limit);
+          if (!fts.error && fts.data && fts.data.length > 0) rows = fts.data;
+          if (rows.length === 0) {
+            const fallback = await sb.from('kb_suppliers')
+              .select('id, slug, name, categories, notes_md, is_active')
+              .eq('is_active', true)
+              .or(`name.ilike.%${q}%,categories.cs.{${q}}`)
+              .limit(limit);
+            if (!fallback.error && fallback.data) rows = fallback.data;
+          }
+        } else {
+          const { data } = await sb.from('kb_suppliers')
+            .select('id, slug, name, categories, notes_md, is_active')
+            .eq('is_active', true)
+            .limit(limit);
+          rows = data ?? [];
+        }
+        const results = rows.map((s) => ({
+          slug: s.slug,
+          name: s.name,
+          categories: s.categories ?? [],
+          notes_excerpt: String(s.notes_md ?? '').replace(/\s+/g, ' ').slice(0, 240),
+        }));
         return JSON.stringify({ count: results.length, results });
       }
 
@@ -1429,15 +1600,32 @@ Where PROJECT_UUID = the [project_id:X] value and QUOTATION_UUID = the [quotatio
 EVERY time you mention a project hub, format it as: [[project:PROJECT_UUID|Display Name]]
 EVERY time you mention a material from search_materials results: [[material:MATERIAL_UUID|Display Name]]
 EVERY time you mention a prefab SKU (Venus / Northville) from search_prefab_catalog results: [[prefab:PREFAB_UUID|Display Name]]
+EVERY time you cite a KB entry from search_kb / get_kb_entry results: [[kb:SLUG|Display Name]]
+EVERY time you mention a supplier from search_suppliers_kb results: [[supplier:SLUG|Name]]
 
 Examples:
 - "The quotation [[quotation:abc-123/def-456|Kitchen Premium]] has 5 areas."
 - "Project [[project:abc-123|Casa Perez]] has 3 quotations."
 - "Material [[material:xyz-789|MDF 3/4 Maple]] costs $45/sheet."
 - "Venus [[prefab:77d2-...|B24]] is $223 USD in Houston Frost."
+- "Box waste is ×1.10 per [[kb:rules-project-constants|project constants]]."
+- "[[supplier:barcocinas|Barcocinas]] supplies the Plus line."
 
 The [project_id:...] and [quotation_id:...] tags in LIVE DATA are your source for these IDs.
 NEVER output raw UUIDs or [id:...] tags directly in your response — always wrap them as links.
+
+=== KNOWLEDGE BASE — POLICY & CONSTANTS ===
+For ANY question about internal policy, production rules, waste/labor/FX constants,
+material roles, cut-list edgeband patterns, finish lines (Plus/Premium/Elite/Laminate/Stain),
+CDS series, plywood base rules, grain orientation, suppliers, or the glossary — call
+search_kb FIRST. Never rely on training memory for Evita-specific numbers; they change.
+
+If search_kb returns a relevant entry, either:
+  (a) call get_kb_entry with the slug to quote the entry verbatim (numbers, tables), or
+  (b) summarize the snippet and cite [[kb:slug|Title]] so the user can open the source.
+
+Never paraphrase the exact values of FX (17), waste multipliers (box ×1.10, door ×1.60),
+labor costs ($400 box / $600 door), or material UUIDs — quote them exactly as stored.
 
 === PROJECT MANAGEMENT QUERIES ===
 For questions about tasks, pending tasks, overdue tasks, project documents, notes, or activity log:
@@ -1612,6 +1800,7 @@ Style: Auto-detect EN/ES. Always show the full breakdown table. Say explicitly i
     const alwaysTools = [
       ...SEARCH_TOOLS,
       ...KNOWLEDGE_TOOLS,
+      ...KB_TOOLS,
       ...INVENTORY_TOOLS,
       ...PURCHASE_READ_TOOLS,
       ...OPTIMIZER_TOOLS,

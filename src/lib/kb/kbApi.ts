@@ -109,6 +109,27 @@ export async function searchEntries(
   return (fuzzy.data ?? []) as KbEntryListItem[];
 }
 
+export async function fetchSupplierBySlug(slug: string): Promise<KbSupplier | null> {
+  const { data, error } = await supabase
+    .from('kb_suppliers')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchEntriesBySupplierId(supplierId: string): Promise<KbEntryListItem[]> {
+  const { data, error } = await supabase
+    .from('kb_entries')
+    .select(LIST_SELECT)
+    .neq('status', 'archived')
+    .contains('supplier_ids', [supplierId])
+    .order('title', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as KbEntryListItem[];
+}
+
 export async function fetchEntryVersions(entryId: string): Promise<KbEntryVersion[]> {
   const { data, error } = await supabase
     .from('kb_entry_versions')

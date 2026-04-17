@@ -1,21 +1,33 @@
+import { Link } from 'react-router-dom';
 import { Building2 } from 'lucide-react';
 import type { KbSupplier } from '../../lib/kb/kbTypes';
 
 interface KbSupplierChipProps {
   supplier: KbSupplier;
   compact?: boolean;
+  as?: 'link' | 'span';
 }
 
-export function KbSupplierChip({ supplier, compact }: KbSupplierChipProps) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-lg border border-emerald-200/70 bg-emerald-50/60 text-emerald-800 font-medium ${
-        compact ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
-      }`}
-      title={supplier.name}
-    >
+export function KbSupplierChip({ supplier, compact, as = 'link' }: KbSupplierChipProps) {
+  const cls = `inline-flex items-center gap-1.5 rounded-lg border border-emerald-200/70 bg-emerald-50/60 text-emerald-800 font-medium ${
+    compact ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
+  }`;
+  const body = (
+    <>
       <Building2 className="w-3 h-3" />
       <span>{supplier.name}</span>
+    </>
+  );
+  if (as === 'link') {
+    return (
+      <Link to={`/kb/suppliers/${supplier.slug}`} className={`${cls} hover:bg-emerald-100/70 transition`} title={supplier.name}>
+        {body}
+      </Link>
+    );
+  }
+  return (
+    <span className={cls} title={supplier.name}>
+      {body}
     </span>
   );
 }
