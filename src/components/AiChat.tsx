@@ -485,12 +485,21 @@ export function AiChat() {
     setLoading(true);
 
     try {
+      // Send the current Supabase session JWT so the edge function can verify
+      // via auth.getUser(). Keep x-evita-key as a fallback while the edge
+      // function accepts both during the migration.
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token ?? '';
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'x-evita-key': EDGE_KEY,
+      };
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
       const res = await fetch(EDGE_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-evita-key': EDGE_KEY,
-        },
+        headers,
         body: JSON.stringify({
           messages: newMessages,
           projectId,
