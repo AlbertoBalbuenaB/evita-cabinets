@@ -3517,6 +3517,183 @@ export type Database = {
           },
         ]
       }
+      wiki_article_versions: {
+        Row: {
+          article_id: string
+          body_md: string
+          category_id: string
+          created_at: string
+          edit_summary: string | null
+          edited_by: string | null
+          id: string
+          slug: string
+          summary: string | null
+          tags: string[]
+          title: string
+          version_num: number
+        }
+        Insert: {
+          article_id: string
+          body_md: string
+          category_id: string
+          created_at?: string
+          edit_summary?: string | null
+          edited_by?: string | null
+          id?: string
+          slug: string
+          summary?: string | null
+          tags: string[]
+          title: string
+          version_num: number
+        }
+        Update: {
+          article_id?: string
+          body_md?: string
+          category_id?: string
+          created_at?: string
+          edit_summary?: string | null
+          edited_by?: string | null
+          id?: string
+          slug?: string
+          summary?: string | null
+          tags?: string[]
+          title?: string
+          version_num?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiki_article_versions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wiki_article_versions_edited_by_fkey"
+            columns: ["edited_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wiki_articles: {
+        Row: {
+          body_md: string
+          category_id: string
+          created_at: string
+          created_by: string | null
+          current_version: number
+          id: string
+          last_edited_by: string | null
+          reading_time_min: number | null
+          search_tsv: unknown
+          slug: string
+          status: string
+          summary: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body_md?: string
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          current_version?: number
+          id?: string
+          last_edited_by?: string | null
+          reading_time_min?: number | null
+          search_tsv?: unknown
+          slug: string
+          status?: string
+          summary?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body_md?: string
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          current_version?: number
+          id?: string
+          last_edited_by?: string | null
+          reading_time_min?: number | null
+          search_tsv?: unknown
+          slug?: string
+          status?: string
+          summary?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiki_articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wiki_articles_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wiki_articles_last_edited_by_fkey"
+            columns: ["last_edited_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wiki_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiki_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       prefab_catalog_with_prices: {

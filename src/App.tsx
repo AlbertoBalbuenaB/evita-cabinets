@@ -32,6 +32,8 @@ const KbProposals = lazy(() => import('./pages/kb/KbProposals').then(m => ({ def
 const KbProposalPage = lazy(() => import('./pages/kb/KbProposalPage').then(m => ({ default: m.KbProposalPage })));
 const KbSupplierPage = lazy(() => import('./pages/kb/KbSupplierPage').then(m => ({ default: m.KbSupplierPage })));
 const KbAudit = lazy(() => import('./pages/kb/KbAudit').then(m => ({ default: m.KbAudit })));
+const WikiHub = lazy(() => import('./pages/wiki/WikiHub').then(m => ({ default: m.WikiHub })));
+const WikiArticlePage = lazy(() => import('./pages/wiki/WikiArticlePage').then(m => ({ default: m.WikiArticlePage })));
 
 function AdminRoute({ children }: { children: ReactNode }) {
   const { member, loading } = useCurrentMember();
@@ -95,6 +97,8 @@ function App() {
             <Route path="/kb/suppliers/:slug" element={<KbSupplierPage />} />
             <Route path="/kb/:slug" element={<KbEntryPage />} />
             <Route path="/kb" element={<KbHub />} />
+            <Route path="/wiki/:slug" element={<WikiArticlePage />} />
+            <Route path="/wiki" element={<WikiHub />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

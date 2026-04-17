@@ -14,6 +14,7 @@ import {
   Search,
   Home,
   BookOpen,
+  Library,
 } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationPanel } from './NotificationPanel';
@@ -57,6 +58,7 @@ export function Layout({ children, onLogout }: LayoutProps) {
     { path: '/prices', label: 'Inventory', icon: Warehouse },
     { path: '/tools', label: 'Tools', icon: Wrench },
     { path: '/kb', label: 'KB', icon: BookOpen },
+    { path: '/wiki', label: 'Wiki', icon: Library },
   ];
 
   function isActive(path: string) {

@@ -4,7 +4,7 @@ import rehypeRaw from 'rehype-raw';
 import type { Components } from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 
-const KB_LINK_REGEX = /\[\[(kb|supplier|material|project):([^|]+)\|([^\]]+)\]\]/g;
+const KB_LINK_REGEX = /\[\[(kb|supplier|material|project|wiki):([^|]+)\|([^\]]+)\]\]/g;
 
 interface KbMarkdownViewerProps {
   source: string;
@@ -23,7 +23,9 @@ function transformLinks(source: string): string {
             ? `/prices/${id}`
             : kind === 'project'
               ? `/projects/${id}`
-              : '#';
+              : kind === 'wiki'
+                ? `/wiki/${id}`
+                : '#';
     return `[${safeLabel}](${href})`;
   });
 }

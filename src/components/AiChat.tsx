@@ -76,7 +76,7 @@ function formatBoldCode(text: string, keyPrefix: string): React.ReactNode[] {
 }
 
 function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: string) => void): React.ReactNode[] {
-  const linkRegex = /\[\[(project|material|quotation|prefab|kb|supplier):([^|]+)\|([^\]]+)\]\]/g;
+  const linkRegex = /\[\[(project|material|quotation|prefab|kb|supplier|wiki):([^|]+)\|([^\]]+)\]\]/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -142,6 +142,17 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           type="button"
           onClick={() => onNavigate?.(`/kb/suppliers/${id}`)}
           className="text-emerald-600 hover:text-emerald-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+        >
+          {label}
+        </button>
+      );
+    } else if (kind === 'wiki') {
+      parts.push(
+        <button
+          key={`${keyPrefix}lnk${idx}`}
+          type="button"
+          onClick={() => onNavigate?.(`/wiki/${id}`)}
+          className="text-violet-600 hover:text-violet-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
