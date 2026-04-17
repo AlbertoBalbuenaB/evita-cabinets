@@ -374,6 +374,7 @@ export function AiChat() {
 
   const EDGE_URL = import.meta.env.VITE_EVITA_IA_URL as string;
   const EDGE_KEY = import.meta.env.VITE_EVITA_IA_SECRET as string;
+  const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
   useEffect(() => {
     try {
@@ -485,21 +486,24 @@ export function AiChat() {
     setLoading(true);
 
     try {
-      // Send the current Supabase session JWT so the edge function can verify
-      // via auth.getUser(). Keep x-evita-key as a fallback while the edge
-      // function accepts both during the migration.
+      // Supabase's edge-function gateway rejects requests without an
+      // Authorization header (401 UNAUTHORIZED_NO_AUTH_HEADER) before the
+      // function itself runs. Always send one — prefer the logged-in user's
+      // JWT (so the function can resolve the user), fall back to the public
+      // anon key so the gateway accepts the request even if the session is
+      // briefly missing. x-evita-key stays for the legacy function-level
+      // auth path the edge function still accepts.
       const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token ?? '';
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'x-evita-key': EDGE_KEY,
-      };
-      if (accessToken) {
-        headers.Authorization = `Bearer ${accessToken}`;
-      }
+      const accessToken = sessionData?.session?.access_token || SUPABASE_ANON_KEY;
+
       const res = await fetch(EDGE_URL, {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+          'apikey': SUPABASE_ANON_KEY,
+          'x-evita-key': EDGE_KEY,
+        },
         body: JSON.stringify({
           messages: newMessages,
           projectId,
@@ -507,7 +511,16 @@ export function AiChat() {
         }),
       });
 
-      if (!res.ok) throw new Error(`Error ${res.status}`);
+      if (!res.ok) {
+        const raw = await res.text();
+        let detail = raw;
+        try {
+          const parsed = JSON.parse(raw);
+          detail = parsed.error || parsed.message || raw;
+        } catch {}
+        console.error('[Evita AI] edge function error', res.status, detail);
+        throw new Error(`HTTP ${res.status}: ${detail.slice(0, 200)}`);
+      }
       const data = await res.json();
       const reply = data.content ?? 'Sorry, I could not get a response.';
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
@@ -515,15 +528,17 @@ export function AiChat() {
       if (updatedMsgs.length >= 2) {
         saveSession(updatedMsgs);
       }
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[Evita AI] sendMessage failed:', err);
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', content: '⚠️ Connection error. Please try again.' },
+        { role: 'assistant', content: `⚠️ Connection error. Please try again.\n\n_Details: ${msg}_` },
       ]);
     } finally {
       setLoading(false);
     }
-  }, [messages, loading, EDGE_URL, EDGE_KEY, projectId, pageKey]);
+  }, [messages, loading, EDGE_URL, EDGE_KEY, SUPABASE_ANON_KEY, projectId, pageKey]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
