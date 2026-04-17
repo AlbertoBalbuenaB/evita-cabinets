@@ -5,11 +5,12 @@ const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 const EVITA_SECRET  = Deno.env.get('EVITA_IA_SECRET')  ?? '';
 const SB_URL        = Deno.env.get('SUPABASE_URL')      ?? '';
 const SB_SERVICE    = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const SB_ANON       = Deno.env.get('SUPABASE_ANON_KEY')         ?? '';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, x-evita-key',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-evita-key',
 };
 
 function hasModificationIntent(messages: {role:string;content:string}[]): boolean {
@@ -1314,7 +1315,30 @@ async function executeTool(name: string, input: any, sb: any, projectId: string 
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
-  if (req.headers.get('x-evita-key') !== EVITA_SECRET) {
+
+  // Auth: accept EITHER a valid Supabase user JWT (Authorization: Bearer …)
+  // OR the legacy x-evita-key shared secret. This keeps the function working
+  // during the transition while the frontend rolls out the JWT path.
+  const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization') ?? '';
+  const jwt = authHeader.toLowerCase().startsWith('bearer ')
+    ? authHeader.slice(7).trim()
+    : '';
+  const legacyKey = req.headers.get('x-evita-key') ?? '';
+
+  let authOk = false;
+  if (legacyKey && EVITA_SECRET && legacyKey === EVITA_SECRET) {
+    authOk = true;
+  } else if (jwt) {
+    try {
+      const authClient = createClient(SB_URL, SB_ANON || SB_SERVICE, {
+        global: { headers: { Authorization: `Bearer ${jwt}` } },
+      });
+      const { data, error } = await authClient.auth.getUser(jwt);
+      if (!error && data?.user) authOk = true;
+    } catch { /* fall through */ }
+  }
+
+  if (!authOk) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS });
   }
   let body: any;
