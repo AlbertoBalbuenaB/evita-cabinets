@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Library, ExternalLink } from 'lucide-react';
+import { Library, ExternalLink, Plus, GitPullRequest, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useWikiStore } from '../../lib/wiki/wikiStore';
+import { useCurrentMember } from '../../lib/useCurrentMember';
 import { searchWikiArticles } from '../../lib/wiki/wikiApi';
 import { KbSearchBar } from '../../components/kb/KbSearchBar';
 import { WikiArticleCard } from '../../components/wiki/WikiArticleCard';
@@ -10,6 +11,8 @@ import type { WikiArticleListItem } from '../../lib/wiki/wikiTypes';
 
 export function WikiHub() {
   const { categories, fetchTaxonomy, isLoaded } = useWikiStore();
+  const { member } = useCurrentMember();
+  const isAdmin = member?.role === 'admin';
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [articles, setArticles] = useState<WikiArticleListItem[]>([]);
@@ -49,12 +52,34 @@ export function WikiHub() {
           <div className="flex-1">
             <div className="flex items-start justify-between gap-2 flex-wrap">
               <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Wiki</h1>
-              <Link to="/kb">
-                <Button variant="ghost" size="sm">
-                  Knowledge Base
-                  <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
-                </Button>
-              </Link>
+              <div className="flex gap-2 flex-wrap">
+                <Link to="/kb">
+                  <Button variant="ghost" size="sm">
+                    Knowledge Base
+                    <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
+                  </Button>
+                </Link>
+                {isAdmin && (
+                  <Link to="/wiki/audit">
+                    <Button variant="ghost" size="sm">
+                      <Shield className="w-4 h-4 mr-1.5" />
+                      Audit
+                    </Button>
+                  </Link>
+                )}
+                <Link to="/wiki/proposals">
+                  <Button variant="ghost" size="sm">
+                    <GitPullRequest className="w-4 h-4 mr-1.5" />
+                    Proposals
+                  </Button>
+                </Link>
+                <Link to="/wiki/new">
+                  <Button variant="primary" size="sm">
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    New
+                  </Button>
+                </Link>
+              </div>
             </div>
             <p className="text-sm text-slate-700 mt-1">
               Manual de armado, protocolos de seguridad, control de calidad y capacitación. Complemento narrativo de la{' '}

@@ -3653,6 +3653,58 @@ export type Database = {
           },
         ]
       }
+      wiki_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          article_id: string | null
+          created_at: string
+          diff_json: Json | null
+          id: string
+          proposal_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          article_id?: string | null
+          created_at?: string
+          diff_json?: Json | null
+          id?: string
+          proposal_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          article_id?: string | null
+          created_at?: string
+          diff_json?: Json | null
+          id?: string
+          proposal_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiki_audit_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wiki_audit_log_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wiki_audit_log_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wiki_categories: {
         Row: {
           created_at: string
@@ -3690,6 +3742,172 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "wiki_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wiki_comments: {
+        Row: {
+          article_id: string | null
+          author_id: string
+          body_tiptap: Json
+          created_at: string
+          id: string
+          parent_id: string | null
+          proposal_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          article_id?: string | null
+          author_id: string
+          body_tiptap: Json
+          created_at?: string
+          id?: string
+          parent_id?: string | null
+          proposal_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string | null
+          author_id?: string
+          body_tiptap?: Json
+          created_at?: string
+          id?: string
+          parent_id?: string | null
+          proposal_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiki_comments_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wiki_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wiki_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wiki_comments_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wiki_proposals: {
+        Row: {
+          author_id: string
+          base_version: number | null
+          created_at: string
+          description_md: string | null
+          id: string
+          kind: string
+          merged_at: string | null
+          merged_version: number | null
+          proposed_body_md: string | null
+          proposed_category_id: string | null
+          proposed_reading_time_min: number | null
+          proposed_slug: string | null
+          proposed_summary: string | null
+          proposed_tags: string[] | null
+          proposed_title: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          state: string
+          summary: string
+          target_article_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          base_version?: number | null
+          created_at?: string
+          description_md?: string | null
+          id?: string
+          kind: string
+          merged_at?: string | null
+          merged_version?: number | null
+          proposed_body_md?: string | null
+          proposed_category_id?: string | null
+          proposed_reading_time_min?: number | null
+          proposed_slug?: string | null
+          proposed_summary?: string | null
+          proposed_tags?: string[] | null
+          proposed_title?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          state?: string
+          summary: string
+          target_article_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          base_version?: number | null
+          created_at?: string
+          description_md?: string | null
+          id?: string
+          kind?: string
+          merged_at?: string | null
+          merged_version?: number | null
+          proposed_body_md?: string | null
+          proposed_category_id?: string | null
+          proposed_reading_time_min?: number | null
+          proposed_slug?: string | null
+          proposed_summary?: string | null
+          proposed_tags?: string[] | null
+          proposed_title?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          state?: string
+          summary?: string
+          target_article_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiki_proposals_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wiki_proposals_proposed_category_id_fkey"
+            columns: ["proposed_category_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wiki_proposals_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wiki_proposals_target_article_id_fkey"
+            columns: ["target_article_id"]
+            isOneToOne: false
+            referencedRelation: "wiki_articles"
             referencedColumns: ["id"]
           },
         ]
@@ -3836,6 +4054,10 @@ export type Database = {
           p_old_hardware_id: string
         }
         Returns: Json
+      }
+      wiki_merge_proposal: {
+        Args: { p_note?: string; p_proposal_id: string }
+        Returns: string
       }
     }
     Enums: {

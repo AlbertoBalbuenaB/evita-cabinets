@@ -1,20 +1,26 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, AlertCircle, Clock, Library } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Clock, Library, Pencil } from 'lucide-react';
 import { useWikiStore } from '../../lib/wiki/wikiStore';
-import { fetchWikiArticleBySlug } from '../../lib/wiki/wikiApi';
+import { fetchWikiArticleBySlug, fetchWikiArticleVersions } from '../../lib/wiki/wikiApi';
+import { fetchMemberNames } from '../../lib/kb/kbApi';
+import { History } from 'lucide-react';
 import { KbMarkdownViewer } from '../../components/kb/KbMarkdownViewer';
-import type { WikiArticle } from '../../lib/wiki/wikiTypes';
+import { Button } from '../../components/Button';
+import type { WikiArticle, WikiArticleVersion } from '../../lib/wiki/wikiTypes';
 
 export function WikiArticlePage() {
   const { slug } = useParams<{ slug: string }>();
   const { categories, fetchTaxonomy } = useWikiStore();
   const [article, setArticle] = useState<WikiArticle | null>(null);
+  const [versions, setVersions] = useState<WikiArticleVersion[]>([]);
+  const [memberNames, setMemberNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
 
   useEffect(() => {
     fetchTaxonomy();
+    fetchMemberNames().then(setMemberNames).catch(() => {});
   }, [fetchTaxonomy]);
 
   useEffect(() => {
@@ -23,10 +29,15 @@ export function WikiArticlePage() {
     setLoading(true);
     setError(null);
     fetchWikiArticleBySlug(slug)
-      .then((row) => {
+      .then(async (row) => {
         if (!active) return;
-        if (!row) setError('Artículo no encontrado.');
-        else setArticle(row);
+        if (!row) {
+          setError('Artículo no encontrado.');
+          return;
+        }
+        setArticle(row);
+        const vs = await fetchWikiArticleVersions(row.id).catch(() => []);
+        if (active) setVersions(vs);
       })
       .catch((err: Error) => active && setError(err.message ?? 'Fetch failed'))
       .finally(() => active && setLoading(false));
@@ -75,11 +86,21 @@ export function WikiArticlePage() {
       </div>
 
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
-        <div className="inline-flex items-center gap-2 mb-2">
-          <Library className="w-5 h-5 text-violet-600" />
-          <span className="text-xs uppercase tracking-wide text-slate-600 font-semibold">Wiki article</span>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="min-w-0 flex-1">
+            <div className="inline-flex items-center gap-2 mb-2">
+              <Library className="w-5 h-5 text-violet-600" />
+              <span className="text-xs uppercase tracking-wide text-slate-600 font-semibold">Wiki article</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{article.title}</h1>
+          </div>
+          <Link to={`/wiki/new?edit=${encodeURIComponent(article.slug)}`}>
+            <Button variant="secondary" size="sm">
+              <Pencil className="w-4 h-4 mr-1.5" />
+              Propose edit
+            </Button>
+          </Link>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{article.title}</h1>
         {article.summary && (
           <p className="text-sm text-slate-700 mt-2">{article.summary}</p>
         )}
@@ -111,6 +132,38 @@ export function WikiArticlePage() {
       <div className="glass-white rounded-2xl p-5 sm:p-6 section-enter">
         <KbMarkdownViewer source={article.body_md} />
       </div>
+
+      {versions.length > 0 && (
+        <div className="glass-white rounded-2xl p-4 sm:p-5">
+          <h3 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wide flex items-center gap-2">
+            <History className="w-4 h-4 text-violet-500" />
+            Version history
+          </h3>
+          <ul className="space-y-2">
+            {versions.map((v) => {
+              const isCurrent = v.version_num === article.current_version;
+              const editor = v.edited_by ? memberNames[v.edited_by] ?? 'Unknown' : 'System';
+              return (
+                <li
+                  key={v.id}
+                  className={`flex items-start gap-3 p-2 rounded-lg ${
+                    isCurrent ? 'bg-violet-50/60 border border-violet-200/60' : ''
+                  }`}
+                >
+                  <span className="font-mono text-xs text-violet-700 font-semibold w-10">v{v.version_num}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-800 truncate">{v.edit_summary ?? 'No summary'}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {editor} · {new Date(v.created_at).toLocaleString()}
+                      {isCurrent && <span className="ml-2 text-violet-700 font-medium">current</span>}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
