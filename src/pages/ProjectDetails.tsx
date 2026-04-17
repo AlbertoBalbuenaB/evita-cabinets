@@ -961,9 +961,50 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         cabinetsCovered,
       });
 
+      // The per-area edgebandCost above is meters × price (from
+      // snapshot.edgebandCostByCabinet). The quotation totals displayed in
+      // Info / Breakdown / Analytics use whole-roll pricing (ft²-style),
+      // so the PDF's per-area sums would end up ~$6k short otherwise and
+      // the printed Grand Total wouldn't match the UI.
+      //
+      // Compute the rolls-based total once and distribute the delta
+      // proportionally across areas by their meters-based edgeband share.
+      // If all edgeband is in one area (common), the entire delta lands
+      // there. Fallback: if meters-based edgeband is 0 but rolls-based
+      // isn't (all pieces outside ebCabinetMap), spread by boards cost
+      // instead so the delta still lands somewhere.
+      const { ebPriceBySlot, ebSlotMeta } = extractEbSnapshotInputs(snapshot);
+      const totalEdgebandRolls = computeEdgebandRollsCost(
+        snapshot.pieces,
+        ebPriceBySlot,
+        snapshot.ebCabinetMap,
+        ebSlotMeta,
+      );
+      const totalEdgebandMeters = Object.values(perArea).reduce(
+        (s, a) => s + a.edgebandCost,
+        0,
+      );
+      const rollsDelta = totalEdgebandRolls - totalEdgebandMeters;
+
       const subtotals: Record<string, number> = {};
-      for (const [areaId, v] of Object.entries(perArea)) {
-        subtotals[areaId] = v.cabinetsSubtotal;
+      if (Math.abs(rollsDelta) > 0.01) {
+        const denom = totalEdgebandMeters > 0
+          ? totalEdgebandMeters
+          : Object.values(perArea).reduce((s, a) => s + a.boardsCost, 0);
+        if (denom > 0) {
+          for (const [areaId, v] of Object.entries(perArea)) {
+            const weight = (totalEdgebandMeters > 0 ? v.edgebandCost : v.boardsCost) / denom;
+            subtotals[areaId] = v.cabinetsSubtotal + rollsDelta * weight;
+          }
+        } else {
+          for (const [areaId, v] of Object.entries(perArea)) {
+            subtotals[areaId] = v.cabinetsSubtotal;
+          }
+        }
+      } else {
+        for (const [areaId, v] of Object.entries(perArea)) {
+          subtotals[areaId] = v.cabinetsSubtotal;
+        }
       }
 
       return subtotals;
