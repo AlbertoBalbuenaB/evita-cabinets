@@ -3638,6 +3638,10 @@ export type Database = {
         }[]
       }
       is_admin: { Args: never; Returns: boolean }
+      kb_merge_proposal: {
+        Args: { p_note?: string; p_proposal_id: string }
+        Returns: string
+      }
       refresh_project_price_staleness: {
         Args: { p_project_id: string }
         Returns: undefined

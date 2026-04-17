@@ -1,22 +1,31 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, AlertCircle, Package } from 'lucide-react';
-import { fetchEntryBySlug } from '../../lib/kb/kbApi';
+import { ArrowLeft, AlertCircle, Package, Pencil } from 'lucide-react';
+import { Button } from '../../components/Button';
+import {
+  fetchEntryBySlug,
+  fetchEntryVersions,
+  fetchMemberNames,
+} from '../../lib/kb/kbApi';
 import { useKbStore } from '../../lib/kb/kbStore';
 import { KbMarkdownViewer } from '../../components/kb/KbMarkdownViewer';
 import { KbStructuredPanel } from '../../components/kb/KbStructuredPanel';
 import { KbSupplierChip } from '../../components/kb/KbSupplierChip';
-import type { KbEntry } from '../../lib/kb/kbTypes';
+import { KbVersionTimeline } from '../../components/kb/KbVersionTimeline';
+import type { KbEntry, KbEntryVersion } from '../../lib/kb/kbTypes';
 
 export function KbEntryPage() {
   const { slug } = useParams<{ slug: string }>();
   const { categories, suppliers, fetchTaxonomy } = useKbStore();
   const [entry, setEntry] = useState<KbEntry | null>(null);
+  const [versions, setVersions] = useState<KbEntryVersion[]>([]);
+  const [memberNames, setMemberNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTaxonomy();
+    fetchMemberNames().then(setMemberNames).catch(() => {});
   }, [fetchTaxonomy]);
 
   useEffect(() => {
@@ -25,10 +34,15 @@ export function KbEntryPage() {
     setLoading(true);
     setError(null);
     fetchEntryBySlug(slug)
-      .then((row) => {
+      .then(async (row) => {
         if (!active) return;
-        if (!row) setError('Entrada no encontrada.');
-        else setEntry(row);
+        if (!row) {
+          setError('Entrada no encontrada.');
+          return;
+        }
+        setEntry(row);
+        const vs = await fetchEntryVersions(row.id).catch(() => []);
+        if (active) setVersions(vs);
       })
       .catch((err: Error) => active && setError(err.message ?? 'Fetch failed'))
       .finally(() => active && setLoading(false));
@@ -101,6 +115,12 @@ export function KbEntryPage() {
               </div>
             )}
           </div>
+          <Link to={`/kb/new?edit=${encodeURIComponent(entry.slug)}`}>
+            <Button variant="secondary" size="sm">
+              <Pencil className="w-4 h-4 mr-1.5" />
+              Propose edit
+            </Button>
+          </Link>
         </div>
 
         {entry.needs_enrichment && (
@@ -172,6 +192,14 @@ export function KbEntryPage() {
       </div>
 
       <KbStructuredPanel data={entry.structured_data} />
+
+      {versions.length > 0 && (
+        <KbVersionTimeline
+          versions={versions}
+          currentVersion={entry.current_version}
+          memberNames={memberNames}
+        />
+      )}
     </div>
   );
 }

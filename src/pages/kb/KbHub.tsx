@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BookOpen, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BookOpen, AlertCircle, GitPullRequest, Plus } from 'lucide-react';
+import { Button } from '../../components/Button';
 import { useKbStore } from '../../lib/kb/kbStore';
 import { searchEntries } from '../../lib/kb/kbApi';
 import { KbSearchBar } from '../../components/kb/KbSearchBar';
@@ -54,7 +56,23 @@ export function KbHub() {
         <div className="flex items-start gap-3">
           <BookOpen className="w-6 h-6 text-indigo-600 mt-1" />
           <div className="flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Knowledge Base</h1>
+            <div className="flex items-start justify-between gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Knowledge Base</h1>
+              <div className="flex gap-2">
+                <Link to="/kb/proposals">
+                  <Button variant="ghost" size="sm">
+                    <GitPullRequest className="w-4 h-4 mr-1.5" />
+                    Proposals
+                  </Button>
+                </Link>
+                <Link to="/kb/new">
+                  <Button variant="primary" size="sm">
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    New
+                  </Button>
+                </Link>
+              </div>
+            </div>
             <p className="text-sm text-slate-700 mt-1">
               Base de referencia interna de Evita: acabados, cubrecantos, herrajes, reglas de fabricación, proveedores y constantes del proyecto.
             </p>

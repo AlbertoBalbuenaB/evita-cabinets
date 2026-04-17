@@ -1,0 +1,57 @@
+import { useMemo } from 'react';
+import { diffLines, diffWordsWithSpace } from 'diff';
+
+interface KbDiffViewerProps {
+  before: string;
+  after: string;
+  mode?: 'line' | 'word';
+  label?: { before: string; after: string };
+}
+
+export function KbDiffViewer({ before, after, mode = 'line', label }: KbDiffViewerProps) {
+  const changes = useMemo(() => {
+    return mode === 'word' ? diffWordsWithSpace(before, after) : diffLines(before, after);
+  }, [before, after, mode]);
+
+  if (before === after) {
+    return (
+      <div className="glass-white rounded-xl p-4 text-sm text-slate-500 italic">
+        Sin cambios en el contenido.
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass-white rounded-xl overflow-hidden">
+      {label && (
+        <div className="grid grid-cols-2 border-b border-slate-200/60 text-xs font-medium text-slate-600">
+          <div className="px-3 py-1.5 bg-rose-50/60">− {label.before}</div>
+          <div className="px-3 py-1.5 bg-emerald-50/60">+ {label.after}</div>
+        </div>
+      )}
+      <pre className="text-xs font-mono leading-relaxed overflow-x-auto p-3 whitespace-pre-wrap">
+        {changes.map((part, i) => {
+          if (part.added) {
+            return (
+              <span key={i} className="bg-emerald-100/70 text-emerald-900">
+                {part.value}
+              </span>
+            );
+          }
+          if (part.removed) {
+            return (
+              <span key={i} className="bg-rose-100/70 text-rose-900 line-through">
+                {part.value}
+              </span>
+            );
+          }
+          return (
+            <span key={i} className="text-slate-700">
+              {part.value}
+            </span>
+          );
+        })}
+      </pre>
+    </div>
+  );
+}

@@ -27,6 +27,9 @@ const PlanViewerPage = lazy(() => import('./pages/PlanViewerPage').then(m => ({ 
 const DraftToolPage = lazy(() => import('./tools/draft/DraftToolPage').then(m => ({ default: m.DraftToolPage })));
 const KbHub = lazy(() => import('./pages/kb/KbHub').then(m => ({ default: m.KbHub })));
 const KbEntryPage = lazy(() => import('./pages/kb/KbEntryPage').then(m => ({ default: m.KbEntryPage })));
+const KbNew = lazy(() => import('./pages/kb/KbNew').then(m => ({ default: m.KbNew })));
+const KbProposals = lazy(() => import('./pages/kb/KbProposals').then(m => ({ default: m.KbProposals })));
+const KbProposalPage = lazy(() => import('./pages/kb/KbProposalPage').then(m => ({ default: m.KbProposalPage })));
 
 function AdminRoute({ children }: { children: ReactNode }) {
   const { member, loading } = useCurrentMember();
@@ -83,6 +86,9 @@ function App() {
             <Route path="/tools/draft" element={<DraftToolPage />} />
             <Route path="/suppliers/:id" element={<SupplierPage />} />
             <Route path="/suppliers" element={<Suppliers />} />
+            <Route path="/kb/new" element={<KbNew />} />
+            <Route path="/kb/proposals/:id" element={<KbProposalPage />} />
+            <Route path="/kb/proposals" element={<KbProposals />} />
             <Route path="/kb/:slug" element={<KbEntryPage />} />
             <Route path="/kb" element={<KbHub />} />
             <Route path="*" element={<Navigate to="/" replace />} />
