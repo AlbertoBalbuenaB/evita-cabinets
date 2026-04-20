@@ -98,12 +98,6 @@ export function KbHub() {
                     Proposals
                   </Button>
                 </Link>
-                <Link to="/kb/new">
-                  <Button variant="primary" size="sm">
-                    <Plus className="w-4 h-4 mr-1.5" />
-                    New
-                  </Button>
-                </Link>
               </div>
             </div>
             <p className="text-sm text-slate-700 mt-1">
