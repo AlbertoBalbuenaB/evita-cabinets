@@ -9,6 +9,7 @@ import type {
   Annotation,
   UndoableAction,
   SessionData,
+  Category,
 } from '../lib/takeoff/types';
 
 const MEASUREMENT_COLORS = [
@@ -46,9 +47,13 @@ interface TakeoffState {
   showAnnotationInput: boolean;
   pendingAnnotationPos: PdfPoint | null;
 
-  // Groups
+  // Groups (legacy, kept for backward-compat with pre-PR-3 sessions)
   groups: string[];
   activeGroup: string | undefined;
+
+  // Categories (takeoff layers — Base Cab, Wall Cab, Countertop, etc.)
+  categories: Category[];
+  activeCategoryId: string | null;
 
   // Undo/redo
   undoStack: UndoableAction[];
@@ -66,6 +71,8 @@ interface TakeoffState {
   rectCount: number;
   angleCount: number;
   polygonCount: number;
+  countCount: number;
+  cutoutCount: number;
   annotationCount: number;
   colorIndex: number;
 }
@@ -104,10 +111,17 @@ interface TakeoffActions {
   setShowAnnotationInput: (show: boolean) => void;
   setPendingAnnotationPos: (pos: PdfPoint | null) => void;
 
-  // Groups
+  // Groups (legacy)
   addGroup: (name: string) => void;
   removeGroup: (name: string) => void;
   setActiveGroup: (name: string | undefined) => void;
+
+  // Categories
+  addCategory: (c: Category) => void;
+  updateCategory: (id: string, partial: Partial<Category>) => void;
+  removeCategory: (id: string) => void;
+  setActiveCategory: (id: string | null) => void;
+  setMeasurementCategory: (id: string, categoryId: string | null) => void;
 
   undo: () => void;
   redo: () => void;
@@ -118,7 +132,7 @@ interface TakeoffActions {
   toggleGrid: () => void;
 
   nextColor: () => string;
-  nextName: (type: 'line' | 'multiline' | 'rectangle' | 'angle' | 'polygon') => string;
+  nextName: (type: 'line' | 'multiline' | 'rectangle' | 'angle' | 'polygon' | 'count' | 'cutout') => string;
 
   // Session
   saveSession: () => void;
@@ -148,6 +162,8 @@ const initialState: TakeoffState = {
   pendingAnnotationPos: null,
   groups: [],
   activeGroup: undefined,
+  categories: [],
+  activeCategoryId: null,
   undoStack: [],
   redoStack: [],
   unit: 'in',
@@ -159,6 +175,8 @@ const initialState: TakeoffState = {
   rectCount: 0,
   angleCount: 0,
   polygonCount: 0,
+  countCount: 0,
+  cutoutCount: 0,
   annotationCount: 0,
   colorIndex: 0,
 };
@@ -317,6 +335,32 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
 
   setActiveGroup: (name) => set({ activeGroup: name }),
 
+  // ── Categories ────────────────────────────────────────────
+
+  addCategory: (c) =>
+    set((s) => ({ categories: [...s.categories, c] })),
+
+  updateCategory: (id, partial) =>
+    set((s) => ({
+      categories: s.categories.map((c) => (c.id === id ? { ...c, ...partial } : c)),
+    })),
+
+  removeCategory: (id) =>
+    set((s) => ({
+      categories: s.categories.filter((c) => c.id !== id),
+      activeCategoryId: s.activeCategoryId === id ? null : s.activeCategoryId,
+      measurements: s.measurements.map((m) =>
+        m.categoryId === id ? { ...m, categoryId: null } : m,
+      ),
+    })),
+
+  setActiveCategory: (id) => set({ activeCategoryId: id }),
+
+  setMeasurementCategory: (id, categoryId) =>
+    set((s) => ({
+      measurements: s.measurements.map((m) => (m.id === id ? { ...m, categoryId } : m)),
+    })),
+
   // ── Undo/Redo ─────────────────────────────────────────────
 
   undo: () => {
@@ -468,6 +512,8 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
       rectangle: ['Rect', 'rectCount'],
       angle: ['Angle', 'angleCount'],
       polygon: ['Polygon', 'polygonCount'],
+      count: ['Count', 'countCount'],
+      cutout: ['Cutout', 'cutoutCount'],
     };
     const [prefix, key] = map[type];
     const n = (s[key] as number) + 1;
@@ -485,6 +531,7 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
       annotations: s.annotations,
       unit: s.unit,
       groups: s.groups,
+      categories: s.categories,
     };
     try {
       localStorage.setItem(SESSION_KEY, JSON.stringify(data));
@@ -511,6 +558,7 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
         annotations: data.annotations || [],
         unit: data.unit || 'in',
         groups: data.groups || [],
+        categories: data.categories || [],
       });
       return true;
     } catch {
@@ -526,6 +574,7 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
       annotations: s.annotations,
       unit: s.unit,
       groups: s.groups,
+      categories: s.categories,
     };
     return JSON.stringify(data, null, 2);
   },
@@ -539,6 +588,7 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
         annotations: data.annotations || [],
         unit: data.unit || 'in',
         groups: data.groups || [],
+        categories: data.categories || [],
         undoStack: [],
         redoStack: [],
       });

@@ -10,6 +10,8 @@ export function translateMeasurement(m: Measurement, dx: number, dy: number): Me
   if (m.type === 'rectangle') return { ...m, cornerA: t(m.cornerA), cornerB: t(m.cornerB) };
   if (m.type === 'angle') return { ...m, pointA: t(m.pointA), vertex: t(m.vertex), pointC: t(m.pointC) };
   if (m.type === 'polygon') return { ...m, points: m.points.map(t) };
+  if (m.type === 'count') return { ...m, position: t(m.position) };
+  if (m.type === 'cutout') return { ...m, cornerA: t(m.cornerA), cornerB: t(m.cornerB) };
   return m;
 }
 
@@ -43,7 +45,7 @@ export function updateMeasurementHandle(
     };
   }
 
-  if (m.type === 'rectangle') {
+  if (m.type === 'rectangle' || m.type === 'cutout') {
     const xMin = Math.min(m.cornerA.x, m.cornerB.x);
     const xMax = Math.max(m.cornerA.x, m.cornerB.x);
     const yMin = Math.min(m.cornerA.y, m.cornerB.y);

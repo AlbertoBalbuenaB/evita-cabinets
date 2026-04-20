@@ -1,5 +1,5 @@
 import {
-  Hand, MousePointer2, Ruler, Minus, Route, Square, Hexagon, Locate, Type,
+  Hand, MousePointer2, Ruler, Minus, Route, Square, Hexagon, Locate, Type, Hash, Scissors,
   ZoomIn, ZoomOut, Maximize2,
   ChevronLeft, ChevronRight,
   Undo2, Redo2, Crosshair, Magnet, Grid3x3,
@@ -34,7 +34,7 @@ interface ToolbarProps {
   isCalibrated: boolean;
 }
 
-const tools: { mode: ToolMode; icon: typeof Hand; label: string; shortcut: string; needsCal?: boolean }[] = [
+const tools: { mode: ToolMode; icon: typeof Hand; label: string; shortcut: string; needsCal?: boolean; hint?: string }[] = [
   { mode: 'select', icon: MousePointer2, label: 'Select', shortcut: 'S' },
   { mode: 'pan', icon: Hand, label: 'Pan', shortcut: 'V' },
   { mode: 'calibrate', icon: Ruler, label: 'Calibrate', shortcut: 'C' },
@@ -43,6 +43,8 @@ const tools: { mode: ToolMode; icon: typeof Hand; label: string; shortcut: strin
   { mode: 'rectangle', icon: Square, label: 'Rectangle', shortcut: 'R', needsCal: true },
   { mode: 'angle', icon: Locate, label: 'Angle', shortcut: 'A' },
   { mode: 'polygon', icon: Hexagon, label: 'Polygon', shortcut: 'P', needsCal: true },
+  { mode: 'count', icon: Hash, label: 'Count', shortcut: 'N' },
+  { mode: 'cutout', icon: Scissors, label: 'Cutout', shortcut: 'X', needsCal: true, hint: 'Select a rectangle/polygon first, then draw the cutout inside' },
   { mode: 'annotate', icon: Type, label: 'Annotate', shortcut: 'T' },
 ];
 
@@ -80,10 +82,11 @@ export function Toolbar({
       {tools.map((t) => {
         const Icon = t.icon;
         const disabled = t.needsCal && !isCalibrated;
+        const hint = t.hint ? ` — ${t.hint}` : '';
         return (
           <ToolBtn key={t.mode} active={activeTool === t.mode}
             onClick={() => onToolChange(t.mode)}
-            title={`${t.label} (${t.shortcut})${disabled ? ' — calibrate first' : ''}`}
+            title={`${t.label} (${t.shortcut})${disabled ? ' — calibrate first' : hint}`}
             disabled={disabled}
           ><Icon className="h-4 w-4" /></ToolBtn>
         );

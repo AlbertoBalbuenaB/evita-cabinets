@@ -153,6 +153,8 @@ export function TakeoffPage() {
         r: () => cal && s.setActiveTool('rectangle'),
         a: () => s.setActiveTool('angle'),
         p: () => cal && s.setActiveTool('polygon'),
+        n: () => s.setActiveTool('count'),
+        x: () => cal && s.setActiveTool('cutout'),
         t: () => s.setActiveTool('annotate'),
         f: () => canvasHandle.current?.fitToScreen(),
         g: () => s.toggleGrid(),

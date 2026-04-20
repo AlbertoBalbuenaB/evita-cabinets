@@ -220,6 +220,11 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
       if (pts.length === 2) finalizeAngle(pts[0], pts[1], pt);
     } else if (tool === 'polygon') {
       state.addActivePoint(pt);
+    } else if (tool === 'count') {
+      finalizeCount(pt);
+    } else if (tool === 'cutout') {
+      state.addActivePoint(pt);
+      if (pts.length === 1) finalizeCutout(pts[0], pt);
     } else if (tool === 'annotate') {
       state.setPendingAnnotationPos(pt);
       state.setShowAnnotationInput(true);
@@ -296,13 +301,16 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
     const cal = state.calibrations[state.currentPage];
     if (!cal) return;
     const pxLen = euclideanDistance(a, b);
+    const catId = state.activeCategoryId;
+    const category = catId ? state.categories.find((c) => c.id === catId) : null;
     state.addMeasurement({
       id: crypto.randomUUID(),
       name: state.nextName('line'),
       type: 'line',
-      color: state.nextColor(),
+      color: category?.color ?? state.nextColor(),
       page: state.currentPage,
       group: state.activeGroup,
+      categoryId: catId,
       pointA: a,
       pointB: b,
       pxLength: pxLen,
@@ -319,13 +327,16 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
     const pxH = Math.abs(b.y - a.y);
     const realW = pxW / cal.pixelsPerUnit;
     const realH = pxH / cal.pixelsPerUnit;
+    const catId = state.activeCategoryId;
+    const category = catId ? state.categories.find((c) => c.id === catId) : null;
     state.addMeasurement({
       id: crypto.randomUUID(),
       name: state.nextName('rectangle'),
       type: 'rectangle',
-      color: state.nextColor(),
+      color: category?.color ?? state.nextColor(),
       page: state.currentPage,
       group: state.activeGroup,
+      categoryId: catId,
       cornerA: a,
       cornerB: b,
       pxWidth: pxW,
@@ -342,13 +353,16 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
     const cal = state.calibrations[state.currentPage];
     if (!cal) return;
     const { segments, total } = polylineLength(points);
+    const catId = state.activeCategoryId;
+    const category = catId ? state.categories.find((c) => c.id === catId) : null;
     state.addMeasurement({
       id: crypto.randomUUID(),
       name: state.nextName('multiline'),
       type: 'multiline',
-      color: state.nextColor(),
+      color: category?.color ?? state.nextColor(),
       page: state.currentPage,
       group: state.activeGroup,
+      categoryId: catId,
       points,
       segments: segments.map((s) => s / cal.pixelsPerUnit),
       totalPxLength: total,
@@ -361,13 +375,16 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
   const finalizeAngle = useCallback((a: PdfPoint, vertex: PdfPoint, c: PdfPoint) => {
     const state = useTakeoffStore.getState();
     const degrees = angleBetweenPoints(a, vertex, c);
+    const catId = state.activeCategoryId;
+    const category = catId ? state.categories.find((c) => c.id === catId) : null;
     state.addMeasurement({
       id: crypto.randomUUID(),
       name: state.nextName('angle'),
       type: 'angle',
-      color: state.nextColor(),
+      color: category?.color ?? state.nextColor(),
       page: state.currentPage,
       group: state.activeGroup,
+      categoryId: catId,
       pointA: a,
       vertex,
       pointC: c,
@@ -388,6 +405,7 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
       color: state.nextColor(),
       page: state.currentPage,
       group: state.activeGroup,
+      categoryId: state.activeCategoryId,
       points,
       pxPerimeter: pxPeri,
       pxArea: pxAr,
@@ -396,6 +414,65 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
       unit: state.unit,
     });
     state.clearActivePoints();
+  }, []);
+
+  const finalizeCount = useCallback((pt: PdfPoint) => {
+    const state = useTakeoffStore.getState();
+    const catId = state.activeCategoryId;
+    // Sequential number inside the active category (or "uncategorized" bucket).
+    const existing = state.measurements.filter(
+      (m) => m.type === 'count' && (m.categoryId ?? null) === (catId ?? null) && m.page === state.currentPage,
+    );
+    const number = existing.length + 1;
+    const category = catId ? state.categories.find((c) => c.id === catId) : null;
+    state.addMeasurement({
+      id: crypto.randomUUID(),
+      name: state.nextName('count'),
+      type: 'count',
+      color: category?.color ?? state.nextColor(),
+      page: state.currentPage,
+      group: state.activeGroup,
+      categoryId: catId,
+      position: pt,
+      number,
+      unit: state.unit,
+    });
+  }, []);
+
+  const finalizeCutout = useCallback((a: PdfPoint, b: PdfPoint) => {
+    const state = useTakeoffStore.getState();
+    const cal = state.calibrations[state.currentPage];
+    if (!cal) { state.clearActivePoints(); return; }
+    // Parent must be a rectangle or polygon selected in the panel / via Select tool.
+    const parent = state.measurements.find(
+      (m) => m.id === state.selectedMeasurementId && (m.type === 'rectangle' || m.type === 'polygon'),
+    );
+    if (!parent) { state.clearActivePoints(); return; }
+    const pxW = Math.abs(b.x - a.x);
+    const pxH = Math.abs(b.y - a.y);
+    const realW = pxW / cal.pixelsPerUnit;
+    const realH = pxH / cal.pixelsPerUnit;
+    const catId = state.activeCategoryId;
+    const category = catId ? state.categories.find((c) => c.id === catId) : null;
+    state.addMeasurement({
+      id: crypto.randomUUID(),
+      name: state.nextName('cutout'),
+      type: 'cutout',
+      color: category?.color ?? '#ef4444', // default to red for cutouts so they stand out
+      page: state.currentPage,
+      group: state.activeGroup,
+      categoryId: catId,
+      parentId: parent.id,
+      shape: 'rectangle',
+      cornerA: a,
+      cornerB: b,
+      pxWidth: pxW,
+      pxHeight: pxH,
+      realWidth: realW,
+      realHeight: realH,
+      realArea: realW * realH,
+      unit: state.unit,
+    });
   }, []);
 
   return (

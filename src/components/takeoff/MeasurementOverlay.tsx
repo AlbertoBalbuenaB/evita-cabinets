@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 import { useTakeoffStore } from '../../hooks/useTakeoffStore';
 import { midpoint, formatMeasurement, formatArea, formatAngle, polygonCentroid, convertUnit } from '../../lib/takeoff/geometry';
 import { getHandlePositions } from '../../lib/takeoff/hitTest';
+import { resolveMeasurementColor } from '../../lib/takeoff/categories';
 import type {
   ViewportState,
   PdfPoint,
@@ -11,6 +12,8 @@ import type {
   RectangleMeasurement,
   AngleMeasurement,
   PolygonMeasurement,
+  CountMeasurement,
+  CutoutMeasurement,
   MeasurementUnit,
   Annotation,
 } from '../../lib/takeoff/types';
@@ -36,13 +39,18 @@ export const MeasurementOverlay = forwardRef<SVGSVGElement, MeasurementOverlayPr
       currentPage,
       selectedMeasurementId,
       unit,
+      categories,
     } = useTakeoffStore();
 
     const scale = viewport.zoom * renderScale;
     const inv = 1 / scale;
     const calibration = calibrations[currentPage] ?? null;
 
-    const pageMeasurements = measurements.filter((m) => m.page === currentPage);
+    // Resolve color via category override at render time — the stored m.color is the
+    // fallback, categories take precedence for assigned measurements.
+    const pageMeasurements = measurements
+      .filter((m) => m.page === currentPage)
+      .map((m) => ({ ...m, color: resolveMeasurementColor(m, categories) }));
     const pageAnnotations = annotations.filter((a) => a.page === currentPage);
     const selectedMeasurement = selectedMeasurementId
       ? pageMeasurements.find((m) => m.id === selectedMeasurementId) ?? null
@@ -205,6 +213,8 @@ function MeasurementShape({ measurement: m, inv, selected, displayUnit }: {
   if (m.type === 'rectangle') return <RectShape m={m} inv={inv} sw={sw} displayUnit={displayUnit} />;
   if (m.type === 'angle') return <AngleShape m={m} inv={inv} sw={sw} />;
   if (m.type === 'polygon') return <PolygonShape m={m} inv={inv} sw={sw} displayUnit={displayUnit} />;
+  if (m.type === 'count') return <CountShape m={m} inv={inv} selected={selected} />;
+  if (m.type === 'cutout') return <CutoutShape m={m} inv={inv} sw={sw} displayUnit={displayUnit} />;
   return null;
 }
 
@@ -294,6 +304,50 @@ function PolygonShape({ m, inv, sw, displayUnit }: { m: PolygonMeasurement; inv:
       {m.points.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={3 * inv} fill={m.color} />)}
       <Label pt={center} text={formatArea(m.realArea * f * f, du)} inv={inv} color={m.color} />
       <Label pt={center} text={formatMeasurement(m.realPerimeter * f, du)} inv={inv} color={m.color} offsetY={14} />
+    </g>
+  );
+}
+
+function CountShape({ m, inv, selected }: { m: CountMeasurement; inv: number; selected: boolean }) {
+  const r = 14 * inv;
+  const fontSize = 12 * inv;
+  return (
+    <g transform={`translate(${m.position.x},${m.position.y})`}>
+      {selected && (
+        <circle r={r + 4 * inv} fill="none" stroke={m.color} strokeWidth={1.5 * inv} strokeDasharray={`${3 * inv} ${2 * inv}`} />
+      )}
+      <circle r={r} fill={m.color} stroke="white" strokeWidth={2 * inv} />
+      <text
+        x={0}
+        y={fontSize * 0.36}
+        fontSize={fontSize}
+        fill="white"
+        fontWeight={700}
+        textAnchor="middle"
+        fontFamily="system-ui, sans-serif"
+      >
+        {m.number}
+      </text>
+    </g>
+  );
+}
+
+function CutoutShape({ m, inv, sw, displayUnit }: { m: CutoutMeasurement; inv: number; sw: number; displayUnit: string }) {
+  const x = Math.min(m.cornerA.x, m.cornerB.x);
+  const y = Math.min(m.cornerA.y, m.cornerB.y);
+  const w = Math.abs(m.cornerB.x - m.cornerA.x);
+  const h = Math.abs(m.cornerB.y - m.cornerA.y);
+  const f = getConversionFactor(m.unit, displayUnit);
+  const du = displayUnit as MeasurementUnit;
+  // Red-ish dashed outline + translucent fill + diagonal X to mark subtracted area.
+  return (
+    <g>
+      <rect x={x} y={y} width={w} height={h}
+        fill={m.color + '20'} stroke={m.color} strokeWidth={sw}
+        strokeDasharray={`${6 * inv} ${3 * inv}`} />
+      <line x1={x} y1={y} x2={x + w} y2={y + h} stroke={m.color} strokeWidth={sw * 0.6} strokeDasharray={`${3 * inv} ${3 * inv}`} />
+      <line x1={x + w} y1={y} x2={x} y2={y + h} stroke={m.color} strokeWidth={sw * 0.6} strokeDasharray={`${3 * inv} ${3 * inv}`} />
+      <Label pt={{ x: x + w / 2, y: y + h / 2 }} text={`− ${formatArea(m.realArea * f * f, du)}`} inv={inv} color={m.color} />
     </g>
   );
 }

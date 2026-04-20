@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Trash2, Copy, CheckCircle2, XCircle, Minus, Route, Square, Hexagon,
-  Locate, Check, FileDown, ClipboardCopy, Save, Plus, X, Type,
+  Locate, Check, FileDown, ClipboardCopy, Save, Plus, X, Type, Hash, Scissors,
 } from 'lucide-react';
 import { useTakeoffStore } from '../../hooks/useTakeoffStore';
 import { formatMeasurement, formatArea, formatAngle, convertUnit } from '../../lib/takeoff/geometry';
-import type { Measurement, MeasurementUnit, Annotation } from '../../lib/takeoff/types';
+import { CATEGORY_PALETTE, resolveMeasurementColor, getNetArea, getCutoutsFor } from '../../lib/takeoff/categories';
+import type { Measurement, MeasurementUnit, Annotation, Category } from '../../lib/takeoff/types';
 import { pdfToScreen } from '../../lib/takeoff/transforms';
 
 const RENDER_SCALE = 2;
@@ -18,6 +19,7 @@ export function MeasurementsPanel() {
     selectMeasurement, deleteMeasurement, renameMeasurement,
     deleteAnnotation, clearAllMeasurements, unit, currentPage,
     groups, activeGroup, setActiveGroup, addGroup, removeGroup,
+    categories, activeCategoryId, setActiveCategory, addCategory, removeCategory,
     saveSession, exportSession, importSession, viewport,
   } = store;
 
@@ -27,6 +29,9 @@ export function MeasurementsPanel() {
   const sessionMenuRef = useRef<HTMLDivElement>(null);
   const [newGroup, setNewGroup] = useState('');
   const [showGroupInput, setShowGroupInput] = useState(false);
+  const [showCategoryInput, setShowCategoryInput] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState(CATEGORY_PALETTE[0]);
 
   const closeSessionMenu = () => { setShowSessionMenu(false); setMenuPos(null); };
 
@@ -53,12 +58,14 @@ export function MeasurementsPanel() {
   const calibration = calibrations[currentPage] ?? null;
   const pageMeasurements = measurements.filter((m) => m.page === currentPage);
   const pageAnnotations = annotations.filter((a) => a.page === currentPage);
-  const filteredMeasurements = activeGroup
-    ? pageMeasurements.filter((m) => m.group === activeGroup)
-    : pageMeasurements;
+  const filteredMeasurements = pageMeasurements.filter((m) => {
+    if (activeGroup && m.group !== activeGroup) return false;
+    if (activeCategoryId && m.categoryId !== activeCategoryId) return false;
+    return true;
+  });
   const otherPageCount = measurements.length - pageMeasurements.length;
 
-  // ── Totals ───────────────────────────────────────────
+  // ── Totals (global, filtered) ────────────────────────
   const totalLinear = filteredMeasurements.reduce((sum, m) => {
     if (m.type === 'line') return sum + (unit === m.unit ? m.realLength : convertUnit(m.realLength, m.unit, unit));
     if (m.type === 'multiline') return sum + (unit === m.unit ? m.totalRealLength : convertUnit(m.totalRealLength, m.unit, unit));
@@ -68,21 +75,59 @@ export function MeasurementsPanel() {
 
   const totalArea = filteredMeasurements.reduce((sum, m) => {
     if (m.type === 'rectangle') {
-      const a = unit === m.unit ? m.realArea : convertUnit(m.realWidth, m.unit, unit) * convertUnit(m.realHeight, m.unit, unit);
-      return sum + a;
+      const net = getNetArea(m, measurements);
+      const f = unit === m.unit ? 1 : (convertUnit(1, m.unit, unit) ** 2);
+      return sum + net * f;
     }
     if (m.type === 'polygon') {
+      const net = getNetArea(m, measurements);
       const f = unit === m.unit ? 1 : (convertUnit(1, m.unit, unit) ** 2);
-      return sum + m.realArea * f;
+      return sum + net * f;
     }
     return sum;
   }, 0);
 
+  const totalCount = filteredMeasurements.reduce((sum, m) => sum + (m.type === 'count' ? 1 : 0), 0);
+
+  // ── Totals by category (only over pageMeasurements; respects group filter if set) ─
+  type CategoryTotal = { categoryId: string | null; name: string; color: string | null; linear: number; area: number; count: number };
+  const byCategory = new Map<string, CategoryTotal>();
+  for (const m of pageMeasurements) {
+    if (activeGroup && m.group !== activeGroup) continue;
+    const catId = m.categoryId ?? null;
+    const key = catId ?? '__uncat__';
+    if (!byCategory.has(key)) {
+      const cat = catId ? categories.find((c) => c.id === catId) : null;
+      byCategory.set(key, { categoryId: catId, name: cat?.name ?? 'Uncategorized', color: cat?.color ?? null, linear: 0, area: 0, count: 0 });
+    }
+    const bucket = byCategory.get(key)!;
+    if (m.type === 'line') {
+      bucket.linear += unit === m.unit ? m.realLength : convertUnit(m.realLength, m.unit, unit);
+    } else if (m.type === 'multiline') {
+      bucket.linear += unit === m.unit ? m.totalRealLength : convertUnit(m.totalRealLength, m.unit, unit);
+    } else if (m.type === 'polygon') {
+      const fArea = unit === m.unit ? 1 : (convertUnit(1, m.unit, unit) ** 2);
+      bucket.linear += unit === m.unit ? m.realPerimeter : convertUnit(m.realPerimeter, m.unit, unit);
+      bucket.area += getNetArea(m, measurements) * fArea;
+    } else if (m.type === 'rectangle') {
+      const fArea = unit === m.unit ? 1 : (convertUnit(1, m.unit, unit) ** 2);
+      bucket.area += getNetArea(m, measurements) * fArea;
+    } else if (m.type === 'count') {
+      bucket.count += 1;
+    }
+    // cutouts: subtracted via getNetArea on their parent — no direct contribution here
+    // angle: not summable — skipped
+  }
+  const categoryTotals = Array.from(byCategory.values())
+    .filter((b) => b.linear > 0 || b.area > 0 || b.count > 0)
+    .sort((a, b) => (a.categoryId === null ? 1 : b.categoryId === null ? -1 : a.name.localeCompare(b.name)));
+
   // ── Export CSV ────────────────────────────────────────
   const exportCsv = () => {
-    const rows = [['Name', 'Type', 'Value', 'Unit', 'Group']];
+    const rows = [['Name', 'Type', 'Value', 'Unit', 'Category', 'Group']];
     for (const m of measurements) {
-      rows.push([m.name, m.type, getDisplayValue(m, unit), unit, m.group || '']);
+      const catName = m.categoryId ? categories.find((c) => c.id === m.categoryId)?.name ?? '' : '';
+      rows.push([m.name, m.type, getDisplayValue(m, unit, measurements), unit, catName, m.group || '']);
     }
     const csv = rows.map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -93,9 +138,10 @@ export function MeasurementsPanel() {
   };
 
   const copyAll = () => {
-    const lines = filteredMeasurements.map((m) => `${m.name}: ${getDisplayValue(m, unit)}`);
+    const lines = filteredMeasurements.map((m) => `${m.name}: ${getDisplayValue(m, unit, measurements)}`);
     if (totalLinear > 0) lines.push(`Total linear: ${formatMeasurement(totalLinear, unit)}`);
     if (totalArea > 0) lines.push(`Total area: ${formatArea(totalArea, unit)}`);
+    if (totalCount > 0) lines.push(`Total count: ${totalCount}`);
     navigator.clipboard.writeText(lines.join('\n'));
   };
 
@@ -103,8 +149,9 @@ export function MeasurementsPanel() {
   const zoomTo = (m: Measurement) => {
     let center: { x: number; y: number };
     if (m.type === 'line') center = { x: (m.pointA.x + m.pointB.x) / 2, y: (m.pointA.y + m.pointB.y) / 2 };
-    else if (m.type === 'rectangle') center = { x: (m.cornerA.x + m.cornerB.x) / 2, y: (m.cornerA.y + m.cornerB.y) / 2 };
+    else if (m.type === 'rectangle' || m.type === 'cutout') center = { x: (m.cornerA.x + m.cornerB.x) / 2, y: (m.cornerA.y + m.cornerB.y) / 2 };
     else if (m.type === 'angle') center = m.vertex;
+    else if (m.type === 'count') center = m.position;
     else if (m.type === 'multiline' || m.type === 'polygon') {
       const pts = m.points;
       center = { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, y: pts.reduce((s, p) => s + p.y, 0) / pts.length };
@@ -148,6 +195,18 @@ export function MeasurementsPanel() {
     closeSessionMenu();
   };
 
+  // ── Category handlers ────────────────────────────────
+  const submitNewCategory = () => {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    const cat: Category = { id: crypto.randomUUID(), name, color: newCategoryColor };
+    addCategory(cat);
+    setActiveCategory(cat.id);
+    setNewCategoryName('');
+    setNewCategoryColor(CATEGORY_PALETTE[(categories.length + 1) % CATEGORY_PALETTE.length]);
+    setShowCategoryInput(false);
+  };
+
   return (
     <>
     <div className="w-72 border-l border-slate-200 bg-white/80 backdrop-blur-sm flex flex-col flex-shrink-0 overflow-hidden">
@@ -188,7 +247,58 @@ export function MeasurementsPanel() {
         )}
       </div>
 
-      {/* Groups */}
+      {/* Categories — layer/takeoff categories with color. Active one auto-assigns to new measurements. */}
+      <div className="px-3 py-1.5 border-b border-slate-100">
+        <div className="flex items-center gap-1 flex-wrap">
+          <button
+            onClick={() => setActiveCategory(null)}
+            className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors ${
+              !activeCategoryId ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+            }`}
+            title="Show all / no active category"
+          >All</button>
+          {categories.map((c) => (
+            <button key={c.id} onClick={() => setActiveCategory(c.id === activeCategoryId ? null : c.id)}
+              className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors flex items-center gap-1 ${
+                activeCategoryId === c.id ? 'text-slate-800' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+              style={activeCategoryId === c.id ? { backgroundColor: c.color + '33', border: `1px solid ${c.color}` } : { backgroundColor: c.color + '18' }}
+              title={`${c.name} — click to ${c.id === activeCategoryId ? 'deactivate' : 'activate'}`}
+            >
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
+              {c.name}
+              <X className="h-2.5 w-2.5 hover:text-red-500"
+                onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete category "${c.name}"? Measurements will keep their stored color.`)) removeCategory(c.id); }}
+              />
+            </button>
+          ))}
+          {!showCategoryInput && (
+            <button onClick={() => setShowCategoryInput(true)} className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-0.5 px-1">
+              <Plus className="h-3 w-3" /> Category
+            </button>
+          )}
+        </div>
+        {showCategoryInput && (
+          <div className="mt-1.5 flex items-center gap-1">
+            <div className="flex items-center gap-0.5 flex-shrink-0">
+              {CATEGORY_PALETTE.slice(0, 6).map((color) => (
+                <button key={color} onClick={() => setNewCategoryColor(color)}
+                  className={`w-3.5 h-3.5 rounded-full transition-transform ${newCategoryColor === color ? 'ring-2 ring-offset-1 ring-slate-400 scale-110' : 'hover:scale-110'}`}
+                  style={{ backgroundColor: color }} title={color}
+                />
+              ))}
+            </div>
+            <input autoFocus value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') submitNewCategory(); if (e.key === 'Escape') { setShowCategoryInput(false); setNewCategoryName(''); } }}
+              className="text-xs border border-slate-200 rounded px-1.5 py-0.5 flex-1 min-w-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="e.g. Base Cabinets"
+            />
+            <button onClick={submitNewCategory} disabled={!newCategoryName.trim()} className="text-[10px] text-blue-600 hover:text-blue-800 disabled:text-slate-300 font-medium px-1">Add</button>
+          </div>
+        )}
+      </div>
+
+      {/* Groups (legacy) */}
       {groups.length > 0 && (
         <div className="px-3 py-1.5 border-b border-slate-100 flex items-center gap-1 flex-wrap">
           <button
@@ -244,6 +354,7 @@ export function MeasurementsPanel() {
           <div className="py-1">
             {filteredMeasurements.map((m) => (
               <MeasurementRow key={m.id} measurement={m} selected={m.id === selectedMeasurementId} displayUnit={unit}
+                categories={categories} allMeasurements={measurements}
                 onSelect={() => { selectMeasurement(m.id === selectedMeasurementId ? null : m.id); zoomTo(m); }}
                 onDelete={() => deleteMeasurement(m.id)} onRename={(name) => renameMeasurement(m.id, name)}
               />
@@ -270,9 +381,9 @@ export function MeasurementsPanel() {
         )}
       </div>
 
-      {/* Totals */}
-      {(totalLinear > 0 || totalArea > 0) && (
-        <div className="px-3 py-2 border-t border-slate-200 bg-slate-50/80">
+      {/* Totals — grand total + per-category breakdown */}
+      {(totalLinear > 0 || totalArea > 0 || totalCount > 0) && (
+        <div className="px-3 py-2 border-t border-slate-200 bg-slate-50/80 max-h-52 overflow-y-auto">
           <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">Totals</div>
           {totalLinear > 0 && (
             <div className="flex justify-between text-xs">
@@ -284,6 +395,30 @@ export function MeasurementsPanel() {
             <div className="flex justify-between text-xs">
               <span className="text-slate-500">Area</span>
               <span className="font-mono font-medium text-slate-700">{formatArea(totalArea, unit)}</span>
+            </div>
+          )}
+          {totalCount > 0 && (
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500">Count</span>
+              <span className="font-mono font-medium text-slate-700">{totalCount}</span>
+            </div>
+          )}
+          {categoryTotals.length > 1 && (
+            <div className="mt-2 pt-2 border-t border-slate-200/70 space-y-1.5">
+              <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">By category</div>
+              {categoryTotals.map((b) => (
+                <div key={b.categoryId ?? '__uncat__'} className="text-[11px]">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: b.color ?? '#cbd5e1' }} />
+                    <span className="font-medium text-slate-600 truncate">{b.name}</span>
+                  </div>
+                  <div className="pl-3 text-slate-500 font-mono space-y-0.5">
+                    {b.linear > 0 && <div className="flex justify-between"><span>Linear</span><span>{formatMeasurement(b.linear, unit)}</span></div>}
+                    {b.area > 0 && <div className="flex justify-between"><span>Area</span><span>{formatArea(b.area, unit)}</span></div>}
+                    {b.count > 0 && <div className="flex justify-between"><span>Count</span><span>{b.count}</span></div>}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -311,25 +446,28 @@ export function MeasurementsPanel() {
 
 // ── Row components ──────────────────────────────────────────
 
-function MeasurementRow({ measurement: m, selected, displayUnit, onSelect, onDelete, onRename }: {
+function MeasurementRow({ measurement: m, selected, displayUnit, categories, allMeasurements, onSelect, onDelete, onRename }: {
   measurement: Measurement; selected: boolean; displayUnit: MeasurementUnit;
+  categories: Category[]; allMeasurements: Measurement[];
   onSelect: () => void; onDelete: () => void; onRename: (name: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(m.name);
   const [copied, setCopied] = useState(false);
 
-  const iconMap = { line: Minus, multiline: Route, rectangle: Square, angle: Locate, polygon: Hexagon };
+  const iconMap = { line: Minus, multiline: Route, rectangle: Square, angle: Locate, polygon: Hexagon, count: Hash, cutout: Scissors };
   const TypeIcon = iconMap[m.type];
-  const displayValue = getDisplayValue(m, displayUnit);
+  const displayValue = getDisplayValue(m, displayUnit, allMeasurements);
+  const effectiveColor = resolveMeasurementColor(m, categories);
+  const category = m.categoryId ? categories.find((c) => c.id === m.categoryId) : null;
 
   const handleCopy = () => { navigator.clipboard.writeText(displayValue); setCopied(true); setTimeout(() => setCopied(false), 1500); };
   const commitRename = () => { setEditing(false); if (editName.trim() && editName !== m.name) onRename(editName.trim()); else setEditName(m.name); };
 
   return (
     <div className={`px-3 py-2 flex items-start gap-2 cursor-pointer transition-colors ${selected ? 'bg-blue-50' : 'hover:bg-slate-50'}`} onClick={onSelect}>
-      <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: m.color + '20' }}>
-        <TypeIcon className="h-3 w-3" style={{ color: m.color }} />
+      <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: effectiveColor + '20' }}>
+        <TypeIcon className="h-3 w-3" style={{ color: effectiveColor }} />
       </div>
       <div className="flex-1 min-w-0">
         {editing ? (
@@ -343,7 +481,12 @@ function MeasurementRow({ measurement: m, selected, displayUnit, onSelect, onDel
             onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}>{m.name}</span>
         )}
         <span className="text-[11px] text-slate-500 font-mono">{displayValue}</span>
-        {m.group && <span className="text-[9px] bg-slate-100 text-slate-500 rounded px-1 ml-1">{m.group}</span>}
+        <div className="flex items-center gap-1 flex-wrap mt-0.5">
+          {category && (
+            <span className="text-[9px] rounded px-1 font-medium" style={{ backgroundColor: category.color + '22', color: category.color }}>{category.name}</span>
+          )}
+          {m.group && <span className="text-[9px] bg-slate-100 text-slate-500 rounded px-1">{m.group}</span>}
+        </div>
       </div>
       <div className="flex items-center gap-0.5 flex-shrink-0">
         <button onClick={(e) => { e.stopPropagation(); handleCopy(); }} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100" title="Copy">
@@ -369,7 +512,7 @@ function AnnotationRow({ annotation: a, onDelete }: { annotation: Annotation; on
 
 // ── Helpers ──────────────────────────────────────────────
 
-function getDisplayValue(m: Measurement, displayUnit: MeasurementUnit): string {
+function getDisplayValue(m: Measurement, displayUnit: MeasurementUnit, allMeasurements: Measurement[] = []): string {
   if (m.type === 'line') {
     const val = displayUnit === m.unit ? m.realLength : convertUnit(m.realLength, m.unit, displayUnit);
     return formatMeasurement(val, displayUnit);
@@ -381,15 +524,31 @@ function getDisplayValue(m: Measurement, displayUnit: MeasurementUnit): string {
   if (m.type === 'rectangle') {
     const w = displayUnit === m.unit ? m.realWidth : convertUnit(m.realWidth, m.unit, displayUnit);
     const h = displayUnit === m.unit ? m.realHeight : convertUnit(m.realHeight, m.unit, displayUnit);
-    const a = w * h;
-    return `${formatMeasurement(w, displayUnit)} x ${formatMeasurement(h, displayUnit)} = ${formatArea(a, displayUnit)}`;
+    const f = displayUnit === m.unit ? 1 : (convertUnit(1, m.unit, displayUnit) ** 2);
+    const cutouts = getCutoutsFor(m.id, allMeasurements);
+    const netArea = getNetArea(m, allMeasurements) * f;
+    const grossArea = m.realArea * f;
+    if (cutouts.length > 0 && netArea !== grossArea) {
+      return `${formatMeasurement(w, displayUnit)} × ${formatMeasurement(h, displayUnit)} · Net ${formatArea(netArea, displayUnit)} (gross ${formatArea(grossArea, displayUnit)})`;
+    }
+    return `${formatMeasurement(w, displayUnit)} × ${formatMeasurement(h, displayUnit)} = ${formatArea(grossArea, displayUnit)}`;
   }
   if (m.type === 'angle') return formatAngle(m.degrees);
   if (m.type === 'polygon') {
     const f = displayUnit === m.unit ? 1 : (convertUnit(1, m.unit, displayUnit) ** 2);
-    return `${formatArea(m.realArea * f, displayUnit)}, perimeter ${formatMeasurement(
-      displayUnit === m.unit ? m.realPerimeter : convertUnit(m.realPerimeter, m.unit, displayUnit), displayUnit
-    )}`;
+    const cutouts = getCutoutsFor(m.id, allMeasurements);
+    const grossArea = m.realArea * f;
+    const netArea = getNetArea(m, allMeasurements) * f;
+    const perimeter = formatMeasurement(displayUnit === m.unit ? m.realPerimeter : convertUnit(m.realPerimeter, m.unit, displayUnit), displayUnit);
+    if (cutouts.length > 0 && netArea !== grossArea) {
+      return `Net ${formatArea(netArea, displayUnit)} (gross ${formatArea(grossArea, displayUnit)}), perimeter ${perimeter}`;
+    }
+    return `${formatArea(grossArea, displayUnit)}, perimeter ${perimeter}`;
+  }
+  if (m.type === 'count') return `#${m.number}`;
+  if (m.type === 'cutout') {
+    const f = displayUnit === m.unit ? 1 : (convertUnit(1, m.unit, displayUnit) ** 2);
+    return `− ${formatArea(m.realArea * f, displayUnit)}`;
   }
   return '';
 }

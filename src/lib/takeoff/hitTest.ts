@@ -44,7 +44,7 @@ function hitTestBody(p: PdfPoint, m: Measurement, threshold: number): boolean {
     }
     return false;
   }
-  if (m.type === 'rectangle') {
+  if (m.type === 'rectangle' || m.type === 'cutout') {
     return pointInRect(p, m.cornerA, m.cornerB);
   }
   if (m.type === 'angle') {
@@ -59,6 +59,10 @@ function hitTestBody(p: PdfPoint, m: Measurement, threshold: number): boolean {
       if (pointToSegmentDistance(p, m.points[i], m.points[j]) <= threshold) return true;
     }
     return false;
+  }
+  if (m.type === 'count') {
+    // Count pin: generous hit radius (the visible pin is ~10px; we allow a bit more to feel forgiving).
+    return Math.hypot(p.x - m.position.x, p.y - m.position.y) <= Math.max(threshold, 12);
   }
   return false;
 }
@@ -75,7 +79,7 @@ export function getHandlePositions(m: Measurement): { key: HandleKey; pt: PdfPoi
   if (m.type === 'multiline' || m.type === 'polygon') {
     return m.points.map((p, i) => ({ key: `points[${i}]` as HandleKey, pt: p }));
   }
-  if (m.type === 'rectangle') {
+  if (m.type === 'rectangle' || m.type === 'cutout') {
     const xMin = Math.min(m.cornerA.x, m.cornerB.x);
     const xMax = Math.max(m.cornerA.x, m.cornerB.x);
     const yMin = Math.min(m.cornerA.y, m.cornerB.y);
@@ -94,6 +98,7 @@ export function getHandlePositions(m: Measurement): { key: HandleKey; pt: PdfPoi
       { key: 'pointC', pt: m.pointC },
     ];
   }
+  // Count pins have no resize handles — you just drag the body to reposition them.
   return [];
 }
 

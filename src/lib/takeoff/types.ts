@@ -34,7 +34,16 @@ export type ToolMode =
   | 'rectangle'
   | 'angle'
   | 'polygon'
+  | 'count'
+  | 'cutout'
   | 'annotate';
+
+// ── Categories (takeoff layers: Base Cab, Wall Cab, Countertop, etc.) ─
+export interface Category {
+  id: string;
+  name: string;
+  color: string; // hex — also used as default color for measurements assigned to this category
+}
 
 // ── Selection handles ────────────────────────────────────────
 // Identifies which vertex/corner of a measurement is being dragged.
@@ -55,10 +64,11 @@ export type HandleKey =
 interface BaseMeasurement {
   id: string;
   name: string;
-  type: 'line' | 'multiline' | 'rectangle' | 'angle' | 'polygon';
+  type: 'line' | 'multiline' | 'rectangle' | 'angle' | 'polygon' | 'count' | 'cutout';
   color: string;
   page: number;
   group?: string;
+  categoryId?: string | null;
 }
 
 export interface LineMeasurement extends BaseMeasurement {
@@ -109,12 +119,35 @@ export interface PolygonMeasurement extends BaseMeasurement {
   unit: MeasurementUnit;
 }
 
+export interface CountMeasurement extends BaseMeasurement {
+  type: 'count';
+  position: PdfPoint;
+  number: number; // sequential label within its category (1-based)
+  unit: MeasurementUnit; // unused for counts, kept to match the union shape
+}
+
+export interface CutoutMeasurement extends BaseMeasurement {
+  type: 'cutout';
+  parentId: string; // id of the RectangleMeasurement or PolygonMeasurement this cutout subtracts from
+  shape: 'rectangle'; // only rectangular cutouts for now; polygon cutouts can come later
+  cornerA: PdfPoint;
+  cornerB: PdfPoint;
+  pxWidth: number;
+  pxHeight: number;
+  realWidth: number;
+  realHeight: number;
+  realArea: number;
+  unit: MeasurementUnit;
+}
+
 export type Measurement =
   | LineMeasurement
   | MultilineMeasurement
   | RectangleMeasurement
   | AngleMeasurement
-  | PolygonMeasurement;
+  | PolygonMeasurement
+  | CountMeasurement
+  | CutoutMeasurement;
 
 // ── Annotations ──────────────────────────────────────────────
 export interface Annotation {
@@ -142,4 +175,5 @@ export interface SessionData {
   annotations: Annotation[];
   unit: MeasurementUnit;
   groups: string[];
+  categories?: Category[]; // optional for backward compat with pre-PR-3 sessions
 }
