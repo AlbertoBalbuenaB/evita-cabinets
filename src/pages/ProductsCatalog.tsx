@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Search, Pencil as Edit2, Trash2, Check, X, Archive, ArchiveRestore, Library, Package, ToggleLeft, ToggleRight, Bookmark, LayoutList, LayoutGrid, Layers, Box, Boxes, Upload } from 'lucide-react';
+import { Plus, Search, Pencil as Edit2, Trash2, Check, X, Archive, ArchiveRestore, Library, Package, ToggleLeft, ToggleRight, LayoutList, LayoutGrid, Layers, Box, Upload } from 'lucide-react';
 import { ClosetCatalogForm } from '../components/ClosetCatalogForm';
 import { PrefabCatalogForm } from '../components/PrefabCatalogForm';
 import { Modal } from '../components/Modal';
@@ -112,12 +112,19 @@ export function ProductsCatalog() {
     {
       title: 'Cabinets',
       crumbs: [{ label: 'Cabinets' }],
+      tabs: [
+        { id: 'products', label: 'Cabinet Catalog', count: products.length, onClick: () => setActiveTab('products') },
+        { id: 'closets', label: 'Closet Library', onClick: () => setActiveTab('closets') },
+        { id: 'prefab', label: 'Prefab Library', onClick: () => setActiveTab('prefab') },
+        { id: 'templates', label: 'Templates', onClick: () => setActiveTab('templates') },
+      ],
+      activeTabId: activeTab,
       primaryAction:
         activeTab === 'products'
           ? { label: 'New Cabinet', icon: Plus, onClick: handleAddNew }
           : undefined,
     },
-    [activeTab],
+    [activeTab, products.length],
   );
 
   async function handleEdit(product: Product) {
@@ -253,37 +260,6 @@ export function ProductsCatalog() {
         </p>
       </div>
 
-      <div className="flex border-b border-slate-200 mb-6">
-        <button
-          onClick={() => setActiveTab('products')}
-          className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'products' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
-        >
-          <Library className="h-4 w-4" />
-          Cabinet Catalog
-        </button>
-        <button
-          onClick={() => setActiveTab('closets')}
-          className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'closets' ? 'border-teal-600 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
-        >
-          <Package className="h-4 w-4" />
-          Closet Library
-        </button>
-        <button
-          onClick={() => setActiveTab('prefab')}
-          className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'prefab' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
-        >
-          <Boxes className="h-4 w-4" />
-          Prefab Library
-        </button>
-        <button
-          onClick={() => setActiveTab('templates')}
-          className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'templates' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
-        >
-          <Bookmark className="h-4 w-4" />
-          Templates
-        </button>
-      </div>
-
       {activeTab === 'closets' && <ClosetLibraryTab />}
 
       {activeTab === 'prefab' && <PrefabLibraryTab />}
@@ -327,7 +303,6 @@ export function ProductsCatalog() {
               <button onClick={() => setViewMode('card')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'card' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid className="h-4 w-4" /></button>
               <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><LayoutList className="h-4 w-4" /></button>
             </div>
-            <Button size="sm" onClick={handleAddNew}><Plus className="h-4 w-4 mr-1" />Add</Button>
           </div>
         </div>
       </div>
