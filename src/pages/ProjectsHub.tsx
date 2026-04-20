@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, FolderOpen, MapPin, User, Calendar, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Button } from '../components/Button';
 import { NewProjectModal } from '../components/NewProjectModal';
 import { formatCurrency } from '../lib/calculations';
 import { useSettingsStore } from '../lib/settingsStore';
@@ -129,15 +128,9 @@ export function ProjectsHub() {
   return (
     <>
     <div className="page-enter">
-      <div className="flex justify-between items-start mb-6 hero-enter">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Projects</h1>
-          <p className="mt-2 text-slate-600">Manage your millwork projects and quotations</p>
-        </div>
-        <Button onClick={handleCreateProject} size="lg">
-          <Plus className="h-5 w-5 sm:mr-2" />
-          <span className="hidden sm:inline">New Project</span>
-        </Button>
+      <div className="mb-6 hero-enter">
+        <h1 className="text-3xl font-bold text-slate-900">Projects</h1>
+        <p className="mt-2 text-slate-600">Manage your millwork projects and quotations</p>
       </div>
 
       {/* Filters */}
@@ -170,12 +163,6 @@ export function ProjectsHub() {
         <div className="glass-white p-12 text-center">
           <FolderOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
           <p className="text-slate-500">{searchQuery ? 'No projects match your search.' : 'Create your first project to get started.'}</p>
-          {!searchQuery && (
-            <Button onClick={handleCreateProject} className="mt-4">
-              <Plus className="h-4 w-4 mr-2" />
-              New Project
-            </Button>
-          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
