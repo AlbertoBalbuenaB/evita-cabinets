@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
 import { SupplierFormModal } from '../components/SupplierFormModal';
 import { useCurrentMember } from '../lib/useCurrentMember';
+import { usePageChrome } from '../contexts/PageChromeContext';
 import type { Supplier } from '../types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -297,6 +298,21 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
     setEditingSupplier(supplier);
     setIsModalOpen(true);
   }
+
+  usePageChrome(
+    embedded
+      ? {}
+      : {
+          title: 'Suppliers',
+          crumbs: [{ label: 'Suppliers' }],
+          primaryAction: {
+            label: 'New Supplier',
+            icon: Plus,
+            onClick: handleAddNew,
+          },
+        },
+    [embedded],
+  );
 
   async function handleToggleActive(supplier: Supplier) {
     try {

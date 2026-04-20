@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Ruler, LayoutDashboard, ArrowLeft, Pencil } from 'lucide-react';
+import { usePageChrome } from '../contexts/PageChromeContext';
 
 const tools = [
   {
@@ -47,6 +48,10 @@ const colorMap: Record<string, { bg: string; iconBg: string; iconText: string; b
 };
 
 export function ToolsHub() {
+  usePageChrome(
+    { title: 'Tools', crumbs: [{ label: 'Tools' }] },
+    [],
+  );
   return (
     <div className="page-enter">
       <div className="mb-6">

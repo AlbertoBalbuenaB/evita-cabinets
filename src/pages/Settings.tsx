@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Save, Upload, AlertCircle, Plus, Trash2, RefreshCw, Download, CheckCircle } from 'lucide-react';
+import { Save, Upload, AlertCircle, Plus, Trash2, RefreshCw, Download, CheckCircle, Languages } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -8,9 +8,18 @@ import { downloadFullBackup, type BackupSummary } from '../utils/backupExport';
 import type { Setting, TaxByType, CustomType, CustomUnit, TeamMember, Department } from '../types';
 import { SYSTEM_ROLE_LABELS, SYSTEM_ROLES } from '../types';
 import { useCurrentMember } from '../lib/useCurrentMember';
+import { useLocaleStore } from '../lib/localeStore';
+import { usePageChrome } from '../contexts/PageChromeContext';
 
 export function Settings() {
   const { member: currentMember } = useCurrentMember();
+  const { locale, setLocale } = useLocaleStore();
+
+  usePageChrome(
+    { title: 'Settings', crumbs: [{ label: 'Settings' }] },
+    [],
+  );
+
   const [allMembers, setAllMembers] = useState<TeamMember[]>([]);
   const [settings, setSettings] = useState<Setting[]>([]);
   const [taxesByType, setTaxesByType] = useState<TaxByType[]>([]);
@@ -493,6 +502,52 @@ export function Settings() {
           <span>{message.text}</span>
         </div>
       )}
+
+      <div className="glass-white p-6 section-enter" style={{ animationDelay: '0.03s' }}>
+        <div className="flex items-start gap-3 mb-4">
+          <Languages className="h-5 w-5 text-indigo-600 mt-0.5" strokeWidth={1.75} />
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">Preferences</h2>
+            <p className="text-slate-500 text-sm mt-1">
+              App-wide display preferences for this browser.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Language</label>
+            <div className="inline-flex items-center rounded-lg border border-slate-200/70 bg-white/70 p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setLocale('es')}
+                className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
+                  locale === 'es'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                aria-pressed={locale === 'es'}
+              >
+                Español
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocale('en')}
+                className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
+                  locale === 'en'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                aria-pressed={locale === 'en'}
+              >
+                English
+              </button>
+            </div>
+            <p className="text-xs text-slate-400 mt-1.5">
+              Controls the language used for catalog entries and Wiki content overlays.
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter" style={{ animationDelay: '0.05s' }}>
         <div className="flex items-start justify-between">

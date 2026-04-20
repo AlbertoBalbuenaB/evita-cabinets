@@ -12,6 +12,7 @@ import { formatCurrency } from '../lib/calculations';
 import { SupplierFormModal } from '../components/SupplierFormModal';
 import { SupplierLogSection } from '../components/SupplierLogSection';
 import { useCurrentMember } from '../lib/useCurrentMember';
+import { usePageChrome } from '../contexts/PageChromeContext';
 import type { Supplier, PriceListItem, PriceListSupplier } from '../types';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -107,6 +108,17 @@ export function SupplierPage() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [itemCount, setItemCount] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  usePageChrome(
+    {
+      title: supplier?.name ?? 'Supplier',
+      crumbs: [
+        { label: 'Suppliers', to: '/suppliers' },
+        { label: supplier?.name ?? '…' },
+      ],
+    },
+    [supplier?.id, supplier?.name],
+  );
 
   const loadSupplier = useCallback(async () => {
     if (!id) { navigate(backTo, { replace: true }); return; }

@@ -16,6 +16,7 @@ import { importPrefabPriceList, type PrefabImportReport } from '../lib/prefabImp
 import { useSettingsStore } from '../lib/settingsStore';
 import type { Product, ProductInsert, ClosetCatalogItem, PrefabCatalogItem, PrefabBrand, PrefabCatalogPrice } from '../types';
 import type { ProductUsage } from '../lib/productUsageChecker';
+import { usePageChrome } from '../contexts/PageChromeContext';
 
 export function ProductsCatalog() {
   const navigate = useNavigate();
@@ -106,6 +107,18 @@ export function ProductsCatalog() {
     setSafeEditMode(false);
     setIsModalOpen(true);
   }
+
+  usePageChrome(
+    {
+      title: 'Cabinets',
+      crumbs: [{ label: 'Cabinets' }],
+      primaryAction:
+        activeTab === 'products'
+          ? { label: 'New Cabinet', icon: Plus, onClick: handleAddNew }
+          : undefined,
+    },
+    [activeTab],
+  );
 
   async function handleEdit(product: Product) {
     setEditingProduct(product);

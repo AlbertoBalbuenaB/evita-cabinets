@@ -13,6 +13,7 @@ import {
   updateTemplate,
 } from '../lib/templateManager';
 import type { CabinetTemplate, TemplateAnalytics, TemplateCategory } from '../types';
+import { usePageChrome } from '../contexts/PageChromeContext';
 
 const TEMPLATE_CATEGORIES: TemplateCategory[] = [
   'Base Cabinets',
@@ -28,6 +29,12 @@ interface TemplatesProps {
 }
 
 export function Templates({ embedded = false }: TemplatesProps) {
+  usePageChrome(
+    embedded
+      ? {}
+      : { title: 'Templates', crumbs: [{ label: 'Templates' }] },
+    [embedded],
+  );
   const [templates, setTemplates] = useState<CabinetTemplate[]>([]);
   const [filteredTemplates, setFilteredTemplates] = useState<CabinetTemplate[]>([]);
   const [loading, setLoading] = useState(true);
