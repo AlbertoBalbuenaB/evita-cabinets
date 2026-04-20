@@ -6,6 +6,7 @@ import { HomePage } from './pages/HomePage';
 import { Login } from './pages/Login';
 import { useAuth } from './lib/auth';
 import { useCurrentMember } from './lib/useCurrentMember';
+import { PageChromeProvider } from './contexts/PageChromeContext';
 
 // ── Lazy-loaded pages (code-split per route) ────────────────────────────────
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -38,6 +39,7 @@ const WikiNew = lazy(() => import('./pages/wiki/WikiNew').then(m => ({ default: 
 const WikiProposals = lazy(() => import('./pages/wiki/WikiProposals').then(m => ({ default: m.WikiProposals })));
 const WikiProposalPage = lazy(() => import('./pages/wiki/WikiProposalPage').then(m => ({ default: m.WikiProposalPage })));
 const WikiAudit = lazy(() => import('./pages/wiki/WikiAudit').then(m => ({ default: m.WikiAudit })));
+const CrmPlaceholder = lazy(() => import('./pages/CrmPlaceholder').then(m => ({ default: m.CrmPlaceholder })));
 
 function AdminRoute({ children }: { children: ReactNode }) {
   const { member, loading } = useCurrentMember();
@@ -72,7 +74,7 @@ function App() {
   }
 
   return (
-    <>
+    <PageChromeProvider>
       <Layout onLogout={signOut}>
         <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
@@ -95,6 +97,7 @@ function App() {
             <Route path="/tools/draft" element={<DraftToolPage />} />
             <Route path="/suppliers/:id" element={<SupplierPage />} />
             <Route path="/suppliers" element={<Suppliers />} />
+            <Route path="/crm" element={<CrmPlaceholder />} />
             <Route path="/kb/new" element={<KbNew />} />
             <Route path="/kb/audit" element={<AdminRoute><KbAudit /></AdminRoute>} />
             <Route path="/kb/proposals/:id" element={<KbProposalPage />} />
@@ -116,7 +119,7 @@ function App() {
       <Suspense fallback={null}>
         <AiChat />
       </Suspense>
-    </>
+    </PageChromeProvider>
   );
 }
 
