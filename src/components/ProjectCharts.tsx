@@ -33,6 +33,15 @@ interface ProjectChartsProps {
    * this prop is omitted the component behaves exactly as before.
    */
   pricingMethod?: 'sqft' | 'optimizer';
+  /**
+   * Risk factor amount from `quotationView.riskAmount` (already scoped to
+   * the active pricing path via the applies_{sqft,optimizer} flags).
+   * Rolled into the "Project Value" KPI so Analytics reflects the same
+   * Subtotal shown in Breakdown's Project Cost Summary (Materials + Labor
+   * + Risk). Default 0 keeps the pre-risk-factor behaviour.
+   */
+  riskAmount?: number;
+  riskFactorPct?: number;
   optimizerOverrides?: {
     /** From `quotationView.perAreaCabinetSubtotal` — per-area cabinet cost in optimizer mode (no quantity multiplier). */
     perAreaCabinetSubtotal: Record<string, number>;
@@ -97,7 +106,7 @@ function KpiCard({
   );
 }
 
-export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrides }: ProjectChartsProps) {
+export function ProjectCharts({ areas, products, pricingMethod, riskAmount = 0, riskFactorPct = 0, optimizerOverrides }: ProjectChartsProps) {
   const isOptimizerMode = pricingMethod === 'optimizer' && optimizerOverrides != null;
 
   const analytics = useMemo(() => {
@@ -215,10 +224,13 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
     // materialsSubtotal from the unified totals — this includes the ft²
     // fallback for cabinets the optimizer couldn't pack (mixed mode),
     // which a simple sum of breakdown categories would miss. In sqft mode
-    // keep the legacy behaviour (sum of breakdown).
-    const totalCost = isOptimizerMode
+    // keep the legacy behaviour (sum of breakdown). We then add `riskAmount`
+    // so "Project Value" matches the "Subtotal" shown in Breakdown's
+    // Project Cost Summary (Materials + Labor + Risk).
+    const materialsPreRisk = isOptimizerMode
       ? optimizerOverrides!.materialsSubtotal
       : materialsBreakdown.reduce((sum, item) => sum + item.cost, 0);
+    const totalCost = materialsPreRisk + riskAmount;
     const maxAreaCost = Math.max(...areasCosts.map((a) => a.total), 1);
     const maxMaterialCost = Math.max(...materialsBreakdown.map((m) => m.cost), 1);
 
@@ -267,7 +279,7 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
       totalBoxes,
       totalPallets,
     };
-  }, [areas, products, isOptimizerMode, optimizerOverrides]);
+  }, [areas, products, isOptimizerMode, optimizerOverrides, riskAmount]);
 
   if (areas.length === 0) return null;
 
@@ -279,7 +291,7 @@ export function ProjectCharts({ areas, products, pricingMethod, optimizerOverrid
         <KpiCard
           label="Project Value"
           value={formatCurrency(analytics.totalCost)}
-          sub="Total materials cost"
+          sub={riskAmount > 0 ? `Subtotal · incl ${riskFactorPct}% risk` : 'Total materials cost'}
           icon={<DollarSign className="h-5 w-5" />}
         />
         <KpiCard

@@ -53,6 +53,22 @@ export async function printQuotation(
   const resolvedName = overrides.pdfProjectName ?? project.name;
   const resolvedAddress = overrides.pdfAddress ?? (project.address || '');
   const resolvedBrief = overrides.pdfProjectBrief ?? filterProjectBriefForPDF(project.project_brief || '');
+
+  // Risk factor — same resolution as `printQuotationUSD`. Distributed
+  // proportionally into the displayed per-area prices and the grand total
+  // so the PDF's "Totals" and "Grand Total" match the Subtotal shown in
+  // the Breakdown tab (Materials + Labor + Risk). Tariff / profit / tax
+  // are NOT applied in this document — it's a materials-only view.
+  const hasOptimizerOverrides = !!(
+    overrides.optimizerAreaSubtotals &&
+    Object.keys(overrides.optimizerAreaSubtotals).length > 0
+  );
+  const riskFactorPct = (project as { risk_factor_percentage?: number | null }).risk_factor_percentage ?? 0;
+  const riskApplies = hasOptimizerOverrides
+    ? ((project as { risk_factor_applies_optimizer?: boolean | null }).risk_factor_applies_optimizer ?? true)
+    : ((project as { risk_factor_applies_sqft?: boolean | null }).risk_factor_applies_sqft ?? true);
+  const riskMultiplier = riskApplies && riskFactorPct > 0 ? 1 + riskFactorPct / 100 : 1;
+
   // Optimizer-mode swap: if the caller passed per-area overrides, use them
   // in place of `Σ cabinet.subtotal` for that area. Areas missing from the
   // map fall back to the ft² sum, so mixed-mode/ft²-mode quotations keep
@@ -88,7 +104,7 @@ export async function printQuotation(
     0
   );
 
-  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal + closetItemsSubtotal + prefabItemsSubtotal;
+  const materialsSubtotal = (cabinetsSubtotal + itemsSubtotal + countertopsSubtotal + closetItemsSubtotal + prefabItemsSubtotal) * riskMultiplier;
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -103,7 +119,7 @@ export async function printQuotation(
     const areaClosetTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
     const areaPrefabTotal = (area.prefabItems || []).reduce((sum, pi) => sum + pi.cost_mxn, 0);
     const rawTotal = areaCabinetsTotal + areaItemsTotal + areaClosetTotal + areaPrefabTotal;
-    const areaTotal = rawTotal * qty;
+    const areaTotal = rawTotal * qty * riskMultiplier;
 
     const boxesPalletsCalc = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
 
@@ -140,11 +156,12 @@ export async function printQuotation(
       const existing = mxnCountertopGroupMap.get(ct.item_name);
       const plItem = priceList.find(p => p.id === ct.price_list_item_id);
       const unit = plItem?.unit || '';
+      const riskAdjusted = ct.subtotal * riskMultiplier;
       if (existing) {
         existing.qty += ct.quantity;
-        existing.subtotal += ct.subtotal;
+        existing.subtotal += riskAdjusted;
       } else {
-        mxnCountertopGroupMap.set(ct.item_name, { itemName: ct.item_name, qty: ct.quantity, unit, subtotal: ct.subtotal });
+        mxnCountertopGroupMap.set(ct.item_name, { itemName: ct.item_name, qty: ct.quantity, unit, subtotal: riskAdjusted });
       }
     }
   }
@@ -647,6 +664,26 @@ export async function printQuotationUSD(
   const taxPercentage = project.tax_percentage || 0;
   const referralRate = project.referral_currency_rate || 0;
 
+  // Risk factor — applied BEFORE profit gross-up to mirror the UI formula
+  // in computeQuotationTotalsSqft. Without this multiplier the USD PDF's
+  // Grand Total would drift from the UI's projectTotal by
+  // riskAmount / (1 - profitMultiplier) × (1 + taxPercentage/100).
+  // The applies_{sqft,optimizer} flags pick which pricing path the risk
+  // attaches to; we use `optimizerAreaSubtotals` presence as the signal
+  // for optimizer mode (same heuristic used elsewhere in this function).
+  const hasOptimizerOverrides = !!(
+    overrides.optimizerAreaSubtotals &&
+    Object.keys(overrides.optimizerAreaSubtotals).length > 0
+  );
+  const riskFactorPct = (project as { risk_factor_percentage?: number | null }).risk_factor_percentage ?? 0;
+  // Defaults mirror the Info-tab state initializers in ProjectDetails
+  // (both `?? true`) so a PDF rendered for a legacy project with nullable
+  // flags matches the header total the user sees.
+  const riskApplies = hasOptimizerOverrides
+    ? ((project as { risk_factor_applies_optimizer?: boolean | null }).risk_factor_applies_optimizer ?? true)
+    : ((project as { risk_factor_applies_sqft?: boolean | null }).risk_factor_applies_sqft ?? true);
+  const riskMultiplier = riskApplies && riskFactorPct > 0 ? 1 + riskFactorPct / 100 : 1;
+
   // Optimizer-mode swap: mirrors the MXN path in `printQuotation`.
   // Areas with an override use the optimizer-derived per-area cabinet
   // subtotal (pre-quantity, MXN); everything else falls back to ft².
@@ -680,9 +717,10 @@ export async function printQuotationUSD(
     // the same way.
     const areaMaterialsTariffBase = (areaCabinetsTariffBase + areaItemsTotal + areaClosetTotal + areaPrefabTotal) * qty;
 
+    const areaAdjustedSubtotal = areaMaterialsSubtotal * riskMultiplier;
     const areaPrice = profitMultiplier > 0 && profitMultiplier < 1
-      ? areaMaterialsSubtotal / (1 - profitMultiplier)
-      : areaMaterialsSubtotal;
+      ? areaAdjustedSubtotal / (1 - profitMultiplier)
+      : areaAdjustedSubtotal;
 
     // Calculate tariff and tax based on ORIGINAL price (not inflated), only when flag is enabled
     const areaTariff = area.applies_tariff === true ? areaMaterialsTariffBase * tariffMultiplier : 0;
@@ -737,9 +775,10 @@ export async function printQuotationUSD(
     }
   }
   const countertopGroupsBase = Array.from(usdCountertopGroupMap.values()).map(g => {
+    const groupAdjusted = g.subtotalMXN * riskMultiplier;
     const groupPrice = profitMultiplier > 0 && profitMultiplier < 1
-      ? g.subtotalMXN / (1 - profitMultiplier)
-      : g.subtotalMXN;
+      ? groupAdjusted / (1 - profitMultiplier)
+      : groupAdjusted;
     const groupTariff = g.subtotalMXNTariffable * tariffMultiplier;
     return { ...g, groupPrice, groupTariff };
   });

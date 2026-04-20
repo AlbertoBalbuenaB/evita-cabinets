@@ -1418,6 +1418,15 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     // optimizer-attributed values (boards + edgeband + extras per area).
     // The unified function computes per-area sums from cabinet fields, but
     // the area cards expect optimizer-attributed shares.
+    //
+    // We also distribute the "rolls delta" — the gap between meters-based
+    // edgeband (used inside `computeOptimizerAreaSubtotals`) and whole-roll
+    // edgeband (used by `materialsSubtotal` / Grand Total / the PDF) —
+    // proportionally across areas. Mirrors the exact logic in
+    // `resolveOptimizerAreaSubtotals` so the Pricing-tab Area Totals,
+    // Analytics charts and the Standard PDF's per-area prices stay in sync
+    // (otherwise the UI per-area sum trails the printed Grand Total by the
+    // full rolls delta, currently ~$1.6k on BHS Kona).
     let perAreaCabinetSubtotal = totals.perAreaCabinetSubtotal;
     if (optimizerReady && activeOptimizerRun) {
       try {
@@ -1429,10 +1438,36 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           areasData: areas,
           cabinetsCovered: new Set<string>(snapshot?.cabinetsCovered ?? []),
         });
+        const { ebPriceBySlot, ebSlotMeta } = extractEbSnapshotInputs(snapshot);
+        const totalEdgebandRolls = computeEdgebandRollsCost(
+          snapshot.pieces,
+          ebPriceBySlot,
+          snapshot.ebCabinetMap,
+          ebSlotMeta,
+        );
+        const totalEdgebandMeters = Object.values(perAreaOpt).reduce((s, a) => s + a.edgebandCost, 0);
+        const rollsDelta = totalEdgebandRolls - totalEdgebandMeters;
+        const hasDelta = Math.abs(rollsDelta) > 0.01;
+        const denom = hasDelta
+          ? (totalEdgebandMeters > 0
+              ? totalEdgebandMeters
+              : Object.values(perAreaOpt).reduce((s, a) => s + a.boardsCost, 0))
+          : 0;
+
         const replaced: Record<string, number> = { ...perAreaCabinetSubtotal };
         for (const area of areas) {
-          replaced[area.id] =
-            perAreaOpt[area.id]?.cabinetsSubtotal ?? perAreaCabinetSubtotal[area.id] ?? 0;
+          const v = perAreaOpt[area.id];
+          if (!v) {
+            replaced[area.id] = perAreaCabinetSubtotal[area.id] ?? 0;
+            continue;
+          }
+          const base = v.cabinetsSubtotal;
+          if (hasDelta && denom > 0) {
+            const weight = (totalEdgebandMeters > 0 ? v.edgebandCost : v.boardsCost) / denom;
+            replaced[area.id] = base + rollsDelta * weight;
+          } else {
+            replaced[area.id] = base;
+          }
         }
         perAreaCabinetSubtotal = replaced;
       } catch {
@@ -2133,8 +2168,8 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <p className="text-sm text-slate-600">Prefab Closets Subtotal:</p>
                 <p className="text-sm text-slate-600">Prefab Cabinets Subtotal:</p>
                 <p className="text-sm text-slate-600">Individual Items Subtotal:</p>
-                <p className="text-sm text-slate-600 mt-2 pt-2 border-t border-slate-300">Materials Subtotal:</p>
-                {riskFactorPct > 0 && <p className="text-sm text-amber-700">Risk Factor ({riskFactorPct}%):</p>}
+                {riskAmount > 0 && <p className="text-sm text-amber-700">Risk Factor ({riskFactorPct}%):</p>}
+                <p className="text-sm text-slate-600 mt-2 pt-2 border-t border-slate-300">Subtotal:</p>
                 {profitMultiplier > 0 && <p className="text-sm text-slate-600">Profit ({(profitMultiplier * 100).toFixed(1)}%):</p>}
                 <p className="text-sm font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">Price:</p>
                 {tariffMultiplier > 0 && <p className="text-sm text-slate-600">Tariff ({(tariffMultiplier * 100).toFixed(2)}%):</p>}
@@ -2150,8 +2185,8 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <p className="text-sm font-medium text-slate-700">{formatPrice(closetItemsSubtotal)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(prefabItemsSubtotal)}</p>
                 <p className="text-sm font-medium text-slate-700">{formatPrice(itemsSubtotal)}</p>
-                <p className="text-sm font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(materialsSubtotal)}</p>
-                {riskFactorPct > 0 && <p className="text-sm font-medium text-amber-700">{formatPrice(riskAmount)}</p>}
+                {riskAmount > 0 && <p className="text-sm font-medium text-amber-700">{formatPrice(riskAmount)}</p>}
+                <p className="text-sm font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(materialsSubtotal + riskAmount)}</p>
                 {profitMultiplier > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(profitAmount)}</p>}
                 <p className="text-sm font-bold text-blue-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(price)}</p>
                 {tariffMultiplier > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(tariffAmount)}</p>}
@@ -2392,6 +2427,8 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                   areas={areas}
                   products={products}
                   pricingMethod={pricingMethod}
+                  riskAmount={quotationView.riskAmount}
+                  riskFactorPct={riskFactorPct}
                   optimizerOverrides={
                     pricingMethod === 'optimizer' && activeOptimizerRun
                       ? {
@@ -2617,6 +2654,12 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                           // switches between sqft and optimizer mode along with the
                           // rest of the UI. Items/countertops/closets/prefab are always
                           // ft² sourced (they don't go through the optimizer).
+                          //
+                          // Risk Factor is distributed proportionally across per-area
+                          // totals so they sum to the Subtotal shown in Breakdown's
+                          // Project Cost Summary (Materials + Labor + Risk). Mirrors
+                          // the same multiplier applied to the Standard PDF's per-area
+                          // pricing table.
                           const cabinetsPart = quotationView.perAreaCabinetSubtotal[area.id] ?? 0;
                           const rawTotal =
                             cabinetsPart +
@@ -2625,13 +2668,16 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                             (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0) +
                             (area.prefabItems || []).reduce((sum, pi) => sum + pi.cost_mxn, 0);
                           const qty = area.quantity ?? 1;
+                          const riskApplies = pricingMethod === 'optimizer' ? riskFactorAppliesOptimizer : riskFactorAppliesSqft;
+                          const riskMultiplier = riskApplies && riskFactorPct > 0 ? 1 + riskFactorPct / 100 : 1;
+                          const adjustedRaw = rawTotal * riskMultiplier;
                           return qty > 1 ? (
                             <div>
-                              <div className="text-xs text-slate-500">{formatCurrency(rawTotal)} × {qty}</div>
-                              <div className="text-base sm:text-xl font-bold text-blue-900">{formatCurrency(rawTotal * qty)}</div>
+                              <div className="text-xs text-slate-500">{formatCurrency(adjustedRaw)} × {qty}</div>
+                              <div className="text-base sm:text-xl font-bold text-blue-900">{formatCurrency(adjustedRaw * qty)}</div>
                             </div>
                           ) : (
-                            <div className="text-base sm:text-xl font-bold text-slate-900">{formatCurrency(rawTotal)}</div>
+                            <div className="text-base sm:text-xl font-bold text-slate-900">{formatCurrency(adjustedRaw)}</div>
                           );
                         })()}
                       </div>
