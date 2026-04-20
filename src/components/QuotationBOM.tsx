@@ -414,7 +414,9 @@ export function QuotationBOM({ areas, projectId, quotation }: QuotationBOMProps)
       materialsCostOnly:  totals.materialsSubtotal - totalLaborCost,
       totalLaborCost,
       materialsSubtotal:  totals.materialsSubtotal,
-      profitMarginAmount: totals.price - totals.materialsSubtotal,
+      riskFactorPct:      riskPct,
+      riskAmount:         totals.riskAmount,
+      profitMarginAmount: totals.profitAmount,
       price:              totals.price,
       tariffAmount:       totals.tariffAmount,
       referralAmount:     totals.referralAmount,
@@ -585,11 +587,18 @@ export function QuotationBOM({ areas, projectId, quotation }: QuotationBOMProps)
           <div className="px-5 py-4">
             <table className="w-full text-sm max-w-lg">
               <tbody>
-                {/* Materials + Labor */}
+                {/* Materials + Labor + Risk → Subtotal */}
                 <SummaryRow label="Materials Cost"   value={costSummary.materialsCostOnly} />
                 <SummaryRow label="Labor Cost"       value={costSummary.totalLaborCost} />
+                {costSummary.riskAmount > 0 && (
+                  <SummaryRow
+                    label={`Risk Factor (${costSummary.riskFactorPct}%)`}
+                    value={costSummary.riskAmount}
+                    muted
+                  />
+                )}
                 <SummaryDivider />
-                <SummaryRow label="Subtotal"         value={costSummary.materialsSubtotal} bold />
+                <SummaryRow label="Subtotal"         value={costSummary.materialsSubtotal + costSummary.riskAmount} bold />
 
                 {/* Profit */}
                 {costSummary.profitMarginAmount > 0 && (

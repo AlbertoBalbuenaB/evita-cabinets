@@ -797,9 +797,6 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
               <tbody>
                 <SummaryRow label="Materials Cost"   value={costSummary.materialsCostOnly} />
                 <SummaryRow label="Labor Cost"       value={costSummary.totalLaborCost} />
-                <SummaryDivider />
-                <SummaryRow label="Subtotal"         value={costSummary.materialsSubtotal} bold />
-
                 {costSummary.riskAmount > 0 && (
                   <SummaryRow
                     label={`Risk Factor (${costSummary.riskFactorPct}%)`}
@@ -807,6 +804,9 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
                     muted
                   />
                 )}
+                <SummaryDivider />
+                <SummaryRow label="Subtotal"         value={costSummary.materialsSubtotal + costSummary.riskAmount} bold />
+
                 {costSummary.profitMarginAmount > 0 && (
                   <>
                     <SummaryRow label="Profit Margin" value={costSummary.profitMarginAmount} muted />

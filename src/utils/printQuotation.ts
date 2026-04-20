@@ -647,6 +647,26 @@ export async function printQuotationUSD(
   const taxPercentage = project.tax_percentage || 0;
   const referralRate = project.referral_currency_rate || 0;
 
+  // Risk factor — applied BEFORE profit gross-up to mirror the UI formula
+  // in computeQuotationTotalsSqft. Without this multiplier the USD PDF's
+  // Grand Total would drift from the UI's projectTotal by
+  // riskAmount / (1 - profitMultiplier) × (1 + taxPercentage/100).
+  // The applies_{sqft,optimizer} flags pick which pricing path the risk
+  // attaches to; we use `optimizerAreaSubtotals` presence as the signal
+  // for optimizer mode (same heuristic used elsewhere in this function).
+  const hasOptimizerOverrides = !!(
+    overrides.optimizerAreaSubtotals &&
+    Object.keys(overrides.optimizerAreaSubtotals).length > 0
+  );
+  const riskFactorPct = (project as { risk_factor_percentage?: number | null }).risk_factor_percentage ?? 0;
+  // Defaults mirror the Info-tab state initializers in ProjectDetails
+  // (both `?? true`) so a PDF rendered for a legacy project with nullable
+  // flags matches the header total the user sees.
+  const riskApplies = hasOptimizerOverrides
+    ? ((project as { risk_factor_applies_optimizer?: boolean | null }).risk_factor_applies_optimizer ?? true)
+    : ((project as { risk_factor_applies_sqft?: boolean | null }).risk_factor_applies_sqft ?? true);
+  const riskMultiplier = riskApplies && riskFactorPct > 0 ? 1 + riskFactorPct / 100 : 1;
+
   // Optimizer-mode swap: mirrors the MXN path in `printQuotation`.
   // Areas with an override use the optimizer-derived per-area cabinet
   // subtotal (pre-quantity, MXN); everything else falls back to ft².
@@ -680,9 +700,10 @@ export async function printQuotationUSD(
     // the same way.
     const areaMaterialsTariffBase = (areaCabinetsTariffBase + areaItemsTotal + areaClosetTotal + areaPrefabTotal) * qty;
 
+    const areaAdjustedSubtotal = areaMaterialsSubtotal * riskMultiplier;
     const areaPrice = profitMultiplier > 0 && profitMultiplier < 1
-      ? areaMaterialsSubtotal / (1 - profitMultiplier)
-      : areaMaterialsSubtotal;
+      ? areaAdjustedSubtotal / (1 - profitMultiplier)
+      : areaAdjustedSubtotal;
 
     // Calculate tariff and tax based on ORIGINAL price (not inflated), only when flag is enabled
     const areaTariff = area.applies_tariff === true ? areaMaterialsTariffBase * tariffMultiplier : 0;
@@ -737,9 +758,10 @@ export async function printQuotationUSD(
     }
   }
   const countertopGroupsBase = Array.from(usdCountertopGroupMap.values()).map(g => {
+    const groupAdjusted = g.subtotalMXN * riskMultiplier;
     const groupPrice = profitMultiplier > 0 && profitMultiplier < 1
-      ? g.subtotalMXN / (1 - profitMultiplier)
-      : g.subtotalMXN;
+      ? groupAdjusted / (1 - profitMultiplier)
+      : groupAdjusted;
     const groupTariff = g.subtotalMXNTariffable * tariffMultiplier;
     return { ...g, groupPrice, groupTariff };
   });
