@@ -1,5 +1,5 @@
 import {
-  Hand, MousePointer2, Ruler, Minus, Route, Square, Hexagon, Locate, Type, Hash, Scissors,
+  Hand, MousePointer2, Ruler, Minus, Route, Square, Hexagon, Locate, Type, Hash, Scissors, MessageSquare,
   ZoomIn, ZoomOut, Maximize2,
   ChevronLeft, ChevronRight,
   Undo2, Redo2, Crosshair, Magnet, Grid3x3,
@@ -45,6 +45,7 @@ const tools: { mode: ToolMode; icon: typeof Hand; label: string; shortcut: strin
   { mode: 'polygon', icon: Hexagon, label: 'Polygon', shortcut: 'P', needsCal: true },
   { mode: 'count', icon: Hash, label: 'Count', shortcut: 'N' },
   { mode: 'cutout', icon: Scissors, label: 'Cutout', shortcut: 'X', needsCal: true, hint: 'Select a rectangle/polygon first, then draw the cutout inside' },
+  { mode: 'comment', icon: MessageSquare, label: 'Comment', shortcut: 'O', hint: 'Requires a saved session — comments sync to Supabase' },
   { mode: 'annotate', icon: Type, label: 'Annotate', shortcut: 'T' },
 ];
 

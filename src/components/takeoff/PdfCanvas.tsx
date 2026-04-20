@@ -225,6 +225,14 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
     } else if (tool === 'cutout') {
       state.addActivePoint(pt);
       if (pts.length === 1) finalizeCutout(pts[0], pt);
+    } else if (tool === 'comment') {
+      if (!state.currentSessionId) {
+        // Comments need a persisted session — otherwise there's nothing to attach them to.
+        window.alert('Save the session first (Save to cloud) before dropping comments.');
+        return;
+      }
+      state.setPendingCommentPos(pt);
+      state.setShowCommentInput(true);
     } else if (tool === 'annotate') {
       state.setPendingAnnotationPos(pt);
       state.setShowAnnotationInput(true);

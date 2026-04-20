@@ -40,6 +40,9 @@ export const MeasurementOverlay = forwardRef<SVGSVGElement, MeasurementOverlayPr
       selectedMeasurementId,
       unit,
       categories,
+      comments,
+      openCommentId,
+      setOpenComment,
     } = useTakeoffStore();
 
     const scale = viewport.zoom * renderScale;
@@ -55,6 +58,9 @@ export const MeasurementOverlay = forwardRef<SVGSVGElement, MeasurementOverlayPr
     const selectedMeasurement = selectedMeasurementId
       ? pageMeasurements.find((m) => m.id === selectedMeasurementId) ?? null
       : null;
+    const rootComments = comments.filter(
+      (c) => c.parentCommentId === null && c.page === currentPage && c.positionX !== null && c.positionY !== null,
+    );
 
     return (
       <svg
@@ -124,11 +130,53 @@ export const MeasurementOverlay = forwardRef<SVGSVGElement, MeasurementOverlayPr
           {selectedMeasurement && activeTool === 'select' && (
             <SelectionHandles m={selectedMeasurement} inv={inv} />
           )}
+
+          {/* Comment pins — always clickable regardless of active tool */}
+          {rootComments.map((c) => (
+            <CommentPinNode
+              key={c.id}
+              x={c.positionX as number}
+              y={c.positionY as number}
+              resolved={c.resolved}
+              active={openCommentId === c.id}
+              inv={inv}
+              onClick={() => setOpenComment(openCommentId === c.id ? null : c.id)}
+            />
+          ))}
         </g>
       </svg>
     );
   }
 );
+
+// ── Comment pin ──────────────────────────────────────────────
+
+function CommentPinNode({ x, y, resolved, active, inv, onClick }: {
+  x: number; y: number; resolved: boolean; active: boolean; inv: number; onClick: () => void;
+}) {
+  const r = 13 * inv;
+  const color = resolved ? '#16a34a' : '#f97316'; // green when resolved, orange when open
+  return (
+    <g
+      transform={`translate(${x},${y})`}
+      style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+    >
+      {active && (
+        <circle r={r + 4 * inv} fill="none" stroke={color} strokeWidth={1.5 * inv} strokeDasharray={`${3 * inv} ${2 * inv}`} />
+      )}
+      <circle r={r} fill={color} stroke="white" strokeWidth={2 * inv} />
+      {/* chat bubble glyph */}
+      <path
+        d={`M ${-5 * inv} ${-3 * inv} h ${10 * inv} a ${1.5 * inv} ${1.5 * inv} 0 0 1 ${1.5 * inv} ${1.5 * inv} v ${5 * inv} a ${1.5 * inv} ${1.5 * inv} 0 0 1 ${-1.5 * inv} ${1.5 * inv} h ${-3 * inv} l ${-2 * inv} ${2 * inv} v ${-2 * inv} h ${-5 * inv} a ${1.5 * inv} ${1.5 * inv} 0 0 1 ${-1.5 * inv} ${-1.5 * inv} v ${-5 * inv} a ${1.5 * inv} ${1.5 * inv} 0 0 1 ${1.5 * inv} ${-1.5 * inv} z`}
+        fill="none"
+        stroke="white"
+        strokeWidth={1.5 * inv}
+        strokeLinejoin="round"
+      />
+    </g>
+  );
+}
 
 // ── Selection handles ────────────────────────────────────────
 

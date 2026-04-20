@@ -36,6 +36,7 @@ export type ToolMode =
   | 'polygon'
   | 'count'
   | 'cutout'
+  | 'comment'
   | 'annotate';
 
 // ── Categories (takeoff layers: Base Cab, Wall Cab, Countertop, etc.) ─

@@ -11,6 +11,7 @@ import type {
   SessionData,
   Category,
 } from '../lib/takeoff/types';
+import type { TakeoffComment } from '../lib/takeoff/supabase';
 
 const MEASUREMENT_COLORS = [
   '#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c',
@@ -59,6 +60,12 @@ interface TakeoffState {
   currentSessionId: string | null;
   sessionName: string | null;
   sessionProjectId: string | null;
+
+  // Comments (loaded from Supabase when a session opens; empty for unsaved sessions).
+  comments: TakeoffComment[];
+  openCommentId: string | null;       // which thread popover is open
+  showCommentInput: boolean;          // showing the "write a new comment" modal
+  pendingCommentPos: PdfPoint | null; // PDF-space position for a new root comment
 
   // Undo/redo
   undoStack: UndoableAction[];
@@ -132,6 +139,14 @@ interface TakeoffActions {
   setCurrentSession: (s: { id: string | null; name: string | null; projectId: string | null }) => void;
   hydrateSessionData: (data: SessionData) => void;
 
+  // Comments (store is the local cache; Supabase adapter handles persistence, then calls these)
+  setComments: (c: TakeoffComment[]) => void;
+  upsertCommentLocal: (c: TakeoffComment) => void;
+  removeCommentLocal: (id: string) => void;
+  setOpenComment: (id: string | null) => void;
+  setShowCommentInput: (show: boolean) => void;
+  setPendingCommentPos: (pt: PdfPoint | null) => void;
+
   undo: () => void;
   redo: () => void;
 
@@ -177,6 +192,10 @@ const initialState: TakeoffState = {
   currentSessionId: null,
   sessionName: null,
   sessionProjectId: null,
+  comments: [],
+  openCommentId: null,
+  showCommentInput: false,
+  pendingCommentPos: null,
   undoStack: [],
   redoStack: [],
   unit: 'in',
@@ -392,6 +411,27 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
       activePoints: [],
       selectedMeasurementId: null,
     }),
+
+  setComments: (c) => set({ comments: c }),
+
+  upsertCommentLocal: (c) =>
+    set((s) => {
+      const idx = s.comments.findIndex((x) => x.id === c.id);
+      if (idx === -1) return { comments: [...s.comments, c] };
+      const next = s.comments.slice();
+      next[idx] = c;
+      return { comments: next };
+    }),
+
+  removeCommentLocal: (id) =>
+    set((s) => ({
+      comments: s.comments.filter((c) => c.id !== id),
+      openCommentId: s.openCommentId === id ? null : s.openCommentId,
+    })),
+
+  setOpenComment: (id) => set({ openCommentId: id }),
+  setShowCommentInput: (show) => set({ showCommentInput: show }),
+  setPendingCommentPos: (pt) => set({ pendingCommentPos: pt }),
 
   // ── Undo/Redo ─────────────────────────────────────────────
 

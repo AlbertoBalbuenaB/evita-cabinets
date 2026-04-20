@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Link2, UploadCloud, FolderOpen } from 'lucide-react';
 import { useTakeoffStore } from '../hooks/useTakeoffStore';
 import { ACCEPTED_FILE_TYPES } from '../lib/takeoff/pdfLoader';
-import { loadSessionFromSupabase } from '../lib/takeoff/supabase';
+import { loadSessionFromSupabase, listCommentsForSession } from '../lib/takeoff/supabase';
 import { PdfDropZone } from '../components/takeoff/PdfDropZone';
 import { PdfCanvas, type PdfCanvasHandle } from '../components/takeoff/PdfCanvas';
 import { Toolbar } from '../components/takeoff/Toolbar';
@@ -11,11 +11,17 @@ import { MeasurementsPanel } from '../components/takeoff/MeasurementsPanel';
 import { CalibrationModal } from '../components/takeoff/CalibrationModal';
 import { SaveSessionModal } from '../components/takeoff/SaveSessionModal';
 import { SessionsList } from '../components/takeoff/SessionsList';
+import { CommentInputModal } from '../components/takeoff/CommentInputModal';
+import { CommentThread } from '../components/takeoff/CommentThread';
 import { Modal } from '../components/Modal';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 
 export function TakeoffPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const querySessionId = searchParams.get('session');
+  const queryProjectId = searchParams.get('project');
+
   const [file, setFile] = useState<File | null>(null);
   const [urlInput, setUrlInput] = useState('');
   const [showUrlModal, setShowUrlModal] = useState(false);
@@ -55,10 +61,31 @@ export function TakeoffPage() {
         projectId: result.session.project_id,
       });
       setFile(result.file);
+      // Kick off comment hydration in the background — no await so the PDF can start
+      // rendering immediately; pins will pop in once the fetch resolves.
+      listCommentsForSession(sessionId)
+        .then((rows) => store.setComments(rows))
+        .catch((err) => console.warn('Failed to load comments', err));
+      // URL sync so refresh keeps the same session loaded.
+      setSearchParams((sp) => {
+        const next = new URLSearchParams(sp);
+        next.set('session', sessionId);
+        next.delete('project');
+        return next;
+      }, { replace: true });
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : String(err));
     }
-  }, [store]);
+  }, [store, setSearchParams]);
+
+  // If the URL has ?session=<id>, load it once on mount.
+  const hasLoadedQuerySession = useRef(false);
+  useEffect(() => {
+    if (hasLoadedQuerySession.current) return;
+    if (!querySessionId) return;
+    hasLoadedQuerySession.current = true;
+    handleOpenSession(querySessionId);
+  }, [querySessionId, handleOpenSession]);
 
   const handleUploadClick = useCallback(() => { fileInputRef.current?.click(); }, []);
 
@@ -157,6 +184,8 @@ export function TakeoffPage() {
       if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && e.shiftKey) { e.preventDefault(); useTakeoffStore.getState().redo(); return; }
       if (e.key === 'Escape') {
         const s = useTakeoffStore.getState();
+        if (s.showCommentInput) { s.setShowCommentInput(false); s.setPendingCommentPos(null); return; }
+        if (s.openCommentId) { s.setOpenComment(null); return; }
         if (s.showAnnotationInput) { s.setShowAnnotationInput(false); s.setPendingAnnotationPos(null); return; }
         if (s.activePoints.length > 0) { s.clearActivePoints(); return; }
         if (s.selectedMeasurementId) { s.selectMeasurement(null); return; }
@@ -181,6 +210,7 @@ export function TakeoffPage() {
         p: () => cal && s.setActiveTool('polygon'),
         n: () => s.setActiveTool('count'),
         x: () => cal && s.setActiveTool('cutout'),
+        o: () => s.setActiveTool('comment'),
         t: () => s.setActiveTool('annotate'),
         f: () => canvasHandle.current?.fitToScreen(),
         g: () => s.toggleGrid(),
@@ -318,6 +348,17 @@ export function TakeoffPage() {
         isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
         file={file}
+        defaultProjectId={queryProjectId ?? null}
+        lockProject={!!queryProjectId && !currentSessionId}
+        onSaved={(sessionId) => {
+          // Keep the URL in sync so a refresh preserves the session identity.
+          setSearchParams((sp) => {
+            const next = new URLSearchParams(sp);
+            next.set('session', sessionId);
+            next.delete('project');
+            return next;
+          }, { replace: true });
+        }}
       />
 
       {/* Sessions list modal */}
@@ -326,6 +367,10 @@ export function TakeoffPage() {
         onClose={() => setShowSessionsList(false)}
         onOpen={handleOpenSession}
       />
+
+      {/* Comment modals (render unconditionally — they return null when not active) */}
+      <CommentInputModal />
+      <CommentThread />
     </div>
   );
 }

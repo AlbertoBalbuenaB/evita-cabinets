@@ -8,6 +8,62 @@ import type { SessionData } from './types';
 
 const BUCKET = 'takeoffs';
 
+// ── Comment types ────────────────────────────────────────────
+
+export interface TakeoffComment {
+  id: string;
+  sessionId: string;
+  parentCommentId: string | null;   // null ⇒ root (has a pin anchored on the PDF)
+  authorId: string;
+  authorName: string | null;
+  text: string;
+  positionX: number | null;         // PDF-space, only on root
+  positionY: number | null;
+  page: number | null;              // only on root
+  resolved: boolean;
+  resolvedBy: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+}
+
+type CommentRowWithAuthor = {
+  id: string;
+  session_id: string;
+  parent_comment_id: string | null;
+  author_id: string;
+  text: string;
+  position_x: number | null;
+  position_y: number | null;
+  page: number | null;
+  resolved: boolean;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  created_at: string;
+  author?: { name: string | null } | { name: string | null }[] | null;
+};
+
+function rowToComment(r: CommentRowWithAuthor): TakeoffComment {
+  const author = r.author;
+  let authorName: string | null = null;
+  if (Array.isArray(author)) authorName = author[0]?.name ?? null;
+  else if (author) authorName = (author as { name: string | null }).name ?? null;
+  return {
+    id: r.id,
+    sessionId: r.session_id,
+    parentCommentId: r.parent_comment_id,
+    authorId: r.author_id,
+    authorName,
+    text: r.text,
+    positionX: r.position_x,
+    positionY: r.position_y,
+    page: r.page,
+    resolved: r.resolved,
+    resolvedBy: r.resolved_by,
+    resolvedAt: r.resolved_at,
+    createdAt: r.created_at,
+  };
+}
+
 export interface TakeoffSessionRow {
   id: string;
   name: string;
@@ -190,6 +246,113 @@ export async function deleteTakeoffSession(sessionId: string): Promise<void> {
   if (sessionRow?.pdf_storage_path) {
     await supabase.storage.from(BUCKET).remove([sessionRow.pdf_storage_path]).catch(() => {});
   }
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+
+// ── Comments ────────────────────────────────────────────────
+
+export async function listCommentsForSession(sessionId: string): Promise<TakeoffComment[]> {
+  const { data, error } = await supabase
+    .from('takeoff_comments')
+    .select(`
+      id, session_id, parent_comment_id, author_id, text,
+      position_x, position_y, page,
+      resolved, resolved_by, resolved_at, created_at,
+      author:author_id ( name )
+    `)
+    .eq('session_id', sessionId)
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(`Load comments failed: ${error.message}`);
+  return (data ?? []).map((r) => rowToComment(r as unknown as CommentRowWithAuthor));
+}
+
+export async function addRootCommentToSupabase(params: {
+  sessionId: string;
+  text: string;
+  positionX: number;
+  positionY: number;
+  page: number;
+}): Promise<TakeoffComment> {
+  const memberId = await getCurrentTeamMemberId();
+  if (!memberId) throw new Error('Not authenticated as a team member.');
+  const { data, error } = await supabase
+    .from('takeoff_comments')
+    .insert({
+      session_id: params.sessionId,
+      parent_comment_id: null,
+      author_id: memberId,
+      text: params.text,
+      position_x: params.positionX,
+      position_y: params.positionY,
+      page: params.page,
+    })
+    .select(`
+      id, session_id, parent_comment_id, author_id, text,
+      position_x, position_y, page,
+      resolved, resolved_by, resolved_at, created_at,
+      author:author_id ( name )
+    `)
+    .single();
+  if (error || !data) throw new Error(`Add comment failed: ${error?.message ?? 'unknown'}`);
+  return rowToComment(data as unknown as CommentRowWithAuthor);
+}
+
+export async function addReplyToSupabase(params: {
+  sessionId: string;
+  parentCommentId: string;
+  text: string;
+}): Promise<TakeoffComment> {
+  const memberId = await getCurrentTeamMemberId();
+  if (!memberId) throw new Error('Not authenticated as a team member.');
+  const { data, error } = await supabase
+    .from('takeoff_comments')
+    .insert({
+      session_id: params.sessionId,
+      parent_comment_id: params.parentCommentId,
+      author_id: memberId,
+      text: params.text,
+      // Replies inherit location from the root; column stays NULL.
+      position_x: null,
+      position_y: null,
+      page: null,
+    })
+    .select(`
+      id, session_id, parent_comment_id, author_id, text,
+      position_x, position_y, page,
+      resolved, resolved_by, resolved_at, created_at,
+      author:author_id ( name )
+    `)
+    .single();
+  if (error || !data) throw new Error(`Reply failed: ${error?.message ?? 'unknown'}`);
+  return rowToComment(data as unknown as CommentRowWithAuthor);
+}
+
+export async function setCommentResolved(commentId: string, resolved: boolean): Promise<TakeoffComment> {
+  const memberId = await getCurrentTeamMemberId();
+  if (!memberId) throw new Error('Not authenticated as a team member.');
+  const { data, error } = await supabase
+    .from('takeoff_comments')
+    .update({
+      resolved,
+      resolved_by: resolved ? memberId : null,
+      resolved_at: resolved ? new Date().toISOString() : null,
+    })
+    .eq('id', commentId)
+    .select(`
+      id, session_id, parent_comment_id, author_id, text,
+      position_x, position_y, page,
+      resolved, resolved_by, resolved_at, created_at,
+      author:author_id ( name )
+    `)
+    .single();
+  if (error || !data) throw new Error(`Resolve failed: ${error?.message ?? 'unknown'}`);
+  return rowToComment(data as unknown as CommentRowWithAuthor);
+}
+
+export async function deleteCommentFromSupabase(commentId: string): Promise<void> {
+  const { error } = await supabase.from('takeoff_comments').delete().eq('id', commentId);
+  if (error) throw new Error(`Delete comment failed: ${error.message}`);
 }
 
 // ── Helpers ──────────────────────────────────────────────────

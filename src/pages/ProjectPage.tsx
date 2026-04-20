@@ -4,7 +4,7 @@ import {
   ArrowLeft, Pencil as Edit2, FileText, FolderOpen, BarChart3,
   Plus, Calendar, Save, X, Copy, Trash2,
   Receipt, ClipboardList, Files, ScrollText, MoreVertical, TrendingUp,
-  ArrowUpDown, Upload, ShoppingCart
+  ArrowUpDown, Upload, ShoppingCart, Ruler,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
@@ -17,6 +17,7 @@ import { DocumentationSection } from '../components/DocumentationSection';
 import { BitacoraSection } from '../components/BitacoraSection';
 import { CrossQuotationAnalytics } from '../components/CrossQuotationAnalytics';
 import { PurchaseListSection } from '../components/purchases/PurchaseListSection';
+import { TakeoffsSection } from '../components/takeoff/TakeoffsSection';
 import type { Project, Quotation, TeamMember } from '../types';
 import { useCurrentMember } from '../lib/useCurrentMember';
 
@@ -35,7 +36,7 @@ function formatRelativeDate(iso: string): string {
   return `${Math.floor(days / 365)} year${Math.floor(days / 365) > 1 ? 's' : ''} ago`;
 }
 
-const VALID_TABS = ['overview', 'quotations', 'purchases', 'management', 'documents', 'logs', 'analytics'] as const;
+const VALID_TABS = ['overview', 'quotations', 'purchases', 'management', 'documents', 'takeoffs', 'logs', 'analytics'] as const;
 type TabKey = typeof VALID_TABS[number];
 
 export function ProjectPage() {
@@ -306,6 +307,7 @@ export function ProjectPage() {
     { id: 'purchases' as const, label: 'Purchases', icon: ShoppingCart },
     { id: 'management' as const, label: 'Management', icon: ClipboardList },
     { id: 'documents' as const, label: 'Documents', icon: Files },
+    { id: 'takeoffs' as const, label: 'Takeoffs', icon: Ruler },
     { id: 'logs' as const, label: 'Logs', icon: ScrollText },
     { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
   ];
@@ -634,6 +636,11 @@ export function ProjectPage() {
       {/* Documents tab */}
       {activeTab === 'documents' && (
         <DocumentationSection projectId={project.id} />
+      )}
+
+      {/* Takeoffs tab */}
+      {activeTab === 'takeoffs' && (
+        <TakeoffsSection projectId={project.id} />
       )}
 
       {/* Logs tab */}
