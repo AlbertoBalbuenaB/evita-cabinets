@@ -133,6 +133,7 @@ export function TakeoffPage() {
         const s = useTakeoffStore.getState();
         if (s.showAnnotationInput) { s.setShowAnnotationInput(false); s.setPendingAnnotationPos(null); return; }
         if (s.activePoints.length > 0) { s.clearActivePoints(); return; }
+        if (s.selectedMeasurementId) { s.selectMeasurement(null); return; }
         s.setActiveTool('pan');
         return;
       }
@@ -145,6 +146,7 @@ export function TakeoffPage() {
       const cal = s.calibrations[s.currentPage];
       const shortcuts: Record<string, () => void> = {
         v: () => s.setActiveTool('pan'),
+        s: () => s.setActiveTool('select'),
         c: () => s.setActiveTool('calibrate'),
         l: () => cal && s.setActiveTool('line'),
         m: () => cal && s.setActiveTool('multiline'),
@@ -153,7 +155,6 @@ export function TakeoffPage() {
         p: () => cal && s.setActiveTool('polygon'),
         t: () => s.setActiveTool('annotate'),
         f: () => canvasHandle.current?.fitToScreen(),
-        s: () => s.toggleSnap(),
         g: () => s.toggleGrid(),
       };
       const fn = shortcuts[e.key.toLowerCase()];

@@ -1,6 +1,7 @@
 import { forwardRef } from 'react';
 import { useTakeoffStore } from '../../hooks/useTakeoffStore';
 import { midpoint, formatMeasurement, formatArea, formatAngle, polygonCentroid, convertUnit } from '../../lib/takeoff/geometry';
+import { getHandlePositions } from '../../lib/takeoff/hitTest';
 import type {
   ViewportState,
   PdfPoint,
@@ -43,6 +44,9 @@ export const MeasurementOverlay = forwardRef<SVGSVGElement, MeasurementOverlayPr
 
     const pageMeasurements = measurements.filter((m) => m.page === currentPage);
     const pageAnnotations = annotations.filter((a) => a.page === currentPage);
+    const selectedMeasurement = selectedMeasurementId
+      ? pageMeasurements.find((m) => m.id === selectedMeasurementId) ?? null
+      : null;
 
     return (
       <svg
@@ -104,14 +108,42 @@ export const MeasurementOverlay = forwardRef<SVGSVGElement, MeasurementOverlayPr
           ))}
 
           {/* Active preview */}
-          {activePoints.length > 0 && cursorPos && activeTool !== 'pan' && activeTool !== 'annotate' && (
+          {activePoints.length > 0 && cursorPos && activeTool !== 'pan' && activeTool !== 'annotate' && activeTool !== 'select' && (
             <ActivePreview points={activePoints} cursor={cursorPos} tool={activeTool} inv={inv} />
+          )}
+
+          {/* Selection handles (only rendered when Select tool is active) */}
+          {selectedMeasurement && activeTool === 'select' && (
+            <SelectionHandles m={selectedMeasurement} inv={inv} />
           )}
         </g>
       </svg>
     );
   }
 );
+
+// ── Selection handles ────────────────────────────────────────
+
+function SelectionHandles({ m, inv }: { m: Measurement; inv: number }) {
+  const handles = getHandlePositions(m);
+  const color = m.color;
+  const r = 5 * inv;
+  return (
+    <g>
+      {handles.map(({ key, pt }) => (
+        <circle
+          key={key}
+          cx={pt.x}
+          cy={pt.y}
+          r={r}
+          fill="white"
+          stroke={color}
+          strokeWidth={1.5 * inv}
+        />
+      ))}
+    </g>
+  );
+}
 
 // ── Grid ─────────────────────────────────────────────────────
 

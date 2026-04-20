@@ -94,6 +94,10 @@ interface TakeoffActions {
   clearAllMeasurements: () => void;
   setMeasurementGroup: (id: string, group: string | undefined) => void;
 
+  // Select tool: live preview during drag (no undo entry) + final commit (with undo)
+  replaceMeasurementLive: (id: string, m: Measurement) => void;
+  commitReplaceMeasurement: (prev: Measurement, next: Measurement) => void;
+
   // Annotations
   addAnnotation: (a: Annotation) => void;
   deleteAnnotation: (id: string) => void;
@@ -261,6 +265,18 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
       measurements: s.measurements.map((m) => (m.id === id ? { ...m, group } : m)),
     })),
 
+  replaceMeasurementLive: (id, next) =>
+    set((s) => ({
+      measurements: s.measurements.map((m) => (m.id === id ? next : m)),
+    })),
+
+  commitReplaceMeasurement: (prev, next) =>
+    set((s) => ({
+      measurements: s.measurements.map((m) => (m.id === prev.id ? next : m)),
+      undoStack: [...s.undoStack, { type: 'REPLACE_MEASUREMENT', prev, next }],
+      redoStack: [],
+    })),
+
   // ── Annotations ───────────────────────────────────────────
 
   addAnnotation: (a) =>
@@ -364,6 +380,13 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
           redoStack: [...redoStack, action],
         });
         break;
+      case 'REPLACE_MEASUREMENT':
+        set({
+          measurements: measurements.map((m) => (m.id === action.prev.id ? action.prev : m)),
+          undoStack: newUndo,
+          redoStack: [...redoStack, action],
+        });
+        break;
     }
   },
 
@@ -412,6 +435,13 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
       case 'DELETE_ANNOTATION':
         set({
           annotations: annotations.filter((a) => a.id !== action.annotation.id),
+          undoStack: [...undoStack, action],
+          redoStack: newRedo,
+        });
+        break;
+      case 'REPLACE_MEASUREMENT':
+        set({
+          measurements: measurements.map((m) => (m.id === action.prev.id ? action.next : m)),
           undoStack: [...undoStack, action],
           redoStack: newRedo,
         });

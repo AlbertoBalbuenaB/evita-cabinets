@@ -3,9 +3,11 @@ import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { loadPdf, renderPage, renderImage, isPdf } from '../../lib/takeoff/pdfLoader';
 import { screenToPdf } from '../../lib/takeoff/transforms';
 import { euclideanDistance, polylineLength, angleBetweenPoints, polygonArea, polygonPerimeter, snapPoint } from '../../lib/takeoff/geometry';
+import { pickAt } from '../../lib/takeoff/hitTest';
+import { translateMeasurement, updateMeasurementHandle } from '../../lib/takeoff/editMeasurement';
 import { useTakeoffStore } from '../../hooks/useTakeoffStore';
 import { MeasurementOverlay } from './MeasurementOverlay';
-import type { PdfPoint, ToolMode } from '../../lib/takeoff/types';
+import type { PdfPoint, ToolMode, Measurement, HandleKey } from '../../lib/takeoff/types';
 
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 20;
@@ -130,9 +132,20 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
   const isPanningRef = useRef(false);
   const lastMouseRef = useRef({ x: 0, y: 0 });
 
+  // Select-tool drag state: holds the original measurement + which handle (if any)
+  // is being dragged, so mouseup can commit a single undo entry for the whole drag.
+  const dragStateRef = useRef<{
+    mode: 'body' | 'handle';
+    measurementId: string;
+    original: Measurement;
+    handleKey?: HandleKey;
+    startPdf: PdfPoint;
+  } | null>(null);
+
   const getToolCursor = (tool: ToolMode): string => {
     if (tool === 'pan') return 'grab';
     if (tool === 'annotate') return 'text';
+    if (tool === 'select') return 'default';
     return 'crosshair';
   };
 
@@ -166,6 +179,30 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
 
     const tool = state.activeTool;
     const pts = state.activePoints;
+
+    if (tool === 'select') {
+      const pageMeasurements = state.measurements.filter((m) => m.page === state.currentPage);
+      const zoomScale = state.viewport.zoom * RENDER_SCALE;
+      const bodyThreshold = 6 / zoomScale;
+      const handleThreshold = 10 / zoomScale;
+      const hit = pickAt(pt, pageMeasurements, state.selectedMeasurementId, bodyThreshold, handleThreshold);
+      if (!hit) {
+        state.selectMeasurement(null);
+        return;
+      }
+      const target = pageMeasurements.find((m) => m.id === hit.measurementId);
+      if (!target) return;
+      state.selectMeasurement(hit.measurementId);
+      dragStateRef.current = {
+        mode: hit.kind === 'handle' ? 'handle' : 'body',
+        measurementId: hit.measurementId,
+        original: target,
+        handleKey: hit.kind === 'handle' ? hit.handleKey : undefined,
+        startPdf: pt,
+      };
+      e.preventDefault();
+      return;
+    }
 
     if (tool === 'calibrate') {
       state.addActivePoint(pt);
@@ -206,6 +243,24 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
     const rect = container.getBoundingClientRect();
     const state = useTakeoffStore.getState();
     let pt = screenToPdf(e.clientX - rect.left, e.clientY - rect.top, state.viewport, RENDER_SCALE);
+
+    // Select-tool drag: body → translate; handle → update single point
+    const drag = dragStateRef.current;
+    if (drag) {
+      if (drag.mode === 'body') {
+        const dx = pt.x - drag.startPdf.x;
+        const dy = pt.y - drag.startPdf.y;
+        state.replaceMeasurementLive(drag.measurementId, translateMeasurement(drag.original, dx, dy));
+      } else if (drag.mode === 'handle' && drag.handleKey) {
+        const cal = state.calibrations[state.currentPage];
+        if (cal) {
+          state.replaceMeasurementLive(drag.measurementId, updateMeasurementHandle(drag.original, drag.handleKey, pt, cal));
+        }
+      }
+      setCursorPos(pt);
+      return;
+    }
+
     if (state.snapEnabled && state.activePoints.length > 0) {
       pt = applySnap(pt, state);
     }
@@ -214,6 +269,15 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
 
   const handleMouseUp = useCallback(() => {
     isPanningRef.current = false;
+    const drag = dragStateRef.current;
+    if (drag) {
+      const state = useTakeoffStore.getState();
+      const current = state.measurements.find((m) => m.id === drag.measurementId);
+      if (current && current !== drag.original) {
+        state.commitReplaceMeasurement(drag.original, current);
+      }
+      dragStateRef.current = null;
+    }
   }, []);
 
   const handleDoubleClick = useCallback(() => {

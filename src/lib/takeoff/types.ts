@@ -27,6 +27,7 @@ export interface Calibration {
 // ── Tools ────────────────────────────────────────────────────
 export type ToolMode =
   | 'pan'
+  | 'select'
   | 'calibrate'
   | 'line'
   | 'multiline'
@@ -34,6 +35,21 @@ export type ToolMode =
   | 'angle'
   | 'polygon'
   | 'annotate';
+
+// ── Selection handles ────────────────────────────────────────
+// Identifies which vertex/corner of a measurement is being dragged.
+// For rectangles the 4 virtual corners (tl/tr/bl/br) are derived from
+// cornerA/cornerB even if those weren't stored as the top-left/bottom-right pair.
+export type HandleKey =
+  | 'pointA'
+  | 'pointB'
+  | 'vertex'
+  | 'pointC'
+  | 'tl'
+  | 'tr'
+  | 'bl'
+  | 'br'
+  | `points[${number}]`;
 
 // ── Measurements ─────────────────────────────────────────────
 interface BaseMeasurement {
@@ -116,7 +132,8 @@ export type UndoableAction =
   | { type: 'SET_CALIBRATION'; page: number; prev: Calibration | null; next: Calibration }
   | { type: 'CLEAR_ALL'; measurements: Measurement[] }
   | { type: 'ADD_ANNOTATION'; annotation: Annotation }
-  | { type: 'DELETE_ANNOTATION'; annotation: Annotation; index: number };
+  | { type: 'DELETE_ANNOTATION'; annotation: Annotation; index: number }
+  | { type: 'REPLACE_MEASUREMENT'; prev: Measurement; next: Measurement };
 
 // ── Session ──────────────────────────────────────────────────
 export interface SessionData {

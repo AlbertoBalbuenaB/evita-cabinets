@@ -1,5 +1,5 @@
 import {
-  Hand, Ruler, Minus, Route, Square, Hexagon, Locate, Type,
+  Hand, MousePointer2, Ruler, Minus, Route, Square, Hexagon, Locate, Type,
   ZoomIn, ZoomOut, Maximize2,
   ChevronLeft, ChevronRight,
   Undo2, Redo2, Crosshair, Magnet, Grid3x3,
@@ -35,6 +35,7 @@ interface ToolbarProps {
 }
 
 const tools: { mode: ToolMode; icon: typeof Hand; label: string; shortcut: string; needsCal?: boolean }[] = [
+  { mode: 'select', icon: MousePointer2, label: 'Select', shortcut: 'S' },
   { mode: 'pan', icon: Hand, label: 'Pan', shortcut: 'V' },
   { mode: 'calibrate', icon: Ruler, label: 'Calibrate', shortcut: 'C' },
   { mode: 'line', icon: Minus, label: 'Line', shortcut: 'L', needsCal: true },
@@ -113,7 +114,7 @@ export function Toolbar({
 
       <Divider />
 
-      <ToolBtn active={snapEnabled} onClick={onToggleSnap} title="Snap to 45° angles (S)"><Magnet className="h-4 w-4" /></ToolBtn>
+      <ToolBtn active={snapEnabled} onClick={onToggleSnap} title="Snap to 45° angles"><Magnet className="h-4 w-4" /></ToolBtn>
       <ToolBtn active={showGrid} onClick={onToggleGrid} title="Toggle grid (G)"><Grid3x3 className="h-4 w-4" /></ToolBtn>
       <ToolBtn active={showCrosshair} onClick={onToggleCrosshair} title="Toggle crosshair"><Crosshair className="h-4 w-4" /></ToolBtn>
 
