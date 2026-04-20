@@ -135,21 +135,21 @@ export function PriceList() {
 
   usePageChrome(
     {
-      title: activeTab === 'suppliers' ? 'Suppliers' : 'Inventory',
-      crumbs:
-        activeTab === 'suppliers'
-          ? [{ label: 'Inventory', to: '/prices' }, { label: 'Suppliers' }]
-          : [{ label: 'Inventory' }],
+      title: 'Inventory',
+      crumbs: [{ label: 'Inventory' }],
+      tabs: [
+        { id: 'catalog', label: 'Catalog', count: items.length, onClick: () => setActiveTab('catalog') },
+        { id: 'stock', label: 'Stock', onClick: () => setActiveTab('stock') },
+        { id: 'movements', label: 'Movements', onClick: () => setActiveTab('movements') },
+        { id: 'suppliers', label: 'Suppliers', onClick: () => setActiveTab('suppliers') },
+      ],
+      activeTabId: activeTab,
       primaryAction:
-        activeTab === 'suppliers'
-          ? undefined
-          : {
-              label: 'Add Item',
-              icon: Plus,
-              onClick: handleAddNew,
-            },
+        activeTab === 'catalog'
+          ? { label: 'Add Item', icon: Plus, onClick: handleAddNew }
+          : undefined,
     },
-    [activeTab],
+    [activeTab, items.length],
   );
 
   function handleEdit(item: PriceListItem) {
@@ -322,41 +322,11 @@ export function PriceList() {
   return (
     <>
     <div className="page-enter">
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hero-enter">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Inventory</h1>
-          <p className="mt-1 text-slate-500 text-sm">
-            {items.length} item{items.length !== 1 ? 's' : ''} &middot; Manage materials, hardware, and pricing
-          </p>
-        </div>
-        {activeTab === 'catalog' && (
-          <Button onClick={handleAddNew} className="self-start sm:self-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Item
-          </Button>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-5 flex gap-1 p-1 bg-slate-100 rounded-xl w-fit">
-        {([
-          { key: 'catalog', label: 'Catalog' },
-          { key: 'stock', label: 'Stock' },
-          { key: 'movements', label: 'Movements' },
-          { key: 'suppliers', label: 'Suppliers' },
-        ] as const).map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-              activeTab === tab.key
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="mb-6 hero-enter">
+        <h1 className="text-3xl font-bold text-slate-900">Inventory</h1>
+        <p className="mt-1 text-slate-500 text-sm">
+          {items.length} item{items.length !== 1 ? 's' : ''} &middot; Manage materials, hardware, and pricing
+        </p>
       </div>
 
       {activeTab === 'catalog' && (<>
