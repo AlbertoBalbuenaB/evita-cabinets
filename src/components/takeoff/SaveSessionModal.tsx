@@ -24,7 +24,7 @@ interface SaveSessionModalProps {
 
 export function SaveSessionModal({ isOpen, onClose, file, defaultProjectId, lockProject, onSaved }: SaveSessionModalProps) {
   const store = useTakeoffStore();
-  const { currentSessionId, sessionName, sessionProjectId, getSessionData, setCurrentSession } = store;
+  const { currentSessionId, sessionName, sessionProjectId, pdfDirty, getSessionData, setCurrentSession, setPdfDirty } = store;
   const existingSessionId = currentSessionId;
 
   const [name, setName] = useState('');
@@ -69,10 +69,12 @@ export function SaveSessionModal({ isOpen, onClose, file, defaultProjectId, lock
         name: trimmed,
         projectId,
         sessionData: getSessionData(),
-        file: existingSessionId ? null : file,
+        // On update: re-upload only if the PDF bytes changed locally (e.g. after trim).
+        file: existingSessionId ? (pdfDirty ? file : null) : file,
         existingSessionId,
       });
       setCurrentSession({ id: sessionId, name: trimmed, projectId });
+      if (pdfDirty) setPdfDirty(false);
       onSaved?.(sessionId, trimmed, projectId);
       onClose();
     } catch (err) {

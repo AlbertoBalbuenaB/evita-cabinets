@@ -1,9 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Link2, UploadCloud, FolderOpen } from 'lucide-react';
+import { ArrowLeft, Link2, UploadCloud, FolderOpen, FileMinus2 } from 'lucide-react';
 import { useTakeoffStore } from '../hooks/useTakeoffStore';
-import { ACCEPTED_FILE_TYPES } from '../lib/takeoff/pdfLoader';
-import { loadSessionFromSupabase, listCommentsForSession, fetchSingleComment } from '../lib/takeoff/supabase';
+import { ACCEPTED_FILE_TYPES, isPdf } from '../lib/takeoff/pdfLoader';
+import {
+  loadSessionFromSupabase,
+  listCommentsForSession,
+  fetchSingleComment,
+  deleteCommentsFromSupabase,
+  updateCommentPages,
+} from '../lib/takeoff/supabase';
 import { supabase } from '../lib/supabase';
 import { PdfDropZone } from '../components/takeoff/PdfDropZone';
 import { PdfCanvas, type PdfCanvasHandle } from '../components/takeoff/PdfCanvas';
@@ -14,6 +20,7 @@ import { SaveSessionModal } from '../components/takeoff/SaveSessionModal';
 import { SessionsList } from '../components/takeoff/SessionsList';
 import { CommentInputModal } from '../components/takeoff/CommentInputModal';
 import { CommentThread } from '../components/takeoff/CommentThread';
+import { TrimPagesModal } from '../components/takeoff/TrimPagesModal';
 import { Modal } from '../components/Modal';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
@@ -29,6 +36,7 @@ export function TakeoffPage() {
   const [annotationText, setAnnotationText] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showSessionsList, setShowSessionsList] = useState(false);
+  const [showTrimModal, setShowTrimModal] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasHandle = useRef<PdfCanvasHandle>(null);
@@ -78,6 +86,25 @@ export function TakeoffPage() {
       setLoadError(err instanceof Error ? err.message : String(err));
     }
   }, [store, setSearchParams]);
+
+  // Trim pages: rebuild the PDF with just the marked pages, remap every
+  // page-indexed piece of state (measurements, calibrations, comments), and
+  // sync Supabase when the session is saved so the cloud copy stays in lockstep.
+  const handleTrimApply = useCallback(
+    async ({ newFile, remap }: { newFile: File; remap: Map<number, number>; keepIndices: number[] }) => {
+      const { droppedCommentIds, updatedRootComments } = store.remapPages(remap);
+      setFile(newFile);
+      if (currentSessionId) {
+        try {
+          if (droppedCommentIds.length > 0) await deleteCommentsFromSupabase(droppedCommentIds);
+          if (updatedRootComments.length > 0) await updateCommentPages(updatedRootComments);
+        } catch (err) {
+          setLoadError(err instanceof Error ? err.message : String(err));
+        }
+      }
+    },
+    [store, currentSessionId],
+  );
 
   // If the URL has ?session=<id>, load it once on mount.
   const hasLoadedQuerySession = useRef(false);
@@ -297,6 +324,15 @@ export function TakeoffPage() {
           >
             <FolderOpen className="h-3.5 w-3.5" /> Open
           </button>
+          {file && isPdf(file) && (
+            <button
+              onClick={() => setShowTrimModal(true)}
+              className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
+              title="Remove pages you don't need to shrink the PDF"
+            >
+              <FileMinus2 className="h-3.5 w-3.5" /> Trim pages
+            </button>
+          )}
           {file && (
             <button
               onClick={() => setShowSaveModal(true)}
@@ -412,6 +448,14 @@ export function TakeoffPage() {
       {/* Comment modals (render unconditionally — they return null when not active) */}
       <CommentInputModal />
       <CommentThread />
+
+      {/* Trim pages modal (PDF only — button is hidden otherwise) */}
+      <TrimPagesModal
+        isOpen={showTrimModal}
+        onClose={() => setShowTrimModal(false)}
+        file={file}
+        onApply={handleTrimApply}
+      />
     </div>
   );
 }

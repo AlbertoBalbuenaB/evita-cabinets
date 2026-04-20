@@ -108,7 +108,9 @@ export interface SaveSessionParams {
   name: string;
   projectId: string | null;
   sessionData: SessionData;
-  // Only required when creating a new session. Updates keep the original PDF.
+  // On create: required, uploads the PDF.
+  // On update: optional — pass it only when the PDF bytes changed (e.g. after
+  // the Trim pages flow); the existing storage object is overwritten in place.
   file?: File | null;
   // If set, update this session instead of inserting a new row.
   existingSessionId?: string | null;
@@ -121,14 +123,35 @@ export async function saveSessionToSupabase(params: SaveSessionParams): Promise<
   const { name, projectId, sessionData, file, existingSessionId } = params;
 
   if (existingSessionId) {
+    // If a new file was provided, replace the PDF at the existing storage path
+    // so the cloud copy matches what the user sees locally.
+    if (file) {
+      const { data: row, error: rowError } = await supabase
+        .from('takeoff_sessions')
+        .select('pdf_storage_path')
+        .eq('id', existingSessionId)
+        .single();
+      if (rowError || !row?.pdf_storage_path) {
+        throw new Error(`Could not locate PDF path: ${rowError?.message ?? 'missing row'}`);
+      }
+      const upload = await supabase.storage.from(BUCKET).upload(row.pdf_storage_path, file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
+      if (upload.error) throw new Error(`PDF re-upload failed: ${upload.error.message}`);
+    }
+
+    const updatePayload: Record<string, unknown> = {
+      name,
+      project_id: projectId,
+      session_data: sessionData as unknown as Json,
+      updated_by: memberId,
+    };
+    if (file) updatePayload.pdf_filename = file.name;
+
     const { error } = await supabase
       .from('takeoff_sessions')
-      .update({
-        name,
-        project_id: projectId,
-        session_data: sessionData as unknown as Json,
-        updated_by: memberId,
-      })
+      .update(updatePayload)
       .eq('id', existingSessionId);
     if (error) throw new Error(`Save failed: ${error.message}`);
     return { sessionId: existingSessionId };
@@ -374,6 +397,26 @@ export async function setCommentResolved(commentId: string, resolved: boolean): 
 export async function deleteCommentFromSupabase(commentId: string): Promise<void> {
   const { error } = await supabase.from('takeoff_comments').delete().eq('id', commentId);
   if (error) throw new Error(`Delete comment failed: ${error.message}`);
+}
+
+// Bulk ops used by the Trim pages flow after pages are remapped.
+export async function deleteCommentsFromSupabase(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const { error } = await supabase.from('takeoff_comments').delete().in('id', ids);
+  if (error) throw new Error(`Bulk delete comments failed: ${error.message}`);
+}
+
+export async function updateCommentPages(updates: { id: string; page: number }[]): Promise<void> {
+  if (updates.length === 0) return;
+  // Postgres doesn't expose a clean batched update through PostgREST; fire individual
+  // UPDATEs in parallel. Comment counts per session stay small enough that this is fine.
+  const results = await Promise.all(
+    updates.map((u) =>
+      supabase.from('takeoff_comments').update({ page: u.page }).eq('id', u.id),
+    ),
+  );
+  const first = results.find((r) => r.error);
+  if (first?.error) throw new Error(`Update comment pages failed: ${first.error.message}`);
 }
 
 // ── Helpers ──────────────────────────────────────────────────

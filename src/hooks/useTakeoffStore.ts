@@ -62,6 +62,11 @@ interface TakeoffState {
   sessionName: string | null;
   sessionProjectId: string | null;
 
+  // Set after any local operation that mutates the PDF bytes (currently only the
+  // Trim pages flow). The next "Save to cloud" on an existing session re-uploads
+  // the PDF so Supabase Storage stays in sync with what the user is seeing.
+  pdfDirty: boolean;
+
   // Comments (loaded from Supabase when a session opens; empty for unsaved sessions).
   comments: TakeoffComment[];
   openCommentId: string | null;       // which thread popover is open
@@ -140,6 +145,15 @@ interface TakeoffActions {
   // Supabase session identity
   setCurrentSession: (s: { id: string | null; name: string | null; projectId: string | null }) => void;
   hydrateSessionData: (data: SessionData) => void;
+  setPdfDirty: (dirty: boolean) => void;
+
+  // Trim pages: remap every page-indexed piece of state after the PDF has been rebuilt.
+  // Returns what the caller needs to sync Supabase for saved sessions —
+  // droppedCommentIds must be deleted, updatedRootComments get their page bumped.
+  remapPages: (map: Map<number, number>) => {
+    droppedCommentIds: string[];
+    updatedRootComments: { id: string; page: number }[];
+  };
 
   // Comments (store is the local cache; Supabase adapter handles persistence, then calls these)
   setComments: (c: TakeoffComment[]) => void;
@@ -194,6 +208,7 @@ const initialState: TakeoffState = {
   currentSessionId: null,
   sessionName: null,
   sessionProjectId: null,
+  pdfDirty: false,
   comments: [],
   openCommentId: null,
   showCommentInput: false,
@@ -418,6 +433,71 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
       activePoints: [],
       selectedMeasurementId: null,
     }),
+
+  setPdfDirty: (dirty) => set({ pdfDirty: dirty }),
+
+  remapPages: (map) => {
+    const s = get();
+
+    // Measurements: keep only those whose page survived, remap to the new page number.
+    const newMeasurements = s.measurements
+      .filter((m) => map.has(m.page))
+      .map((m) => ({ ...m, page: map.get(m.page)! }));
+
+    // Calibrations are keyed by the old page number — rebuild the dict.
+    const newCalibrations: Record<number, typeof s.calibrations[number]> = {};
+    for (const [oldPageStr, cal] of Object.entries(s.calibrations)) {
+      const newPage = map.get(Number(oldPageStr));
+      if (newPage !== undefined) newCalibrations[newPage] = cal;
+    }
+
+    // Comments: first figure out which root comments survived (by page). Replies
+    // live or die with their root regardless of their own (null) page.
+    const keptRootIds = new Set<string>();
+    for (const c of s.comments) {
+      if (c.parentCommentId === null && c.page !== null && map.has(c.page)) {
+        keptRootIds.add(c.id);
+      }
+    }
+
+    const droppedCommentIds: string[] = [];
+    const updatedRootComments: { id: string; page: number }[] = [];
+    const newComments = [] as typeof s.comments;
+    for (const c of s.comments) {
+      if (c.parentCommentId === null) {
+        if (keptRootIds.has(c.id)) {
+          const newPage = map.get(c.page!)!;
+          newComments.push({ ...c, page: newPage });
+          if (c.page !== newPage) updatedRootComments.push({ id: c.id, page: newPage });
+        } else {
+          droppedCommentIds.push(c.id);
+        }
+      } else if (keptRootIds.has(c.parentCommentId)) {
+        newComments.push(c);
+      } else {
+        droppedCommentIds.push(c.id);
+      }
+    }
+
+    const maxNewPage = Math.max(0, ...Array.from(map.values()));
+    const clampedCurrentPage = Math.min(Math.max(1, s.currentPage), Math.max(1, maxNewPage));
+
+    set({
+      measurements: newMeasurements,
+      calibrations: newCalibrations,
+      comments: newComments,
+      pageCount: maxNewPage,
+      currentPage: clampedCurrentPage,
+      selectedMeasurementId: null,
+      activePoints: [],
+      openCommentId: null,
+      undoStack: [],
+      redoStack: [],
+      pdfDirty: true,
+    });
+
+    return { droppedCommentIds, updatedRootComments };
+  },
 
   setComments: (c) => set({ comments: c }),
 
