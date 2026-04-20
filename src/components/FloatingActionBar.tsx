@@ -84,7 +84,7 @@ export function FloatingActionBar({
       <div
         style={{
           position: 'fixed',
-          top: '56px',
+          top: '104px',
           left: 0,
           right: 0,
           zIndex: 36,
