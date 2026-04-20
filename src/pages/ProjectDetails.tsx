@@ -1418,6 +1418,15 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     // optimizer-attributed values (boards + edgeband + extras per area).
     // The unified function computes per-area sums from cabinet fields, but
     // the area cards expect optimizer-attributed shares.
+    //
+    // We also distribute the "rolls delta" — the gap between meters-based
+    // edgeband (used inside `computeOptimizerAreaSubtotals`) and whole-roll
+    // edgeband (used by `materialsSubtotal` / Grand Total / the PDF) —
+    // proportionally across areas. Mirrors the exact logic in
+    // `resolveOptimizerAreaSubtotals` so the Pricing-tab Area Totals,
+    // Analytics charts and the Standard PDF's per-area prices stay in sync
+    // (otherwise the UI per-area sum trails the printed Grand Total by the
+    // full rolls delta, currently ~$1.6k on BHS Kona).
     let perAreaCabinetSubtotal = totals.perAreaCabinetSubtotal;
     if (optimizerReady && activeOptimizerRun) {
       try {
@@ -1429,10 +1438,36 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           areasData: areas,
           cabinetsCovered: new Set<string>(snapshot?.cabinetsCovered ?? []),
         });
+        const { ebPriceBySlot, ebSlotMeta } = extractEbSnapshotInputs(snapshot);
+        const totalEdgebandRolls = computeEdgebandRollsCost(
+          snapshot.pieces,
+          ebPriceBySlot,
+          snapshot.ebCabinetMap,
+          ebSlotMeta,
+        );
+        const totalEdgebandMeters = Object.values(perAreaOpt).reduce((s, a) => s + a.edgebandCost, 0);
+        const rollsDelta = totalEdgebandRolls - totalEdgebandMeters;
+        const hasDelta = Math.abs(rollsDelta) > 0.01;
+        const denom = hasDelta
+          ? (totalEdgebandMeters > 0
+              ? totalEdgebandMeters
+              : Object.values(perAreaOpt).reduce((s, a) => s + a.boardsCost, 0))
+          : 0;
+
         const replaced: Record<string, number> = { ...perAreaCabinetSubtotal };
         for (const area of areas) {
-          replaced[area.id] =
-            perAreaOpt[area.id]?.cabinetsSubtotal ?? perAreaCabinetSubtotal[area.id] ?? 0;
+          const v = perAreaOpt[area.id];
+          if (!v) {
+            replaced[area.id] = perAreaCabinetSubtotal[area.id] ?? 0;
+            continue;
+          }
+          const base = v.cabinetsSubtotal;
+          if (hasDelta && denom > 0) {
+            const weight = (totalEdgebandMeters > 0 ? v.edgebandCost : v.boardsCost) / denom;
+            replaced[area.id] = base + rollsDelta * weight;
+          } else {
+            replaced[area.id] = base;
+          }
         }
         perAreaCabinetSubtotal = replaced;
       } catch {
