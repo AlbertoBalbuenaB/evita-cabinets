@@ -1,0 +1,69 @@
+import { Fragment } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Home } from 'lucide-react';
+import { useChromeReader } from '../contexts/PageChromeContext';
+import { deriveCrumbs } from '../lib/routeLabels';
+
+export function Breadcrumbs() {
+  const { pathname } = useLocation();
+  const { crumbs: override } = useChromeReader();
+  const crumbs = override && override.length > 0 ? override : deriveCrumbs(pathname);
+
+  if (crumbs.length === 0) return null;
+
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className="flex items-center gap-1.5 text-sm min-w-0"
+    >
+      <ol className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+        {crumbs.map((crumb, idx) => {
+          const isLast = idx === crumbs.length - 1;
+          const isFirst = idx === 0;
+          const showHomeIcon = isFirst && crumb.label === 'Home';
+          const labelNode = showHomeIcon ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Home className="h-3.5 w-3.5" strokeWidth={2} />
+              <span className="hidden sm:inline">Home</span>
+            </span>
+          ) : (
+            <span className="truncate max-w-[220px]">{crumb.label}</span>
+          );
+          return (
+            <Fragment key={`${crumb.label}-${idx}`}>
+              {idx > 0 && (
+                <span
+                  aria-hidden
+                  className="text-slate-300 select-none shrink-0"
+                >
+                  /
+                </span>
+              )}
+              <li
+                className={`min-w-0 ${
+                  isLast
+                    ? 'text-slate-900 font-semibold'
+                    : 'text-slate-500'
+                }`}
+                aria-current={isLast ? 'page' : undefined}
+              >
+                {crumb.to && !isLast ? (
+                  <Link
+                    to={crumb.to}
+                    className="inline-flex items-center gap-1 rounded hover:text-slate-800 hover:underline underline-offset-2 transition-colors"
+                  >
+                    {labelNode}
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1">
+                    {labelNode}
+                  </span>
+                )}
+              </li>
+            </Fragment>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
