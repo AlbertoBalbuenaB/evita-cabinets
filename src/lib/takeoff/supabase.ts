@@ -267,6 +267,27 @@ export async function listCommentsForSession(sessionId: string): Promise<Takeoff
   return (data ?? []).map((r) => rowToComment(r as unknown as CommentRowWithAuthor));
 }
 
+// Fetch a single comment by id with the joined author name. Used by the realtime
+// subscription handler to reconcile payloads from postgres_changes (which carry raw
+// columns only — no joins) into a fully-formed TakeoffComment that matches what
+// listCommentsForSession would have returned. Returns null if the row is gone
+// (e.g. deleted between the event firing and our fetch arriving).
+export async function fetchSingleComment(commentId: string): Promise<TakeoffComment | null> {
+  const { data, error } = await supabase
+    .from('takeoff_comments')
+    .select(`
+      id, session_id, parent_comment_id, author_id, text,
+      position_x, position_y, page,
+      resolved, resolved_by, resolved_at, created_at,
+      author:author_id ( name )
+    `)
+    .eq('id', commentId)
+    .maybeSingle();
+  if (error) throw new Error(`Fetch comment failed: ${error.message}`);
+  if (!data) return null;
+  return rowToComment(data as unknown as CommentRowWithAuthor);
+}
+
 export async function addRootCommentToSupabase(params: {
   sessionId: string;
   text: string;

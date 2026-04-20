@@ -3,7 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Link2, UploadCloud, FolderOpen } from 'lucide-react';
 import { useTakeoffStore } from '../hooks/useTakeoffStore';
 import { ACCEPTED_FILE_TYPES } from '../lib/takeoff/pdfLoader';
-import { loadSessionFromSupabase, listCommentsForSession } from '../lib/takeoff/supabase';
+import { loadSessionFromSupabase, listCommentsForSession, fetchSingleComment } from '../lib/takeoff/supabase';
+import { supabase } from '../lib/supabase';
 import { PdfDropZone } from '../components/takeoff/PdfDropZone';
 import { PdfCanvas, type PdfCanvasHandle } from '../components/takeoff/PdfCanvas';
 import { Toolbar } from '../components/takeoff/Toolbar';
@@ -86,6 +87,46 @@ export function TakeoffPage() {
     hasLoadedQuerySession.current = true;
     handleOpenSession(querySessionId);
   }, [querySessionId, handleOpenSession]);
+
+  // Realtime subscription for threaded comments. Re-subscribes whenever the session
+  // identity changes (open a different session, or reset to standalone). Follows the
+  // same pattern as src/lib/useNotifications.ts — channel scoped by the session id,
+  // supabase.removeChannel() in the cleanup.
+  useEffect(() => {
+    if (!currentSessionId) return;
+    const sessionId = currentSessionId;
+    const channel = supabase
+      .channel(`takeoff_comments:${sessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'takeoff_comments',
+          filter: `session_id=eq.${sessionId}`,
+        },
+        async (payload) => {
+          if (payload.eventType === 'DELETE') {
+            const oldId = (payload.old as { id?: string } | null)?.id;
+            if (oldId) store.removeCommentLocal(oldId);
+            return;
+          }
+          // INSERT or UPDATE — payload.new carries raw columns only, so fetch the row
+          // again with the author join to keep the local cache consistent with what
+          // listCommentsForSession would return.
+          const newId = (payload.new as { id?: string } | null)?.id;
+          if (!newId) return;
+          try {
+            const full = await fetchSingleComment(newId);
+            if (full) store.upsertCommentLocal(full);
+          } catch (err) {
+            console.warn('Failed to hydrate realtime comment', err);
+          }
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [currentSessionId, store]);
 
   const handleUploadClick = useCallback(() => { fileInputRef.current?.click(); }, []);
 
