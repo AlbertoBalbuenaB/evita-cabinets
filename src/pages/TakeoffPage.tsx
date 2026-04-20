@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Link2 } from 'lucide-react';
+import { ArrowLeft, Link2, UploadCloud, FolderOpen } from 'lucide-react';
 import { useTakeoffStore } from '../hooks/useTakeoffStore';
 import { ACCEPTED_FILE_TYPES } from '../lib/takeoff/pdfLoader';
+import { loadSessionFromSupabase } from '../lib/takeoff/supabase';
 import { PdfDropZone } from '../components/takeoff/PdfDropZone';
 import { PdfCanvas, type PdfCanvasHandle } from '../components/takeoff/PdfCanvas';
 import { Toolbar } from '../components/takeoff/Toolbar';
 import { MeasurementsPanel } from '../components/takeoff/MeasurementsPanel';
 import { CalibrationModal } from '../components/takeoff/CalibrationModal';
+import { SaveSessionModal } from '../components/takeoff/SaveSessionModal';
+import { SessionsList } from '../components/takeoff/SessionsList';
 import { Modal } from '../components/Modal';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
@@ -17,6 +20,9 @@ export function TakeoffPage() {
   const [urlInput, setUrlInput] = useState('');
   const [showUrlModal, setShowUrlModal] = useState(false);
   const [annotationText, setAnnotationText] = useState('');
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showSessionsList, setShowSessionsList] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasHandle = useRef<PdfCanvasHandle>(null);
 
@@ -26,6 +32,7 @@ export function TakeoffPage() {
     showCalibrationModal, activePoints, unit, showCrosshair,
     snapEnabled, showGrid, undoStack, redoStack,
     showAnnotationInput, pendingAnnotationPos,
+    sessionName, sessionProjectId, currentSessionId,
   } = store;
 
   const calibration = calibrations[currentPage] ?? null;
@@ -33,6 +40,25 @@ export function TakeoffPage() {
   useEffect(() => { store.reset(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFile = useCallback((f: File) => { store.reset(); setFile(f); }, [store]);
+
+  // Load a Supabase session: fetches row + PDF, hydrates the store, and replaces the file.
+  const handleOpenSession = useCallback(async (sessionId: string) => {
+    setLoadError(null);
+    try {
+      const result = await loadSessionFromSupabase(sessionId);
+      if (!result) { setLoadError('Session not found.'); return; }
+      store.reset();
+      store.hydrateSessionData(result.session.session_data);
+      store.setCurrentSession({
+        id: result.session.id,
+        name: result.session.name,
+        projectId: result.session.project_id,
+      });
+      setFile(result.file);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : String(err));
+    }
+  }, [store]);
 
   const handleUploadClick = useCallback(() => { fileInputRef.current?.click(); }, []);
 
@@ -179,12 +205,43 @@ export function TakeoffPage() {
           <ArrowLeft className="h-3.5 w-3.5" /> Tools
         </Link>
         <span className="text-sm font-semibold text-slate-800">Evita Takeoff</span>
-        {file && <span className="text-xs text-slate-400 truncate max-w-xs">{file.name}</span>}
-        {!file && (
-          <button onClick={() => setShowUrlModal(true)} className="ml-auto inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700">
-            <Link2 className="h-3.5 w-3.5" /> Import from URL
-          </button>
+        {file && (
+          <>
+            <span className="text-xs text-slate-600 font-medium truncate max-w-xs">
+              {sessionName ?? file.name}
+            </span>
+            {currentSessionId && (
+              <span className="text-[10px] bg-emerald-50 text-emerald-700 rounded px-1.5 py-0.5 flex-shrink-0">
+                {sessionProjectId ? 'project' : 'saved'}
+              </span>
+            )}
+          </>
         )}
+        <div className="ml-auto flex items-center gap-2">
+          {loadError && <span className="text-xs text-red-600 truncate max-w-xs">{loadError}</span>}
+          <button
+            onClick={() => setShowSessionsList(true)}
+            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
+            title="Open a saved session"
+          >
+            <FolderOpen className="h-3.5 w-3.5" /> Open
+          </button>
+          {file && (
+            <button
+              onClick={() => setShowSaveModal(true)}
+              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+              title={currentSessionId ? 'Update this saved session' : 'Save to Supabase'}
+            >
+              <UploadCloud className="h-3.5 w-3.5" />
+              {currentSessionId ? 'Update' : 'Save to cloud'}
+            </button>
+          )}
+          {!file && (
+            <button onClick={() => setShowUrlModal(true)} className="inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700">
+              <Link2 className="h-3.5 w-3.5" /> Import from URL
+            </button>
+          )}
+        </div>
       </div>
 
       {file ? (
@@ -255,6 +312,20 @@ export function TakeoffPage() {
           </div>
         </Modal>
       )}
+
+      {/* Save to Supabase modal */}
+      <SaveSessionModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        file={file}
+      />
+
+      {/* Sessions list modal */}
+      <SessionsList
+        isOpen={showSessionsList}
+        onClose={() => setShowSessionsList(false)}
+        onOpen={handleOpenSession}
+      />
     </div>
   );
 }

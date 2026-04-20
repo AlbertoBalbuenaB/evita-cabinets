@@ -55,6 +55,11 @@ interface TakeoffState {
   categories: Category[];
   activeCategoryId: string | null;
 
+  // Supabase-backed session identity (null while unsaved / working offline).
+  currentSessionId: string | null;
+  sessionName: string | null;
+  sessionProjectId: string | null;
+
   // Undo/redo
   undoStack: UndoableAction[];
   redoStack: UndoableAction[];
@@ -123,6 +128,10 @@ interface TakeoffActions {
   setActiveCategory: (id: string | null) => void;
   setMeasurementCategory: (id: string, categoryId: string | null) => void;
 
+  // Supabase session identity
+  setCurrentSession: (s: { id: string | null; name: string | null; projectId: string | null }) => void;
+  hydrateSessionData: (data: SessionData) => void;
+
   undo: () => void;
   redo: () => void;
 
@@ -139,6 +148,7 @@ interface TakeoffActions {
   loadSession: () => boolean;
   exportSession: () => string;
   importSession: (json: string) => boolean;
+  getSessionData: () => SessionData;
 
   reset: () => void;
 }
@@ -164,6 +174,9 @@ const initialState: TakeoffState = {
   activeGroup: undefined,
   categories: [],
   activeCategoryId: null,
+  currentSessionId: null,
+  sessionName: null,
+  sessionProjectId: null,
   undoStack: [],
   redoStack: [],
   unit: 'in',
@@ -360,6 +373,25 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
     set((s) => ({
       measurements: s.measurements.map((m) => (m.id === id ? { ...m, categoryId } : m)),
     })),
+
+  // ── Session identity ──────────────────────────────────────
+
+  setCurrentSession: ({ id, name, projectId }) =>
+    set({ currentSessionId: id, sessionName: name, sessionProjectId: projectId }),
+
+  hydrateSessionData: (data) =>
+    set({
+      calibrations: data.calibrations || {},
+      measurements: data.measurements || [],
+      annotations: data.annotations || [],
+      unit: data.unit || 'in',
+      groups: data.groups || [],
+      categories: data.categories || [],
+      undoStack: [],
+      redoStack: [],
+      activePoints: [],
+      selectedMeasurementId: null,
+    }),
 
   // ── Undo/Redo ─────────────────────────────────────────────
 
@@ -566,9 +598,11 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
     }
   },
 
-  exportSession: () => {
+  exportSession: () => JSON.stringify(get().getSessionData(), null, 2),
+
+  getSessionData: (): SessionData => {
     const s = get();
-    const data: SessionData = {
+    return {
       calibrations: s.calibrations,
       measurements: s.measurements,
       annotations: s.annotations,
@@ -576,7 +610,6 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
       groups: s.groups,
       categories: s.categories,
     };
-    return JSON.stringify(data, null, 2);
   },
 
   importSession: (json) => {

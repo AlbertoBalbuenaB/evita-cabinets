@@ -3211,6 +3211,141 @@ export type Database = {
         }
         Relationships: []
       }
+      takeoff_comments: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          page: number | null
+          parent_comment_id: string | null
+          position_x: number | null
+          position_y: number | null
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          session_id: string
+          text: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          id?: string
+          page?: number | null
+          parent_comment_id?: string | null
+          position_x?: number | null
+          position_y?: number | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_id: string
+          text: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          page?: number | null
+          parent_comment_id?: string | null
+          position_x?: number | null
+          position_y?: number | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "takeoff_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_comments_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_comments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      takeoff_sessions: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          pdf_filename: string
+          pdf_storage_path: string
+          project_id: string | null
+          session_data: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          pdf_filename: string
+          pdf_storage_path: string
+          project_id?: string | null
+          session_data?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          pdf_filename?: string
+          pdf_storage_path?: string
+          project_id?: string | null
+          session_data?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "takeoff_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_sessions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "takeoff_sessions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_assignees: {
         Row: {
           member_id: string
