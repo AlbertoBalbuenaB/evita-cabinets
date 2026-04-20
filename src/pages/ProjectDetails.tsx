@@ -2619,6 +2619,12 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                           // switches between sqft and optimizer mode along with the
                           // rest of the UI. Items/countertops/closets/prefab are always
                           // ft² sourced (they don't go through the optimizer).
+                          //
+                          // Risk Factor is distributed proportionally across per-area
+                          // totals so they sum to the Subtotal shown in Breakdown's
+                          // Project Cost Summary (Materials + Labor + Risk). Mirrors
+                          // the same multiplier applied to the Standard PDF's per-area
+                          // pricing table.
                           const cabinetsPart = quotationView.perAreaCabinetSubtotal[area.id] ?? 0;
                           const rawTotal =
                             cabinetsPart +
@@ -2627,13 +2633,16 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                             (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0) +
                             (area.prefabItems || []).reduce((sum, pi) => sum + pi.cost_mxn, 0);
                           const qty = area.quantity ?? 1;
+                          const riskApplies = pricingMethod === 'optimizer' ? riskFactorAppliesOptimizer : riskFactorAppliesSqft;
+                          const riskMultiplier = riskApplies && riskFactorPct > 0 ? 1 + riskFactorPct / 100 : 1;
+                          const adjustedRaw = rawTotal * riskMultiplier;
                           return qty > 1 ? (
                             <div>
-                              <div className="text-xs text-slate-500">{formatCurrency(rawTotal)} × {qty}</div>
-                              <div className="text-base sm:text-xl font-bold text-blue-900">{formatCurrency(rawTotal * qty)}</div>
+                              <div className="text-xs text-slate-500">{formatCurrency(adjustedRaw)} × {qty}</div>
+                              <div className="text-base sm:text-xl font-bold text-blue-900">{formatCurrency(adjustedRaw * qty)}</div>
                             </div>
                           ) : (
-                            <div className="text-base sm:text-xl font-bold text-slate-900">{formatCurrency(rawTotal)}</div>
+                            <div className="text-base sm:text-xl font-bold text-slate-900">{formatCurrency(adjustedRaw)}</div>
                           );
                         })()}
                       </div>
