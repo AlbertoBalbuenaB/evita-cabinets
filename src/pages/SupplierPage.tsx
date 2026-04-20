@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft, Pencil as Edit2, Phone, Mail, Globe, MapPin,
   Star, Package, Clock, Tag, ToggleLeft, ToggleRight,
@@ -97,6 +97,8 @@ type ProductRow = PriceListSupplier & { price_list_item: PriceListItem | null };
 export function SupplierPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const backTo = (location.state as { from?: string } | null)?.from ?? '/suppliers';
   const { member } = useCurrentMember();
   const isAdmin = member?.role === 'admin';
 
@@ -107,13 +109,13 @@ export function SupplierPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const loadSupplier = useCallback(async () => {
-    if (!id) { navigate('/suppliers', { replace: true }); return; }
+    if (!id) { navigate(backTo, { replace: true }); return; }
     setLoading(true);
     const { data, error } = await supabase.from('suppliers').select('*').eq('id', id).single();
-    if (error || !data) { navigate('/suppliers', { replace: true }); return; }
+    if (error || !data) { navigate(backTo, { replace: true }); return; }
     setSupplier(data);
     setLoading(false);
-  }, [id, navigate]);
+  }, [id, navigate, backTo]);
 
   const loadProducts = useCallback(async () => {
     if (!id) return;
@@ -183,15 +185,15 @@ export function SupplierPage() {
       <div className="flex items-center justify-between gap-4 hero-enter">
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate('/suppliers')}
+            onClick={() => navigate(backTo)}
             className="flex-shrink-0 p-2 rounded-xl bg-white/60 hover:bg-white/80 border border-slate-200/50 text-slate-600 hover:text-slate-800 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-sm text-slate-400">
-              <button onClick={() => navigate('/suppliers')} className="hover:text-blue-600 transition-colors">
-                Suppliers
+              <button onClick={() => navigate(backTo)} className="hover:text-blue-600 transition-colors">
+                {backTo.startsWith('/prices') ? 'Inventory / Suppliers' : 'Suppliers'}
               </button>
               <span>/</span>
             </div>

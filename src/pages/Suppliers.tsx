@@ -478,7 +478,9 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                 key={supplier.id}
                 supplier={supplier}
                 isAdmin={isAdmin}
-                onClick={() => navigate(`/suppliers/${supplier.id}`)}
+                onClick={() => navigate(`/suppliers/${supplier.id}`, {
+                  state: embedded ? { from: '/prices?tab=suppliers' } : undefined,
+                })}
                 onEdit={(e) => { e.stopPropagation(); handleEdit(supplier); }}
                 onToggle={(e) => { e.stopPropagation(); handleToggleActive(supplier); }}
               />
@@ -513,7 +515,9 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                       <tr
                         key={supplier.id}
                         className="hover:bg-slate-50/50 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/suppliers/${supplier.id}`)}
+                        onClick={() => navigate(`/suppliers/${supplier.id}`, {
+                          state: embedded ? { from: '/prices?tab=suppliers' } : undefined,
+                        })}
                       >
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">

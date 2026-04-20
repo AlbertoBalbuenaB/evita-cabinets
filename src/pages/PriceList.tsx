@@ -32,9 +32,19 @@ export function PriceList() {
   const [viewMode, setViewMode] = useState<ViewMode>('card');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PriceListItem | null>(null);
-  const [activeTab, setActiveTab] = useState<InventoryTab>('catalog');
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const rawTab = searchParams.get('tab');
+  const activeTab: InventoryTab =
+    rawTab === 'stock' || rawTab === 'movements' || rawTab === 'suppliers'
+      ? rawTab
+      : 'catalog';
+  const setActiveTab = (tab: InventoryTab) => {
+    const next = new URLSearchParams(searchParams);
+    if (tab === 'catalog') next.delete('tab'); else next.set('tab', tab);
+    setSearchParams(next, { replace: true });
+  };
 
   useEffect(() => {
     loadPriceList();
