@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Library, ExternalLink, Plus, GitPullRequest, Shield, Tag, X } from 'lucide-react';
 import { pickText, useLocaleStore } from '../../lib/localeStore';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { usePageChrome } from '../../contexts/PageChromeContext';
 import { useWikiStore } from '../../lib/wiki/wikiStore';
 import { useCurrentMember } from '../../lib/useCurrentMember';
 import { searchWikiArticles } from '../../lib/wiki/wikiApi';
@@ -11,10 +12,24 @@ import { Button } from '../../components/Button';
 import type { WikiArticleListItem } from '../../lib/wiki/wikiTypes';
 
 export function WikiHub() {
+  const navigate = useNavigate();
   const { categories, fetchTaxonomy, isLoaded } = useWikiStore();
   const { member } = useCurrentMember();
   const { locale } = useLocaleStore();
   const isAdmin = member?.role === 'admin';
+
+  usePageChrome(
+    {
+      title: 'Wiki',
+      crumbs: [{ label: 'Wiki' }],
+      primaryAction: {
+        label: 'New Article',
+        icon: Plus,
+        onClick: () => navigate('/wiki/new'),
+      },
+    },
+    [navigate],
+  );
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);

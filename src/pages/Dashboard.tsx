@@ -19,6 +19,7 @@ import { seedSampleData } from '../utils/seedData';
 import { Button } from '../components/Button';
 import { isAccessoryPanel } from '../lib/cabinetFilters';
 import { useSettingsStore } from '../lib/settingsStore';
+import { usePageChrome } from '../contexts/PageChromeContext';
 
 interface DashboardStats {
   totalProjects: number;
@@ -74,6 +75,10 @@ interface HardwareTrend {
 
 export function Dashboard() {
   const navigate = useNavigate();
+  usePageChrome(
+    { title: 'Dashboard', crumbs: [{ label: 'Dashboard' }] },
+    [],
+  );
   const [stats, setStats] = useState<DashboardStats>({
     totalProjects: 0,
     wonProjects: 0,

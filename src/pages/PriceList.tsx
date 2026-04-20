@@ -13,6 +13,7 @@ import { formatCurrency } from '../lib/calculations';
 import { InventoryStockTable } from '../components/inventory/InventoryStockTable';
 import { InventoryMovementsTable } from '../components/inventory/InventoryMovementsTable';
 import { Suppliers } from './Suppliers';
+import { usePageChrome } from '../contexts/PageChromeContext';
 import type { PriceListItem, PriceListInsert } from '../types';
 
 type InventoryTab = 'catalog' | 'stock' | 'movements' | 'suppliers';
@@ -131,6 +132,25 @@ export function PriceList() {
     setEditingItem(null);
     setIsModalOpen(true);
   }
+
+  usePageChrome(
+    {
+      title: activeTab === 'suppliers' ? 'Suppliers' : 'Inventory',
+      crumbs:
+        activeTab === 'suppliers'
+          ? [{ label: 'Inventory', to: '/prices' }, { label: 'Suppliers' }]
+          : [{ label: 'Inventory' }],
+      primaryAction:
+        activeTab === 'suppliers'
+          ? undefined
+          : {
+              label: 'Add Item',
+              icon: Plus,
+              onClick: handleAddNew,
+            },
+    },
+    [activeTab],
+  );
 
   function handleEdit(item: PriceListItem) {
     setEditingItem(item);

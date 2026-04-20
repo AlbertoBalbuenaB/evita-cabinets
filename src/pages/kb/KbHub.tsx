@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, AlertCircle, GitPullRequest, Plus, Shield, Library } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/Button';
 import { useKbStore } from '../../lib/kb/kbStore';
 import { useCurrentMember } from '../../lib/useCurrentMember';
@@ -8,12 +9,27 @@ import { searchEntries } from '../../lib/kb/kbApi';
 import { KbSearchBar } from '../../components/kb/KbSearchBar';
 import { KbEntryCard } from '../../components/kb/KbEntryCard';
 import { KbCategoryChip } from '../../components/kb/KbCategoryChip';
+import { usePageChrome } from '../../contexts/PageChromeContext';
 import type { KbEntryListItem } from '../../lib/kb/kbTypes';
 
 export function KbHub() {
+  const navigate = useNavigate();
   const { categories, suppliers, fetchTaxonomy, isLoaded } = useKbStore();
   const { member } = useCurrentMember();
   const isAdmin = member?.role === 'admin';
+
+  usePageChrome(
+    {
+      title: 'Knowledge Base',
+      crumbs: [{ label: 'KB' }],
+      primaryAction: {
+        label: 'New Entry',
+        icon: Plus,
+        onClick: () => navigate('/kb/new'),
+      },
+    },
+    [navigate],
+  );
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [entries, setEntries] = useState<KbEntryListItem[]>([]);

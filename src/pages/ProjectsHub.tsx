@@ -6,6 +6,7 @@ import { Button } from '../components/Button';
 import { NewProjectModal } from '../components/NewProjectModal';
 import { formatCurrency } from '../lib/calculations';
 import { useSettingsStore } from '../lib/settingsStore';
+import { usePageChrome } from '../contexts/PageChromeContext';
 import type { Project, Quotation } from '../types';
 
 interface ProjectWithStats extends Project {
@@ -70,6 +71,19 @@ export function ProjectsHub() {
   function handleCreateProject() {
     setShowCreateModal(true);
   }
+
+  usePageChrome(
+    {
+      title: 'Projects',
+      crumbs: [{ label: 'Projects' }],
+      primaryAction: {
+        label: 'New Project',
+        icon: Plus,
+        onClick: handleCreateProject,
+      },
+    },
+    [],
+  );
 
   function handleProjectCreated(projectId: string) {
     navigate(`/projects/${projectId}`);

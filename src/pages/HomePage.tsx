@@ -20,6 +20,7 @@ import { HomeLogDetailModal } from '../components/HomeLogDetailModal';
 import { formatCurrency } from '../lib/calculations';
 import { useSettingsStore } from '../lib/settingsStore';
 import { useCurrentMember } from '../lib/useCurrentMember';
+import { usePageChrome } from '../contexts/PageChromeContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -356,6 +357,19 @@ export function HomePage() {
   const [feedSearch, setFeedSearch] = useState('');
   const [feedDropdownOpen, setFeedDropdownOpen] = useState(false);
   const feedSearchRef = useRef<HTMLDivElement>(null);
+
+  usePageChrome(
+    {
+      title: 'Home',
+      crumbs: [{ label: 'Home' }],
+      primaryAction: {
+        label: 'New Project',
+        icon: Plus,
+        onClick: () => setShowNewProjectModal(true),
+      },
+    },
+    [],
+  );
 
   function switchTaskTab(next: 'projects' | 'planner') {
     setTaskTab(next);
