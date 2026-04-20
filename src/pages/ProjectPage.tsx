@@ -20,6 +20,7 @@ import { PurchaseListSection } from '../components/purchases/PurchaseListSection
 import { TakeoffsSection } from '../components/takeoff/TakeoffsSection';
 import type { Project, Quotation, TeamMember } from '../types';
 import { useCurrentMember } from '../lib/useCurrentMember';
+import { usePageChrome } from '../contexts/PageChromeContext';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -72,6 +73,17 @@ export function ProjectPage() {
   const [quotationModal, setQuotationModal] = useState<{ open: boolean; quotation?: Quotation }>({ open: false });
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  usePageChrome(
+    {
+      title: project?.name ?? 'Project',
+      crumbs: [
+        { label: 'Projects', to: '/projects' },
+        { label: project?.name ?? '…' },
+      ],
+    },
+    [project?.id, project?.name],
+  );
 
   useEffect(() => {
     if (!projectId) { navigate('/projects', { replace: true }); return; }
@@ -355,16 +367,16 @@ export function ProjectPage() {
   return (
     <>
     <div className="space-y-5 page-enter">
-      {/* Breadcrumb */}
+      {/* Page hero — back button + title + last-modified subtitle */}
       <div className="flex items-center gap-3 hero-enter">
-        <button onClick={() => navigate('/projects')} className="flex-shrink-0 p-2 rounded-xl bg-white/60 hover:bg-white/80 border border-slate-200/50 text-slate-600 hover:text-slate-800 transition-colors">
+        <button
+          onClick={() => navigate('/projects')}
+          className="flex-shrink-0 p-2 rounded-xl bg-white/60 hover:bg-white/80 border border-slate-200/50 text-slate-600 hover:text-slate-800 transition-colors"
+          aria-label="Back to projects"
+        >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5 text-sm text-slate-400">
-            <button onClick={() => navigate('/projects')} className="hover:text-blue-600 transition-colors">Projects</button>
-            <span>/</span>
-          </div>
           <h1 className="text-lg font-semibold text-slate-900 truncate">{project.name}</h1>
           {Boolean((project as Record<string, unknown>).last_modified_at) && Boolean((project as Record<string, unknown>).last_modified_by_member_id) && (
             <p className="text-xs text-slate-400 mt-0.5">
