@@ -23,7 +23,7 @@ const AiChat = lazy(() => import('./components/AiChat').then(m => ({ default: m.
 const Suppliers = lazy(() => import('./pages/Suppliers').then(m => ({ default: m.Suppliers })));
 const SupplierPage = lazy(() => import('./pages/SupplierPage').then(m => ({ default: m.SupplierPage })));
 const ToolsHub = lazy(() => import('./pages/ToolsHub').then(m => ({ default: m.ToolsHub })));
-const PlanViewerPage = lazy(() => import('./pages/PlanViewerPage').then(m => ({ default: m.PlanViewerPage })));
+const TakeoffPage = lazy(() => import('./pages/TakeoffPage').then(m => ({ default: m.TakeoffPage })));
 const DraftToolPage = lazy(() => import('./tools/draft/DraftToolPage').then(m => ({ default: m.DraftToolPage })));
 const KbHub = lazy(() => import('./pages/kb/KbHub').then(m => ({ default: m.KbHub })));
 const KbEntryPage = lazy(() => import('./pages/kb/KbEntryPage').then(m => ({ default: m.KbEntryPage })));
@@ -90,7 +90,8 @@ function App() {
             <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
             <Route path="/optimizer" element={<OptimizerPage />} />
             <Route path="/tools" element={<ToolsHub />} />
-            <Route path="/tools/plan-viewer" element={<PlanViewerPage />} />
+            <Route path="/tools/takeoff" element={<TakeoffPage />} />
+            <Route path="/tools/plan-viewer" element={<Navigate to="/tools/takeoff" replace />} />
             <Route path="/tools/draft" element={<DraftToolPage />} />
             <Route path="/suppliers/:id" element={<SupplierPage />} />
             <Route path="/suppliers" element={<Suppliers />} />

@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback } from 'react';
 import { Upload, FileText } from 'lucide-react';
-import { ACCEPTED_FILE_TYPES, isAcceptedFile } from '../../lib/plan-viewer/pdfLoader';
+import { ACCEPTED_FILE_TYPES, isAcceptedFile } from '../../lib/takeoff/pdfLoader';
 
 interface PdfDropZoneProps {
   onFile: (file: File) => void;

@@ -10,10 +10,10 @@ const tools = [
     color: 'violet',
   },
   {
-    title: 'Plan Viewer',
-    description: 'Upload PDFs or images, calibrate scale, and take measurements',
+    title: 'Evita Takeoff',
+    description: 'Upload PDFs or images, calibrate scale, and take measurements for takeoff',
     icon: Ruler,
-    path: '/tools/plan-viewer',
+    path: '/tools/takeoff',
     color: 'blue',
   },
   {

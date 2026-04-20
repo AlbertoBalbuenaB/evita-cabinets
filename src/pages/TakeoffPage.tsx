@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Link2 } from 'lucide-react';
-import { usePlanViewerStore } from '../hooks/usePlanViewerStore';
-import { ACCEPTED_FILE_TYPES } from '../lib/plan-viewer/pdfLoader';
-import { PdfDropZone } from '../components/plan-viewer/PdfDropZone';
-import { PdfCanvas, type PdfCanvasHandle } from '../components/plan-viewer/PdfCanvas';
-import { Toolbar } from '../components/plan-viewer/Toolbar';
-import { MeasurementsPanel } from '../components/plan-viewer/MeasurementsPanel';
-import { CalibrationModal } from '../components/plan-viewer/CalibrationModal';
+import { useTakeoffStore } from '../hooks/useTakeoffStore';
+import { ACCEPTED_FILE_TYPES } from '../lib/takeoff/pdfLoader';
+import { PdfDropZone } from '../components/takeoff/PdfDropZone';
+import { PdfCanvas, type PdfCanvasHandle } from '../components/takeoff/PdfCanvas';
+import { Toolbar } from '../components/takeoff/Toolbar';
+import { MeasurementsPanel } from '../components/takeoff/MeasurementsPanel';
+import { CalibrationModal } from '../components/takeoff/CalibrationModal';
 import { Modal } from '../components/Modal';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 
-export function PlanViewerPage() {
+export function TakeoffPage() {
   const [file, setFile] = useState<File | null>(null);
   const [urlInput, setUrlInput] = useState('');
   const [showUrlModal, setShowUrlModal] = useState(false);
@@ -20,7 +20,7 @@ export function PlanViewerPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasHandle = useRef<PdfCanvasHandle>(null);
 
-  const store = usePlanViewerStore();
+  const store = useTakeoffStore();
   const {
     viewport, activeTool, currentPage, pageCount, calibrations,
     showCalibrationModal, activePoints, unit, showCrosshair,
@@ -37,12 +37,12 @@ export function PlanViewerPage() {
   const handleUploadClick = useCallback(() => { fileInputRef.current?.click(); }, []);
 
   const handleZoomIn = useCallback(() => {
-    const z = usePlanViewerStore.getState().viewport.zoom;
+    const z = useTakeoffStore.getState().viewport.zoom;
     store.setViewport({ zoom: Math.min(20, z * 1.25) });
   }, [store]);
 
   const handleZoomOut = useCallback(() => {
-    const z = usePlanViewerStore.getState().viewport.zoom;
+    const z = useTakeoffStore.getState().viewport.zoom;
     store.setViewport({ zoom: Math.max(0.1, z / 1.25) });
   }, [store]);
 
@@ -68,7 +68,7 @@ export function PlanViewerPage() {
 
     // Draw PDF canvas with its transform
     ctx.save();
-    const vp = usePlanViewerStore.getState().viewport;
+    const vp = useTakeoffStore.getState().viewport;
     ctx.translate(vp.offsetX, vp.offsetY);
     ctx.scale(vp.zoom, vp.zoom);
     ctx.drawImage(canvas, 0, 0);
@@ -86,7 +86,7 @@ export function PlanViewerPage() {
         if (!blob) return;
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'plan-measurements.png';
+        a.download = 'takeoff.png';
         a.click();
       });
     };
@@ -127,21 +127,21 @@ export function PlanViewerPage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
 
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); usePlanViewerStore.getState().undo(); return; }
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && e.shiftKey) { e.preventDefault(); usePlanViewerStore.getState().redo(); return; }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); useTakeoffStore.getState().undo(); return; }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && e.shiftKey) { e.preventDefault(); useTakeoffStore.getState().redo(); return; }
       if (e.key === 'Escape') {
-        const s = usePlanViewerStore.getState();
+        const s = useTakeoffStore.getState();
         if (s.showAnnotationInput) { s.setShowAnnotationInput(false); s.setPendingAnnotationPos(null); return; }
         if (s.activePoints.length > 0) { s.clearActivePoints(); return; }
         s.setActiveTool('pan');
         return;
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        const s = usePlanViewerStore.getState();
+        const s = useTakeoffStore.getState();
         if (s.selectedMeasurementId) { s.deleteMeasurement(s.selectedMeasurementId); return; }
       }
 
-      const s = usePlanViewerStore.getState();
+      const s = useTakeoffStore.getState();
       const cal = s.calibrations[s.currentPage];
       const shortcuts: Record<string, () => void> = {
         v: () => s.setActiveTool('pan'),
@@ -175,7 +175,7 @@ export function PlanViewerPage() {
         <Link to="/tools" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors">
           <ArrowLeft className="h-3.5 w-3.5" /> Tools
         </Link>
-        <span className="text-sm font-semibold text-slate-800">Plan Viewer</span>
+        <span className="text-sm font-semibold text-slate-800">Evita Takeoff</span>
         {file && <span className="text-xs text-slate-400 truncate max-w-xs">{file.name}</span>}
         {!file && (
           <button onClick={() => setShowUrlModal(true)} className="ml-auto inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700">

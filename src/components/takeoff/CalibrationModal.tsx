@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Modal } from '../Modal';
 import { Input } from '../Input';
 import { Button } from '../Button';
-import type { MeasurementUnit, PdfPoint, Calibration } from '../../lib/plan-viewer/types';
-import { euclideanDistance } from '../../lib/plan-viewer/geometry';
+import type { MeasurementUnit, PdfPoint, Calibration } from '../../lib/takeoff/types';
+import { euclideanDistance } from '../../lib/takeoff/geometry';
 
 interface CalibrationModalProps {
   isOpen: boolean;

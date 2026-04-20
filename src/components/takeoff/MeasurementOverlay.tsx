@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
-import { usePlanViewerStore } from '../../hooks/usePlanViewerStore';
-import { midpoint, formatMeasurement, formatArea, formatAngle, polygonCentroid, convertUnit } from '../../lib/plan-viewer/geometry';
+import { useTakeoffStore } from '../../hooks/useTakeoffStore';
+import { midpoint, formatMeasurement, formatArea, formatAngle, polygonCentroid, convertUnit } from '../../lib/takeoff/geometry';
 import type {
   ViewportState,
   PdfPoint,
@@ -12,7 +12,7 @@ import type {
   PolygonMeasurement,
   MeasurementUnit,
   Annotation,
-} from '../../lib/plan-viewer/types';
+} from '../../lib/takeoff/types';
 
 interface MeasurementOverlayProps {
   canvasWidth: number;
@@ -35,7 +35,7 @@ export const MeasurementOverlay = forwardRef<SVGSVGElement, MeasurementOverlayPr
       currentPage,
       selectedMeasurementId,
       unit,
-    } = usePlanViewerStore();
+    } = useTakeoffStore();
 
     const scale = viewport.zoom * renderScale;
     const inv = 1 / scale;

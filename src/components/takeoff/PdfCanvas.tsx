@@ -1,11 +1,11 @@
 import { useRef, useEffect, useCallback, useState, forwardRef, useImperativeHandle } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import { loadPdf, renderPage, renderImage, isPdf } from '../../lib/plan-viewer/pdfLoader';
-import { screenToPdf } from '../../lib/plan-viewer/transforms';
-import { euclideanDistance, polylineLength, angleBetweenPoints, polygonArea, polygonPerimeter, snapPoint } from '../../lib/plan-viewer/geometry';
-import { usePlanViewerStore } from '../../hooks/usePlanViewerStore';
+import { loadPdf, renderPage, renderImage, isPdf } from '../../lib/takeoff/pdfLoader';
+import { screenToPdf } from '../../lib/takeoff/transforms';
+import { euclideanDistance, polylineLength, angleBetweenPoints, polygonArea, polygonPerimeter, snapPoint } from '../../lib/takeoff/geometry';
+import { useTakeoffStore } from '../../hooks/useTakeoffStore';
 import { MeasurementOverlay } from './MeasurementOverlay';
-import type { PdfPoint, ToolMode } from '../../lib/plan-viewer/types';
+import type { PdfPoint, ToolMode } from '../../lib/takeoff/types';
 
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 20;
@@ -32,7 +32,7 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
   const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
   const [cursorPos, setCursorPos] = useState<PdfPoint | null>(null);
 
-  const store = usePlanViewerStore();
+  const store = useTakeoffStore();
   const { viewport, currentPage, activeTool } = store;
 
   useImperativeHandle(ref, () => ({
@@ -114,10 +114,10 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
       const rect = container.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
-      const { viewport: vp } = usePlanViewerStore.getState();
+      const { viewport: vp } = useTakeoffStore.getState();
       const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
       const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, vp.zoom * factor));
-      usePlanViewerStore.getState().setViewport({
+      useTakeoffStore.getState().setViewport({
         zoom: newZoom,
         offsetX: mouseX - (mouseX - vp.offsetX) * (newZoom / vp.zoom),
         offsetY: mouseY - (mouseY - vp.offsetY) * (newZoom / vp.zoom),
@@ -137,14 +137,14 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
   };
 
   // Apply snap if shift is held
-  const applySnap = (pt: PdfPoint, state: ReturnType<typeof usePlanViewerStore.getState>): PdfPoint => {
+  const applySnap = (pt: PdfPoint, state: ReturnType<typeof useTakeoffStore.getState>): PdfPoint => {
     if (!state.snapEnabled || state.activePoints.length === 0) return pt;
     const anchor = state.activePoints[state.activePoints.length - 1];
     return snapPoint(pt, anchor);
   };
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    const state = usePlanViewerStore.getState();
+    const state = useTakeoffStore.getState();
 
     if (e.button === 1 || (e.button === 0 && state.activeTool === 'pan')) {
       isPanningRef.current = true;
@@ -194,7 +194,7 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
       const dx = e.clientX - lastMouseRef.current.x;
       const dy = e.clientY - lastMouseRef.current.y;
       lastMouseRef.current = { x: e.clientX, y: e.clientY };
-      const state = usePlanViewerStore.getState();
+      const state = useTakeoffStore.getState();
       state.setViewport({
         offsetX: state.viewport.offsetX + dx,
         offsetY: state.viewport.offsetY + dy,
@@ -204,7 +204,7 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
     const container = containerRef.current;
     if (!container) return;
     const rect = container.getBoundingClientRect();
-    const state = usePlanViewerStore.getState();
+    const state = useTakeoffStore.getState();
     let pt = screenToPdf(e.clientX - rect.left, e.clientY - rect.top, state.viewport, RENDER_SCALE);
     if (state.snapEnabled && state.activePoints.length > 0) {
       pt = applySnap(pt, state);
@@ -217,7 +217,7 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
   }, []);
 
   const handleDoubleClick = useCallback(() => {
-    const state = usePlanViewerStore.getState();
+    const state = useTakeoffStore.getState();
     if (state.activeTool === 'multiline' && state.activePoints.length >= 3) {
       finalizeMultiline(state.activePoints.slice(0, -1));
     } else if (state.activeTool === 'polygon' && state.activePoints.length >= 4) {
@@ -228,7 +228,7 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
   // ── Finalization helpers ──────────────────────────────────
 
   const finalizeLine = useCallback((a: PdfPoint, b: PdfPoint) => {
-    const state = usePlanViewerStore.getState();
+    const state = useTakeoffStore.getState();
     const cal = state.calibrations[state.currentPage];
     if (!cal) return;
     const pxLen = euclideanDistance(a, b);
@@ -248,7 +248,7 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
   }, []);
 
   const finalizeRect = useCallback((a: PdfPoint, b: PdfPoint) => {
-    const state = usePlanViewerStore.getState();
+    const state = useTakeoffStore.getState();
     const cal = state.calibrations[state.currentPage];
     if (!cal) return;
     const pxW = Math.abs(b.x - a.x);
@@ -274,7 +274,7 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
   }, []);
 
   const finalizeMultiline = useCallback((points: PdfPoint[]) => {
-    const state = usePlanViewerStore.getState();
+    const state = useTakeoffStore.getState();
     const cal = state.calibrations[state.currentPage];
     if (!cal) return;
     const { segments, total } = polylineLength(points);
@@ -295,7 +295,7 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
   }, []);
 
   const finalizeAngle = useCallback((a: PdfPoint, vertex: PdfPoint, c: PdfPoint) => {
-    const state = usePlanViewerStore.getState();
+    const state = useTakeoffStore.getState();
     const degrees = angleBetweenPoints(a, vertex, c);
     state.addMeasurement({
       id: crypto.randomUUID(),
@@ -312,7 +312,7 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
   }, []);
 
   const finalizePolygon = useCallback((points: PdfPoint[]) => {
-    const state = usePlanViewerStore.getState();
+    const state = useTakeoffStore.getState();
     const cal = state.calibrations[state.currentPage];
     if (!cal) return;
     const pxPeri = polygonPerimeter(points);

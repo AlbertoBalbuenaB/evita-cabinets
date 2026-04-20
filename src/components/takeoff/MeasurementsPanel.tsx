@@ -1,17 +1,18 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Trash2, Copy, CheckCircle2, XCircle, Minus, Route, Square, Hexagon,
   Locate, Check, FileDown, ClipboardCopy, Save, Plus, X, Type,
 } from 'lucide-react';
-import { usePlanViewerStore } from '../../hooks/usePlanViewerStore';
-import { formatMeasurement, formatArea, formatAngle, convertUnit } from '../../lib/plan-viewer/geometry';
-import type { Measurement, MeasurementUnit, Annotation } from '../../lib/plan-viewer/types';
-import { pdfToScreen } from '../../lib/plan-viewer/transforms';
+import { useTakeoffStore } from '../../hooks/useTakeoffStore';
+import { formatMeasurement, formatArea, formatAngle, convertUnit } from '../../lib/takeoff/geometry';
+import type { Measurement, MeasurementUnit, Annotation } from '../../lib/takeoff/types';
+import { pdfToScreen } from '../../lib/takeoff/transforms';
 
 const RENDER_SCALE = 2;
 
 export function MeasurementsPanel() {
-  const store = usePlanViewerStore();
+  const store = useTakeoffStore();
   const {
     calibrations, measurements, annotations, selectedMeasurementId,
     selectMeasurement, deleteMeasurement, renameMeasurement,
@@ -21,8 +22,33 @@ export function MeasurementsPanel() {
   } = store;
 
   const [showSessionMenu, setShowSessionMenu] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const sessionBtnRef = useRef<HTMLButtonElement>(null);
+  const sessionMenuRef = useRef<HTMLDivElement>(null);
   const [newGroup, setNewGroup] = useState('');
   const [showGroupInput, setShowGroupInput] = useState(false);
+
+  const closeSessionMenu = () => { setShowSessionMenu(false); setMenuPos(null); };
+
+  const toggleSessionMenu = () => {
+    if (showSessionMenu) { closeSessionMenu(); return; }
+    const r = sessionBtnRef.current?.getBoundingClientRect();
+    if (!r) return;
+    setMenuPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+    setShowSessionMenu(true);
+  };
+
+  useEffect(() => {
+    if (!showSessionMenu) return;
+    const onMouseDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (sessionBtnRef.current?.contains(t)) return;
+      if (sessionMenuRef.current?.contains(t)) return;
+      closeSessionMenu();
+    };
+    document.addEventListener('mousedown', onMouseDown);
+    return () => document.removeEventListener('mousedown', onMouseDown);
+  }, [showSessionMenu]);
 
   const calibration = calibrations[currentPage] ?? null;
   const pageMeasurements = measurements.filter((m) => m.page === currentPage);
@@ -99,15 +125,15 @@ export function MeasurementsPanel() {
   };
 
   // ── Session handlers ─────────────────────────────────
-  const handleSave = () => { saveSession(); setShowSessionMenu(false); };
+  const handleSave = () => { saveSession(); closeSessionMenu(); };
   const handleExportJson = () => {
     const json = exportSession();
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'plan-viewer-session.json'; a.click();
+    a.href = url; a.download = 'takeoff-session.json'; a.click();
     URL.revokeObjectURL(url);
-    setShowSessionMenu(false);
+    closeSessionMenu();
   };
   const handleImportJson = () => {
     const input = document.createElement('input');
@@ -119,10 +145,11 @@ export function MeasurementsPanel() {
       importSession(text);
     };
     input.click();
-    setShowSessionMenu(false);
+    closeSessionMenu();
   };
 
   return (
+    <>
     <div className="w-72 border-l border-slate-200 bg-white/80 backdrop-blur-sm flex flex-col flex-shrink-0 overflow-hidden">
       {/* Calibration status */}
       <div className="px-3 py-2.5 border-b border-slate-200">
@@ -152,20 +179,9 @@ export function MeasurementsPanel() {
         <button onClick={exportCsv} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100" title="Export CSV">
           <FileDown className="h-3.5 w-3.5" />
         </button>
-        <div className="relative">
-          <button onClick={() => setShowSessionMenu(!showSessionMenu)} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100" title="Session">
-            <Save className="h-3.5 w-3.5" />
-          </button>
-          {showSessionMenu && (
-            <div className="absolute right-0 top-7 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-10 w-40">
-              <button onClick={handleSave} className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50">Save to browser</button>
-              <button onClick={() => { store.loadSession(); setShowSessionMenu(false); }} className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50">Load from browser</button>
-              <hr className="my-1 border-slate-100" />
-              <button onClick={handleExportJson} className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50">Export JSON</button>
-              <button onClick={handleImportJson} className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50">Import JSON</button>
-            </div>
-          )}
-        </div>
+        <button ref={sessionBtnRef} onClick={toggleSessionMenu} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100" title="Session">
+          <Save className="h-3.5 w-3.5" />
+        </button>
         <div className="flex-1" />
         {filteredMeasurements.length > 0 && (
           <button onClick={clearAllMeasurements} className="text-[10px] text-red-500 hover:text-red-700 font-medium">Clear all</button>
@@ -273,6 +289,23 @@ export function MeasurementsPanel() {
         </div>
       )}
     </div>
+
+    {/* Session menu — portal to escape the panel's overflow-hidden */}
+    {showSessionMenu && menuPos && createPortal(
+      <div
+        ref={sessionMenuRef}
+        style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 60 }}
+        className="bg-white rounded-lg shadow-lg border border-slate-200 py-1 w-40"
+      >
+        <button onClick={handleSave} className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50">Save to browser</button>
+        <button onClick={() => { store.loadSession(); closeSessionMenu(); }} className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50">Load from browser</button>
+        <hr className="my-1 border-slate-100" />
+        <button onClick={handleExportJson} className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50">Export JSON</button>
+        <button onClick={handleImportJson} className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50">Import JSON</button>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }
 

@@ -118,7 +118,7 @@ src/
 │   ├── inventory/         # Stock tables, movement modals
 │   ├── optimizer/         # Cut list optimizer UI
 │   │   └── quotation/     # Optimizer ↔ quotation pricing integration
-│   ├── plan-viewer/       # PDF measurement tool (calibration, overlays)
+│   ├── takeoff/           # Evita Takeoff — PDF takeoff tool (calibration, measurements, overlays)
 │   └── purchases/         # Purchase/consume inventory modals
 ├── lib/                   # Business logic
 │   ├── auth.ts            # Google OAuth (useAuth hook)
@@ -133,7 +133,7 @@ src/
 │   ├── optimizer/         # Nesting engine (engine.ts = 70k)
 │   │   └── quotation/     # Optimizer-based pricing alternative
 │   ├── pricing/           # Sqft-based totals (computeQuotationTotalsSqft)
-│   ├── plan-viewer/       # PDF geometry & transforms
+│   ├── takeoff/           # PDF geometry & transforms (Evita Takeoff)
 │   ├── templateManager.ts # Reusable cabinet configurations
 │   ├── versioningSystem.ts # Quotation version snapshots
 │   ├── sheetMaterials.ts  # Sheet material calcs
@@ -184,7 +184,7 @@ data/prefab/                     # Seed CSVs for Venus/Northville catalogs
 /templates                                    → Templates
 /optimizer                                    → OptimizerPage
 /tools                                        → ToolsHub
-/tools/plan-viewer                            → PlanViewerPage
+/tools/takeoff                                → TakeoffPage (ex Plan Viewer, legacy /tools/plan-viewer redirects here)
 /suppliers                                    → Suppliers
 /suppliers/:id                                → SupplierPage
 /settings                                     → Settings (admin only)
@@ -472,4 +472,4 @@ A full dark mode audit was run in April 2026 and found ~1,236 hardcoded colors a
 - Optimizer: functional, integrated with quotation pricing
 - Prefab Library: newly added (Apr 2026)
 - Supplier/Inventory: functional
-- Plan Viewer: functional (PDF measurement tool)
+- Evita Takeoff (ex Plan Viewer): functional (PDF measurement + takeoff tool)

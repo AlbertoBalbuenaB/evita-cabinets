@@ -96,6 +96,16 @@ export function formatMeasurement(value: number, unit: MeasurementUnit): string 
 }
 
 export function formatArea(value: number, unit: MeasurementUnit): string {
+  // Auto-escalar a unidades útiles para takeoff: sq in → sq ft; sq cm/mm → sq m.
+  if (unit === 'in' && value >= 144) {
+    return (value / 144).toFixed(2) + ' sq ft';
+  }
+  if (unit === 'cm' && value >= 10_000) {
+    return (value / 10_000).toFixed(2) + ' sq m';
+  }
+  if (unit === 'mm' && value >= 1_000_000) {
+    return (value / 1_000_000).toFixed(2) + ' sq m';
+  }
   const suffix = { in: ' sq in', ft: ' sq ft', cm: ' sq cm', mm: ' sq mm' }[unit];
   const precision = unit === 'mm' ? 0 : unit === 'cm' ? 1 : 2;
   return value.toFixed(precision) + suffix;

@@ -9,16 +9,17 @@ import type {
   Annotation,
   UndoableAction,
   SessionData,
-} from '../lib/plan-viewer/types';
+} from '../lib/takeoff/types';
 
 const MEASUREMENT_COLORS = [
   '#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c',
   '#0891b2', '#be185d', '#4f46e5', '#ca8a04', '#059669',
 ];
 
-const SESSION_KEY = 'plan-viewer-session';
+const SESSION_KEY = 'evita-takeoff-session';
+const LEGACY_SESSION_KEY = 'plan-viewer-session';
 
-interface PlanViewerState {
+interface TakeoffState {
   // PDF
   pageCount: number;
   currentPage: number;
@@ -69,7 +70,7 @@ interface PlanViewerState {
   colorIndex: number;
 }
 
-interface PlanViewerActions {
+interface TakeoffActions {
   setPageInfo: (pageCount: number, width: number, height: number) => void;
   setCurrentPage: (page: number) => void;
 
@@ -124,9 +125,9 @@ interface PlanViewerActions {
   reset: () => void;
 }
 
-export type PlanViewerStore = PlanViewerState & PlanViewerActions;
+export type TakeoffStore = TakeoffState & TakeoffActions;
 
-const initialState: PlanViewerState = {
+const initialState: TakeoffState = {
   pageCount: 0,
   currentPage: 1,
   pdfPageWidth: 0,
@@ -158,7 +159,7 @@ const initialState: PlanViewerState = {
   colorIndex: 0,
 };
 
-export const usePlanViewerStore = create<PlanViewerStore>((set, get) => ({
+export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
   ...initialState,
 
   setPageInfo: (pageCount, width, height) =>
@@ -431,7 +432,7 @@ export const usePlanViewerStore = create<PlanViewerStore>((set, get) => ({
 
   nextName: (type) => {
     const s = get();
-    const map: Record<string, [string, keyof PlanViewerState]> = {
+    const map: Record<string, [string, keyof TakeoffState]> = {
       line: ['Line', 'lineCount'],
       multiline: ['Path', 'multilineCount'],
       rectangle: ['Rect', 'rectCount'],
@@ -440,7 +441,7 @@ export const usePlanViewerStore = create<PlanViewerStore>((set, get) => ({
     };
     const [prefix, key] = map[type];
     const n = (s[key] as number) + 1;
-    set({ [key]: n } as Partial<PlanViewerState>);
+    set({ [key]: n } as Partial<TakeoffState>);
     return `${prefix} ${n}`;
   },
 
@@ -462,7 +463,16 @@ export const usePlanViewerStore = create<PlanViewerStore>((set, get) => ({
 
   loadSession: () => {
     try {
-      const raw = localStorage.getItem(SESSION_KEY);
+      let raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) {
+        // Soft migration from the old Plan Viewer key (pre-rename to Evita Takeoff).
+        const legacy = localStorage.getItem(LEGACY_SESSION_KEY);
+        if (legacy) {
+          localStorage.setItem(SESSION_KEY, legacy);
+          localStorage.removeItem(LEGACY_SESSION_KEY);
+          raw = legacy;
+        }
+      }
       if (!raw) return false;
       const data: SessionData = JSON.parse(raw);
       set({

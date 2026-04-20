@@ -5,7 +5,7 @@ import {
   Undo2, Redo2, Crosshair, Magnet, Grid3x3,
   Upload, Download,
 } from 'lucide-react';
-import type { ToolMode, MeasurementUnit } from '../../lib/plan-viewer/types';
+import type { ToolMode, MeasurementUnit } from '../../lib/takeoff/types';
 
 interface ToolbarProps {
   activeTool: ToolMode;
