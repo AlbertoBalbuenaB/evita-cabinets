@@ -1023,7 +1023,6 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
   async function handlePrint() {
     const resolved = await resolveOptimizerAreaSubtotals();
-    const laborCost = quotationView.byCategory.labor;
     await printQuotation(project, areas, products, priceList, {
       pdfProjectName: isPdfNameModified ? pdfProjectName : undefined,
       pdfCustomer: isPdfCustomerModified ? pdfCustomer : undefined,
@@ -1031,21 +1030,6 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       pdfProjectBrief: isPdfBriefModified ? pdfProjectBrief : undefined,
       optimizerAreaSubtotals: resolved?.subtotals,
       optimizerAreaSubtotalsTariffBase: resolved?.tariffBase,
-      quotationTotals: {
-        materialsCostOnly:  quotationView.materialsSubtotal - laborCost,
-        laborCost,
-        riskFactorPct:      riskFactorPct,
-        riskAmount:         quotationView.riskAmount,
-        profitAmount:       quotationView.profitAmount,
-        price:              quotationView.price,
-        tariffAmount:       quotationView.tariffAmount,
-        referralAmount:     quotationView.referralAmount,
-        taxAmount:          quotationView.taxAmount,
-        installDeliveryMxn: quotationView.installDeliveryMxn,
-        otherExpenses,
-        otherExpensesLabel: otherExpensesLabel || 'Other Expenses',
-        fullProjectTotal:   quotationView.projectTotal,
-      },
     });
   }
 

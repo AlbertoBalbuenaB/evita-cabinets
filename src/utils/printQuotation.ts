@@ -41,29 +41,6 @@ export interface PDFOverrides {
    * which over-tariffs the rolls overhead by ~tariffMultiplier.
    */
   optimizerAreaSubtotalsTariffBase?: Record<string, number>;
-  /**
-   * Precomputed cost-summary totals from `quotationView` in ProjectDetails.
-   * When provided, the Standard MXN PDF renders a "Project Cost Summary"
-   * section at the end of the document that mirrors the Breakdown tab
-   * (Materials + Labor + Risk → Subtotal → Profit → Price → Tax → Grand
-   * Total). When omitted, the PDF keeps its legacy materials-only output
-   * for backward compatibility.
-   */
-  quotationTotals?: {
-    materialsCostOnly: number;
-    laborCost: number;
-    riskFactorPct: number;
-    riskAmount: number;
-    profitAmount: number;
-    price: number;
-    tariffAmount: number;
-    referralAmount: number;
-    taxAmount: number;
-    installDeliveryMxn: number;
-    otherExpenses: number;
-    otherExpensesLabel: string;
-    fullProjectTotal: number;
-  };
 }
 
 export async function printQuotation(
@@ -76,6 +53,22 @@ export async function printQuotation(
   const resolvedName = overrides.pdfProjectName ?? project.name;
   const resolvedAddress = overrides.pdfAddress ?? (project.address || '');
   const resolvedBrief = overrides.pdfProjectBrief ?? filterProjectBriefForPDF(project.project_brief || '');
+
+  // Risk factor — same resolution as `printQuotationUSD`. Distributed
+  // proportionally into the displayed per-area prices and the grand total
+  // so the PDF's "Totals" and "Grand Total" match the Subtotal shown in
+  // the Breakdown tab (Materials + Labor + Risk). Tariff / profit / tax
+  // are NOT applied in this document — it's a materials-only view.
+  const hasOptimizerOverrides = !!(
+    overrides.optimizerAreaSubtotals &&
+    Object.keys(overrides.optimizerAreaSubtotals).length > 0
+  );
+  const riskFactorPct = (project as { risk_factor_percentage?: number | null }).risk_factor_percentage ?? 0;
+  const riskApplies = hasOptimizerOverrides
+    ? ((project as { risk_factor_applies_optimizer?: boolean | null }).risk_factor_applies_optimizer ?? true)
+    : ((project as { risk_factor_applies_sqft?: boolean | null }).risk_factor_applies_sqft ?? true);
+  const riskMultiplier = riskApplies && riskFactorPct > 0 ? 1 + riskFactorPct / 100 : 1;
+
   // Optimizer-mode swap: if the caller passed per-area overrides, use them
   // in place of `Σ cabinet.subtotal` for that area. Areas missing from the
   // map fall back to the ft² sum, so mixed-mode/ft²-mode quotations keep
@@ -111,7 +104,7 @@ export async function printQuotation(
     0
   );
 
-  const materialsSubtotal = cabinetsSubtotal + itemsSubtotal + countertopsSubtotal + closetItemsSubtotal + prefabItemsSubtotal;
+  const materialsSubtotal = (cabinetsSubtotal + itemsSubtotal + countertopsSubtotal + closetItemsSubtotal + prefabItemsSubtotal) * riskMultiplier;
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -126,7 +119,7 @@ export async function printQuotation(
     const areaClosetTotal = (area.closetItems || []).reduce((sum, ci) => sum + ci.subtotal_mxn, 0);
     const areaPrefabTotal = (area.prefabItems || []).reduce((sum, pi) => sum + pi.cost_mxn, 0);
     const rawTotal = areaCabinetsTotal + areaItemsTotal + areaClosetTotal + areaPrefabTotal;
-    const areaTotal = rawTotal * qty;
+    const areaTotal = rawTotal * qty * riskMultiplier;
 
     const boxesPalletsCalc = calculateAreaBoxesAndPallets(area.cabinets, products, area.closetItems || []);
 
@@ -163,11 +156,12 @@ export async function printQuotation(
       const existing = mxnCountertopGroupMap.get(ct.item_name);
       const plItem = priceList.find(p => p.id === ct.price_list_item_id);
       const unit = plItem?.unit || '';
+      const riskAdjusted = ct.subtotal * riskMultiplier;
       if (existing) {
         existing.qty += ct.quantity;
-        existing.subtotal += ct.subtotal;
+        existing.subtotal += riskAdjusted;
       } else {
-        mxnCountertopGroupMap.set(ct.item_name, { itemName: ct.item_name, qty: ct.quantity, unit, subtotal: ct.subtotal });
+        mxnCountertopGroupMap.set(ct.item_name, { itemName: ct.item_name, qty: ct.quantity, unit, subtotal: riskAdjusted });
       }
     }
   }
@@ -597,7 +591,7 @@ export async function printQuotation(
           }).join('')}
           ` : ''}
           <tr>
-            <td><strong>${overrides.quotationTotals ? 'Materials Total' : 'Grand Total'}</strong></td>
+            <td><strong>Grand Total</strong></td>
             <td class="center"></td>
             <td class="right"></td>
             <td class="right"><strong>${formatCurrency(materialsSubtotal)}</strong></td>
@@ -611,42 +605,6 @@ export async function printQuotation(
           <div>Pallets approx. everything assembled</div>
         </div>
       ` : ''}
-
-      ${overrides.quotationTotals ? (() => {
-        const qt = overrides.quotationTotals;
-        const rows: string[] = [];
-        rows.push(`<div class="summary-row"><span class="summary-label">Materials Cost</span><span class="summary-value">${formatCurrency(qt.materialsCostOnly)}</span></div>`);
-        rows.push(`<div class="summary-row"><span class="summary-label">Labor Cost</span><span class="summary-value">${formatCurrency(qt.laborCost)}</span></div>`);
-        if (qt.riskAmount > 0) {
-          rows.push(`<div class="summary-row"><span class="summary-label">Risk Factor (${qt.riskFactorPct}%)</span><span class="summary-value">${formatCurrency(qt.riskAmount)}</span></div>`);
-        }
-        rows.push(`<div class="summary-row subtotal"><span class="summary-label">Subtotal</span><span class="summary-value">${formatCurrency(qt.materialsCostOnly + qt.laborCost + qt.riskAmount)}</span></div>`);
-        if (qt.profitAmount > 0) {
-          rows.push(`<div class="summary-row"><span class="summary-label">Profit Margin</span><span class="summary-value">${formatCurrency(qt.profitAmount)}</span></div>`);
-        }
-        rows.push(`<div class="summary-row subtotal"><span class="summary-label">Price (pre-tax)</span><span class="summary-value">${formatCurrency(qt.price)}</span></div>`);
-        if (qt.tariffAmount > 0) {
-          rows.push(`<div class="summary-row"><span class="summary-label">Tariff</span><span class="summary-value">${formatCurrency(qt.tariffAmount)}</span></div>`);
-        }
-        if (qt.referralAmount > 0) {
-          rows.push(`<div class="summary-row"><span class="summary-label">Referral</span><span class="summary-value">${formatCurrency(qt.referralAmount)}</span></div>`);
-        }
-        if (qt.taxAmount > 0) {
-          rows.push(`<div class="summary-row"><span class="summary-label">Tax (IVA)</span><span class="summary-value">${formatCurrency(qt.taxAmount)}</span></div>`);
-        }
-        if (qt.installDeliveryMxn > 0) {
-          rows.push(`<div class="summary-row"><span class="summary-label">Install &amp; Delivery</span><span class="summary-value">${formatCurrency(qt.installDeliveryMxn)}</span></div>`);
-        }
-        if (qt.otherExpenses > 0) {
-          rows.push(`<div class="summary-row"><span class="summary-label">${qt.otherExpensesLabel}</span><span class="summary-value">${formatCurrency(qt.otherExpenses)}</span></div>`);
-        }
-        rows.push(`<div class="summary-row total"><span class="summary-label">Grand Total</span><span class="summary-value">${formatCurrency(qt.fullProjectTotal)}</span></div>`);
-        return `
-      <div class="section-title">Project Cost Summary</div>
-      <div class="summary-section">
-        ${rows.join('\n        ')}
-      </div>`;
-      })() : ''}
 
       ${renderBriefBlocksAsHTML(resolvedBrief)}
 
