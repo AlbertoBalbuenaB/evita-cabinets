@@ -62,6 +62,16 @@ export type HandleKey =
   | `points[${number}]`;
 
 // ── Measurements ─────────────────────────────────────────────
+
+// Optional link from a measurement to a price_list row (or future: product catalog).
+// Used by "Send to quotation" to seed area_items rows with a matching SKU.
+export interface LinkedProduct {
+  kind: 'price_list';
+  id: string;       // price_list.id
+  label: string;    // cached item name for display without an extra fetch
+  unit?: string;    // cached price_list.unit for display ("sqft", "lf", "each", etc.)
+}
+
 interface BaseMeasurement {
   id: string;
   name: string;
@@ -70,6 +80,7 @@ interface BaseMeasurement {
   page: number;
   group?: string;
   categoryId?: string | null;
+  linkedProduct?: LinkedProduct | null;
 }
 
 export interface LineMeasurement extends BaseMeasurement {

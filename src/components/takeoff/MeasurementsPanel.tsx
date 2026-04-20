@@ -3,12 +3,15 @@ import { createPortal } from 'react-dom';
 import {
   Trash2, Copy, CheckCircle2, XCircle, Minus, Route, Square, Hexagon,
   Locate, Check, FileDown, ClipboardCopy, Save, Plus, X, Type, Hash, Scissors,
+  Link2, Link2Off, Send,
 } from 'lucide-react';
 import { useTakeoffStore } from '../../hooks/useTakeoffStore';
 import { formatMeasurement, formatArea, formatAngle, convertUnit } from '../../lib/takeoff/geometry';
 import { CATEGORY_PALETTE, resolveMeasurementColor, getNetArea, getCutoutsFor } from '../../lib/takeoff/categories';
-import type { Measurement, MeasurementUnit, Annotation, Category } from '../../lib/takeoff/types';
+import type { Measurement, MeasurementUnit, Annotation, Category, LinkedProduct } from '../../lib/takeoff/types';
 import { pdfToScreen } from '../../lib/takeoff/transforms';
+import { LinkProductPicker } from './LinkProductPicker';
+import { SendToQuotationModal } from './SendToQuotationModal';
 
 const RENDER_SCALE = 2;
 
@@ -21,7 +24,11 @@ export function MeasurementsPanel() {
     groups, activeGroup, setActiveGroup, addGroup, removeGroup,
     categories, activeCategoryId, setActiveCategory, addCategory, removeCategory,
     saveSession, exportSession, importSession, viewport,
+    sessionProjectId, setMeasurementLinkedProduct,
   } = store;
+
+  const [linkPickerFor, setLinkPickerFor] = useState<string | null>(null);
+  const [showSendToQuotation, setShowSendToQuotation] = useState(false);
 
   const [showSessionMenu, setShowSessionMenu] = useState(false);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
@@ -241,6 +248,15 @@ export function MeasurementsPanel() {
         <button ref={sessionBtnRef} onClick={toggleSessionMenu} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100" title="Session">
           <Save className="h-3.5 w-3.5" />
         </button>
+        {sessionProjectId && (
+          <button
+            onClick={() => setShowSendToQuotation(true)}
+            className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+            title="Send linked measurements to a quotation in this project"
+          >
+            <Send className="h-3.5 w-3.5" />
+          </button>
+        )}
         <div className="flex-1" />
         {filteredMeasurements.length > 0 && (
           <button onClick={clearAllMeasurements} className="text-[10px] text-red-500 hover:text-red-700 font-medium">Clear all</button>
@@ -357,6 +373,7 @@ export function MeasurementsPanel() {
                 categories={categories} allMeasurements={measurements}
                 onSelect={() => { selectMeasurement(m.id === selectedMeasurementId ? null : m.id); zoomTo(m); }}
                 onDelete={() => deleteMeasurement(m.id)} onRename={(name) => renameMeasurement(m.id, name)}
+                onLink={() => setLinkPickerFor(m.id)}
               />
             ))}
           </div>
@@ -425,6 +442,30 @@ export function MeasurementsPanel() {
       )}
     </div>
 
+    {/* Link-to-product picker (only rendered when a row's link icon was clicked) */}
+    {linkPickerFor && (
+      <LinkProductPicker
+        isOpen
+        onClose={() => setLinkPickerFor(null)}
+        measurementName={measurements.find((m) => m.id === linkPickerFor)?.name ?? ''}
+        currentLink={measurements.find((m) => m.id === linkPickerFor)?.linkedProduct ?? null}
+        onSave={(link: LinkedProduct | null) => {
+          if (linkPickerFor) setMeasurementLinkedProduct(linkPickerFor, link);
+        }}
+      />
+    )}
+
+    {/* Send linked measurements as area_items to a quotation (only when this takeoff is
+        attached to a project). */}
+    {showSendToQuotation && sessionProjectId && (
+      <SendToQuotationModal
+        isOpen
+        onClose={() => setShowSendToQuotation(false)}
+        projectId={sessionProjectId}
+        displayUnit={unit}
+      />
+    )}
+
     {/* Session menu — portal to escape the panel's overflow-hidden */}
     {showSessionMenu && menuPos && createPortal(
       <div
@@ -446,10 +487,10 @@ export function MeasurementsPanel() {
 
 // ── Row components ──────────────────────────────────────────
 
-function MeasurementRow({ measurement: m, selected, displayUnit, categories, allMeasurements, onSelect, onDelete, onRename }: {
+function MeasurementRow({ measurement: m, selected, displayUnit, categories, allMeasurements, onSelect, onDelete, onRename, onLink }: {
   measurement: Measurement; selected: boolean; displayUnit: MeasurementUnit;
   categories: Category[]; allMeasurements: Measurement[];
-  onSelect: () => void; onDelete: () => void; onRename: (name: string) => void;
+  onSelect: () => void; onDelete: () => void; onRename: (name: string) => void; onLink: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(m.name);
@@ -460,6 +501,8 @@ function MeasurementRow({ measurement: m, selected, displayUnit, categories, all
   const displayValue = getDisplayValue(m, displayUnit, allMeasurements);
   const effectiveColor = resolveMeasurementColor(m, categories);
   const category = m.categoryId ? categories.find((c) => c.id === m.categoryId) : null;
+  // Angles and cutouts don't have a natural orderable quantity, so hide the link button for them.
+  const linkable = m.type !== 'angle' && m.type !== 'cutout';
 
   const handleCopy = () => { navigator.clipboard.writeText(displayValue); setCopied(true); setTimeout(() => setCopied(false), 1500); };
   const commitRename = () => { setEditing(false); if (editName.trim() && editName !== m.name) onRename(editName.trim()); else setEditName(m.name); };
@@ -486,9 +529,27 @@ function MeasurementRow({ measurement: m, selected, displayUnit, categories, all
             <span className="text-[9px] rounded px-1 font-medium" style={{ backgroundColor: category.color + '22', color: category.color }}>{category.name}</span>
           )}
           {m.group && <span className="text-[9px] bg-slate-100 text-slate-500 rounded px-1">{m.group}</span>}
+          {m.linkedProduct && (
+            <span
+              className="text-[9px] bg-blue-50 text-blue-700 rounded px-1 inline-flex items-center gap-0.5 max-w-[11rem]"
+              title={`Linked to ${m.linkedProduct.label}`}
+            >
+              <Link2 className="h-2.5 w-2.5 flex-shrink-0" />
+              <span className="truncate">{m.linkedProduct.label}</span>
+            </span>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-0.5 flex-shrink-0">
+        {linkable && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onLink(); }}
+            className={`p-1 rounded ${m.linkedProduct ? 'text-blue-600 hover:bg-blue-50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+            title={m.linkedProduct ? `Linked: ${m.linkedProduct.label}` : 'Link to price list'}
+          >
+            {m.linkedProduct ? <Link2 className="h-3 w-3" /> : <Link2Off className="h-3 w-3" />}
+          </button>
+        )}
         <button onClick={(e) => { e.stopPropagation(); handleCopy(); }} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100" title="Copy">
           {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
         </button>

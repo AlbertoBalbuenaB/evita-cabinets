@@ -10,6 +10,7 @@ import type {
   UndoableAction,
   SessionData,
   Category,
+  LinkedProduct,
 } from '../lib/takeoff/types';
 import type { TakeoffComment } from '../lib/takeoff/supabase';
 
@@ -134,6 +135,7 @@ interface TakeoffActions {
   removeCategory: (id: string) => void;
   setActiveCategory: (id: string | null) => void;
   setMeasurementCategory: (id: string, categoryId: string | null) => void;
+  setMeasurementLinkedProduct: (id: string, link: LinkedProduct | null) => void;
 
   // Supabase session identity
   setCurrentSession: (s: { id: string | null; name: string | null; projectId: string | null }) => void;
@@ -391,6 +393,11 @@ export const useTakeoffStore = create<TakeoffStore>((set, get) => ({
   setMeasurementCategory: (id, categoryId) =>
     set((s) => ({
       measurements: s.measurements.map((m) => (m.id === id ? { ...m, categoryId } : m)),
+    })),
+
+  setMeasurementLinkedProduct: (id, link) =>
+    set((s) => ({
+      measurements: s.measurements.map((m) => (m.id === id ? { ...m, linkedProduct: link } : m)),
     })),
 
   // ── Session identity ──────────────────────────────────────
