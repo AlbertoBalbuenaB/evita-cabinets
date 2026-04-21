@@ -1803,12 +1803,12 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           so the page content always starts exactly below the FAB
           regardless of viewport, font size, or whether the Stale chip
           (etc.) is currently visible.
-          Formula: header + 44 FAB + 8 gap-above + 8 gap-below − 24 worst-
-          case main padding (py-6 on mobile) = header + 36.
+          Formula: header + 44 FAB + 0 gap-above (flush) + 8 gap-below −
+          24 worst-case main padding (py-6 on mobile) = header + 28.
           Fallback 200 px only used if `--ph-h` hasn't been set. */}
       <div
         aria-hidden
-        style={{ height: 'calc(var(--ph-h, 200px) + 36px)' }}
+        style={{ height: 'calc(var(--ph-h, 200px) + 28px)' }}
       />
 
       <FloatingActionBar

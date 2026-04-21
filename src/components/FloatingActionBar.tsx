@@ -86,11 +86,12 @@ export function FloatingActionBar({
         style={{
           // Tracks the ProjectHeader's measured height via the `--ph-h`
           // CSS var written from ProjectHeader on mount + every resize.
-          // The constants: 56 px Topbar, 8 px gap between header and FAB.
-          // Fallback 200 px is used only if the var hasn't been set (JS
-          // disabled); with JS it's overridden before first paint via
-          // `useLayoutEffect`.
-          top: 'calc(56px + var(--ph-h, 200px) + 8px)',
+          // Only constant: 56 px Topbar. The FAB sits flush against the
+          // header's bottom border (0 px gap, no overlap) — their borders
+          // touch cleanly because `--ph-h` uses `Math.ceil` of the
+          // measured height. Fallback 200 px is used only if the var
+          // hasn't been set (JS disabled).
+          top: 'calc(56px + var(--ph-h, 200px))',
           boxShadow: scrolled
             ? '0 2px 12px rgba(99,102,241,0.1), 0 1px 0 rgba(0,0,0,0.05)'
             : '0 1px 0 rgba(0,0,0,0.05)',
