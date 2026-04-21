@@ -227,8 +227,8 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
           <div className="bg-status-amber-bg rounded-lg p-3 border border-amber-100">
             <div className="flex items-center mb-2">
               <Package className="h-4 w-4 text-status-amber-fg mr-1.5" />
-              <h4 className="text-sm font-semibold text-amber-900">Boards (from optimizer run)</h4>
-              <span className="ml-auto text-xs font-semibold text-amber-800">
+              <h4 className="text-sm font-semibold text-status-amber-fg">Boards (from optimizer run)</h4>
+              <span className="ml-auto text-xs font-semibold text-status-amber-fg">
                 {formatCurrency(data.boardRows.reduce((s, r) => s + r.cost, 0))}
               </span>
             </div>
@@ -257,8 +257,8 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
           <div className="bg-status-amber-bg rounded-lg p-3 border border-amber-100">
             <div className="flex items-center mb-2">
               <Ruler className="h-4 w-4 text-status-amber-fg mr-1.5" />
-              <h4 className="text-sm font-semibold text-amber-900">Edgeband (Rolls 150m)</h4>
-              <span className="ml-auto text-xs font-semibold text-amber-800">
+              <h4 className="text-sm font-semibold text-status-amber-fg">Edgeband (Rolls 150m)</h4>
+              <span className="ml-auto text-xs font-semibold text-status-amber-fg">
                 {formatCurrency(data.edgebandRows.reduce((s, r) => s + r.cost, 0))}
               </span>
             </div>
@@ -313,8 +313,8 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
           <div className="bg-accent-tint-soft rounded-lg p-3 border border-accent-tint-border">
             <div className="flex items-center mb-2">
               <Package className="h-4 w-4 text-accent-text mr-1.5" />
-              <h4 className="text-sm font-semibold text-purple-900">Accessories</h4>
-              <span className="ml-auto text-xs font-semibold text-purple-800">
+              <h4 className="text-sm font-semibold text-accent-text">Accessories</h4>
+              <span className="ml-auto text-xs font-semibold text-accent-text">
                 {formatCurrency(data.accessoriesRows.reduce((s, r) => s + r.cost, 0))}
               </span>
             </div>
@@ -339,8 +339,8 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
           <div className="bg-status-orange-bg rounded-lg p-3 border border-status-orange-brd">
             <div className="flex items-center mb-2">
               <ListChecks className="h-4 w-4 text-status-orange-fg mr-1.5" />
-              <h4 className="text-sm font-semibold text-orange-900">Individual Items</h4>
-              <span className="ml-auto text-xs font-semibold text-orange-800">
+              <h4 className="text-sm font-semibold text-status-orange-fg">Individual Items</h4>
+              <span className="ml-auto text-xs font-semibold text-status-orange-fg">
                 {formatCurrency(data.itemsRows.reduce((s, r) => s + r.cost, 0))}
               </span>
             </div>
@@ -365,8 +365,8 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
           <div className="bg-status-orange-bg rounded-lg p-3 border border-status-orange-brd">
             <div className="flex items-center mb-2">
               <Hammer className="h-4 w-4 text-status-orange-fg mr-1.5" />
-              <h4 className="text-sm font-semibold text-orange-900">Countertops</h4>
-              <span className="ml-auto text-xs font-semibold text-orange-800">
+              <h4 className="text-sm font-semibold text-status-orange-fg">Countertops</h4>
+              <span className="ml-auto text-xs font-semibold text-status-orange-fg">
                 {formatCurrency(data.countertopsRows.reduce((s, r) => s + r.cost, 0))}
               </span>
             </div>

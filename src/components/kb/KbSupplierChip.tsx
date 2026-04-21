@@ -12,7 +12,7 @@ interface KbSupplierChipProps {
 export function KbSupplierChip({ supplier, compact, as = 'link' }: KbSupplierChipProps) {
   const { locale } = useLocaleStore();
   const name = pickText(supplier, 'name', locale);
-  const cls = `inline-flex items-center gap-1.5 rounded-lg border border-status-emerald-brd bg-status-emerald-bg text-emerald-800 font-medium ${
+  const cls = `inline-flex items-center gap-1.5 rounded-lg border border-status-emerald-brd bg-status-emerald-bg text-status-emerald-fg font-medium ${
     compact ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
   }`;
   const body = (

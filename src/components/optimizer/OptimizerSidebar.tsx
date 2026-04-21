@@ -283,7 +283,7 @@ export function OptimizerSidebar() {
                 {store.areas.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {store.areas.map(a => (
-                      <span key={a} className="inline-flex items-center gap-1 text-xs bg-blue-600/10 text-blue-800 px-2 py-0.5 rounded-full font-medium border border-blue-600/15">
+                      <span key={a} className="inline-flex items-center gap-1 text-xs bg-blue-600/10 text-accent-text px-2 py-0.5 rounded-full font-medium border border-blue-600/15">
                         {a}
                         <button onClick={() => store.removeArea(a)} className="text-blue-400 hover:text-red-500 transition-colors"><X className="h-2.5 w-2.5" /></button>
                       </span>

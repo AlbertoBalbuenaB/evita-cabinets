@@ -357,7 +357,7 @@ export function DocumentationSection({ projectId }: Props) {
   return (
     <div className="glass-white p-5">
       <div className="flex items-center mb-5">
-        <Link2 className="h-5 w-5 text-sky-600 mr-2" />
+        <Link2 className="h-5 w-5 text-accent-text mr-2" />
         <h3 className="text-lg font-semibold text-fg-900">Documentation</h3>
       </div>
 

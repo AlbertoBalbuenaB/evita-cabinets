@@ -33,14 +33,14 @@ export function KbDiffViewer({ before, after, mode = 'line', label }: KbDiffView
         {changes.map((part, i) => {
           if (part.added) {
             return (
-              <span key={i} className="bg-status-emerald-bg text-emerald-900">
+              <span key={i} className="bg-status-emerald-bg text-status-emerald-fg">
                 {part.value}
               </span>
             );
           }
           if (part.removed) {
             return (
-              <span key={i} className="bg-status-red-bg text-rose-900 line-through">
+              <span key={i} className="bg-status-red-bg text-status-red-fg line-through">
                 {part.value}
               </span>
             );

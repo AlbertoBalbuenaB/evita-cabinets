@@ -149,7 +149,7 @@ export function CutListDetailPanel({ pieces, cabinetDetails, onOverrideChanged }
                 <span className="font-medium text-fg-800 truncate flex items-center gap-2">
                   <span className="truncate">{label}{qtySuffix}</span>
                   {info?.hasOverride && (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-status-amber-bg text-amber-800 shrink-0">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-status-amber-bg text-status-amber-fg shrink-0">
                       Modified
                     </span>
                   )}
@@ -282,11 +282,11 @@ function RoleBadge({ role }: { role: Pieza['cutPieceRole'] }) {
   // Mirrors the tint convention from ProductFormModal and ProductItem so
   // the visual language is consistent across cut-list surfaces.
   const styles: Record<string, { bg: string; text: string; label: string }> = {
-    cuerpo:     { bg: 'bg-accent-tint-soft',    text: 'text-blue-800',    label: 'Box'        },
-    frente:     { bg: 'bg-status-amber-bg',   text: 'text-amber-800',   label: 'Door'       },
-    back:       { bg: 'bg-status-emerald-bg', text: 'text-emerald-800', label: 'Back'       },
+    cuerpo:     { bg: 'bg-accent-tint-soft',    text: 'text-accent-text',    label: 'Box'        },
+    frente:     { bg: 'bg-status-amber-bg',   text: 'text-status-amber-fg',   label: 'Door'       },
+    back:       { bg: 'bg-status-emerald-bg', text: 'text-status-emerald-fg', label: 'Back'       },
     drawer_box: { bg: 'bg-teal-100',    text: 'text-teal-800',    label: 'Drawer Box' },
-    shelf:      { bg: 'bg-accent-tint-soft',  text: 'text-violet-800',  label: 'Shelf'      },
+    shelf:      { bg: 'bg-accent-tint-soft',  text: 'text-accent-text',  label: 'Shelf'      },
     custom:     { bg: 'bg-surf-muted',   text: 'text-fg-700',   label: 'Custom'     },
   };
   const key = role ?? 'custom';

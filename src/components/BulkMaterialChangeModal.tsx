@@ -745,7 +745,7 @@ export function BulkMaterialChangeModal({
                   className="mt-0.5 w-4 h-4 text-accent-text focus-visible:ring-focus rounded"
                 />
                 <div>
-                  <span className="text-sm font-medium text-blue-900">
+                  <span className="text-sm font-medium text-accent-text">
                     Update matching interior finish
                   </span>
                   <p className="text-xs text-accent-text mt-1">
@@ -766,10 +766,10 @@ export function BulkMaterialChangeModal({
               />
               <div className="flex-1">
                 <div className="flex items-center">
-                  <span className="text-sm font-medium text-green-900">
+                  <span className="text-sm font-medium text-status-emerald-fg">
                     Automatically recalculate prices after material change
                   </span>
-                  <span className="ml-2 text-xs bg-status-emerald-bg text-green-800 px-2 py-0.5 rounded-full">
+                  <span className="ml-2 text-xs bg-status-emerald-bg text-status-emerald-fg px-2 py-0.5 rounded-full">
                     Recommended
                   </span>
                 </div>
@@ -812,7 +812,7 @@ export function BulkMaterialChangeModal({
             <div className="p-3 bg-status-red-bg border border-status-red-brd rounded-lg flex items-start space-x-2">
               <AlertTriangle className="h-5 w-5 text-status-red-fg flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-red-900">Error</p>
+                <p className="text-sm font-medium text-status-red-fg">Error</p>
                 <p className="text-xs text-status-red-fg mt-1">{validationError}</p>
               </div>
             </div>
@@ -844,11 +844,11 @@ export function BulkMaterialChangeModal({
         return (
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-accent-tint-border">
-            <h3 className="text-lg font-semibold text-blue-900 mb-3">Change Summary</h3>
+            <h3 className="text-lg font-semibold text-accent-text mb-3">Change Summary</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-accent-text mb-1">Cabinets Affected</p>
-                <p className="text-2xl font-bold text-blue-900">{activePreview.totalCabinets}</p>
+                <p className="text-2xl font-bold text-accent-text">{activePreview.totalCabinets}</p>
               </div>
               <div>
                 <p className="text-xs text-accent-text mb-1">Cost Change</p>
@@ -863,12 +863,12 @@ export function BulkMaterialChangeModal({
 
             <div className="mt-4 pt-4 border-t border-accent-tint-border">
               <div className="flex justify-between text-sm">
-                <span className="text-blue-800">Current Total:</span>
-                <span className="font-semibold text-blue-900">{formatCurrency(activePreview.costBefore)}</span>
+                <span className="text-accent-text">Current Total:</span>
+                <span className="font-semibold text-accent-text">{formatCurrency(activePreview.costBefore)}</span>
               </div>
               <div className="flex justify-between text-sm mt-1">
-                <span className="text-blue-800">New Total:</span>
-                <span className="font-semibold text-blue-900">{formatCurrency(activePreview.costAfter)}</span>
+                <span className="text-accent-text">New Total:</span>
+                <span className="font-semibold text-accent-text">{formatCurrency(activePreview.costAfter)}</span>
               </div>
             </div>
           </div>
@@ -877,7 +877,7 @@ export function BulkMaterialChangeModal({
             <div className="p-3 bg-status-amber-bg border border-status-amber-brd rounded-lg flex items-start space-x-2">
               <AlertTriangle className="h-5 w-5 text-status-amber-fg flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-900">Significant Cost Change</p>
+                <p className="text-sm font-medium text-status-amber-fg">Significant Cost Change</p>
                 <p className="text-xs text-status-amber-fg mt-1">
                   This change will {activePreview.costDifference > 0 ? 'increase' : 'decrease'} costs by more than 20%. Please verify this is correct.
                 </p>
@@ -922,7 +922,7 @@ export function BulkMaterialChangeModal({
             <div className="p-3 bg-status-red-bg border border-status-red-brd rounded-lg flex items-start space-x-2">
               <AlertTriangle className="h-5 w-5 text-status-red-fg flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-red-900">Error</p>
+                <p className="text-sm font-medium text-status-red-fg">Error</p>
                 <p className="text-xs text-status-red-fg mt-1">{validationError}</p>
               </div>
             </div>
@@ -983,8 +983,8 @@ export function BulkMaterialChangeModal({
               </div>
 
               <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4">
-                <h4 className="font-semibold text-blue-900 mb-3">Material Change</h4>
-                <div className="text-sm text-blue-800">
+                <h4 className="font-semibold text-accent-text mb-3">Material Change</h4>
+                <div className="text-sm text-accent-text">
                   <div>Updated {finalResults.materialChange.updated} cabinet{finalResults.materialChange.updated !== 1 ? 's' : ''}</div>
                   <div className="mt-1">
                     Cost impact: <span className={`font-semibold ${
@@ -999,8 +999,8 @@ export function BulkMaterialChangeModal({
 
               {finalResults.priceRecalc && (
                 <div className="bg-status-emerald-bg border border-status-emerald-brd rounded-lg p-4">
-                  <h4 className="font-semibold text-green-900 mb-3">Price Recalculation</h4>
-                  <div className="text-sm text-green-800 space-y-2">
+                  <h4 className="font-semibold text-status-emerald-fg mb-3">Price Recalculation</h4>
+                  <div className="text-sm text-status-emerald-fg space-y-2">
                     <div>Recalculated {finalResults.priceRecalc.updated} cabinet{finalResults.priceRecalc.updated !== 1 ? 's' : ''}</div>
 
                     {finalResults.priceRecalc.areaChanges.map((change, idx) => (

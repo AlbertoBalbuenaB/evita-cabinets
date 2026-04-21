@@ -581,7 +581,7 @@ function ClosetLibraryTab() {
                 <tr key={item.id} className={`hover:bg-surf-app transition-colors ${!item.is_active ? 'opacity-50' : ''}`}>
                   <td className="px-4 py-2 font-mono text-xs text-fg-600">{item.cabinet_code}</td>
                   <td className="px-4 py-2">
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${item.evita_line === 'Evita Premium' ? 'bg-status-amber-bg text-amber-800' : 'bg-teal-100 text-teal-800'}`}>
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${item.evita_line === 'Evita Premium' ? 'bg-status-amber-bg text-status-amber-fg' : 'bg-teal-100 text-teal-800'}`}>
                       {item.evita_line}
                     </span>
                   </td>
@@ -870,20 +870,20 @@ function PrefabLibraryTab() {
         <table className="w-full text-sm">
           <thead className="bg-accent-tint-soft border-b border-accent-tint-border">
             <tr>
-              <th className="text-left px-4 py-3 font-semibold text-indigo-900">Code</th>
-              <th className="text-left px-4 py-3 font-semibold text-indigo-900">Category</th>
-              <th className="text-left px-4 py-3 font-semibold text-indigo-900">Type</th>
-              <th className="text-right px-4 py-3 font-semibold text-indigo-900">W"</th>
-              <th className="text-right px-4 py-3 font-semibold text-indigo-900">H"</th>
-              <th className="text-right px-4 py-3 font-semibold text-indigo-900">D"</th>
-              <th className="text-left px-4 py-3 font-semibold text-indigo-900">
+              <th className="text-left px-4 py-3 font-semibold text-accent-text">Code</th>
+              <th className="text-left px-4 py-3 font-semibold text-accent-text">Category</th>
+              <th className="text-left px-4 py-3 font-semibold text-accent-text">Type</th>
+              <th className="text-right px-4 py-3 font-semibold text-accent-text">W"</th>
+              <th className="text-right px-4 py-3 font-semibold text-accent-text">H"</th>
+              <th className="text-right px-4 py-3 font-semibold text-accent-text">D"</th>
+              <th className="text-left px-4 py-3 font-semibold text-accent-text">
                 {finishFilter === 'all' ? 'Finishes' : finishFilter}
               </th>
-              <th className="text-right px-4 py-3 font-semibold text-indigo-900">Price USD</th>
-              <th className="text-right px-4 py-3 font-semibold text-indigo-900">Price MXN</th>
-              <th className="text-center px-4 py-3 font-semibold text-indigo-900">Flags</th>
-              <th className="text-center px-4 py-3 font-semibold text-indigo-900">Active</th>
-              <th className="text-center px-4 py-3 font-semibold text-indigo-900">Edit</th>
+              <th className="text-right px-4 py-3 font-semibold text-accent-text">Price USD</th>
+              <th className="text-right px-4 py-3 font-semibold text-accent-text">Price MXN</th>
+              <th className="text-center px-4 py-3 font-semibold text-accent-text">Flags</th>
+              <th className="text-center px-4 py-3 font-semibold text-accent-text">Active</th>
+              <th className="text-center px-4 py-3 font-semibold text-accent-text">Edit</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -943,7 +943,7 @@ function PrefabLibraryTab() {
                     <td className="px-4 py-2 text-center space-x-1">
                       {item.dims_locked && (
                         <span
-                          className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-status-amber-bg text-amber-800"
+                          className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-status-amber-bg text-status-amber-fg"
                           title="User-edited dimensions (importer won't overwrite)"
                         >
                           locked
@@ -951,7 +951,7 @@ function PrefabLibraryTab() {
                       )}
                       {item.dims_auto_parsed && !item.dims_locked && (
                         <span
-                          className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-100 text-sky-800"
+                          className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-100 text-accent-text"
                           title="Dimensions decoded from cabinet code"
                         >
                           auto

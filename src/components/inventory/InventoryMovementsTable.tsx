@@ -160,7 +160,7 @@ export function InventoryMovementsTable() {
                     <td className="px-5 py-3.5 max-w-[200px]">
                       <button
                         onClick={() => navigate(`/prices/${m.price_list_item_id}`)}
-                        className="text-accent-text hover:text-blue-800 hover:underline truncate block text-left font-medium"
+                        className="text-accent-text hover:text-accent-text hover:underline truncate block text-left font-medium"
                       >
                         {m.price_list_item?.concept_description ?? '—'}
                       </button>

@@ -43,14 +43,14 @@ export function KbMarkdownViewer({ source, className }: KbMarkdownViewerProps) {
           <button
             type="button"
             onClick={() => navigate(href)}
-            className="text-accent-text hover:text-indigo-800 underline underline-offset-2 font-medium bg-transparent border-0 p-0 inline cursor-pointer"
+            className="text-accent-text hover:text-accent-text underline underline-offset-2 font-medium bg-transparent border-0 p-0 inline cursor-pointer"
           >
             {children}
           </button>
         );
       }
       return (
-        <a href={href} target="_blank" rel="noopener noreferrer" className="text-accent-text hover:text-indigo-800 underline">
+        <a href={href} target="_blank" rel="noopener noreferrer" className="text-accent-text hover:text-accent-text underline">
           {children}
         </a>
       );

@@ -7,12 +7,12 @@ import type { WikiAuditRow } from '../../lib/wiki/wikiTypes';
 
 function styleForAction(action: string) {
   if (action.startsWith('proposal.')) {
-    if (action.endsWith('.merge')) return { bg: 'bg-accent-tint-soft', text: 'text-violet-800' };
-    if (action.includes('_to_approved'))  return { bg: 'bg-status-emerald-bg', text: 'text-emerald-800' };
-    if (action.includes('_to_rejected'))  return { bg: 'bg-status-red-bg',    text: 'text-rose-800' };
-    if (action.includes('_to_changes_requested')) return { bg: 'bg-status-amber-bg', text: 'text-amber-800' };
+    if (action.endsWith('.merge')) return { bg: 'bg-accent-tint-soft', text: 'text-accent-text' };
+    if (action.includes('_to_approved'))  return { bg: 'bg-status-emerald-bg', text: 'text-status-emerald-fg' };
+    if (action.includes('_to_rejected'))  return { bg: 'bg-status-red-bg',    text: 'text-status-red-fg' };
+    if (action.includes('_to_changes_requested')) return { bg: 'bg-status-amber-bg', text: 'text-status-amber-fg' };
     if (action.includes('_to_withdrawn')) return { bg: 'bg-surf-muted',   text: 'text-fg-700' };
-    if (action.includes('_to_open'))      return { bg: 'bg-accent-tint-strong',  text: 'text-indigo-800' };
+    if (action.includes('_to_open'))      return { bg: 'bg-accent-tint-strong',  text: 'text-accent-text' };
   }
   return { bg: 'bg-surf-muted', text: 'text-fg-700' };
 }
@@ -41,7 +41,7 @@ export function WikiAudit() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
-      <Link to="/wiki" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-violet-800">
+      <Link to="/wiki" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-accent-text">
         <ArrowLeft className="w-4 h-4" /> Wiki
       </Link>
 
@@ -104,7 +104,7 @@ export function WikiAudit() {
                         {row.proposal_id && (
                           <Link
                             to={`/wiki/proposals/${row.proposal_id}`}
-                            className="text-accent-text hover:text-violet-800 font-mono block"
+                            className="text-accent-text hover:text-accent-text font-mono block"
                           >
                             prop {row.proposal_id.slice(0, 8)}
                           </Link>

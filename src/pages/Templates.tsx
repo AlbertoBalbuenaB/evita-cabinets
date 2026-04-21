@@ -292,7 +292,7 @@ export function Templates({ embedded = false }: TemplatesProps) {
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <h3 className="font-semibold text-fg-900">{template.name}</h3>
-                      <span className="inline-block mt-1 px-2 py-0.5 bg-accent-tint-soft text-blue-800 text-xs rounded">
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-accent-tint-soft text-accent-text text-xs rounded">
                         {template.category}
                       </span>
                     </div>
@@ -398,7 +398,7 @@ export function Templates({ embedded = false }: TemplatesProps) {
             </p>
             {deletingTemplate.usage_count > 0 && (
               <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-3">
-                <p className="text-sm text-yellow-800">
+                <p className="text-sm text-status-amber-fg">
                   This template has been used {deletingTemplate.usage_count} times in projects.
                   Deleting it will not affect existing cabinets.
                 </p>
@@ -441,7 +441,7 @@ function TemplatePreviewModal({ template, onClose }: TemplatePreviewModalProps) 
       <div className="space-y-4">
         <div>
           <h3 className="text-lg font-semibold text-fg-900">{template.name}</h3>
-          <span className="inline-block mt-1 px-2 py-1 bg-accent-tint-soft text-blue-800 text-xs rounded">
+          <span className="inline-block mt-1 px-2 py-1 bg-accent-tint-soft text-accent-text text-xs rounded">
             {template.category}
           </span>
         </div>
@@ -617,7 +617,7 @@ function TemplateEditModal({ template, onClose, onSave }: TemplateEditModalProps
         </div>
 
         <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3">
-          <p className="text-sm text-blue-800">
+          <p className="text-sm text-accent-text">
             <strong>Note:</strong> Only the name, description, and category can be edited.
             To change materials or hardware, create a new template from a cabinet.
           </p>

@@ -68,7 +68,7 @@ export function KbEntryPage() {
         <div className="glass-white rounded-2xl p-6 text-center">
           <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
           <p className="text-fg-700">{error ?? 'Entrada no disponible.'}</p>
-          <Link to="/kb" className="inline-flex items-center gap-1 text-accent-text hover:text-indigo-800 mt-3 text-sm">
+          <Link to="/kb" className="inline-flex items-center gap-1 text-accent-text hover:text-accent-text mt-3 text-sm">
             <ArrowLeft className="w-4 h-4" /> Volver al KB
           </Link>
         </div>
@@ -85,7 +85,7 @@ export function KbEntryPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
       <div className="flex items-center gap-2 text-sm">
-        <Link to="/kb" className="inline-flex items-center gap-1 text-accent-text hover:text-indigo-800">
+        <Link to="/kb" className="inline-flex items-center gap-1 text-accent-text hover:text-accent-text">
           <ArrowLeft className="w-4 h-4" /> Knowledge Base
         </Link>
         {category && (
@@ -104,7 +104,7 @@ export function KbEntryPage() {
           <div className="min-w-0 flex-1">
             <h1 className="text-2xl sm:text-3xl font-bold text-fg-900">{title}</h1>
             <div className="mt-2 flex items-center gap-2 flex-wrap text-xs text-fg-600">
-              <span className="font-mono px-2 py-0.5 rounded bg-accent-tint-strong text-indigo-800">{entry.entry_type}</span>
+              <span className="font-mono px-2 py-0.5 rounded bg-accent-tint-strong text-accent-text">{entry.entry_type}</span>
               <span>·</span>
               <span className="font-mono">v{entry.current_version}</span>
               <span>·</span>
@@ -163,7 +163,7 @@ export function KbEntryPage() {
                     <Link
                       key={id}
                       to={`/products/${id}`}
-                      className="font-mono text-xs text-accent-text hover:text-indigo-800 mr-2"
+                      className="font-mono text-xs text-accent-text hover:text-accent-text mr-2"
                     >
                       {id.slice(0, 8)}
                     </Link>
@@ -180,7 +180,7 @@ export function KbEntryPage() {
                     <Link
                       key={id}
                       to={`/prices/${id}`}
-                      className="font-mono text-xs text-accent-text hover:text-indigo-800 mr-2"
+                      className="font-mono text-xs text-accent-text hover:text-accent-text mr-2"
                     >
                       {id.slice(0, 8)}
                     </Link>

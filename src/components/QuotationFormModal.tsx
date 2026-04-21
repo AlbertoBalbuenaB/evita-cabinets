@@ -118,7 +118,7 @@ export function QuotationFormModal({
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="bg-status-red-bg border border-status-red-brd rounded-lg p-3">
-            <p className="text-sm text-red-800">{error}</p>
+            <p className="text-sm text-status-red-fg">{error}</p>
           </div>
         )}
 

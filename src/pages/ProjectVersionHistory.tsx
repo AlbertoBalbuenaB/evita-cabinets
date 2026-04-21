@@ -57,13 +57,13 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
         return {
           icon: TrendingUp,
           label: 'Price Recalculation',
-          color: 'bg-accent-tint-soft text-blue-800 border-accent-tint-border',
+          color: 'bg-accent-tint-soft text-accent-text border-accent-tint-border',
         };
       case 'material_change':
         return {
           icon: Package,
           label: 'Material Change',
-          color: 'bg-accent-tint-soft text-purple-800 border-accent-tint-border',
+          color: 'bg-accent-tint-soft text-accent-text border-accent-tint-border',
         };
       case 'manual_snapshot':
         return {
@@ -179,7 +179,7 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                               {version.version_name}
                             </h3>
                             {isFirst && (
-                              <span className="px-2 py-0.5 bg-accent-tint-soft text-blue-800 text-xs font-medium rounded-full">
+                              <span className="px-2 py-0.5 bg-accent-tint-soft text-accent-text text-xs font-medium rounded-full">
                                 Latest
                               </span>
                             )}
@@ -314,10 +314,10 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                           </div>
                           <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
                             detail.change_type === 'both'
-                              ? 'bg-accent-tint-soft text-purple-800'
+                              ? 'bg-accent-tint-soft text-accent-text'
                               : detail.change_type === 'material_change'
-                              ? 'bg-accent-tint-soft text-blue-800'
-                              : 'bg-status-emerald-bg text-green-800'
+                              ? 'bg-accent-tint-soft text-accent-text'
+                              : 'bg-status-emerald-bg text-status-emerald-fg'
                           }`}>
                             {detail.change_type === 'both' ? 'Material + Price' :
                              detail.change_type === 'material_change' ? 'Material Change' : 'Price Update'}

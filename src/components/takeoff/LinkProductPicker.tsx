@@ -93,12 +93,12 @@ export function LinkProductPicker({ isOpen, onClose, measurementName, currentLin
         {currentLink && (
           <div className="flex items-center justify-between gap-2 px-3 py-2 bg-accent-tint-soft rounded-lg text-xs">
             <div className="min-w-0">
-              <span className="font-medium text-blue-800">Currently linked:</span>
+              <span className="font-medium text-accent-text">Currently linked:</span>
               <span className="ml-1 text-accent-text truncate">{currentLink.label}</span>
             </div>
             <button
               onClick={handleUnlink}
-              className="flex-shrink-0 inline-flex items-center gap-1 text-xs text-status-red-fg hover:text-red-800"
+              className="flex-shrink-0 inline-flex items-center gap-1 text-xs text-status-red-fg hover:text-status-red-fg"
             >
               <Link2Off className="h-3 w-3" />
               Unlink

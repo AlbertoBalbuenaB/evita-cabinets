@@ -26,7 +26,7 @@ interface MentionItem {
 }
 
 const GROUP_CONFIG = {
-  member:     { label: 'Team Members', Icon: User,  iconColor: 'text-sky-600',     iconBg: 'bg-sky-100'     },
+  member:     { label: 'Team Members', Icon: User,  iconColor: 'text-accent-text',     iconBg: 'bg-sky-100'     },
   department: { label: 'Departments',  Icon: Users, iconColor: 'text-status-emerald-fg', iconBg: 'bg-status-emerald-bg' },
 } as const;
 
@@ -101,7 +101,7 @@ const MentionSuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>
                     type="button"
                     onClick={() => command(item)}
                     className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                      isSelected ? 'bg-accent-tint-soft text-blue-900' : 'text-fg-700 hover:bg-surf-app'
+                      isSelected ? 'bg-accent-tint-soft text-accent-text' : 'text-fg-700 hover:bg-surf-app'
                     }`}
                   >
                     @{item.label}

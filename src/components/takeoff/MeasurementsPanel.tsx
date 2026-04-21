@@ -309,7 +309,7 @@ export function MeasurementsPanel() {
               className="text-xs border border-border-soft rounded px-1.5 py-0.5 flex-1 min-w-0 focus:outline-none focus:ring-1 focus-visible:ring-focus"
               placeholder="e.g. Base Cabinets"
             />
-            <button onClick={submitNewCategory} disabled={!newCategoryName.trim()} className="text-[10px] text-accent-text hover:text-blue-800 disabled:text-fg-300 font-medium px-1">Add</button>
+            <button onClick={submitNewCategory} disabled={!newCategoryName.trim()} className="text-[10px] text-accent-text hover:text-accent-text disabled:text-fg-300 font-medium px-1">Add</button>
           </div>
         )}
       </div>

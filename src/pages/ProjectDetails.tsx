@@ -1914,8 +1914,8 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           <div className="flex items-start">
             <AlertTriangle className="h-6 w-6 text-status-amber-fg mr-3 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h3 className="text-base font-semibold text-yellow-900 mb-1">Price Updates Available</h3>
-              <p className="text-sm text-yellow-800 mb-3">
+              <h3 className="text-base font-semibold text-status-amber-fg mb-1">Price Updates Available</h3>
+              <p className="text-sm text-status-amber-fg mb-3">
                 Some materials in this project have outdated prices. Your price list has been updated since these cabinets were created.
               </p>
               <div className="flex flex-col sm:flex-row gap-2">
@@ -1931,7 +1931,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                   size="sm"
                   variant="ghost"
                   onClick={() => setHasStalePrices(false)}
-                  className="text-yellow-800 hover:bg-status-amber-bg"
+                  className="text-status-amber-fg hover:bg-status-amber-bg"
                 >
                   Dismiss
                 </Button>
@@ -2157,7 +2157,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 {riskAmount > 0 && <p className="text-sm font-medium text-status-amber-fg">{formatPrice(riskAmount)}</p>}
                 <p className="text-sm font-semibold text-fg-900 mt-2 pt-2 border-t border-border-solid">{formatPrice(materialsSubtotal + riskAmount)}</p>
                 {profitMultiplier > 0 && <p className="text-sm font-medium text-fg-700">{formatPrice(profitAmount)}</p>}
-                <p className="text-sm font-bold text-blue-900 mt-2 pt-2 border-t border-border-solid">{formatPrice(price)}</p>
+                <p className="text-sm font-bold text-accent-text mt-2 pt-2 border-t border-border-solid">{formatPrice(price)}</p>
                 {tariffMultiplier > 0 && <p className="text-sm font-medium text-fg-700">{formatPrice(tariffAmount)}</p>}
                 {referralRate > 0 && <p className="text-sm font-medium text-fg-700">{formatPrice(referralAmount)}</p>}
                 {taxPercentage > 0 && <p className="text-sm font-medium text-fg-700">{formatPrice(taxAmount)}</p>}
@@ -2372,11 +2372,11 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
         {project.project_brief && (
           <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-5">
-            <h3 className="text-sm font-semibold text-blue-900 flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-semibold text-accent-text flex items-center gap-2 mb-3">
               <Package className="h-4 w-4" />
               Project Brief
             </h3>
-            <p className="text-sm text-blue-900 whitespace-pre-wrap font-mono">{project.project_brief}</p>
+            <p className="text-sm text-fg-800 whitespace-pre-wrap font-mono">{project.project_brief}</p>
           </div>
         )}
       </div>
@@ -2603,7 +2603,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                           }}
                           className={`w-14 px-1.5 py-1 text-sm text-center border rounded focus:outline-none focus:ring-2 focus-visible:ring-focus ${
                             (area.quantity ?? 1) > 1
-                              ? 'border-accent-tint-border bg-accent-tint-soft text-blue-800 font-semibold'
+                              ? 'border-accent-tint-border bg-accent-tint-soft text-accent-text font-semibold'
                               : 'border-border-soft bg-surf-app text-fg-400'
                           }`}
                           title="Area quantity multiplier — all subtotals are multiplied by this number"
@@ -2643,7 +2643,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                           return qty > 1 ? (
                             <div>
                               <div className="text-xs text-fg-500">{formatCurrency(adjustedRaw)} × {qty}</div>
-                              <div className="text-base sm:text-xl font-bold text-blue-900">{formatCurrency(adjustedRaw * qty)}</div>
+                              <div className="text-base sm:text-xl font-bold text-accent-text">{formatCurrency(adjustedRaw * qty)}</div>
                             </div>
                           ) : (
                             <div className="text-base sm:text-xl font-bold text-fg-900">{formatCurrency(adjustedRaw)}</div>
@@ -2852,7 +2852,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2">
                                     <h4 className="font-semibold text-fg-900">{countertop.item_name}</h4>
-                                    <span className="text-xs bg-status-orange-bg text-orange-800 px-2 py-0.5 rounded">
+                                    <span className="text-xs bg-status-orange-bg text-status-orange-fg px-2 py-0.5 rounded">
                                       Countertop
                                     </span>
                                   </div>
@@ -2867,7 +2867,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                     </div>
                                     <div className="flex justify-between col-span-2 pt-1 border-t border-status-orange-brd">
                                       <span className="text-fg-600 font-medium">Subtotal:</span>
-                                      <span className="font-semibold text-orange-900">
+                                      <span className="font-semibold text-status-orange-fg">
                                         {formatPrice(countertop.subtotal)}
                                       </span>
                                     </div>
@@ -2917,7 +2917,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2">
                                     <h4 className="font-semibold text-fg-900">{item.item_name}</h4>
-                                    <span className="text-xs bg-status-amber-bg text-amber-800 px-2 py-0.5 rounded">
+                                    <span className="text-xs bg-status-amber-bg text-status-amber-fg px-2 py-0.5 rounded">
                                       Item
                                     </span>
                                   </div>
@@ -2932,7 +2932,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                     </div>
                                     <div className="flex justify-between col-span-2 pt-1 border-t border-status-amber-brd">
                                       <span className="text-fg-600 font-medium">Subtotal:</span>
-                                      <span className="font-semibold text-amber-900">
+                                      <span className="font-semibold text-status-amber-fg">
                                         {formatPrice(item.subtotal)}
                                       </span>
                                     </div>
@@ -2983,7 +2983,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                       <h4 className="font-semibold text-fg-900">
                                         {catalog?.brand?.name ?? 'Prefab'} — {catalog?.description ?? catalog?.cabinet_code ?? 'Item'}
                                       </h4>
-                                      <span className="text-xs bg-accent-tint-strong text-indigo-800 px-2 py-0.5 rounded">
+                                      <span className="text-xs bg-accent-tint-strong text-accent-text px-2 py-0.5 rounded">
                                         Prefab
                                       </span>
                                       {catalog && (
@@ -3015,7 +3015,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                       </div>
                                       <div className="flex justify-between col-span-2 pt-1 border-t border-accent-tint-border">
                                         <span className="text-fg-600 font-medium">Subtotal:</span>
-                                        <span className="font-semibold text-indigo-900">
+                                        <span className="font-semibold text-accent-text">
                                           {formatPrice(prefabItem.cost_mxn)}
                                         </span>
                                       </div>

@@ -332,7 +332,7 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
           <div className="bg-status-amber-bg rounded-lg p-3 border border-amber-100 lg:col-span-2">
             <div className="flex items-center mb-2">
               <Package className="h-3 w-3 text-status-amber-fg mr-1.5" />
-              <h5 className="text-xs font-semibold text-amber-900">Boards (from optimizer run)</h5>
+              <h5 className="text-xs font-semibold text-status-amber-fg">Boards (from optimizer run)</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {boardRows.map((row) => (
@@ -362,7 +362,7 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
           <div className="bg-status-amber-bg rounded-lg p-3 border border-amber-100 lg:col-span-2">
             <div className="flex items-center mb-2">
               <Ruler className="h-3 w-3 text-status-amber-fg mr-1.5" />
-              <h5 className="text-xs font-semibold text-amber-900">Edgeband (Rolls 150m)</h5>
+              <h5 className="text-xs font-semibold text-status-amber-fg">Edgeband (Rolls 150m)</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {edgebandRows.map((row) => (
@@ -412,7 +412,7 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
           <div className="bg-accent-tint-soft rounded-lg p-3 border border-accent-tint-border lg:col-span-2">
             <div className="flex items-center mb-2">
               <Package className="h-3 w-3 text-accent-text mr-1.5" />
-              <h5 className="text-xs font-semibold text-purple-900">Accessories</h5>
+              <h5 className="text-xs font-semibold text-accent-text">Accessories</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
               {accessories.map((row) => (
@@ -435,7 +435,7 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
           <div className="bg-status-orange-bg rounded-lg p-3 border border-status-orange-brd lg:col-span-2">
             <div className="flex items-center mb-2">
               <Hammer className="h-3 w-3 text-status-orange-fg mr-1.5" />
-              <h5 className="text-xs font-semibold text-orange-900">Countertops</h5>
+              <h5 className="text-xs font-semibold text-status-orange-fg">Countertops</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
               {countertops.map((row) => (

@@ -5,14 +5,14 @@ import { fetchAuditLog, fetchMemberNames } from '../../lib/kb/kbApi';
 import type { KbAuditRow } from '../../lib/kb/kbTypes';
 
 const ACTION_STYLES: Record<string, { bg: string; text: string }> = {
-  'proposal.create.merge':  { bg: 'bg-accent-tint-soft',   text: 'text-violet-800' },
-  'proposal.edit.merge':    { bg: 'bg-accent-tint-soft',   text: 'text-violet-800' },
-  'proposal.delete.merge':  { bg: 'bg-status-red-bg',     text: 'text-rose-800' },
-  default_approved:         { bg: 'bg-status-emerald-bg',  text: 'text-emerald-800' },
-  default_rejected:         { bg: 'bg-status-red-bg',     text: 'text-rose-800' },
-  default_changes:          { bg: 'bg-status-amber-bg',    text: 'text-amber-800' },
+  'proposal.create.merge':  { bg: 'bg-accent-tint-soft',   text: 'text-accent-text' },
+  'proposal.edit.merge':    { bg: 'bg-accent-tint-soft',   text: 'text-accent-text' },
+  'proposal.delete.merge':  { bg: 'bg-status-red-bg',     text: 'text-status-red-fg' },
+  default_approved:         { bg: 'bg-status-emerald-bg',  text: 'text-status-emerald-fg' },
+  default_rejected:         { bg: 'bg-status-red-bg',     text: 'text-status-red-fg' },
+  default_changes:          { bg: 'bg-status-amber-bg',    text: 'text-status-amber-fg' },
   default_withdrawn:        { bg: 'bg-surf-muted',    text: 'text-fg-700' },
-  default_open:             { bg: 'bg-accent-tint-strong',   text: 'text-indigo-800' },
+  default_open:             { bg: 'bg-accent-tint-strong',   text: 'text-accent-text' },
 };
 
 function styleForAction(action: string) {
@@ -51,7 +51,7 @@ export function KbAudit() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
-      <Link to="/kb" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-indigo-800">
+      <Link to="/kb" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-accent-text">
         <ArrowLeft className="w-4 h-4" /> Knowledge Base
       </Link>
 
@@ -114,7 +114,7 @@ export function KbAudit() {
                         {row.proposal_id && (
                           <Link
                             to={`/kb/proposals/${row.proposal_id}`}
-                            className="text-accent-text hover:text-indigo-800 font-mono block"
+                            className="text-accent-text hover:text-accent-text font-mono block"
                           >
                             prop {row.proposal_id.slice(0, 8)}
                           </Link>

@@ -109,7 +109,7 @@ export function WikiHub() {
             </div>
             <p className="text-sm text-fg-700 mt-1">
               Manual de armado, protocolos de seguridad, control de calidad y capacitación. Complemento narrativo de la{' '}
-              <Link to="/kb" className="text-accent-text hover:text-indigo-800 underline">Knowledge Base</Link>.
+              <Link to="/kb" className="text-accent-text hover:text-accent-text underline">Knowledge Base</Link>.
             </p>
             <div className="mt-3 flex flex-wrap gap-3 text-xs text-fg-600">
               <span>{categories.length} categorías</span>

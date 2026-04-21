@@ -506,7 +506,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
               <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3 flex items-center justify-between">
                 <div className="flex items-center">
                   <Bookmark className="h-5 w-5 text-accent-text mr-2" />
-                  <span className="text-sm text-blue-800">Start with a template to save time</span>
+                  <span className="text-sm text-accent-text">Start with a template to save time</span>
                 </div>
                 <Button
                   size="sm"
@@ -642,7 +642,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <Layers className="h-4 w-4 text-accent-text" />
-                      <span className="text-xs font-semibold text-blue-900">Surface Layer Material</span>
+                      <span className="text-xs font-semibold text-accent-text">Surface Layer Material</span>
                       <span className="text-xs text-accent-text">(Applied over base material)</span>
                     </div>
                     <AutocompleteSelect
@@ -693,7 +693,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   <div className="bg-status-orange-bg border border-status-orange-brd rounded-lg p-3 mt-2">
                     <div className="flex items-center gap-2 mb-2">
                       <Package className="h-4 w-4 text-status-orange-fg" />
-                      <span className="text-xs font-semibold text-orange-900">Back Panel Material</span>
+                      <span className="text-xs font-semibold text-status-orange-fg">Back Panel Material</span>
                       <span className="text-xs text-status-orange-fg">(Will be subtracted from box material)</span>
                     </div>
                     <AutocompleteSelect
@@ -730,7 +730,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     {backPanelSF > 0 && (
                       <div className="mt-3 bg-status-orange-bg border border-status-orange-brd rounded-lg p-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-orange-900">Back Panel Area:</span>
+                          <span className="text-sm font-medium text-status-orange-fg">Back Panel Area:</span>
                           <span className="text-sm font-bold text-status-orange-fg">{backPanelSF.toFixed(2)} ft²</span>
                         </div>
                       </div>
@@ -934,7 +934,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   <div className="bg-status-emerald-bg border border-status-emerald-brd rounded-lg p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <Layers className="h-4 w-4 text-status-emerald-fg" />
-                      <span className="text-xs font-semibold text-green-900">Surface Layer Material</span>
+                      <span className="text-xs font-semibold text-status-emerald-fg">Surface Layer Material</span>
                       <span className="text-xs text-status-emerald-fg">(Applied over base material)</span>
                     </div>
                     <AutocompleteSelect
@@ -1124,7 +1124,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3 mb-3">
                     <div className="flex items-start gap-2">
                       <Info className="h-4 w-4 text-accent-text mt-0.5 flex-shrink-0" />
-                      <div className="text-xs text-purple-900">
+                      <div className="text-xs text-accent-text">
                         <p className="font-medium mb-1">Add accessories like glass, fabric, lighting, decorative items, etc.</p>
                         <p className="text-accent-text">Accessories do not affect shipping or labor calculations.</p>
                       </div>

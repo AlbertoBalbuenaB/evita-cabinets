@@ -36,9 +36,9 @@ export function OptimizerWarningsPanel({
       : 'green';
 
   const toneClasses = {
-    red:   { bg: 'bg-status-red-bg',    border: 'border-status-red-brd',    text: 'text-red-900',    icon: 'text-status-red-fg'    },
-    amber: { bg: 'bg-status-amber-bg',  border: 'border-status-amber-brd',  text: 'text-amber-900',  icon: 'text-status-amber-fg'  },
-    green: { bg: 'bg-status-emerald-bg',  border: 'border-status-emerald-brd',  text: 'text-green-900',  icon: 'text-status-emerald-fg'  },
+    red:   { bg: 'bg-status-red-bg',    border: 'border-status-red-brd',    text: 'text-status-red-fg',    icon: 'text-status-red-fg'    },
+    amber: { bg: 'bg-status-amber-bg',  border: 'border-status-amber-brd',  text: 'text-status-amber-fg',  icon: 'text-status-amber-fg'  },
+    green: { bg: 'bg-status-emerald-bg',  border: 'border-status-emerald-brd',  text: 'text-status-emerald-fg',  icon: 'text-status-emerald-fg'  },
   }[tone];
 
   if (totalCabinetsCount === 0 && !hasAnything) return null;

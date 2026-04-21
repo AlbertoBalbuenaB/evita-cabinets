@@ -27,7 +27,7 @@ function highlightMatch(text: string, query: string) {
     <>
       {parts.map((part, i) =>
         regex.test(part) ? (
-          <mark key={i} className="bg-status-amber-bg text-yellow-800 rounded-sm px-0.5">
+          <mark key={i} className="bg-status-amber-bg text-status-amber-fg rounded-sm px-0.5">
             {part}
           </mark>
         ) : (

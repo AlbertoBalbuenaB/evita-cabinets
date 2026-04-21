@@ -101,17 +101,17 @@ const CATEGORY_ORDER: BOMCategory[] = [
 ];
 
 const CATEGORY_COLORS: Record<BOMCategory, string> = {
-  'Boards':            'bg-status-amber-bg text-amber-800',
-  'Edgeband':          'bg-accent-tint-soft text-purple-800',
+  'Boards':            'bg-status-amber-bg text-status-amber-fg',
+  'Edgeband':          'bg-accent-tint-soft text-accent-text',
   'Hardware':          'bg-surf-muted text-fg-700',
-  'Accessories':       'bg-status-emerald-bg text-green-800',
-  'Interior Finish':   'bg-sky-50 text-sky-800',
-  'Door Profile':      'bg-accent-tint-soft text-indigo-800',
-  'Items':             'bg-status-orange-bg text-orange-800',
+  'Accessories':       'bg-status-emerald-bg text-status-emerald-fg',
+  'Interior Finish':   'bg-sky-50 text-accent-text',
+  'Door Profile':      'bg-accent-tint-soft text-accent-text',
+  'Items':             'bg-status-orange-bg text-status-orange-fg',
   'Countertops':       'bg-teal-50 text-teal-800',
-  'Closet Items':      'bg-accent-tint-soft text-pink-800',
-  'Prefab Items':      'bg-status-red-bg text-red-800',
-  'Fallback Cabinets': 'bg-status-amber-bg text-yellow-800',
+  'Closet Items':      'bg-accent-tint-soft text-status-red-fg',
+  'Prefab Items':      'bg-status-red-bg text-status-red-fg',
+  'Fallback Cabinets': 'bg-status-amber-bg text-status-amber-fg',
 };
 
 interface BOMRow {

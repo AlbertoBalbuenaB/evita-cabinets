@@ -168,8 +168,8 @@ export function BulkPriceUpdateModal({
               <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4 flex items-start">
                 <AlertCircle className="h-5 w-5 text-status-amber-fg mr-3 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <h4 className="font-semibold text-yellow-900 mb-1">Price Changes Detected</h4>
-                  <p className="text-sm text-yellow-800">
+                  <h4 className="font-semibold text-status-amber-fg mb-1">Price Changes Detected</h4>
+                  <p className="text-sm text-status-amber-fg">
                     {analysis.affectedCabinetsCount} cabinet{analysis.affectedCabinetsCount !== 1 ? 's' : ''} across {analysis.affectedAreas.length} area{analysis.affectedAreas.length !== 1 ? 's' : ''} {analysis.affectedAreas.length !== 1 ? 'are' : 'is'} affected by price changes.
                   </p>
                 </div>
@@ -262,8 +262,8 @@ export function BulkPriceUpdateModal({
               </div>
 
               <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4">
-                <h4 className="font-semibold text-blue-900 mb-2">Selected Summary</h4>
-                <div className="text-sm text-blue-800 space-y-1">
+                <h4 className="font-semibold text-accent-text mb-2">Selected Summary</h4>
+                <div className="text-sm text-accent-text space-y-1">
                   <div>Areas: {selectedAreaIds.length} of {analysis.affectedAreas.length}</div>
                   <div>Cabinets: {selectedCabinetsCount}</div>
                   <div className="flex items-center">
@@ -331,8 +331,8 @@ export function BulkPriceUpdateModal({
                       </p>
                       {updateResult.errors.length > 0 && (
                         <div className="bg-status-red-bg border border-status-red-brd rounded-lg p-4 text-left max-w-md mx-auto">
-                          <h4 className="font-semibold text-red-900 mb-2">Errors:</h4>
-                          <ul className="text-sm text-red-800 space-y-1">
+                          <h4 className="font-semibold text-status-red-fg mb-2">Errors:</h4>
+                          <ul className="text-sm text-status-red-fg space-y-1">
                             {updateResult.errors.slice(0, 5).map((error, idx) => (
                               <li key={idx}>{error}</li>
                             ))}

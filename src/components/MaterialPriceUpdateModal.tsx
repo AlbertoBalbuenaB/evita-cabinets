@@ -241,8 +241,8 @@ export function MaterialPriceUpdateModal({
                 </p>
                 {updateResult.errors.length > 0 && (
                   <div className="bg-status-red-bg border border-status-red-brd rounded-lg p-4 text-left max-w-md mx-auto">
-                    <h4 className="font-semibold text-red-900 mb-2">Errors:</h4>
-                    <ul className="text-sm text-red-800 space-y-1">
+                    <h4 className="font-semibold text-status-red-fg mb-2">Errors:</h4>
+                    <ul className="text-sm text-status-red-fg space-y-1">
                       {updateResult.errors.slice(0, 5).map((error, idx) => (
                         <li key={idx}>{error}</li>
                       ))}
@@ -308,8 +308,8 @@ export function MaterialPriceUpdateModal({
           <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4 flex items-start">
             <Info className="h-5 w-5 text-accent-text mr-3 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <h4 className="font-semibold text-blue-900 mb-1">What does this do?</h4>
-              <p className="text-sm text-blue-800">
+              <h4 className="font-semibold text-accent-text mb-1">What does this do?</h4>
+              <p className="text-sm text-accent-text">
                 This will recalculate all cabinet costs using the current prices from your price list.
                 Materials assigned to each cabinet will remain the same, but their costs will be updated
                 to reflect current pricing. A version snapshot will be saved before making changes.

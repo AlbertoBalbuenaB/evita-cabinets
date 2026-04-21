@@ -336,7 +336,7 @@ export function TakeoffPage() {
           {file && (
             <button
               onClick={() => setShowSaveModal(true)}
-              className="inline-flex items-center gap-1 text-xs text-accent-text hover:text-blue-800"
+              className="inline-flex items-center gap-1 text-xs text-accent-text hover:text-accent-text"
               title={currentSessionId ? 'Update this saved session' : 'Save to Supabase'}
             >
               <UploadCloud className="h-3.5 w-3.5" />

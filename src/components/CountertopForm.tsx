@@ -205,12 +205,12 @@ export function CountertopForm({ areaId, countertop, onClose }: CountertopFormPr
           <div className="bg-status-orange-bg border border-status-orange-brd rounded-lg p-4">
             <div className="flex justify-between items-center">
               <div>
-                <div className="text-sm text-orange-800 font-medium">Subtotal</div>
+                <div className="text-sm text-status-orange-fg font-medium">Subtotal</div>
                 <div className="text-xs text-status-orange-fg">
                   {quantity} × {formatCurrency(unitPrice)}
                 </div>
               </div>
-              <div className="text-2xl font-bold text-orange-900">{formatCurrency(subtotal)}</div>
+              <div className="text-2xl font-bold text-status-orange-fg">{formatCurrency(subtotal)}</div>
             </div>
           </div>
         )}

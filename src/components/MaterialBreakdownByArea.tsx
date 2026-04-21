@@ -336,7 +336,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                 <div className="bg-accent-tint-soft rounded-lg p-4 border border-blue-100">
                   <div className="flex items-center mb-3">
                     <Package className="h-4 w-4 text-accent-text mr-2" />
-                    <h4 className="text-sm font-semibold text-blue-900">Box Materials (Sheets)</h4>
+                    <h4 className="text-sm font-semibold text-accent-text">Box Materials (Sheets)</h4>
                   </div>
                   <div className="space-y-2">
                     {Array.from(area.boxMaterialSheets.entries()).map(([name, data]) => (
@@ -357,7 +357,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                 <div className="bg-status-emerald-bg rounded-lg p-4 border border-green-100">
                   <div className="flex items-center mb-3">
                     <Package className="h-4 w-4 text-status-emerald-fg mr-2" />
-                    <h4 className="text-sm font-semibold text-green-900">Doors Materials (Sheets)</h4>
+                    <h4 className="text-sm font-semibold text-status-emerald-fg">Doors Materials (Sheets)</h4>
                   </div>
                   <div className="space-y-2">
                     {Array.from(area.doorsMaterialSheets.entries()).map(([name, data]) => (
@@ -378,7 +378,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                 <div className="bg-status-amber-bg rounded-lg p-4 border border-amber-100">
                   <div className="flex items-center mb-3">
                     <Ruler className="h-4 w-4 text-status-amber-fg mr-2" />
-                    <h4 className="text-sm font-semibold text-amber-900">Box Edgeband (Rolls)</h4>
+                    <h4 className="text-sm font-semibold text-status-amber-fg">Box Edgeband (Rolls)</h4>
                   </div>
                   <div className="space-y-2">
                     {Array.from(area.boxEdgebandRolls.entries()).map(([name, data]) => (
@@ -399,7 +399,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                 <div className="bg-accent-tint-soft rounded-lg p-4 border border-purple-100">
                   <div className="flex items-center mb-3">
                     <Ruler className="h-4 w-4 text-accent-text mr-2" />
-                    <h4 className="text-sm font-semibold text-purple-900">Doors Edgeband (Rolls)</h4>
+                    <h4 className="text-sm font-semibold text-accent-text">Doors Edgeband (Rolls)</h4>
                   </div>
                   <div className="space-y-2">
                     {Array.from(area.doorsEdgebandRolls.entries()).map(([name, data]) => (
@@ -440,7 +440,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                 <div className="bg-accent-tint-soft rounded-lg p-4 border border-accent-tint-border lg:col-span-2">
                   <div className="flex items-center mb-3">
                     <Package className="h-4 w-4 text-accent-text mr-2" />
-                    <h4 className="text-sm font-semibold text-purple-900">Accessories</h4>
+                    <h4 className="text-sm font-semibold text-accent-text">Accessories</h4>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {Array.from(area.accessories.entries()).map(([name, data]) => (
@@ -460,7 +460,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                 <div className="bg-status-orange-bg rounded-lg p-4 border border-status-orange-brd lg:col-span-2">
                   <div className="flex items-center mb-3">
                     <Hammer className="h-4 w-4 text-status-orange-fg mr-2" />
-                    <h4 className="text-sm font-semibold text-orange-900">Countertops</h4>
+                    <h4 className="text-sm font-semibold text-status-orange-fg">Countertops</h4>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {Array.from(area.countertops.entries()).map(([name, data]) => (

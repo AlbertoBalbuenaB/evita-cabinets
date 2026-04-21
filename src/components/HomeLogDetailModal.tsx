@@ -184,7 +184,7 @@ export function HomeLogDetailModal({ log, currentMemberId, currentMemberName, on
             <Link
               to={`/projects/${log.project_id}`}
               onClick={onClose}
-              className="inline-flex items-center gap-1 text-[11px] text-accent-text hover:text-blue-800 font-medium flex-shrink-0"
+              className="inline-flex items-center gap-1 text-[11px] text-accent-text hover:text-accent-text font-medium flex-shrink-0"
             >
               {log.project_name} <ExternalLink className="h-3 w-3" />
             </Link>

@@ -182,12 +182,12 @@ export function ItemForm({ areaId, item, onClose }: ItemFormProps) {
           <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4">
             <div className="flex justify-between items-center">
               <div>
-                <div className="text-sm text-blue-800 font-medium">Subtotal</div>
+                <div className="text-sm text-accent-text font-medium">Subtotal</div>
                 <div className="text-xs text-accent-text">
                   {quantity} × {formatCurrency(unitPrice)}
                 </div>
               </div>
-              <div className="text-2xl font-bold text-blue-900">{formatCurrency(subtotal)}</div>
+              <div className="text-2xl font-bold text-accent-text">{formatCurrency(subtotal)}</div>
             </div>
           </div>
         )}

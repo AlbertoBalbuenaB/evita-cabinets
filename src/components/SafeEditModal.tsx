@@ -71,10 +71,10 @@ export function SafeEditModal({
         <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4 flex items-start space-x-3">
           <AlertCircle className="h-5 w-5 text-status-amber-fg mt-0.5 flex-shrink-0" />
           <div>
-            <h3 className="text-sm font-semibold text-amber-900 mb-1">
+            <h3 className="text-sm font-semibold text-status-amber-fg mb-1">
               This product is currently in use
             </h3>
-            <p className="text-sm text-amber-800">
+            <p className="text-sm text-status-amber-fg">
               This product is used in <strong>{usage.usageCount}</strong> cabinet
               {usage.usageCount !== 1 ? 's' : ''} across{' '}
               <strong>{usage.projectNames.length}</strong> project
@@ -82,8 +82,8 @@ export function SafeEditModal({
             </p>
             {usage.projectNames.length > 0 && (
               <div className="mt-2">
-                <p className="text-xs font-medium text-amber-900 mb-1">Projects:</p>
-                <ul className="text-xs text-amber-800 list-disc list-inside max-h-24 overflow-y-auto">
+                <p className="text-xs font-medium text-status-amber-fg mb-1">Projects:</p>
+                <ul className="text-xs text-status-amber-fg list-disc list-inside max-h-24 overflow-y-auto">
                   {usage.projectNames.slice(0, 10).map((name, idx) => (
                     <li key={idx}>{name}</li>
                   ))}
@@ -100,8 +100,8 @@ export function SafeEditModal({
           <div className="flex items-start space-x-3">
             <Package className="h-5 w-5 text-accent-text mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="text-sm font-semibold text-blue-900 mb-1">Safe Editing Solution</h3>
-              <p className="text-sm text-blue-800">
+              <h3 className="text-sm font-semibold text-accent-text mb-1">Safe Editing Solution</h3>
+              <p className="text-sm text-accent-text">
                 To protect historical project data, your changes will be saved as a new product
                 version. Historical projects will continue to reference the original product.
               </p>

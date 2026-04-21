@@ -448,7 +448,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
         total={totals.box}
         open={openBox}
         onToggle={() => setOpenBox((v) => !v)}
-        color="text-blue-800"
+        color="text-accent-text"
       />
       {openBox && (
         <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4 space-y-3">
@@ -458,7 +458,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
             <>
               {breakdown.boxMaterials.map((mat, idx) => (
                 <div key={idx} className="bg-surf-card rounded-lg p-3 border border-blue-100">
-                  <div className="flex justify-between text-sm font-medium text-blue-900 mb-1">
+                  <div className="flex justify-between text-sm font-medium text-accent-text mb-1">
                     <span>{mat.materialName}</span>
                     <span>{formatCurrency(mat.cost)}</span>
                   </div>
@@ -471,13 +471,13 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
               ))}
               {breakdown.boxInteriorFinishes.length > 0 && (
                 <div className="pt-1">
-                  <div className="flex items-center gap-1 mb-2 text-xs font-semibold text-blue-800">
+                  <div className="flex items-center gap-1 mb-2 text-xs font-semibold text-accent-text">
                     <Layers className="h-3.5 w-3.5" />
                     Surface Layer (Applied Over Base)
                   </div>
                   {breakdown.boxInteriorFinishes.map((mat, idx) => (
                     <div key={idx} className="bg-accent-tint-soft rounded-lg p-3 border border-accent-tint-border mb-2">
-                      <div className="flex justify-between text-sm font-medium text-blue-900 mb-1">
+                      <div className="flex justify-between text-sm font-medium text-accent-text mb-1">
                         <span className="flex items-center gap-1"><Layers className="h-3 w-3" />{mat.materialName}</span>
                         <span>{formatCurrency(mat.cost)}</span>
                       </div>
@@ -489,7 +489,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
                   ))}
                 </div>
               )}
-              <div className="flex justify-between text-sm font-bold text-blue-900 pt-2 border-t border-accent-tint-border">
+              <div className="flex justify-between text-sm font-bold text-accent-text pt-2 border-t border-accent-tint-border">
                 <span>Total Box</span>
                 <span>{formatCurrency(totals.box)}</span>
               </div>
@@ -504,7 +504,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
         total={totals.doors}
         open={openDoors}
         onToggle={() => setOpenDoors((v) => !v)}
-        color="text-green-800"
+        color="text-status-emerald-fg"
       />
       {openDoors && (
         <div className="bg-status-emerald-bg border border-status-emerald-brd rounded-lg p-4 space-y-3">
@@ -514,7 +514,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
             <>
               {breakdown.doorsMaterials.map((mat, idx) => (
                 <div key={idx} className="bg-surf-card rounded-lg p-3 border border-green-100">
-                  <div className="flex justify-between text-sm font-medium text-green-900 mb-1">
+                  <div className="flex justify-between text-sm font-medium text-status-emerald-fg mb-1">
                     <span>{mat.materialName}</span>
                     <span>{formatCurrency(mat.cost)}</span>
                   </div>
@@ -527,13 +527,13 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
               ))}
               {breakdown.doorsInteriorFinishes.length > 0 && (
                 <div className="pt-1">
-                  <div className="flex items-center gap-1 mb-2 text-xs font-semibold text-green-800">
+                  <div className="flex items-center gap-1 mb-2 text-xs font-semibold text-status-emerald-fg">
                     <Layers className="h-3.5 w-3.5" />
                     Surface Layer (Applied Over Base)
                   </div>
                   {breakdown.doorsInteriorFinishes.map((mat, idx) => (
                     <div key={idx} className="bg-status-emerald-bg rounded-lg p-3 border border-status-emerald-brd mb-2">
-                      <div className="flex justify-between text-sm font-medium text-green-900 mb-1">
+                      <div className="flex justify-between text-sm font-medium text-status-emerald-fg mb-1">
                         <span className="flex items-center gap-1"><Layers className="h-3 w-3" />{mat.materialName}</span>
                         <span>{formatCurrency(mat.cost)}</span>
                       </div>
@@ -545,7 +545,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
                   ))}
                 </div>
               )}
-              <div className="flex justify-between text-sm font-bold text-green-900 pt-2 border-t border-status-emerald-brd">
+              <div className="flex justify-between text-sm font-bold text-status-emerald-fg pt-2 border-t border-status-emerald-brd">
                 <span>Total Doors</span>
                 <span>{formatCurrency(totals.doors)}</span>
               </div>
@@ -562,13 +562,13 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
             total={totals.backPanel}
             open={openBackPanel}
             onToggle={() => setOpenBackPanel((v) => !v)}
-            color="text-orange-800"
+            color="text-status-orange-fg"
           />
           {openBackPanel && (
             <div className="bg-status-orange-bg border border-status-orange-brd rounded-lg p-4 space-y-3">
               {breakdown.backPanelMaterials.map((mat, idx) => (
                 <div key={idx} className="bg-surf-card rounded-lg p-3 border border-orange-100">
-                  <div className="flex justify-between text-sm font-medium text-orange-900 mb-1">
+                  <div className="flex justify-between text-sm font-medium text-status-orange-fg mb-1">
                     <span>{mat.materialName}</span>
                     <span>{formatCurrency(mat.cost)}</span>
                   </div>
@@ -591,7 +591,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
         total={totals.edgeband}
         open={openEdgeband}
         onToggle={() => setOpenEdgeband((v) => !v)}
-        color="text-amber-800"
+        color="text-status-amber-fg"
       />
       {openEdgeband && (
         <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4 space-y-3">
@@ -601,7 +601,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
             <>
               {breakdown.edgebands.map((eb, idx) => (
                 <div key={idx} className="bg-surf-card rounded-lg p-3 border border-amber-100">
-                  <div className="flex justify-between text-sm font-medium text-amber-900 mb-1">
+                  <div className="flex justify-between text-sm font-medium text-status-amber-fg mb-1">
                     <span>{eb.edgebandName}</span>
                     <span>{formatCurrency(eb.cost)}</span>
                   </div>
@@ -612,7 +612,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
                   </div>
                 </div>
               ))}
-              <div className="flex justify-between text-sm font-bold text-amber-900 pt-2 border-t border-status-amber-brd">
+              <div className="flex justify-between text-sm font-bold text-status-amber-fg pt-2 border-t border-status-amber-brd">
                 <span>Total Edgeband</span>
                 <span>{formatCurrency(totals.edgeband)}</span>
               </div>
@@ -685,13 +685,13 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
             total={totals.countertops}
             open={openCountertops}
             onToggle={() => setOpenCountertops((v) => !v)}
-            color="text-orange-800"
+            color="text-status-orange-fg"
           />
           {openCountertops && (
             <div className="bg-status-orange-bg border border-status-orange-brd rounded-lg p-4 space-y-2">
               {breakdown.countertops.map((ct, idx) => (
                 <div key={idx} className="bg-surf-card rounded-lg p-3 border border-orange-100">
-                  <div className="flex justify-between text-sm font-medium text-orange-900 mb-1">
+                  <div className="flex justify-between text-sm font-medium text-status-orange-fg mb-1">
                     <span>{ct.item_name}</span>
                     <span>{formatCurrency(ct.subtotal)}</span>
                   </div>
@@ -702,7 +702,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
                   {ct.notes && <div className="text-xs text-status-orange-fg italic mt-1">{ct.notes}</div>}
                 </div>
               ))}
-              <div className="flex justify-between text-sm font-bold text-orange-900 pt-2 border-t border-status-orange-brd">
+              <div className="flex justify-between text-sm font-bold text-status-orange-fg pt-2 border-t border-status-orange-brd">
                 <span>Total Countertops</span>
                 <span>{formatCurrency(totals.countertops)}</span>
               </div>
@@ -719,13 +719,13 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
             total={totals.items}
             open={openItems}
             onToggle={() => setOpenItems((v) => !v)}
-            color="text-amber-800"
+            color="text-status-amber-fg"
           />
           {openItems && (
             <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4 space-y-2">
               {breakdown.items.map((item, idx) => (
                 <div key={idx} className="bg-surf-card rounded-lg p-3 border border-amber-100">
-                  <div className="flex justify-between text-sm font-medium text-amber-900 mb-1">
+                  <div className="flex justify-between text-sm font-medium text-status-amber-fg mb-1">
                     <span>{item.item_name}</span>
                     <span>{formatCurrency(item.subtotal)}</span>
                   </div>
@@ -736,7 +736,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
                   {item.notes && <div className="text-xs text-status-amber-fg italic mt-1">{item.notes}</div>}
                 </div>
               ))}
-              <div className="flex justify-between text-sm font-bold text-amber-900 pt-2 border-t border-status-amber-brd">
+              <div className="flex justify-between text-sm font-bold text-status-amber-fg pt-2 border-t border-status-amber-brd">
                 <span>Total Items</span>
                 <span>{formatCurrency(totals.items)}</span>
               </div>

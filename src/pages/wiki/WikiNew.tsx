@@ -50,7 +50,7 @@ export function WikiNew() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
-      <Link to="/wiki" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-violet-800">
+      <Link to="/wiki" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-accent-text">
         <ArrowLeft className="w-4 h-4" /> Wiki
       </Link>
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">

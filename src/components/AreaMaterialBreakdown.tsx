@@ -258,7 +258,7 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
           <div className="bg-accent-tint-soft rounded-lg p-3 border border-blue-100">
             <div className="flex items-center mb-2">
               <Package className="h-3 w-3 text-accent-text mr-1.5" />
-              <h5 className="text-xs font-semibold text-blue-900">Box Materials (Sheets)</h5>
+              <h5 className="text-xs font-semibold text-accent-text">Box Materials (Sheets)</h5>
             </div>
             <div className="space-y-1.5">
               {Array.from(data.boxMaterialSheets.entries()).map(([name, matData]) => (
@@ -276,7 +276,7 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
               <div className="mt-2 pt-2 border-t border-accent-tint-border">
                 <div className="flex items-center gap-1 mb-1.5">
                   <Layers className="h-3 w-3 text-accent-text" />
-                  <span className="text-xs font-semibold text-blue-800">Surface Layers</span>
+                  <span className="text-xs font-semibold text-accent-text">Surface Layers</span>
                 </div>
                 {Array.from(data.boxInteriorFinishSheets.entries()).map(([name, matData]) => (
                   <div key={name} className="bg-accent-tint-soft rounded p-2 text-xs mb-1.5">
@@ -304,7 +304,7 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
           <div className="bg-status-emerald-bg rounded-lg p-3 border border-green-100">
             <div className="flex items-center mb-2">
               <Package className="h-3 w-3 text-status-emerald-fg mr-1.5" />
-              <h5 className="text-xs font-semibold text-green-900">Doors Materials (Sheets)</h5>
+              <h5 className="text-xs font-semibold text-status-emerald-fg">Doors Materials (Sheets)</h5>
             </div>
             <div className="space-y-1.5">
               {Array.from(data.doorsMaterialSheets.entries()).map(([name, matData]) => (
@@ -322,7 +322,7 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
               <div className="mt-2 pt-2 border-t border-status-emerald-brd">
                 <div className="flex items-center gap-1 mb-1.5">
                   <Layers className="h-3 w-3 text-status-emerald-fg" />
-                  <span className="text-xs font-semibold text-green-800">Surface Layers</span>
+                  <span className="text-xs font-semibold text-status-emerald-fg">Surface Layers</span>
                 </div>
                 {Array.from(data.doorsInteriorFinishSheets.entries()).map(([name, matData]) => (
                   <div key={name} className="bg-status-emerald-bg rounded p-2 text-xs mb-1.5">
@@ -350,7 +350,7 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
           <div className="bg-status-orange-bg rounded-lg p-3 border border-orange-100">
             <div className="flex items-center mb-2">
               <Package className="h-3 w-3 text-status-orange-fg mr-1.5" />
-              <h5 className="text-xs font-semibold text-orange-900">Back Panel Materials (Sheets)</h5>
+              <h5 className="text-xs font-semibold text-status-orange-fg">Back Panel Materials (Sheets)</h5>
             </div>
             <div className="space-y-1.5">
               {Array.from(data.backPanelMaterialSheets.entries()).map(([name, matData]) => (
@@ -377,7 +377,7 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
           <div className="bg-status-amber-bg rounded-lg p-3 border border-amber-100 lg:col-span-2">
             <div className="flex items-center mb-2">
               <Ruler className="h-3 w-3 text-status-amber-fg mr-1.5" />
-              <h5 className="text-xs font-semibold text-amber-900">Edgeband (Rolls 150m)</h5>
+              <h5 className="text-xs font-semibold text-status-amber-fg">Edgeband (Rolls 150m)</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {Array.from(data.edgebandRolls.entries()).map(([name, rollData]) => (
@@ -418,7 +418,7 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
           <div className="bg-accent-tint-soft rounded-lg p-3 border border-accent-tint-border lg:col-span-2">
             <div className="flex items-center mb-2">
               <Package className="h-3 w-3 text-accent-text mr-1.5" />
-              <h5 className="text-xs font-semibold text-purple-900">Accessories</h5>
+              <h5 className="text-xs font-semibold text-accent-text">Accessories</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
               {Array.from(data.accessories.entries()).map(([name, accData]) => (
@@ -438,7 +438,7 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
           <div className="bg-status-orange-bg rounded-lg p-3 border border-status-orange-brd lg:col-span-2">
             <div className="flex items-center mb-2">
               <Hammer className="h-3 w-3 text-status-orange-fg mr-1.5" />
-              <h5 className="text-xs font-semibold text-orange-900">Countertops</h5>
+              <h5 className="text-xs font-semibold text-status-orange-fg">Countertops</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
               {Array.from(data.countertops.entries()).map(([name, ctData]) => (

@@ -383,7 +383,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
           <button
             type="button"
             onClick={() => setCalcOpen((o) => !o)}
-            className="flex items-center gap-2 w-full text-left text-sm font-semibold text-accent-text hover:text-blue-800 transition-colors"
+            className="flex items-center gap-2 w-full text-left text-sm font-semibold text-accent-text hover:text-accent-text transition-colors"
           >
             <span>📐 Auto-calculate from dimensions</span>
             <svg
@@ -731,11 +731,11 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
           <button
             type="button"
             onClick={() => setDespieceOpen((o) => !o)}
-            className="flex items-center gap-2 w-full text-left text-sm font-semibold text-status-amber-fg hover:text-amber-800 transition-colors"
+            className="flex items-center gap-2 w-full text-left text-sm font-semibold text-status-amber-fg hover:text-status-amber-fg transition-colors"
           >
             <span>🪚 Cut List</span>
             {cutPieces.length > 0 && (
-              <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-status-amber-bg text-amber-800">
+              <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-status-amber-bg text-status-amber-fg">
                 {cutPieces.length} {cutPieces.length === 1 ? 'piece' : 'pieces'}
               </span>
             )}
@@ -821,11 +821,11 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                                 prev.map((p) => p.id === piece.id ? { ...p, material: e.target.value as CutPiece['material'] } : p)
                               )}
                               className={`px-1.5 py-0.5 rounded text-xs font-medium border-0 focus:outline-none focus:ring-1 focus-visible:ring-focus ${
-                                piece.material === 'cuerpo'      ? 'bg-accent-tint-soft text-blue-800' :
-                                piece.material === 'frente'      ? 'bg-status-amber-bg text-amber-800' :
-                                piece.material === 'back'        ? 'bg-status-emerald-bg text-emerald-800' :
+                                piece.material === 'cuerpo'      ? 'bg-accent-tint-soft text-accent-text' :
+                                piece.material === 'frente'      ? 'bg-status-amber-bg text-status-amber-fg' :
+                                piece.material === 'back'        ? 'bg-status-emerald-bg text-status-emerald-fg' :
                                 piece.material === 'drawer_box'  ? 'bg-teal-100 text-teal-800' :
-                                piece.material === 'shelf'       ? 'bg-accent-tint-soft text-violet-800' :
+                                piece.material === 'shelf'       ? 'bg-accent-tint-soft text-accent-text' :
                                                                    'bg-surf-muted text-fg-700'
                               }`}
                             >
@@ -844,7 +844,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                                 prev.map((p) => p.id === piece.id ? { ...p, veta: e.target.value as CutPiece['veta'] } : p)
                               )}
                               className={`px-1 py-0.5 rounded text-xs font-medium border-0 focus:outline-none focus:ring-1 focus-visible:ring-focus ${
-                                piece.veta === 'vertical'   ? 'bg-accent-tint-soft text-purple-800' :
+                                piece.veta === 'vertical'   ? 'bg-accent-tint-soft text-accent-text' :
                                 piece.veta === 'horizontal' ? 'bg-teal-100 text-teal-800' :
                                                               'bg-surf-muted text-fg-600'
                               }`}
@@ -900,7 +900,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
 
         {safeEditMode && (
           <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-3">
-            <p className="text-xs text-amber-900">
+            <p className="text-xs text-status-amber-fg">
               <strong>Note:</strong> This product is in use. Changes will create a new version to
               protect historical data.
             </p>

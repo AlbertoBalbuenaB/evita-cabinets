@@ -63,7 +63,7 @@ export function WikiArticlePage() {
         <div className="glass-white rounded-2xl p-6 text-center">
           <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
           <p className="text-fg-700">{error ?? 'Artículo no disponible.'}</p>
-          <Link to="/wiki" className="inline-flex items-center gap-1 text-accent-text hover:text-violet-800 mt-3 text-sm">
+          <Link to="/wiki" className="inline-flex items-center gap-1 text-accent-text hover:text-accent-text mt-3 text-sm">
             <ArrowLeft className="w-4 h-4" /> Volver al Wiki
           </Link>
         </div>
@@ -80,7 +80,7 @@ export function WikiArticlePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
       <div className="flex items-center gap-2 text-sm">
-        <Link to="/wiki" className="inline-flex items-center gap-1 text-accent-text hover:text-violet-800">
+        <Link to="/wiki" className="inline-flex items-center gap-1 text-accent-text hover:text-accent-text">
           <ArrowLeft className="w-4 h-4" /> Wiki
         </Link>
         {category && (

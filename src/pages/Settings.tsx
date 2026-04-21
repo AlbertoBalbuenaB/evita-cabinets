@@ -494,8 +494,8 @@ export function Settings() {
         <div
           className={`flex items-center space-x-2 p-4 rounded-lg ${
             message.type === 'success'
-              ? 'bg-status-emerald-bg text-green-800 border border-status-emerald-brd'
-              : 'bg-status-red-bg text-red-800 border border-status-red-brd'
+              ? 'bg-status-emerald-bg text-status-emerald-fg border border-status-emerald-brd'
+              : 'bg-status-red-bg text-status-red-fg border border-status-red-brd'
           }`}
         >
           <AlertCircle className="h-5 w-5" />
@@ -595,7 +595,7 @@ export function Settings() {
           <div className="mt-4 flex items-start space-x-3 p-4 bg-status-emerald-bg border border-status-emerald-brd rounded-lg">
             <CheckCircle className="h-5 w-5 text-status-emerald-fg mt-0.5 shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-green-800">Backup downloaded successfully</p>
+              <p className="text-sm font-semibold text-status-emerald-fg">Backup downloaded successfully</p>
               <p className="text-sm text-status-emerald-fg mt-0.5">
                 {backupResult.projectCount} {backupResult.projectCount === 1 ? 'project' : 'projects'},{' '}
                 {backupResult.productCount} {backupResult.productCount === 1 ? 'product' : 'products'},{' '}
@@ -650,12 +650,12 @@ export function Settings() {
         <h2 className="text-xl font-semibold text-fg-900 mb-6">Taxes by Material Type</h2>
         <div className="space-y-4">
           <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4 mb-4">
-            <p className="text-sm text-blue-800">
+            <p className="text-sm text-accent-text">
               <strong>How it works:</strong> Configure tax percentages for different material types.
               These taxes are automatically applied to price list items based on their type.
               For example, all Metal items can have 25% tax, all Fabric items 25%, etc.
             </p>
-            <p className="text-sm text-blue-800 mt-2">
+            <p className="text-sm text-accent-text mt-2">
               <strong>Important:</strong> After changing tax rates, click "Apply Taxes to Price List"
               to recalculate all prices with the new tax rates.
             </p>
@@ -881,17 +881,17 @@ export function Settings() {
         <h2 className="text-xl font-semibold text-fg-900 mb-6">Company Logo</h2>
         <div className="space-y-4">
           <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4">
-            <p className="text-sm text-amber-800 font-medium mb-2">
+            <p className="text-sm text-status-amber-fg font-medium mb-2">
               How to upload your company logo:
             </p>
-            <ol className="text-sm text-amber-800 space-y-1 list-decimal list-inside">
+            <ol className="text-sm text-status-amber-fg space-y-1 list-decimal list-inside">
               <li>Go to your Supabase Dashboard</li>
               <li>Navigate to Storage in the left sidebar</li>
               <li>Open the "logos" bucket</li>
               <li>Upload your logo file with the exact name: <code className="bg-status-amber-bg px-2 py-0.5 rounded font-mono text-xs">evita_logo.png</code></li>
               <li>The logo will automatically appear in your quotation PDFs</li>
             </ol>
-            <p className="text-sm text-amber-800 mt-3">
+            <p className="text-sm text-status-amber-fg mt-3">
               <strong>Note:</strong> The file must be named exactly "evita_logo.png" (PNG format recommended for best quality)
             </p>
           </div>
@@ -914,13 +914,13 @@ export function Settings() {
         <h2 className="text-xl font-semibold text-fg-900 mb-6">Material Waste Percentages</h2>
         <div className="space-y-4">
           <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4 mb-4">
-            <p className="text-sm text-blue-800">
+            <p className="text-sm text-accent-text">
               <strong>How it works:</strong> Waste percentages are applied directly to the Box SF
               and Doors SF values in the Products Catalog. For example, if a product has 24.58 Box SF
               and you apply 20% waste, it will become 29.49 SF. These adjusted values are then used
               in all quotations.
             </p>
-            <p className="text-sm text-blue-800 mt-2">
+            <p className="text-sm text-accent-text mt-2">
               <strong>Important:</strong> After changing these percentages, you must click "Apply to
               All Products" to update the catalog values. This will recalculate all products based on
               their original SF values.

@@ -29,7 +29,7 @@ export function SummaryView({ result }: Props) {
   return (
     <div className="flex-1 overflow-auto p-4">
       {unplaced.length > 0 && (
-        <div className="bg-status-red-bg border border-status-red-brd rounded-lg p-3 mb-4 text-sm text-red-800">
+        <div className="bg-status-red-bg border border-status-red-brd rounded-lg p-3 mb-4 text-sm text-status-red-fg">
           <span className="font-semibold">Warning: </span>
           {unplaced.reduce((s, u) => s + u.count, 0)} piece(s) could not be placed:{' '}
           {unplaced.map(u => `${u.nombre} ${u.ancho}×${u.alto} (×${u.count})`).join(', ')}.

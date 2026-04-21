@@ -62,7 +62,7 @@ export function KbSupplierPage() {
         <div className="glass-white rounded-2xl p-6 text-center text-fg-700">
           {error ?? 'Proveedor no disponible.'}
           <div className="mt-3">
-            <Link to="/kb" className="text-accent-text hover:text-indigo-800 text-sm">
+            <Link to="/kb" className="text-accent-text hover:text-accent-text text-sm">
               ← Knowledge Base
             </Link>
           </div>
@@ -75,7 +75,7 @@ export function KbSupplierPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
-      <Link to="/kb" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-indigo-800">
+      <Link to="/kb" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-accent-text">
         <ArrowLeft className="w-4 h-4" /> Knowledge Base
       </Link>
 
@@ -100,7 +100,7 @@ export function KbSupplierPage() {
           {supplier.ops_supplier_id && (
             <Link
               to={`/suppliers/${supplier.ops_supplier_id}`}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg glass-white text-sm text-accent-text hover:text-indigo-800"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg glass-white text-sm text-accent-text hover:text-accent-text"
             >
               Ops record <ExternalLink className="w-3.5 h-3.5" />
             </Link>

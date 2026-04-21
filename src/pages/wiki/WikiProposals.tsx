@@ -53,7 +53,7 @@ export function WikiProposals() {
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <Link to="/wiki" className="text-sm text-accent-text hover:text-violet-800 inline-flex items-center gap-1 mb-2">
+            <Link to="/wiki" className="text-sm text-accent-text hover:text-accent-text inline-flex items-center gap-1 mb-2">
               <Library className="w-4 h-4" /> Wiki
             </Link>
             <h1 className="text-xl sm:text-2xl font-bold text-fg-900">Wiki proposals</h1>

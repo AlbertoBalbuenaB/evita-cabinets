@@ -93,7 +93,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/projects/${id}`)}
-          className="text-accent-text hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-accent-text hover:text-accent-text underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -106,7 +106,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/projects/${projectPart}/quotations/${quotationPart}`)}
-          className="text-accent-text hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-accent-text hover:text-accent-text underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -119,7 +119,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/products?tab=prefab&prefabId=${id}`)}
-          className="text-accent-text hover:text-indigo-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-accent-text hover:text-accent-text underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -130,7 +130,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/kb/${id}`)}
-          className="text-status-emerald-fg hover:text-emerald-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-status-emerald-fg hover:text-status-emerald-fg underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -141,7 +141,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/kb/suppliers/${id}`)}
-          className="text-status-emerald-fg hover:text-emerald-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-status-emerald-fg hover:text-status-emerald-fg underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -152,7 +152,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/wiki/${id}`)}
-          className="text-accent-text hover:text-violet-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-accent-text hover:text-accent-text underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -163,7 +163,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/prices/${id}`)}
-          className="text-accent-text hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-accent-text hover:text-accent-text underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>

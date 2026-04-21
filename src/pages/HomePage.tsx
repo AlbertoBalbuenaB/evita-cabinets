@@ -69,27 +69,27 @@ type SubsectionVariant = 'blue' | 'amber' | 'green' | 'red' | 'rose' | 'purple';
 const VARIANT = {
   blue: {
     bg: 'bg-accent-tint-soft',    border: 'border-blue-100/80',    dot: 'bg-blue-500',
-    label: 'text-blue-800', badge: 'bg-accent-tint-soft text-accent-text', emptyDot: 'text-blue-300',
+    label: 'text-accent-text', badge: 'bg-accent-tint-soft text-accent-text', emptyDot: 'text-blue-300',
   },
   amber: {
     bg: 'bg-status-amber-bg',    border: 'border-amber-100/80',    dot: 'bg-amber-500',
-    label: 'text-amber-800', badge: 'bg-status-amber-bg text-status-amber-fg', emptyDot: 'text-amber-300',
+    label: 'text-status-amber-fg', badge: 'bg-status-amber-bg text-status-amber-fg', emptyDot: 'text-amber-300',
   },
   green: {
     bg: 'bg-status-emerald-bg',    border: 'border-emerald-100/80',    dot: 'bg-emerald-500',
-    label: 'text-emerald-800', badge: 'bg-status-emerald-bg text-status-emerald-fg', emptyDot: 'text-emerald-300',
+    label: 'text-status-emerald-fg', badge: 'bg-status-emerald-bg text-status-emerald-fg', emptyDot: 'text-emerald-300',
   },
   red: {
     bg: 'bg-status-red-bg',    border: 'border-status-red-brd',    dot: 'bg-red-500',
-    label: 'text-red-800', badge: 'bg-status-red-bg text-status-red-fg', emptyDot: 'text-red-300',
+    label: 'text-status-red-fg', badge: 'bg-status-red-bg text-status-red-fg', emptyDot: 'text-red-300',
   },
   rose: {
     bg: 'bg-status-red-bg',    border: 'border-status-red-brd',    dot: 'bg-rose-500',
-    label: 'text-rose-800', badge: 'bg-status-red-bg text-status-red-fg', emptyDot: 'text-rose-300',
+    label: 'text-status-red-fg', badge: 'bg-status-red-bg text-status-red-fg', emptyDot: 'text-rose-300',
   },
   purple: {
     bg: 'bg-accent-tint-soft',    border: 'border-purple-100/80',    dot: 'bg-purple-500',
-    label: 'text-purple-800', badge: 'bg-accent-tint-soft text-accent-text', emptyDot: 'text-purple-300',
+    label: 'text-accent-text', badge: 'bg-accent-tint-soft text-accent-text', emptyDot: 'text-purple-300',
   },
 } satisfies Record<SubsectionVariant, object>;
 
@@ -889,37 +889,37 @@ export function HomePage() {
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-accent-tint-border shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
-                <span className="text-sm font-bold text-blue-800 tabular-nums">{inProgressAll}</span>
+                <span className="text-sm font-bold text-accent-text tabular-nums">{inProgressAll}</span>
                 <span className="text-xs text-accent-text font-medium hidden sm:inline">In Progress</span>
               </div>
               {inReviewAll > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-accent-tint-border shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0" />
-                  <span className="text-sm font-bold text-purple-800 tabular-nums">{inReviewAll}</span>
+                  <span className="text-sm font-bold text-accent-text tabular-nums">{inReviewAll}</span>
                   <span className="text-xs text-accent-text font-medium hidden sm:inline">In Review</span>
                 </div>
               )}
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-status-amber-brd shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
-                <span className="text-sm font-bold text-amber-800 tabular-nums">{pendingAll}</span>
+                <span className="text-sm font-bold text-status-amber-fg tabular-nums">{pendingAll}</span>
                 <span className="text-xs text-status-amber-fg font-medium hidden sm:inline">To-do</span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-status-emerald-brd shadow-sm">
                 <TrendingUp className="h-3.5 w-3.5 text-status-emerald-fg flex-shrink-0" />
-                <span className="text-sm font-bold text-emerald-800 tabular-nums">{doneAll}</span>
+                <span className="text-sm font-bold text-status-emerald-fg tabular-nums">{doneAll}</span>
                 <span className="text-xs text-status-emerald-fg font-medium hidden sm:inline">Done</span>
               </div>
               {overdueAll > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-status-red-bg border border-status-red-brd shadow-sm">
                   <AlertTriangle className="h-3.5 w-3.5 text-status-red-fg flex-shrink-0" />
-                  <span className="text-sm font-bold text-red-800 tabular-nums">{overdueAll}</span>
+                  <span className="text-sm font-bold text-status-red-fg tabular-nums">{overdueAll}</span>
                   <span className="text-xs text-status-red-fg font-medium hidden sm:inline">Overdue</span>
                 </div>
               )}
               {blockedAll > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-status-red-bg border border-status-red-brd shadow-sm">
                   <Ban className="h-3.5 w-3.5 text-status-red-fg flex-shrink-0" />
-                  <span className="text-sm font-bold text-rose-800 tabular-nums">{blockedAll}</span>
+                  <span className="text-sm font-bold text-status-red-fg tabular-nums">{blockedAll}</span>
                   <span className="text-xs text-status-red-fg font-medium hidden sm:inline">Blocked</span>
                 </div>
               )}
@@ -1170,7 +1170,7 @@ export function HomePage() {
 
                   <button
                     onClick={() => setCreatingTask({ kind: 'project' })}
-                    className="ml-auto flex items-center gap-1 text-xs font-semibold text-accent-text hover:text-blue-800 bg-accent-tint-soft hover:bg-accent-tint-soft border border-accent-tint-border px-2.5 py-1 rounded-lg transition-all"
+                    className="ml-auto flex items-center gap-1 text-xs font-semibold text-accent-text hover:text-accent-text bg-accent-tint-soft hover:bg-accent-tint-soft border border-accent-tint-border px-2.5 py-1 rounded-lg transition-all"
                   >
                     <Plus className="h-3 w-3" /> New Task
                   </button>
@@ -1521,7 +1521,7 @@ export function HomePage() {
             )}
             <button
               onClick={() => setShowNewLogModal(true)}
-              className="flex items-center gap-1 text-xs font-semibold text-accent-text hover:text-violet-800 bg-accent-tint-soft hover:bg-accent-tint-soft border border-accent-tint-border px-2.5 py-1 rounded-lg transition-all flex-shrink-0"
+              className="flex items-center gap-1 text-xs font-semibold text-accent-text hover:text-accent-text bg-accent-tint-soft hover:bg-accent-tint-soft border border-accent-tint-border px-2.5 py-1 rounded-lg transition-all flex-shrink-0"
             >
               <Plus className="h-3 w-3" /> New Entry
             </button>

@@ -319,7 +319,7 @@ export function HomeTaskFormModal({
               <Link
                 to={`/projects/${task.project_id}?tab=management&task=${task.id}`}
                 onClick={onClose}
-                className="ml-1 inline-flex items-center gap-1 text-[11px] text-accent-text hover:text-blue-800 font-medium"
+                className="ml-1 inline-flex items-center gap-1 text-[11px] text-accent-text hover:text-accent-text font-medium"
                 title="Open full task view in the project"
               >
                 Open in project <ExternalLink className="h-3 w-3" />

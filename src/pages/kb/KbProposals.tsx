@@ -52,7 +52,7 @@ export function KbProposals() {
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <Link to="/kb" className="text-sm text-accent-text hover:text-indigo-800 inline-flex items-center gap-1 mb-2">
+            <Link to="/kb" className="text-sm text-accent-text hover:text-accent-text inline-flex items-center gap-1 mb-2">
               <BookOpen className="w-4 h-4" /> Knowledge Base
             </Link>
             <h1 className="text-xl sm:text-2xl font-bold text-fg-900">Proposals</h1>

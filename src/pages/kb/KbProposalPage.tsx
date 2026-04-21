@@ -130,7 +130,7 @@ export function KbProposalPage() {
         <div className="glass-white rounded-2xl p-6 text-center text-fg-700">
           {error ?? 'Propuesta no disponible.'}
           <div className="mt-3">
-            <Link to="/kb/proposals" className="text-accent-text hover:text-indigo-800 text-sm">
+            <Link to="/kb/proposals" className="text-accent-text hover:text-accent-text text-sm">
               ← Back to proposals
             </Link>
           </div>
@@ -145,7 +145,7 @@ export function KbProposalPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
-      <Link to="/kb/proposals" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-indigo-800">
+      <Link to="/kb/proposals" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-accent-text">
         <ArrowLeft className="w-4 h-4" /> Proposals
       </Link>
 

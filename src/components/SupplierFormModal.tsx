@@ -147,7 +147,7 @@ function CategoryPicker({
               <button
                 type="button"
                 onClick={() => remove(cat)}
-                className="ml-0.5 text-blue-500 hover:text-blue-800 transition-colors"
+                className="ml-0.5 text-blue-500 hover:text-accent-text transition-colors"
               >
                 <X className="h-3 w-3" />
               </button>

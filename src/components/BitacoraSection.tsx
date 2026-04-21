@@ -72,7 +72,7 @@ const MENTION_TYPE_CONFIG = {
   cabinet:    { groupLabel: 'Cabinets',   Icon: Package,   iconColor: 'text-status-amber-fg',  iconBg: 'bg-status-amber-bg'  },
   price_item:  { groupLabel: 'Price List',  Icon: DollarSign, iconColor: 'text-status-emerald-fg',   iconBg: 'bg-status-emerald-bg'   },
   department:   { groupLabel: 'Departments', Icon: Users,      iconColor: 'text-status-emerald-fg', iconBg: 'bg-status-emerald-bg' },
-  team_member:  { groupLabel: 'Team Members',Icon: User,       iconColor: 'text-sky-600',     iconBg: 'bg-sky-100'     },
+  team_member:  { groupLabel: 'Team Members',Icon: User,       iconColor: 'text-accent-text',     iconBg: 'bg-sky-100'     },
 } as const;
 
 function isUuid(s: string): boolean {
@@ -187,7 +187,7 @@ const SuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>(
                       <Icon className={`h-3.5 w-3.5 ${cfg.iconColor}`} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className={`text-sm font-medium truncate ${isSelected ? 'text-blue-900' : 'text-fg-800'}`}>
+                      <p className={`text-sm font-medium truncate ${isSelected ? 'text-accent-text' : 'text-fg-800'}`}>
                         {item.label}
                       </p>
                       {item.subtitle && (

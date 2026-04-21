@@ -176,7 +176,7 @@ export function ImportCabinetsModal({ isOpen, onClose }: Props) {
                       <td className="py-2 px-3 text-fg-800 font-medium">{product.description}</td>
                       <td className="py-2 px-3 text-fg-500 text-xs">{product.collection_name || '—'}</td>
                       <td className="py-2 px-3 text-center">
-                        <span className="inline-flex items-center gap-1 text-xs bg-status-amber-bg text-amber-800 px-2 py-0.5 rounded-full font-medium">
+                        <span className="inline-flex items-center gap-1 text-xs bg-status-amber-bg text-status-amber-fg px-2 py-0.5 rounded-full font-medium">
                           <Package className="h-3 w-3" />{pieces.length}
                         </span>
                       </td>

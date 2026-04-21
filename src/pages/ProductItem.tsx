@@ -109,12 +109,12 @@ export function ProductItem() {
       <div className="rounded-xl px-5 sm:px-7 py-5 sm:py-6" style={{ background: 'linear-gradient(135deg, rgba(219,234,254,0.4), rgba(224,231,255,0.3), rgba(241,245,249,0.35))', borderBottom: '1px solid rgba(148,163,184,0.2)' }}>
         <div className="flex items-start justify-between mb-3 flex-wrap gap-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-600/10 text-blue-800 border border-blue-600/15">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-600/10 text-accent-text border border-blue-600/15">
               <Package className="h-3 w-3" />
               {product.collection_name || 'Standard Catalog'}
             </span>
             {product.has_drawers && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-800 border border-amber-500/15">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-status-amber-fg border border-amber-500/15">
                 <Layers className="h-3 w-3" />
                 Has Drawers
               </span>
@@ -272,7 +272,7 @@ export function ProductItem() {
                 <LayoutDashboard className="h-4 w-4 text-fg-400" />
                 <h3 className="text-xs font-semibold text-fg-500 uppercase tracking-wide">Cut List</h3>
               </div>
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-status-amber-bg text-amber-800">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-status-amber-bg text-status-amber-fg">
                 {pieces.length} {pieces.length === 1 ? 'piece' : 'pieces'}
               </span>
             </div>
@@ -301,11 +301,11 @@ export function ProductItem() {
                       <td className="py-2 text-center text-fg-700 tabular-nums font-semibold">{piece.cantidad}</td>
                       <td className="py-2 text-center">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          piece.material === 'cuerpo'     ? 'bg-accent-tint-soft text-blue-800' :
-                          piece.material === 'frente'     ? 'bg-status-amber-bg text-amber-800' :
-                          piece.material === 'back'       ? 'bg-status-emerald-bg text-emerald-800' :
+                          piece.material === 'cuerpo'     ? 'bg-accent-tint-soft text-accent-text' :
+                          piece.material === 'frente'     ? 'bg-status-amber-bg text-status-amber-fg' :
+                          piece.material === 'back'       ? 'bg-status-emerald-bg text-status-emerald-fg' :
                           piece.material === 'drawer_box' ? 'bg-teal-100 text-teal-800' :
-                          piece.material === 'shelf'      ? 'bg-accent-tint-soft text-violet-800' :
+                          piece.material === 'shelf'      ? 'bg-accent-tint-soft text-accent-text' :
                                                             'bg-surf-muted text-fg-700'
                         }`}>
                           {piece.material === 'cuerpo'     ? 'Box Construction' :

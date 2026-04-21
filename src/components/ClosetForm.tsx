@@ -108,7 +108,7 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
     return (
       <>
         {text.slice(0, idx)}
-        <mark className="bg-status-amber-bg text-yellow-900 rounded-sm px-0.5">{text.slice(idx, idx + query.length)}</mark>
+        <mark className="bg-status-amber-bg text-status-amber-fg rounded-sm px-0.5">{text.slice(idx, idx + query.length)}</mark>
         {text.slice(idx + query.length)}
       </>
     );

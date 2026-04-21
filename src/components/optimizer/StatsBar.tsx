@@ -11,7 +11,7 @@ export function StatsBar({ result }: Props) {
   return (
     <div className="bg-surf-card border-b border-border-soft overflow-x-auto flex-shrink-0">
       {unplaced.length > 0 && (
-        <div className="bg-status-red-bg border-b border-status-red-brd px-4 py-2 text-sm text-red-800 flex items-start gap-2">
+        <div className="bg-status-red-bg border-b border-status-red-brd px-4 py-2 text-sm text-status-red-fg flex items-start gap-2">
           <span className="font-semibold shrink-0">Warning:</span>
           <span>
             {unplaced.reduce((s, u) => s + u.count, 0)} piece(s) could not be placed:

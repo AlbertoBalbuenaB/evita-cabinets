@@ -165,7 +165,7 @@ export function TemplateSelectorModal({
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <h3 className="font-semibold text-fg-900">{template.name}</h3>
-                        <span className="px-2 py-0.5 bg-accent-tint-soft text-blue-800 text-xs rounded">
+                        <span className="px-2 py-0.5 bg-accent-tint-soft text-accent-text text-xs rounded">
                           {template.category}
                         </span>
                       </div>
@@ -200,7 +200,7 @@ export function TemplateSelectorModal({
             <div className="flex items-start">
               <AlertCircle className="h-5 w-5 text-status-amber-fg flex-shrink-0 mt-0.5" />
               <div className="ml-3 flex-1">
-                <h4 className="text-sm font-medium text-yellow-800 mb-2">
+                <h4 className="text-sm font-medium text-status-amber-fg mb-2">
                   Some materials are no longer available
                 </h4>
                 <ul className="text-sm text-status-amber-fg space-y-1">
@@ -213,7 +213,7 @@ export function TemplateSelectorModal({
                     • The product associated with this template is inactive
                   </p>
                 )}
-                <p className="text-sm text-yellow-800 mt-2 font-medium">
+                <p className="text-sm text-status-amber-fg mt-2 font-medium">
                   You will need to select alternative materials after loading this template.
                 </p>
               </div>
@@ -224,13 +224,13 @@ export function TemplateSelectorModal({
         {selectedTemplate && validationStatus?.isValid && (
           <div className="bg-status-emerald-bg border border-status-emerald-brd rounded-lg p-3">
             <div className="space-y-2">
-              <p className="text-sm text-green-800">
+              <p className="text-sm text-status-emerald-fg">
                 <Check className="h-4 w-4 inline mr-1" />
                 All materials are available. Template is ready to use.
               </p>
               {(selectedTemplate.use_box_interior_finish || selectedTemplate.use_doors_interior_finish) && (
                 <div className="bg-status-amber-bg border border-status-amber-brd rounded p-2 mt-2">
-                  <p className="text-xs text-amber-800 flex items-center gap-1">
+                  <p className="text-xs text-status-amber-fg flex items-center gap-1">
                     <Layers className="h-3.5 w-3.5" />
                     <span className="font-medium">This template uses composite materials:</span>
                   </p>

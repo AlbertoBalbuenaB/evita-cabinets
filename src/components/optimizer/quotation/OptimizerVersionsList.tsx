@@ -102,7 +102,7 @@ export function OptimizerVersionsList({
               <button
                 type="button"
                 onClick={() => { setOpen(false); onOpenCompare(); }}
-                className="inline-flex items-center gap-1 text-xs text-accent-text hover:text-blue-800 font-medium"
+                className="inline-flex items-center gap-1 text-xs text-accent-text hover:text-accent-text font-medium"
               >
                 <GitCompareArrows className="h-3 w-3" />
                 Compare
@@ -164,7 +164,7 @@ export function OptimizerVersionsList({
                           type="button"
                           onClick={() => handleSetActive(run.id)}
                           disabled={isPending}
-                          className="text-[10px] text-accent-text hover:text-blue-800 font-medium disabled:opacity-40"
+                          className="text-[10px] text-accent-text hover:text-accent-text font-medium disabled:opacity-40"
                         >
                           Set active
                         </button>
