@@ -489,15 +489,20 @@ export function QuotationOptimizerTab({
 
   return (
     // Full-bleed wrapper: escape the Layout's max-w-7xl container so the
-    // Breakdown tab uses the full viewport width. Only affects this tab —
-    // the other tabs (Info, Pricing, Analytics, History) still respect
-    // the centered container.
+    // Breakdown tab uses the full width of the main column. Only affects
+    // this tab — the other tabs (Info, Pricing, Analytics, History) still
+    // respect the centered container.
+    //
+    // --content-offset is the sidebar rail width on desktop and 0 on
+    // mobile (see index.css). It keeps the full-bleed box aligned with
+    // the main column instead of the raw viewport, so the left edge
+    // doesn't slide behind the sidebar on lg+ screens.
     <div
       className="relative"
       style={{
-        width: '100vw',
-        marginLeft: 'calc(50% - 50vw)',
-        marginRight: 'calc(50% - 50vw)',
+        width: 'calc(100vw - var(--content-offset, 0px))',
+        marginLeft: 'calc(50% - 50vw + var(--content-offset, 0px) / 2)',
+        marginRight: 'calc(50% - 50vw + var(--content-offset, 0px) / 2)',
       }}
     >
     <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 104px)' }}>

@@ -234,6 +234,20 @@ a.bitacora-link:hover {
   .app-bg {
     background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 30%, #faf5ff 60%, #f0f9ff 100%);
     min-height: 100vh;
+    /*
+     * --content-offset mirrors --rail-w (set inline by Layout) on desktop,
+     * and collapses to 0 on mobile where the sidebar is an off-canvas
+     * drawer. Full-bleed content escapes the max-w-7xl container using
+     * this offset so it spans the main column exactly, without drifting
+     * behind the sidebar or overflowing the right edge.
+     */
+    --content-offset: 0px;
+  }
+
+  @media (min-width: 1024px) {
+    .app-bg {
+      --content-offset: var(--rail-w, 64px);
+    }
   }
 
   .glass-white {
