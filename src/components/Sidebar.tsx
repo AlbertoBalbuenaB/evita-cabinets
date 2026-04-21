@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import {
   Home,
-  LayoutDashboard,
+  BarChart3,
   FolderKanban,
   Warehouse,
   Package,
@@ -11,8 +11,8 @@ import {
   BookOpen,
   Library,
   Settings as SettingsIcon,
-  PanelLeftOpen,
-  PanelLeftClose,
+  ChevronLeft,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 import { useSidebar } from '../hooks/useSidebar';
@@ -57,7 +57,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
 
   const workspace: Item[] = [
     { path: '/', icon: Home, label: 'Home', exact: true },
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/dashboard', icon: BarChart3, label: 'Dashboard' },
   ];
   const operations: Item[] = [
     { path: '/projects', icon: FolderKanban, label: 'Projects', badge: projectsCount },
@@ -95,7 +95,25 @@ export function Sidebar({ onLogout }: SidebarProps) {
           borderRight: '1px solid rgba(148,163,184,0.2)',
         }}
       >
-        <SidebarHeader expanded={expanded} onToggle={toggleExpanded} />
+        <SidebarHeader />
+
+        {/* Floating collapse/expand handle — straddles the sidebar's right
+            edge so it's reachable in both the 64 px collapsed rail and the
+            220 px expanded state. Desktop only; mobile uses the Topbar's
+            `Menu` hamburger via `openMobile()`. */}
+        <button
+          type="button"
+          onClick={toggleExpanded}
+          aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+          aria-expanded={expanded}
+          className="hidden lg:flex absolute top-5 right-[-12px] z-50 h-6 w-6 rounded-full bg-white border border-slate-200 shadow-sm items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {expanded ? (
+            <ChevronLeft className="h-3.5 w-3.5" strokeWidth={2} />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
+          )}
+        </button>
 
         <nav className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-2.5 py-3 space-y-5">
           <GroupLabel expanded={expanded}>Workspace</GroupLabel>
@@ -141,42 +159,24 @@ export function Sidebar({ onLogout }: SidebarProps) {
   );
 }
 
-function SidebarHeader({
-  expanded,
-  onToggle,
-}: {
-  expanded: boolean;
-  onToggle: () => void;
-}) {
+function SidebarHeader() {
   return (
-    <div className="shrink-0 h-14 flex items-center gap-2 px-3 border-b border-slate-200/50">
+    <div className="shrink-0 h-14 flex items-center px-3 border-b border-slate-200/50">
       <Link
         to="/"
-        className="flex items-center gap-2 min-w-0"
+        className="flex items-center min-w-0"
         aria-label="Evita Cabinets home"
       >
         <img
           src="/evita_logo.png"
           alt="Evita Cabinets"
-          className="shrink-0 h-7 w-auto object-contain"
+          className="shrink-0 h-10 w-auto object-contain"
           style={{
             filter:
               'brightness(0) saturate(100%) invert(20%) sepia(80%) saturate(700%) hue-rotate(200deg)',
           }}
         />
       </Link>
-      <button
-        onClick={onToggle}
-        aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
-        aria-expanded={expanded}
-        className={`hidden lg:inline-flex ml-auto h-7 w-7 rounded-md items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500`}
-      >
-        {expanded ? (
-          <PanelLeftClose className="h-4 w-4" strokeWidth={1.75} />
-        ) : (
-          <PanelLeftOpen className="h-4 w-4" strokeWidth={1.75} />
-        )}
-      </button>
     </div>
   );
 }
