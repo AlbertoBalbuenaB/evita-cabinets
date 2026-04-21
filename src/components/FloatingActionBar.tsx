@@ -82,13 +82,8 @@ export function FloatingActionBar({
       )}
 
       <div
+        className="fixed top-[104px] right-0 left-0 lg:left-[var(--rail-w)] z-[36] transition-[left,box-shadow] duration-[250ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
         style={{
-          position: 'fixed',
-          top: '56px',
-          left: 0,
-          right: 0,
-          zIndex: 36,
-          transition: 'box-shadow 0.2s ease',
           boxShadow: scrolled
             ? '0 2px 12px rgba(99,102,241,0.1), 0 1px 0 rgba(0,0,0,0.05)'
             : '0 1px 0 rgba(0,0,0,0.05)',

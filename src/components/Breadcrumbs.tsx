@@ -1,6 +1,5 @@
 import { Fragment } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home } from 'lucide-react';
 import { useChromeReader } from '../contexts/PageChromeContext';
 import { deriveCrumbs } from '../lib/routeLabels';
 
@@ -19,14 +18,7 @@ export function Breadcrumbs() {
       <ol className="flex items-center gap-1.5 min-w-0 overflow-hidden">
         {crumbs.map((crumb, idx) => {
           const isLast = idx === crumbs.length - 1;
-          const isFirst = idx === 0;
-          const showHomeIcon = isFirst && crumb.label === 'Home';
-          const labelNode = showHomeIcon ? (
-            <span className="inline-flex items-center gap-1.5">
-              <Home className="h-3.5 w-3.5" strokeWidth={2} />
-              <span className="hidden sm:inline">Home</span>
-            </span>
-          ) : (
+          const labelNode = (
             <span className="truncate max-w-[220px]">{crumb.label}</span>
           );
           return (

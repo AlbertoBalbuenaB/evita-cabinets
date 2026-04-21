@@ -22,11 +22,20 @@ export type ChromeAction = {
   loading?: boolean;
 };
 
+export type ChromeTab = {
+  id: string;
+  label: string;
+  count?: number | null;
+  onClick: () => void;
+};
+
 export type PageChrome = {
   title?: string;
   crumbs?: Crumb[];
   primaryAction?: ChromeAction;
   secondaryActions?: ChromeAction[];
+  tabs?: ChromeTab[];
+  activeTabId?: string;
 };
 
 type ChromeContextValue = {

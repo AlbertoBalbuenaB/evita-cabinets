@@ -10,7 +10,6 @@ import {
   XCircle,
   BarChart3,
   Tag,
-  RefreshCw,
   AlertTriangle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -97,8 +96,7 @@ export function Dashboard() {
   const [hardwareTrends, setHardwareTrends] = useState<HardwareTrend[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [autoRefresh, setAutoRefresh] = useState(true);
-  const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
+  const [autoRefresh] = useState(true);
   const exchangeRate = useSettingsStore(s => s.settings.exchangeRateUsdToMxn);
   const fetchSettings = useSettingsStore(s => s.fetchSettings);
 
@@ -235,8 +233,6 @@ export function Dashboard() {
       });
 
       setProjectTypeStats(Array.from(typeStatsMap.values()).filter(stat => stat.totalProjects > 0));
-
-      setLastRefreshTime(new Date());
     } catch (error) {
       console.error('Error loading stats:', error);
       setError('Failed to load dashboard statistics. Please try again.');
@@ -614,36 +610,13 @@ export function Dashboard() {
           <p className="mt-2 text-slate-600">
             Performance metrics and conversion analytics
           </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Last updated: {lastRefreshTime.toLocaleTimeString()}
-            {autoRefresh && ' • Auto-refresh enabled'}
-          </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => {
-              loadStats();
-              loadTrends();
-            }}
-            variant="secondary"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+        {stats.totalProducts === 0 && stats.totalPriceItems === 0 && (
+          <Button onClick={handleSeedData} variant="secondary">
+            <Database className="h-4 w-4 mr-2" />
+            Load Sample Data
           </Button>
-          <Button
-            onClick={() => setAutoRefresh(!autoRefresh)}
-            variant={autoRefresh ? 'secondary' : 'outline'}
-          >
-            <Clock className="h-4 w-4 mr-2" />
-            {autoRefresh ? 'Auto-refresh On' : 'Auto-refresh Off'}
-          </Button>
-          {stats.totalProducts === 0 && stats.totalPriceItems === 0 && (
-            <Button onClick={handleSeedData} variant="secondary">
-              <Database className="h-4 w-4 mr-2" />
-              Load Sample Data
-            </Button>
-          )}
-        </div>
+        )}
       </div>
 
 

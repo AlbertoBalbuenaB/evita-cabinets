@@ -92,8 +92,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
           background: 'rgba(255,255,255,0.55)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          borderRight: '1px solid rgba(255,255,255,0.7)',
-          boxShadow: '1px 0 12px rgba(99,102,241,0.06)',
+          borderRight: '1px solid rgba(148,163,184,0.2)',
         }}
       >
         <SidebarHeader expanded={expanded} onToggle={toggleExpanded} />
@@ -156,19 +155,15 @@ function SidebarHeader({
         className="flex items-center gap-2 min-w-0"
         aria-label="Evita Cabinets home"
       >
-        <span
-          className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white text-[13px] font-bold"
-          style={{ backgroundImage: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}
-        >
-          E
-        </span>
-        <span
-          className={`text-sm font-semibold text-slate-900 truncate ${
-            expanded ? '' : 'lg:hidden'
-          }`}
-        >
-          Evita Cabinets
-        </span>
+        <img
+          src="/evita_logo.png"
+          alt="Evita Cabinets"
+          className="shrink-0 h-7 w-auto object-contain"
+          style={{
+            filter:
+              'brightness(0) saturate(100%) invert(20%) sepia(80%) saturate(700%) hue-rotate(200deg)',
+          }}
+        />
       </Link>
       <button
         onClick={onToggle}
