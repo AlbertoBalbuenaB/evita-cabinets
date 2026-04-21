@@ -1800,11 +1800,12 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       />
       {/* Spacer covering both fixed bars: ProjectHeader + FloatingActionBar.
           ProjectHeader only restacks at `lg:`, so two breakpoints is enough:
-          - base (< lg): columns stack, compacted header ≈ 200 px → 236 px
-            spacer (includes the 44 px FAB plus breathing room at the mobile
-            py-6 main padding).
-          - lg+: side-by-side, compacted header ≈ 100 px → 132 px spacer. */}
-      <div className="h-[236px] lg:h-[132px]" aria-hidden />
+          - base (< lg): columns stack, compacted header ≈ 200 px, FAB sits
+            16 px below → 252 px spacer (header + FAB + breathing room at
+            the mobile py-6 main padding).
+          - lg+: side-by-side, compacted header ≈ 112 px, FAB sits 16 px
+            below → 148 px spacer. */}
+      <div className="h-[252px] lg:h-[148px]" aria-hidden />
 
       <FloatingActionBar
         onAddArea={() => setIsAreaModalOpen(true)}
