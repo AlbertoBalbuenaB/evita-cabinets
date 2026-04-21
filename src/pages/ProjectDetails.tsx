@@ -1646,7 +1646,10 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
   return (
     <div>
-      <div style={{ position: 'fixed', top: '56px', left: 0, right: 0, zIndex: 40, background: 'white', borderBottom: '1px solid #e2e8f0' }}>
+      <div
+        className="fixed top-[56px] right-0 left-0 lg:left-[var(--rail-w)] z-[40] transition-[left] duration-[250ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+        style={{ background: 'white', borderBottom: '1px solid #e2e8f0' }}
+      >
         <div className="max-w-7xl mx-auto flex items-center h-12 px-4 sm:px-6 lg:px-8" style={{ maxWidth: '80rem', margin: '0 auto', display: 'flex', alignItems: 'center', height: '48px', padding: '0 24px' }}>
           <button
             onClick={onBack}
