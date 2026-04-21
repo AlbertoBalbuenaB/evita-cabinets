@@ -646,11 +646,11 @@ export function AiChat() {
             transform: isVisible ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',
             opacity: isVisible ? 1 : 0,
             transition: 'transform 280ms cubic-bezier(0.34,1.56,0.64,1), opacity 250ms ease',
-            background: 'rgba(255,255,255,0.72)',
+            background: 'var(--surf-projhdr)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
             borderRadius: '20px',
-            border: '1px solid rgba(255,255,255,0.9)',
+            border: '1px solid var(--border-soft)',
             boxShadow: '0 8px 32px rgba(99,102,241,0.12), 0 2px 12px rgba(0,0,0,0.08)',
           }}
           onClick={e => e.stopPropagation()}
@@ -659,8 +659,8 @@ export function AiChat() {
           <div
             className="flex items-center justify-between px-5 py-4 flex-shrink-0"
             style={{
-              background: 'rgba(255,255,255,0.5)',
-              borderBottom: '1px solid rgba(0,0,0,0.06)',
+              background: 'var(--surf-projhdr)',
+              borderBottom: '1px solid var(--border-hair)',
               borderRadius: '20px 20px 0 0',
             }}
           >
@@ -724,7 +724,7 @@ export function AiChat() {
           {view === 'history' && (
             <div
               className="flex-1 overflow-y-auto flex flex-col"
-              style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,0,0,0.1) transparent' }}
+              style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--border-soft) transparent' }}
             >
               {/* History toolbar */}
               <div className="flex-shrink-0 px-4 pt-3 pb-2 space-y-2">
@@ -739,7 +739,7 @@ export function AiChat() {
                 {history.length > 3 && (
                   <div
                     className="flex items-center gap-2 rounded-xl px-3 py-2"
-                    style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(0,0,0,0.07)' }}
+                    style={{ background: 'var(--surf-btn)', border: '1px solid var(--border-soft)' }}
                   >
                     <Search size={13} className="text-fg-400 flex-shrink-0" />
                     <input
@@ -796,7 +796,7 @@ export function AiChat() {
                               <button
                                 onClick={() => setDeletingId(null)}
                                 className="flex-1 py-1.5 rounded-lg text-xs font-medium text-fg-600 hover:bg-surf-card transition-colors"
-                                style={{ border: '1px solid rgba(0,0,0,0.1)' }}
+                                style={{ border: '1px solid var(--border-soft)' }}
                               >
                                 Cancel
                               </button>
@@ -817,9 +817,9 @@ export function AiChat() {
                           key={session.id}
                           className="group relative rounded-xl transition-all hover:bg-accent-tint-soft"
                           style={{
-                            background: isActive ? 'rgba(59,130,246,0.06)' : 'rgba(255,255,255,0.6)',
-                            border: isActive ? '1px solid rgba(59,130,246,0.2)' : '1px solid rgba(0,0,0,0.07)',
-                            borderLeft: isActive ? '3px solid #3b82f6' : undefined,
+                            background: isActive ? 'var(--accent-tint-soft)' : 'var(--surf-btn)',
+                            border: isActive ? '1px solid var(--accent-tint-border)' : '1px solid var(--border-soft)',
+                            borderLeft: isActive ? '3px solid var(--accent-b)' : undefined,
                             animation: `fadeSlideIn 200ms ease ${idx * 30}ms both`,
                           }}
                         >
@@ -901,7 +901,7 @@ export function AiChat() {
             <>
               <div
                 className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
-                style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0,0,0,0.1) transparent' }}
+                style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--border-soft) transparent' }}
               >
                 {messages.length === 0 && (
                   <div className="space-y-5">
@@ -934,8 +934,8 @@ export function AiChat() {
                           onClick={() => sendMessage(s.text)}
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all hover:bg-accent-tint-soft hover:border-accent-tint-border"
                           style={{
-                            background: 'rgba(255,255,255,0.6)',
-                            border: '1px solid rgba(0,0,0,0.07)',
+                            background: 'var(--surf-btn)',
+                            border: '1px solid var(--border-soft)',
                           }}
                         >
                           <span className="text-base">{s.icon}</span>
@@ -974,8 +974,8 @@ export function AiChat() {
                               borderBottomRightRadius: '6px',
                             }
                           : {
-                              background: 'rgba(255,255,255,0.8)',
-                              border: '1px solid rgba(0,0,0,0.07)',
+                              background: 'var(--surf-btn-hover)',
+                              border: '1px solid var(--border-soft)',
                               color: '#374151',
                               borderBottomLeftRadius: '6px',
                             }
@@ -999,7 +999,7 @@ export function AiChat() {
                     </div>
                     <div
                       className="px-4 py-3 rounded-2xl rounded-bl-md"
-                      style={{ background: 'rgba(255,255,255,0.8)', border: '1px solid rgba(0,0,0,0.07)' }}
+                      style={{ background: 'var(--surf-btn-hover)', border: '1px solid var(--border-soft)' }}
                     >
                       <div className="flex gap-1 items-center h-4">
                         {[0, 1, 2].map(i => (
@@ -1033,7 +1033,7 @@ export function AiChat() {
                 <div
                   className="flex items-end gap-2 rounded-2xl px-4 py-3 bg-surf-card"
                   style={{
-                    border: '1px solid rgba(0,0,0,0.1)',
+                    border: '1px solid var(--border-soft)',
                   }}
                 >
                   <textarea
@@ -1092,7 +1092,7 @@ export function AiChat() {
           className="fixed bottom-6 right-4 z-50 flex items-center justify-center transition-all duration-200"
           style={{
             background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-            border: '1px solid rgba(255,255,255,0.12)',
+            border: '1px solid var(--border-soft)',
             borderRadius: '50%',
             width: '44px',
             height: '44px',

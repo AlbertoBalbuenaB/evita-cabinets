@@ -134,10 +134,10 @@ export function ProjectHeader({
       ref={outerRef}
       className={outerClass}
       style={{
-        background: 'rgba(255,255,255,0.65)',
+        background: 'var(--surf-projhdr)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(226,232,240,0.7)',
+        borderBottom: '1px solid var(--border-soft)',
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -172,7 +172,7 @@ export function ProjectHeader({
               <StatusChip status={status} onChange={onStatusChange} />
               {isStale && (
                 <span
-                  className="inline-flex items-center gap-1 px-[8px] py-[2px] rounded-full border bg-amber-500/[0.12] text-status-amber-fg border-amber-500/30 text-[10px] font-bold tracking-[0.04em] uppercase"
+                  className="inline-flex items-center gap-1 px-[8px] py-[2px] rounded-full border bg-status-amber-bg text-status-amber-fg border-status-amber-brd text-[10px] font-bold tracking-[0.04em] uppercase"
                   title="The optimizer run is stale because cabinets changed after it was saved. Re-optimize in the Breakdown tab to refresh these numbers."
                 >
                   <AlertTriangle className="h-[10px] w-[10px]" strokeWidth={1.5} />
@@ -180,7 +180,7 @@ export function ProjectHeader({
                 </span>
               )}
               {projectType && (
-                <span className="inline-flex items-center gap-1 px-[8px] py-[2px] rounded-full border bg-indigo-500/[0.08] text-accent-text border-indigo-500/20 text-[11px] font-medium">
+                <span className="inline-flex items-center gap-1 px-[8px] py-[2px] rounded-full border bg-accent-tint-soft text-accent-text border-accent-tint-border text-[11px] font-medium">
                   <Box className="h-[10px] w-[10px]" strokeWidth={1.5} />
                   {projectType}
                 </span>
@@ -220,11 +220,9 @@ export function ProjectHeader({
 
           {/* Right column — financial card */}
           <div
-            className="lg:min-w-[270px] rounded-[12px] px-[16px] py-[10px] border"
+            className="lg:min-w-[270px] rounded-[12px] px-[16px] py-[10px] border border-accent-tint-border"
             style={{
-              background:
-                'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(59,130,246,0.06))',
-              borderColor: 'rgba(165,180,252,0.55)',
+              background: 'var(--accent-tint-card)',
             }}
           >
             <div className="text-[10px] font-semibold tracking-[0.14em] uppercase text-accent-text mb-[2px] flex items-center gap-[6px]">
