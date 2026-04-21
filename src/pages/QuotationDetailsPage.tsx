@@ -1,8 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ProjectDetails } from './ProjectDetails';
+import { ProjectDetails, type QuotationTab } from './ProjectDetails';
+import { usePageChrome } from '../contexts/PageChromeContext';
 import type { Quotation, Project } from '../types';
+
+const TAB_DEFS: Array<{ id: QuotationTab; label: string }> = [
+  { id: 'info',      label: 'Info' },
+  { id: 'pricing',   label: 'Pricing' },
+  { id: 'cutlist',   label: 'Breakdown' },
+  { id: 'analytics', label: 'Analytics' },
+  { id: 'history',   label: 'History' },
+];
 
 export function QuotationDetailsPage() {
   const { projectId, quotationId } = useParams<{ projectId: string; quotationId: string }>();
@@ -10,6 +19,7 @@ export function QuotationDetailsPage() {
   const [quotation, setQuotation] = useState<Quotation | null>(null);
   const [parentProject, setParentProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<QuotationTab>('info');
 
   useEffect(() => {
     if (!quotationId) { navigate('/projects', { replace: true }); return; }
@@ -34,6 +44,43 @@ export function QuotationDetailsPage() {
     load();
   }, [quotationId, projectId, navigate]);
 
+  // Build the tabs for the global Topbar. `onClick` closes over `setActiveTab`,
+  // so it stays stable as long as the id list is.
+  const chromeTabs = useMemo(
+    () =>
+      TAB_DEFS.map((t) => ({
+        id: t.id,
+        label: t.label,
+        onClick: () => setActiveTab(t.id),
+      })),
+    [],
+  );
+
+  const variantName =
+    quotation?.version_label || quotation?.name || 'Quote';
+  const titleProject = parentProject?.name ?? '';
+
+  usePageChrome(
+    {
+      title: titleProject ? `${titleProject} · ${variantName}` : variantName,
+      // ProjectHeader renders its own identity (back button + project /
+      // variant title). Suppress the Topbar's crumb strip so the two
+      // don't duplicate the same information.
+      hideCrumbs: true,
+      tabs: chromeTabs,
+      activeTabId: activeTab,
+    },
+    [
+      parentProject?.id,
+      parentProject?.name,
+      quotation?.id,
+      quotation?.name,
+      quotation?.version_label,
+      activeTab,
+      chromeTabs,
+    ],
+  );
+
   if (loading || !quotation) {
     return (
       <div className="space-y-5 page-enter">
@@ -55,6 +102,8 @@ export function QuotationDetailsPage() {
       project={quotation}
       parentProject={parentProject}
       onBack={() => navigate(projectId ? `/projects/${projectId}` : '/projects')}
+      activeTab={activeTab}
+      onActiveTabChange={setActiveTab}
     />
   );
 }

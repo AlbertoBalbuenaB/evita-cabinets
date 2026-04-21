@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Plus, Pencil as Edit2, Trash2, Copy, Package, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, History, SeparatorHorizontal, Layers, Boxes } from 'lucide-react';
+import { Plus, Pencil as Edit2, Trash2, Copy, Package, DollarSign, ListPlus, Calculator, Receipt, Hammer, RefreshCw, Search, X, AlertTriangle, GripVertical, ChevronUp, ChevronDown, Info, RotateCcw, FileText, BarChart3, SeparatorHorizontal, Boxes } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { fetchAllProducts } from '../lib/fetchAllProducts';
 import { Button } from '../components/Button';
@@ -83,13 +83,20 @@ import { ProductFormModal } from '../components/ProductFormModal';
 import type { ProductInsert } from '../types';
 import { exportQuotationToJSON } from '../utils/projectExportImport';
 import { SectionDivider } from '../components/SectionDivider';
+import { ProjectHeader } from '../components/project/ProjectHeader';
+import type { QuoteStatus } from '../components/project/StatusChip';
+import { useQuotationUiStore } from '../lib/quotationUiStore';
 
 import { useAiChatContext } from '../stores/aiChatContext';
+
+export type QuotationTab = 'info' | 'pricing' | 'cutlist' | 'analytics' | 'history';
 
 interface ProjectDetailsProps {
   project: Quotation;
   parentProject?: Project | null;
   onBack: () => void;
+  activeTab?: QuotationTab;
+  onActiveTabChange?: (tab: QuotationTab) => void;
 }
 
 type AreaWithChildren = ProjectArea & {
@@ -101,7 +108,13 @@ type AreaWithChildren = ProjectArea & {
   sections: AreaSection[];
 };
 
-export function ProjectDetails({ project: initialProject, parentProject, onBack }: ProjectDetailsProps) {
+export function ProjectDetails({
+  project: initialProject,
+  parentProject,
+  onBack,
+  activeTab: activeTabProp,
+  onActiveTabChange,
+}: ProjectDetailsProps) {
   const setActiveProjectTab = useAiChatContext(s => s.setActiveProjectTab);
   const [project, setProject] = useState<Quotation>(initialProject);
   // Canonical pricing method for the whole Quotation section. Drives the
@@ -136,7 +149,13 @@ export function ProjectDetails({ project: initialProject, parentProject, onBack 
   const [editingClosetItem, setEditingClosetItem] = useState<AreaClosetItem | null>(null);
   const [selectedAreaForPrefab, setSelectedAreaForPrefab] = useState<string | null>(null);
   const [editingPrefabItem, setEditingPrefabItem] = useState<AreaPrefabItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'pricing' | 'cutlist' | 'analytics' | 'history'>('info');
+  // Tab state is owned by QuotationDetailsPage so the global Topbar can
+  // render the tab row via `usePageChrome({ tabs, activeTabId })`. We keep a
+  // local fallback for any future caller that mounts ProjectDetails without
+  // the lifted state (not used today).
+  const [localActiveTab, setLocalActiveTab] = useState<QuotationTab>('info');
+  const activeTab = activeTabProp ?? localActiveTab;
+  const setActiveTab = onActiveTabChange ?? setLocalActiveTab;
 
   useEffect(() => {
     setActiveProjectTab(activeTab);
@@ -147,7 +166,14 @@ export function ProjectDetails({ project: initialProject, parentProject, onBack 
     return () => { setActiveProjectTab(null); };
   }, [setActiveProjectTab]);
 
-  const [currencyDisplay, setCurrencyDisplay] = useState<'USD' | 'MXN' | 'BOTH'>('MXN');
+  // Currency display is now persisted across sessions via a tiny Zustand
+  // store keyed on `evita:quote:totalMode`. The in-file `currencyDisplay` is
+  // kept as a derived value so the ~26 existing `formatPrice(...)` call sites
+  // don't need to change.
+  const totalMode = useQuotationUiStore(s => s.totalMode);
+  const setTotalMode = useQuotationUiStore(s => s.setTotalMode);
+  const currencyDisplay: 'USD' | 'MXN' | 'BOTH' =
+    totalMode === 'Both' ? 'BOTH' : totalMode;
   const exchangeRate = useSettingsStore(s => s.settings.exchangeRateUsdToMxn);
   const fetchSettings = useSettingsStore(s => s.fetchSettings);
   const [otherExpenses, setOtherExpenses] = useState(project.other_expenses || 0);
@@ -181,8 +207,6 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   const DEFAULT_PRICE_VALIDITY = '*Price is valid for 15 days.\n*Preliminary quote, based off of our best interpretation of the provided plans. Pricing is subject to change once final layout and finishes have been approved.\n*A Design Retainer is required prior to commencing drawings. The design retainer will be credited back to the purchase of cabinets.';
   const [disclaimerTariffInfo, setDisclaimerTariffInfo] = useState(project.disclaimer_tariff_info || DEFAULT_TARIFF_INFO);
   const [disclaimerPriceValidity, setDisclaimerPriceValidity] = useState(project.disclaimer_price_validity || DEFAULT_PRICE_VALIDITY);
-  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
-
   const [pdfProjectName, setPdfProjectName] = useState(project.pdf_project_name ?? project.name);
   const [pdfCustomer, setPdfCustomer] = useState(project.pdf_customer ?? (project.customer || ''));
   const [pdfAddress, setPdfAddress] = useState(project.pdf_address ?? (project.address || ''));
@@ -1537,6 +1561,120 @@ const [isEditingDate, setIsEditingDate] = useState(false);
   const taxAmount = quotationView.taxAmount;
   const projectTotal = quotationView.projectTotal;
 
+  // ── ProjectHeader derivations ───────────────────────────────────────────
+  // Total in both currencies for the new header's financial card.
+  const totalMxn = projectTotal;
+  const totalUsd = exchangeRate > 0 ? projectTotal / exchangeRate : 0;
+
+  // Alternative-method total — drives the "−X% vs FT²" / "+X% vs Optimizer"
+  // delta pill in the header. When we're showing optimizer numbers, the alt
+  // is the raw sqft total; and vice versa. If the alt method can't be
+  // computed (e.g. no optimizer run exists while in sqft mode), the pill is
+  // hidden. Runs `computeQuotationTotals` a second time; cheap compared to
+  // the full `quotationView` memo.
+  const altMethodTotal = useMemo<number | null>(() => {
+    const altMethod: PricingMethod = pricingMethod === 'optimizer' ? 'sqft' : 'optimizer';
+    const installDeliveryMxnLocal = installDelivery * exchangeRate;
+    const baseMultipliers = {
+      profitMultiplier,
+      tariffMultiplier,
+      referralRate,
+      taxPercentage,
+      installDeliveryMxn: installDeliveryMxnLocal,
+      otherExpenses,
+      riskFactorPct: 0,
+    };
+
+    try {
+      if (altMethod === 'sqft') {
+        const t = computeQuotationTotals({
+          pricingMethod: 'sqft',
+          areasData: areas,
+          multipliers: {
+            ...baseMultipliers,
+            riskFactorPct: riskFactorAppliesSqft ? riskFactorPct : 0,
+          },
+        });
+        return t.fullProjectTotal;
+      }
+      if (!activeOptimizerRun) return null;
+      const snapshot = activeOptimizerRun.snapshot as unknown as OptimizerRunSnapshot;
+      const result = activeOptimizerRun.result as unknown as OptimizationResult;
+      const cabinetsCovered = new Set<string>(snapshot?.cabinetsCovered ?? []);
+      const tariffableMaterialsCost = computeOptimizerTariffableMaterialsCost({
+        result,
+        snapshot,
+        areasData: areas,
+        edgebandByCabinet: snapshot?.edgebandCostByCabinet ?? {},
+      });
+      const { ebPriceBySlot, ebSlotMeta } = extractEbSnapshotInputs(snapshot);
+      const edgebandRollsCost = computeEdgebandRollsCost(
+        snapshot.pieces,
+        ebPriceBySlot,
+        snapshot.ebCabinetMap,
+        ebSlotMeta,
+      );
+      const t = computeQuotationTotals({
+        pricingMethod: 'optimizer',
+        areasData: areas,
+        multipliers: {
+          ...baseMultipliers,
+          riskFactorPct: riskFactorAppliesOptimizer ? riskFactorPct : 0,
+        },
+        optimizerRun: {
+          materialCost: Number(activeOptimizerRun.material_cost ?? 0),
+          edgebandCost: edgebandRollsCost,
+          cabinetsCovered,
+          tariffableMaterialsCost,
+        },
+      });
+      return t.fullProjectTotal;
+    } catch {
+      return null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    pricingMethod,
+    activeOptimizerRun,
+    areas,
+    profitMultiplier,
+    tariffMultiplier,
+    referralRate,
+    taxPercentage,
+    installDelivery,
+    exchangeRate,
+    otherExpenses,
+    riskFactorPct,
+    riskFactorAppliesSqft,
+    riskFactorAppliesOptimizer,
+  ]);
+
+  const headerDelta = useMemo<{ value: number; label: 'FT²' | 'Optimizer' } | undefined>(() => {
+    if (altMethodTotal == null || !Number.isFinite(altMethodTotal) || altMethodTotal <= 0) {
+      return undefined;
+    }
+    if (!Number.isFinite(projectTotal) || projectTotal <= 0) return undefined;
+    return {
+      value: (projectTotal - altMethodTotal) / altMethodTotal,
+      label: pricingMethod === 'optimizer' ? 'FT²' : 'Optimizer',
+    };
+  }, [projectTotal, altMethodTotal, pricingMethod]);
+
+  // Status-change handler — wraps the Supabase mutation formerly inlined in
+  // the gradient header. Called by `<ProjectHeader />` via `onStatusChange`.
+  async function handleStatusChange(next: QuoteStatus) {
+    try {
+      const { error } = await supabase
+        .from('quotations')
+        .update({ status: next, updated_at: new Date().toISOString() })
+        .eq('id', project.id);
+      if (error) throw error;
+      setProject((prev) => ({ ...prev, status: next }));
+    } catch (err) {
+      console.error('Error updating status:', err);
+    }
+  }
+
   const formatPrice = (amount: number) => {
     const amountInUSD = amount / exchangeRate;
     const formattedUSD = new Intl.NumberFormat('en-US', {
@@ -1636,62 +1774,42 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     );
   }
 
-  const tabs = [
-    { id: 'info' as const, label: 'Info', icon: Receipt },
-    { id: 'pricing' as const, label: 'Pricing', icon: Calculator },
-    { id: 'cutlist' as const, label: 'Breakdown', icon: Layers },
-    { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
-    { id: 'history' as const, label: 'History', icon: History },
-  ];
-
   return (
     <div>
+      {/* Sticky project header — sits under the 56 px Topbar, spans the
+          viewport minus the sidebar. Replaces the old fixed sub-bar + the
+          gradient header card. The 5 page tabs have been migrated into the
+          global Topbar via `usePageChrome({ tabs })` in QuotationDetailsPage. */}
+      <ProjectHeader
+        projectName={parentProject?.name ?? ''}
+        projectId={parentProject?.id ?? ''}
+        variantName={project.version_label || project.name}
+        status={(project.status as QuoteStatus | null | undefined) ?? null}
+        isStale={pricingMethod === 'optimizer' && optimizerIsStale}
+        projectType={project.project_type}
+        address={project.address}
+        quotedAt={project.quote_date}
+        total={{ usd: totalUsd, mxn: totalMxn }}
+        totalMode={totalMode}
+        onTotalModeChange={setTotalMode}
+        pricingMethod={pricingMethod}
+        delta={headerDelta}
+        onEdit={() => setIsEditingDate(true)}
+        onStatusChange={handleStatusChange}
+        onBack={onBack}
+      />
+      {/* Spacer covering both fixed bars: ProjectHeader + FloatingActionBar.
+          Uses the `--ph-h` CSS var ProjectHeader writes on mount/resize,
+          so the page content always starts exactly below the FAB
+          regardless of viewport, font size, or whether the Stale chip
+          (etc.) is currently visible.
+          Formula: header + 44 FAB + 0 gap-above (flush) + 8 gap-below −
+          24 worst-case main padding (py-6 on mobile) = header + 28.
+          Fallback 200 px only used if `--ph-h` hasn't been set. */}
       <div
-        className="fixed top-[56px] right-0 left-0 lg:left-[var(--rail-w)] z-[40] transition-[left] duration-[250ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-        style={{ background: 'white', borderBottom: '1px solid #e2e8f0' }}
-      >
-        <div className="max-w-7xl mx-auto flex items-center h-12 px-4 sm:px-6 lg:px-8" style={{ maxWidth: '80rem', margin: '0 auto', display: 'flex', alignItems: 'center', height: '48px', padding: '0 24px' }}>
-          <button
-            onClick={onBack}
-            className="flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors mr-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div className="flex items-center gap-1.5 text-sm text-slate-400 mr-4 flex-shrink-0 hidden sm:flex">
-            {parentProject ? (
-              <>
-                <button onClick={onBack} className="hover:text-blue-600 transition-colors truncate max-w-[140px]">{parentProject.name}</button>
-                <span>/</span>
-                <span className="text-slate-700 font-medium truncate max-w-[160px]">{project.version_label || project.name}</span>
-              </>
-            ) : (
-              <span className="text-slate-700 font-medium truncate max-w-[200px]">{project.name}</span>
-            )}
-          </div>
-          <div className="flex flex-1 items-center overflow-x-auto">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex flex-1 justify-center items-center gap-1.5 px-3 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                    isActive
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ height: '48px' }} />
+        aria-hidden
+        style={{ height: 'calc(var(--ph-h, 200px) + 28px)' }}
+      />
 
       <FloatingActionBar
         onAddArea={() => setIsAreaModalOpen(true)}
@@ -1719,229 +1837,77 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         onPricingMethodChange={handlePricingMethodChange}
       />
 
-      <div className="mb-6 mt-6 page-enter">
+      {/* Notes — used to live inside the old gradient header card; now it's
+          a sibling glass card so the ProjectHeader stays focused on identity
+          and the total. */}
+      {project.project_details && (
+        <div className="mb-6 glass-white rounded-xl px-5 py-4 page-enter">
+          <h3 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+            <Receipt className="h-4 w-4" />
+            Notes
+          </h3>
+          <p className="text-sm text-slate-600 whitespace-pre-wrap">{project.project_details}</p>
+        </div>
+      )}
 
-        <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200 p-4 sm:p-6 shadow-sm mb-6">
-          <div className="flex justify-between items-start gap-6">
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{project.name}</h1>
-                <div className="relative inline-block">
-                  {isStatusMenuOpen && (
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setIsStatusMenuOpen(false)}
-                    />
-                  )}
-                  <button
-                    onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
-                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold cursor-pointer select-none transition-opacity hover:opacity-80 ${
-                      project.status === 'Awarded' ? 'bg-green-100 text-green-700' :
-                      project.status === 'Pending' ? 'bg-blue-100 text-blue-700' :
-                      project.status === 'Estimating' ? 'bg-orange-100 text-orange-700' :
-                      project.status === 'Sent' ? 'bg-cyan-100 text-cyan-700' :
-                      project.status === 'Lost' ? 'bg-red-100 text-red-700' :
-                      project.status === 'Discarded' ? 'bg-slate-100 text-slate-600' :
-                      project.status === 'Cancelled' ? 'bg-gray-100 text-gray-600' :
-                      'bg-slate-100 text-slate-600'
-                    }`}
-                  >
-                    {project.status ? project.status.toUpperCase() : 'NO STATUS'}
-                    <ChevronDown className="h-3 w-3 opacity-70" />
-                  </button>
-                  {isStatusMenuOpen && (
-                    <div className="absolute left-0 top-full mt-1 z-20 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
-                      {(['Pending', 'Estimating', 'Sent', 'Lost', 'Awarded', 'Discarded', 'Cancelled'] as const).map((status) => (
-                        <button
-                          key={status}
-                          onClick={async () => {
-                            try {
-                              const { error } = await supabase
-                                .from('quotations')
-                                .update({ status, updated_at: new Date().toISOString() })
-                                .eq('id', project.id);
-                              if (error) throw error;
-                              setProject(prev => ({ ...prev, status }));
-                              setIsStatusMenuOpen(false);
-                            } catch (err) {
-                              console.error('Error updating status:', err);
-                            }
-                          }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 text-left"
-                        >
-                          <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${
-                            status === 'Awarded' ? 'bg-green-500' :
-                            status === 'Pending' ? 'bg-blue-500' :
-                            status === 'Estimating' ? 'bg-orange-500' :
-                            status === 'Sent' ? 'bg-cyan-500' :
-                            status === 'Lost' ? 'bg-red-500' :
-                            status === 'Discarded' ? 'bg-slate-400' :
-                            'bg-gray-400'
-                          }`} />
-                          {status}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              {project.address && (
-                <p className="text-slate-600 flex items-center gap-2 text-sm sm:text-base">
-                  <span className="text-slate-400">📍</span> {project.address}
-                </p>
-              )}
-              <div className="mt-1 flex items-center gap-2">
-                {isEditingDate ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      value={editedQuoteDate}
-                      onChange={(e) => setEditedQuoteDate(e.target.value)}
-                      className="px-2 py-1 text-xs border border-slate-300 rounded"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={handleSaveDateChange}
-                      className="!px-2 !py-1 !text-xs"
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setIsEditingDate(false);
-                        setEditedQuoteDate(project.quote_date);
-                      }}
-                      className="!px-2 !py-1 !text-xs"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-xs sm:text-sm text-slate-500">
-                      Quote Date: {new Date(project.quote_date + 'T00:00:00').toLocaleDateString('en-US', {
-                        month: '2-digit',
-                        day: '2-digit',
-                        year: 'numeric'
-                      })}
-                    </p>
-                    <button
-                      onClick={async () => {
-                        const today = new Date().toISOString().split('T')[0];
-                        try {
-                          const { error } = await supabase
-                            .from('quotations')
-                            .update({
-                              quote_date: today,
-                              updated_at: new Date().toISOString()
-                            })
-                            .eq('id', project.id);
-                          if (error) throw error;
-                          window.location.reload();
-                        } catch (error) {
-                          console.error('Error updating date:', error);
-                          alert('Failed to update date: ' + (error instanceof Error ? error.message : String(error)));
-                        }
-                      }}
-                      className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded font-medium"
-                    >
-                      Update to Today
-                    </button>
-                    <button
-                      onClick={() => setIsEditingDate(true)}
-                      className="px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-medium"
-                    >
-                      Edit
-                    </button>
-                    <p className="text-xs sm:text-sm text-slate-500">
-                      Type: {project.project_type}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex-shrink-0 text-right">
-              <div className="text-xs text-slate-400 uppercase tracking-wide mb-1 flex items-center justify-end gap-2">
-                <span>Project Total</span>
-                <span
-                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide border ${
-                    pricingMethod === 'optimizer'
-                      ? 'bg-blue-50 text-blue-700 border-blue-200'
-                      : 'bg-slate-100 text-slate-600 border-slate-200'
-                  }`}
-                  title={
-                    pricingMethod === 'optimizer'
-                      ? 'Values come from the active optimizer run (board-based).'
-                      : 'Values come from the legacy ft² pricing.'
-                  }
-                >
-                  {pricingMethod === 'optimizer' ? 'OPTIMIZER' : 'FT²'}
-                </span>
-                {pricingMethod === 'optimizer' && optimizerIsStale && (
-                  <span
-                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide border bg-amber-50 text-amber-700 border-amber-200"
-                    title="The optimizer run is stale because cabinets changed after it was saved. Re-optimize in the Breakdown tab to refresh these numbers."
-                  >
-                    <AlertTriangle className="h-2.5 w-2.5" />
-                    STALE
-                  </span>
-                )}
-              </div>
-              <div className="text-2xl font-bold text-slate-900 leading-tight">
-                {formatPrice(projectTotal)}{' '}
-                <span className="text-sm font-normal text-slate-500">
-                  {currencyDisplay === 'BOTH' ? 'MXN + USD' : currencyDisplay}
-                </span>
-              </div>
-              <div className="mt-3 flex justify-end">
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    background: '#e9ecef',
-                    borderRadius: '7px',
-                    padding: '3px',
-                    gap: '2px',
-                  }}
-                >
-                  {(['USD', 'MXN', 'BOTH'] as const).map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setCurrencyDisplay(c)}
-                      style={{
-                        fontSize: '11px',
-                        padding: '4px 12px',
-                        borderRadius: '5px',
-                        border: currencyDisplay === c ? '0.5px solid #d1d5db' : 'none',
-                        background: currencyDisplay === c ? 'white' : 'transparent',
-                        color: currencyDisplay === c ? '#0f172a' : '#64748b',
-                        cursor: 'pointer',
-                        fontWeight: currencyDisplay === c ? 600 : 400,
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      {c === 'BOTH' ? 'Both' : c}
-                    </button>
-                  ))}
-                </div>
-              </div>
+      {/* Date-edit modal — opened from ProjectHeader's Edit link. */}
+      <Modal
+        isOpen={isEditingDate}
+        onClose={() => {
+          setIsEditingDate(false);
+          setEditedQuoteDate(project.quote_date);
+        }}
+        title="Edit Quote Date"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <Input
+            type="date"
+            label="Quote Date"
+            value={editedQuoteDate}
+            onChange={(e) => setEditedQuoteDate(e.target.value)}
+          />
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                const today = new Date().toISOString().split('T')[0];
+                setEditedQuoteDate(today);
+                try {
+                  const { error } = await supabase
+                    .from('quotations')
+                    .update({ quote_date: today, updated_at: new Date().toISOString() })
+                    .eq('id', project.id);
+                  if (error) throw error;
+                  setProject((prev) => ({ ...prev, quote_date: today }));
+                  setIsEditingDate(false);
+                } catch (err) {
+                  console.error('Error updating date:', err);
+                  alert('Failed to update date: ' + (err instanceof Error ? err.message : String(err)));
+                }
+              }}
+            >
+              Set to Today
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setIsEditingDate(false);
+                  setEditedQuoteDate(project.quote_date);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSaveDateChange}>
+                Save
+              </Button>
             </div>
           </div>
-
-          {project.project_details && (
-            <div className="mt-4 p-4 bg-white border border-slate-200 rounded-lg">
-              <h3 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                <Receipt className="h-4 w-4" />
-                Notes
-              </h3>
-              <p className="text-sm text-slate-600 whitespace-pre-wrap">{project.project_details}</p>
-            </div>
-          )}
         </div>
-
-      </div>
+      </Modal>
 
       {activeTab === 'pricing' && hasStalePrices && (
         <div className="mb-6 bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">

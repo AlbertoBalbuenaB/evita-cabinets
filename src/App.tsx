@@ -40,6 +40,7 @@ const WikiProposals = lazy(() => import('./pages/wiki/WikiProposals').then(m => 
 const WikiProposalPage = lazy(() => import('./pages/wiki/WikiProposalPage').then(m => ({ default: m.WikiProposalPage })));
 const WikiAudit = lazy(() => import('./pages/wiki/WikiAudit').then(m => ({ default: m.WikiAudit })));
 const CrmPlaceholder = lazy(() => import('./pages/CrmPlaceholder').then(m => ({ default: m.CrmPlaceholder })));
+const ProjectHeaderDemo = lazy(() => import('./pages/_dev/ProjectHeaderDemo').then(m => ({ default: m.ProjectHeaderDemo })));
 
 function AdminRoute({ children }: { children: ReactNode }) {
   const { member, loading } = useCurrentMember();
@@ -111,6 +112,7 @@ function App() {
             <Route path="/wiki/proposals" element={<WikiProposals />} />
             <Route path="/wiki/:slug" element={<WikiArticlePage />} />
             <Route path="/wiki" element={<WikiHub />} />
+            <Route path="/_dev/project-header" element={<ProjectHeaderDemo />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
