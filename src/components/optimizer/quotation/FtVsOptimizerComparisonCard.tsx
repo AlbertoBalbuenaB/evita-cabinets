@@ -37,18 +37,18 @@ export function FtVsOptimizerComparisonCard({ sqftTotal, optimizerTotal, activeM
     <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-3 items-stretch">
       {/* ft² side */}
       <div className={`rounded-lg border p-3 ${
-        activeMethod === 'sqft' ? 'border-blue-300 bg-blue-50' : 'border-slate-200 bg-white'
+        activeMethod === 'sqft' ? 'border-accent-tint-border bg-accent-tint-soft' : 'border-border-soft bg-surf-card'
       }`}>
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">ft² Pricing</span>
+          <span className="text-xs font-medium text-fg-500 uppercase tracking-wide">ft² Pricing</span>
           {activeMethod === 'sqft' && (
-            <span className="text-[10px] font-semibold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">ACTIVE</span>
+            <span className="text-[10px] font-semibold text-accent-text bg-accent-tint-soft px-1.5 py-0.5 rounded">ACTIVE</span>
           )}
         </div>
-        <div className="text-2xl font-bold text-slate-900 tabular-nums">
+        <div className="text-2xl font-bold text-fg-900 tabular-nums">
           {formatCurrency(sqftTotal)}
         </div>
-        <div className="text-xs text-slate-400 mt-0.5">Current traditional rollup</div>
+        <div className="text-xs text-fg-400 mt-0.5">Current traditional rollup</div>
       </div>
 
       {/* Delta */}
@@ -56,38 +56,38 @@ export function FtVsOptimizerComparisonCard({ sqftTotal, optimizerTotal, activeM
         {hasOptimizer ? (
           <>
             <div className={`flex items-center gap-1 text-base font-bold tabular-nums ${
-              deltaTone === 'green' ? 'text-green-600' :
-              deltaTone === 'red'   ? 'text-red-600'   : 'text-slate-500'
+              deltaTone === 'green' ? 'text-status-emerald-fg' :
+              deltaTone === 'red'   ? 'text-status-red-fg'   : 'text-fg-500'
             }`}>
               {(() => { const Icon = deltaIcon; return <Icon className="h-4 w-4" />; })()}
               {delta >= 0 ? '+' : ''}{formatCurrency(delta)}
             </div>
             <div className={`text-xs tabular-nums ${
-              deltaTone === 'green' ? 'text-green-600' :
-              deltaTone === 'red'   ? 'text-red-600'   : 'text-slate-500'
+              deltaTone === 'green' ? 'text-status-emerald-fg' :
+              deltaTone === 'red'   ? 'text-status-red-fg'   : 'text-fg-500'
             }`}>
               {delta >= 0 ? '+' : ''}{deltaPct.toFixed(1)}%
             </div>
           </>
         ) : (
-          <div className="text-xs text-slate-400">vs</div>
+          <div className="text-xs text-fg-400">vs</div>
         )}
       </div>
 
       {/* Breakdown side */}
       <div className={`rounded-lg border p-3 ${
-        activeMethod === 'optimizer' ? 'border-blue-300 bg-blue-50' : 'border-slate-200 bg-white'
+        activeMethod === 'optimizer' ? 'border-accent-tint-border bg-accent-tint-soft' : 'border-border-soft bg-surf-card'
       }`}>
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Optimizer</span>
+          <span className="text-xs font-medium text-fg-500 uppercase tracking-wide">Optimizer</span>
           {activeMethod === 'optimizer' && (
-            <span className="text-[10px] font-semibold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">ACTIVE</span>
+            <span className="text-[10px] font-semibold text-accent-text bg-accent-tint-soft px-1.5 py-0.5 rounded">ACTIVE</span>
           )}
         </div>
-        <div className="text-2xl font-bold text-slate-900 tabular-nums">
+        <div className="text-2xl font-bold text-fg-900 tabular-nums">
           {hasOptimizer ? formatCurrency(optimizerTotal as number) : '—'}
         </div>
-        <div className="text-xs text-slate-400 mt-0.5">
+        <div className="text-xs text-fg-400 mt-0.5">
           {hasOptimizer ? 'From active optimizer run' : 'No active run yet'}
         </div>
       </div>

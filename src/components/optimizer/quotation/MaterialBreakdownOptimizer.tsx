@@ -199,8 +199,8 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
 
   if (!data) {
     return (
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <div className="text-center py-4 text-sm text-slate-500">
+      <div className="bg-surf-card rounded-lg border border-border-soft p-4">
+        <div className="text-center py-4 text-sm text-fg-500">
           No optimizer data available. Run the optimizer in the Breakdown tab.
         </div>
       </div>
@@ -208,35 +208,35 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-blue-200 p-4">
+    <div className="bg-surf-card rounded-lg border border-accent-tint-border p-4">
       <div className="flex items-center mb-4">
-        <Layers className="h-5 w-5 text-blue-600 mr-2" />
-        <h3 className="text-lg font-semibold text-slate-900">
+        <Layers className="h-5 w-5 text-accent-text mr-2" />
+        <h3 className="text-lg font-semibold text-fg-900">
           Material Breakdown
-          <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 border border-blue-200 text-[9px] font-bold tracking-wide uppercase align-middle">
+          <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded bg-accent-tint-soft text-accent-text border border-accent-tint-border text-[9px] font-bold tracking-wide uppercase align-middle">
             Optimizer
           </span>
         </h3>
-        <span className="ml-auto text-sm font-semibold text-green-600">
+        <span className="ml-auto text-sm font-semibold text-status-emerald-fg">
           Total: {formatCurrency(data.totalCost)}
         </span>
       </div>
 
       <div className="space-y-3">
         {data.boardRows.length > 0 && (
-          <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+          <div className="bg-status-amber-bg rounded-lg p-3 border border-amber-100">
             <div className="flex items-center mb-2">
-              <Package className="h-4 w-4 text-amber-700 mr-1.5" />
-              <h4 className="text-sm font-semibold text-amber-900">Boards (from optimizer run)</h4>
-              <span className="ml-auto text-xs font-semibold text-amber-800">
+              <Package className="h-4 w-4 text-status-amber-fg mr-1.5" />
+              <h4 className="text-sm font-semibold text-status-amber-fg">Boards (from optimizer run)</h4>
+              <span className="ml-auto text-xs font-semibold text-status-amber-fg">
                 {formatCurrency(data.boardRows.reduce((s, r) => s + r.cost, 0))}
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {data.boardRows.map((row) => (
-                <div key={row.name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{row.name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={row.name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{row.name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span>
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.boards} boards
@@ -245,7 +245,7 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
                       <Ruler className="h-3 w-3 inline mr-1" />
                       {row.totalSF.toFixed(1)} SF
                     </span>
-                    <span className="font-semibold text-amber-700">{formatCurrency(row.cost)}</span>
+                    <span className="font-semibold text-status-amber-fg">{formatCurrency(row.cost)}</span>
                   </div>
                 </div>
               ))}
@@ -254,19 +254,19 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
         )}
 
         {data.edgebandRows.length > 0 && (
-          <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+          <div className="bg-status-amber-bg rounded-lg p-3 border border-amber-100">
             <div className="flex items-center mb-2">
-              <Ruler className="h-4 w-4 text-amber-700 mr-1.5" />
-              <h4 className="text-sm font-semibold text-amber-900">Edgeband (Rolls 150m)</h4>
-              <span className="ml-auto text-xs font-semibold text-amber-800">
+              <Ruler className="h-4 w-4 text-status-amber-fg mr-1.5" />
+              <h4 className="text-sm font-semibold text-status-amber-fg">Edgeband (Rolls 150m)</h4>
+              <span className="ml-auto text-xs font-semibold text-status-amber-fg">
                 {formatCurrency(data.edgebandRows.reduce((s, r) => s + r.cost, 0))}
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {data.edgebandRows.map((row) => (
-                <div key={row.name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{row.name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={row.name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{row.name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span>
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.rolls} rolls
@@ -275,7 +275,7 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
                       <Ruler className="h-3 w-3 inline mr-1" />
                       {row.meters.toFixed(1)}m
                     </span>
-                    <span className="font-semibold text-amber-700">{formatCurrency(row.cost)}</span>
+                    <span className="font-semibold text-status-amber-fg">{formatCurrency(row.cost)}</span>
                   </div>
                 </div>
               ))}
@@ -284,24 +284,24 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
         )}
 
         {data.hardwareRows.length > 0 && (
-          <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+          <div className="bg-surf-app rounded-lg p-3 border border-border-soft">
             <div className="flex items-center mb-2">
-              <Wrench className="h-4 w-4 text-slate-700 mr-1.5" />
-              <h4 className="text-sm font-semibold text-slate-900">Hardware</h4>
-              <span className="ml-auto text-xs font-semibold text-slate-800">
+              <Wrench className="h-4 w-4 text-fg-700 mr-1.5" />
+              <h4 className="text-sm font-semibold text-fg-900">Hardware</h4>
+              <span className="ml-auto text-xs font-semibold text-fg-800">
                 {formatCurrency(data.hardwareRows.reduce((s, r) => s + r.cost, 0))}
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {data.hardwareRows.map((row) => (
-                <div key={row.name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{row.name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={row.name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{row.name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span>
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.quantity} pcs
                     </span>
-                    <span className="font-semibold text-slate-700">{formatCurrency(row.cost)}</span>
+                    <span className="font-semibold text-fg-700">{formatCurrency(row.cost)}</span>
                   </div>
                 </div>
               ))}
@@ -310,24 +310,24 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
         )}
 
         {data.accessoriesRows.length > 0 && (
-          <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+          <div className="bg-accent-tint-soft rounded-lg p-3 border border-accent-tint-border">
             <div className="flex items-center mb-2">
-              <Package className="h-4 w-4 text-purple-700 mr-1.5" />
-              <h4 className="text-sm font-semibold text-purple-900">Accessories</h4>
-              <span className="ml-auto text-xs font-semibold text-purple-800">
+              <Package className="h-4 w-4 text-accent-text mr-1.5" />
+              <h4 className="text-sm font-semibold text-accent-text">Accessories</h4>
+              <span className="ml-auto text-xs font-semibold text-accent-text">
                 {formatCurrency(data.accessoriesRows.reduce((s, r) => s + r.cost, 0))}
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {data.accessoriesRows.map((row) => (
-                <div key={row.name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{row.name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={row.name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{row.name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span>
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.quantity} pcs
                     </span>
-                    <span className="font-semibold text-purple-700">{formatCurrency(row.cost)}</span>
+                    <span className="font-semibold text-accent-text">{formatCurrency(row.cost)}</span>
                   </div>
                 </div>
               ))}
@@ -336,24 +336,24 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
         )}
 
         {data.itemsRows.length > 0 && (
-          <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+          <div className="bg-status-orange-bg rounded-lg p-3 border border-status-orange-brd">
             <div className="flex items-center mb-2">
-              <ListChecks className="h-4 w-4 text-orange-700 mr-1.5" />
-              <h4 className="text-sm font-semibold text-orange-900">Individual Items</h4>
-              <span className="ml-auto text-xs font-semibold text-orange-800">
+              <ListChecks className="h-4 w-4 text-status-orange-fg mr-1.5" />
+              <h4 className="text-sm font-semibold text-status-orange-fg">Individual Items</h4>
+              <span className="ml-auto text-xs font-semibold text-status-orange-fg">
                 {formatCurrency(data.itemsRows.reduce((s, r) => s + r.cost, 0))}
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {data.itemsRows.map((row) => (
-                <div key={row.name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{row.name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={row.name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{row.name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span>
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.quantity} pcs
                     </span>
-                    <span className="font-semibold text-orange-700">{formatCurrency(row.cost)}</span>
+                    <span className="font-semibold text-status-orange-fg">{formatCurrency(row.cost)}</span>
                   </div>
                 </div>
               ))}
@@ -362,24 +362,24 @@ export function MaterialBreakdownOptimizer({ run, areas }: Props) {
         )}
 
         {data.countertopsRows.length > 0 && (
-          <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+          <div className="bg-status-orange-bg rounded-lg p-3 border border-status-orange-brd">
             <div className="flex items-center mb-2">
-              <Hammer className="h-4 w-4 text-orange-700 mr-1.5" />
-              <h4 className="text-sm font-semibold text-orange-900">Countertops</h4>
-              <span className="ml-auto text-xs font-semibold text-orange-800">
+              <Hammer className="h-4 w-4 text-status-orange-fg mr-1.5" />
+              <h4 className="text-sm font-semibold text-status-orange-fg">Countertops</h4>
+              <span className="ml-auto text-xs font-semibold text-status-orange-fg">
                 {formatCurrency(data.countertopsRows.reduce((s, r) => s + r.cost, 0))}
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {data.countertopsRows.map((row) => (
-                <div key={row.name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{row.name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={row.name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{row.name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span>
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.quantity.toFixed(2)} units
                     </span>
-                    <span className="font-semibold text-orange-700">{formatCurrency(row.cost)}</span>
+                    <span className="font-semibold text-status-orange-fg">{formatCurrency(row.cost)}</span>
                   </div>
                 </div>
               ))}

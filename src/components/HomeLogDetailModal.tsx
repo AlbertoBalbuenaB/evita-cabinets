@@ -16,13 +16,13 @@ type LogType = 'note' | 'change' | 'decision' | 'risk' | 'issue' | 'milestone' |
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const LOG_TYPES: Record<LogType, { label: string; Icon: any; color: string; bg: string; border: string; badgeBg: string }> = {
-  note:      { label: 'Note',      Icon: FileText,       color: 'text-slate-600',  bg: 'bg-slate-50',    border: 'border-l-slate-300',   badgeBg: 'bg-slate-100'  },
-  change:    { label: 'Change',    Icon: RefreshCw,      color: 'text-amber-600',  bg: 'bg-amber-50',    border: 'border-l-amber-400',   badgeBg: 'bg-amber-100'  },
-  decision:  { label: 'Decision',  Icon: CheckCircle,    color: 'text-blue-600',   bg: 'bg-blue-50',     border: 'border-l-blue-400',    badgeBg: 'bg-blue-100'   },
-  risk:      { label: 'Risk',      Icon: AlertTriangle,  color: 'text-orange-600', bg: 'bg-orange-50',   border: 'border-l-orange-400',  badgeBg: 'bg-orange-100' },
-  issue:     { label: 'Issue',     Icon: XCircle,        color: 'text-red-600',    bg: 'bg-red-50',      border: 'border-l-red-400',     badgeBg: 'bg-red-100'    },
-  milestone: { label: 'Milestone', Icon: Trophy,         color: 'text-green-600',  bg: 'bg-green-50',    border: 'border-l-green-400',   badgeBg: 'bg-green-100'  },
-  update:    { label: 'Update',    Icon: Radio,          color: 'text-purple-600', bg: 'bg-purple-50',   border: 'border-l-purple-400',  badgeBg: 'bg-purple-100' },
+  note:      { label: 'Note',      Icon: FileText,       color: 'text-fg-600',  bg: 'bg-surf-app',    border: 'border-l-slate-300',   badgeBg: 'bg-surf-muted'  },
+  change:    { label: 'Change',    Icon: RefreshCw,      color: 'text-status-amber-fg',  bg: 'bg-status-amber-bg',    border: 'border-l-amber-400',   badgeBg: 'bg-status-amber-bg'  },
+  decision:  { label: 'Decision',  Icon: CheckCircle,    color: 'text-accent-text',   bg: 'bg-accent-tint-soft',     border: 'border-l-blue-400',    badgeBg: 'bg-accent-tint-soft'   },
+  risk:      { label: 'Risk',      Icon: AlertTriangle,  color: 'text-status-orange-fg', bg: 'bg-status-orange-bg',   border: 'border-l-orange-400',  badgeBg: 'bg-status-orange-bg' },
+  issue:     { label: 'Issue',     Icon: XCircle,        color: 'text-status-red-fg',    bg: 'bg-status-red-bg',      border: 'border-l-red-400',     badgeBg: 'bg-status-red-bg'    },
+  milestone: { label: 'Milestone', Icon: Trophy,         color: 'text-status-emerald-fg',  bg: 'bg-status-emerald-bg',    border: 'border-l-green-400',   badgeBg: 'bg-status-emerald-bg'  },
+  update:    { label: 'Update',    Icon: Radio,          color: 'text-accent-text', bg: 'bg-accent-tint-soft',   border: 'border-l-purple-400',  badgeBg: 'bg-accent-tint-soft' },
 };
 
 // ── TipTap JSON helpers ───────────────────────────────────────────────────────
@@ -89,9 +89,9 @@ function getInitials(name: string) {
 }
 
 const AVATAR_COLORS = [
-  'bg-violet-100 text-violet-700', 'bg-blue-100 text-blue-700',
-  'bg-amber-100 text-amber-700',   'bg-emerald-100 text-emerald-700',
-  'bg-rose-100 text-rose-700',     'bg-cyan-100 text-cyan-700',
+  'bg-accent-tint-soft text-accent-text', 'bg-accent-tint-soft text-accent-text',
+  'bg-status-amber-bg text-status-amber-fg',   'bg-status-emerald-bg text-status-emerald-fg',
+  'bg-status-red-bg text-status-red-fg',     'bg-cyan-100 text-cyan-700',
 ];
 
 function avatarColor(name: string) {
@@ -176,20 +176,20 @@ export function HomeLogDetailModal({ log, currentMemberId, currentMemberName, on
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
-      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/70 w-full max-w-lg max-h-[92vh] flex flex-col">
+      <div className="bg-surf-card backdrop-blur-xl rounded-2xl shadow-2xl border border-white/70 w-full max-w-lg max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/60 bg-gradient-to-r from-violet-50/40 to-indigo-50/20 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border-rail bg-accent-tint-card flex-shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <h3 className="text-base font-semibold text-slate-900 truncate">Log Entry</h3>
+            <h3 className="text-base font-semibold text-fg-900 truncate">Log Entry</h3>
             <Link
               to={`/projects/${log.project_id}`}
               onClick={onClose}
-              className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-medium flex-shrink-0"
+              className="inline-flex items-center gap-1 text-[11px] text-accent-text hover:text-accent-text font-medium flex-shrink-0"
             >
               {log.project_name} <ExternalLink className="h-3 w-3" />
             </Link>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0">
+          <button onClick={onClose} className="text-fg-400 hover:text-fg-600 transition-colors flex-shrink-0">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -204,24 +204,24 @@ export function HomeLogDetailModal({ log, currentMemberId, currentMemberName, on
                 {cfg.label}
               </span>
               {log.author_name && (
-                <span className="text-[11px] text-slate-600 font-medium">{log.author_name}</span>
+                <span className="text-[11px] text-fg-600 font-medium">{log.author_name}</span>
               )}
-              <span className="text-[11px] text-slate-400 flex items-center gap-0.5 ml-auto">
+              <span className="text-[11px] text-fg-400 flex items-center gap-0.5 ml-auto">
                 <Clock className="h-2.5 w-2.5" />
                 {format(new Date(log.created_at), 'MMM d, yyyy HH:mm')}
               </span>
             </div>
-            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{fullText}</p>
+            <p className="text-sm text-fg-700 leading-relaxed whitespace-pre-wrap">{fullText}</p>
           </div>
 
           {/* Replies */}
           <div className="px-4 pb-4">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              <span className="text-xs font-semibold text-fg-500 uppercase tracking-wide">
                 Replies
               </span>
               {!loadingReplies && (
-                <span className="text-[10px] font-semibold bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded-full">
+                <span className="text-[10px] font-semibold bg-surf-muted text-fg-400 px-1.5 py-0.5 rounded-full">
                   {replies.length}
                 </span>
               )}
@@ -229,11 +229,11 @@ export function HomeLogDetailModal({ log, currentMemberId, currentMemberName, on
 
             {loadingReplies ? (
               <div className="space-y-3">
-                <div className="h-12 rounded-lg bg-slate-100 animate-pulse" />
-                <div className="h-12 rounded-lg bg-slate-100 animate-pulse" />
+                <div className="h-12 rounded-lg bg-surf-muted animate-pulse" />
+                <div className="h-12 rounded-lg bg-surf-muted animate-pulse" />
               </div>
             ) : replies.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-4">No replies yet — be the first</p>
+              <p className="text-xs text-fg-400 text-center py-4">No replies yet — be the first</p>
             ) : (
               <div className="space-y-3">
                 {replies.map(reply => {
@@ -246,13 +246,13 @@ export function HomeLogDetailModal({ log, currentMemberId, currentMemberName, on
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-xs font-semibold text-slate-700">{authorName}</span>
-                          <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
+                          <span className="text-xs font-semibold text-fg-700">{authorName}</span>
+                          <span className="text-[10px] text-fg-400 flex items-center gap-0.5">
                             <Clock className="h-2.5 w-2.5" />
                             {reply.created_at ? format(new Date(reply.created_at), 'MMM d, HH:mm') : ''}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">{replyText}</p>
+                        <p className="text-xs text-fg-600 leading-relaxed whitespace-pre-wrap">{replyText}</p>
                       </div>
                     </div>
                   );
@@ -263,14 +263,14 @@ export function HomeLogDetailModal({ log, currentMemberId, currentMemberName, on
         </div>
 
         {/* Reply input — sticky at bottom */}
-        <div className="flex-shrink-0 px-4 py-3 border-t border-white/60 bg-white/40 backdrop-blur-sm">
+        <div className="flex-shrink-0 px-4 py-3 border-t border-border-rail bg-surf-card backdrop-blur-sm">
           <div className="flex gap-2">
             <textarea
               value={replyText}
               onChange={e => setReplyText(e.target.value)}
               placeholder="Write a reply…"
               rows={2}
-              className="flex-1 text-xs border border-slate-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white/70"
+              className="flex-1 text-xs border border-border-soft rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 bg-surf-card"
               onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendReply(); }}
             />
             <Button
@@ -286,7 +286,7 @@ export function HomeLogDetailModal({ log, currentMemberId, currentMemberName, on
               )}
             </Button>
           </div>
-          <p className="text-[10px] text-slate-400 mt-1">Cmd+Enter to send</p>
+          <p className="text-[10px] text-fg-400 mt-1">Cmd+Enter to send</p>
         </div>
       </div>
     </div>,

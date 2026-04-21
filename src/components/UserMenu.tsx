@@ -5,6 +5,7 @@ import { ChevronUp, LogOut, Settings as SettingsIcon, User, Languages } from 'lu
 import { useCurrentMember } from '../lib/useCurrentMember';
 import { useLocaleStore } from '../lib/localeStore';
 import { getAvatarGradientStyle, getInitials } from '../lib/avatarColors';
+import { ThemeToggle } from './ThemeToggle';
 
 interface UserMenuProps {
   expanded: boolean;
@@ -68,7 +69,7 @@ export function UserMenu({ expanded, onLogout }: UserMenuProps) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Open user menu"
-        className={`group w-full flex items-center gap-2.5 rounded-xl p-1.5 text-left transition-all duration-150 hover:bg-slate-100/80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+        className={`group w-full flex items-center gap-2.5 rounded-xl p-1.5 text-left transition-all duration-150 hover:bg-rail-item-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 ${
           expanded ? '' : 'justify-center'
         }`}
       >
@@ -81,17 +82,17 @@ export function UserMenu({ expanded, onLogout }: UserMenuProps) {
         {expanded && (
           <>
             <span className="flex-1 min-w-0">
-              <span className="block text-[13px] font-semibold text-slate-900 truncate">
+              <span className="block text-[13px] font-semibold text-fg-900 truncate">
                 {name}
               </span>
               {role && (
-                <span className="block text-[11px] text-slate-500 truncate capitalize">
+                <span className="block text-[11px] text-fg-500 truncate capitalize">
                   {role}
                 </span>
               )}
             </span>
             <ChevronUp
-              className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${
+              className={`h-4 w-4 text-fg-400 shrink-0 transition-transform ${
                 open ? '' : 'rotate-180'
               }`}
             />
@@ -109,12 +110,12 @@ export function UserMenu({ expanded, onLogout }: UserMenuProps) {
             transform: 'translateY(-100%)',
           }}
         >
-          <div className="px-2.5 py-2 border-b border-slate-200/60">
-            <div className="text-[13px] font-semibold text-slate-900 truncate">
+          <div className="px-2.5 py-2 border-b border-border-soft">
+            <div className="text-[13px] font-semibold text-fg-900 truncate">
               {name}
             </div>
             {member?.email && (
-              <div className="text-[11px] text-slate-500 truncate">
+              <div className="text-[11px] text-fg-500 truncate">
                 {member.email}
               </div>
             )}
@@ -136,7 +137,15 @@ export function UserMenu({ expanded, onLogout }: UserMenuProps) {
               }}
             />
           </div>
-          <div className="border-t border-slate-200/60 pt-1">
+          <div className="border-t border-border-soft pt-1.5 pb-1">
+            <div className="px-2.5 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-fg-400">
+              Appearance
+            </div>
+            <div className="px-2.5 pb-1.5">
+              <ThemeToggle variant="menu" />
+            </div>
+          </div>
+          <div className="border-t border-border-soft pt-1">
             <MenuButton
               icon={LogOut}
               label="Log out"
@@ -170,9 +179,9 @@ function MenuLink({
       to={to}
       onClick={onClick}
       role="menuitem"
-      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-colors"
+      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-fg-700 hover:bg-rail-item-hover hover:text-fg-900 transition-colors"
     >
-      <Icon className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
+      <Icon className="h-4 w-4 text-fg-400" strokeWidth={1.75} />
       {label}
     </Link>
   );
@@ -200,19 +209,19 @@ function MenuButton({
       disabled={disabled}
       className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-colors ${
         disabled
-          ? 'text-slate-400 cursor-not-allowed'
+          ? 'text-fg-400 cursor-not-allowed'
           : danger
-          ? 'text-rose-600 hover:bg-rose-50'
-          : 'text-slate-700 hover:bg-slate-100/80 hover:text-slate-900'
+          ? 'text-[color:var(--red-dot)] hover:bg-status-red-bg'
+          : 'text-fg-700 hover:bg-rail-item-hover hover:text-fg-900'
       }`}
     >
       <Icon
-        className={`h-4 w-4 ${danger ? 'text-rose-500' : 'text-slate-400'}`}
+        className={`h-4 w-4 ${danger ? 'text-[color:var(--red-dot)]' : 'text-fg-400'}`}
         strokeWidth={1.75}
       />
       <span className="flex-1 text-left">{label}</span>
       {rightText && (
-        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+        <span className="text-[10px] font-semibold text-fg-400 uppercase tracking-wider">
           {rightText}
         </span>
       )}

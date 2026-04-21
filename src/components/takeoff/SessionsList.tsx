@@ -53,14 +53,14 @@ export function SessionsList({ isOpen, onClose, projectId, onOpen }: SessionsLis
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={projectId ? 'Project takeoffs' : 'My takeoffs'} size="lg">
       <div>
-        {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+        {error && <p className="text-xs text-status-red-fg mb-2">{error}</p>}
 
         {loading ? (
-          <div className="py-8 flex items-center justify-center text-slate-400">
+          <div className="py-8 flex items-center justify-center text-fg-400">
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
         ) : sessions.length === 0 ? (
-          <p className="py-8 text-sm text-slate-500 text-center">
+          <p className="py-8 text-sm text-fg-500 text-center">
             {projectId
               ? 'No takeoffs for this project yet. Create one from the Takeoff tool.'
               : 'No saved takeoffs yet. Save the current session from the panel to see it here.'}
@@ -71,16 +71,16 @@ export function SessionsList({ isOpen, onClose, projectId, onOpen }: SessionsLis
               <div key={s.id} className="py-3 flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-800 truncate">{s.name}</span>
+                    <span className="font-medium text-fg-800 truncate">{s.name}</span>
                     {s.projectName && (
-                      <span className="text-[10px] bg-indigo-50 text-indigo-700 rounded px-1.5 py-0.5 flex-shrink-0">{s.projectName}</span>
+                      <span className="text-[10px] bg-accent-tint-soft text-accent-text rounded px-1.5 py-0.5 flex-shrink-0">{s.projectName}</span>
                     )}
                     {!s.projectId && (
-                      <span className="text-[10px] bg-slate-100 text-slate-500 rounded px-1.5 py-0.5 flex-shrink-0">standalone</span>
+                      <span className="text-[10px] bg-surf-muted text-fg-500 rounded px-1.5 py-0.5 flex-shrink-0">standalone</span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-500 truncate mt-0.5">{s.pdfFilename}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
+                  <p className="text-xs text-fg-500 truncate mt-0.5">{s.pdfFilename}</p>
+                  <p className="text-[10px] text-fg-400 mt-0.5">
                     Updated {formatRelativeDate(s.updatedAt)}
                     {s.createdByName && ` · by ${s.createdByName}`}
                   </p>
@@ -97,7 +97,7 @@ export function SessionsList({ isOpen, onClose, projectId, onOpen }: SessionsLis
                   <button
                     onClick={() => handleDelete(s.id)}
                     disabled={pendingDelete === s.id}
-                    className="p-1.5 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40"
+                    className="p-1.5 rounded text-fg-400 hover:text-red-500 hover:bg-status-red-bg disabled:opacity-40"
                     title="Delete session"
                   >
                     {pendingDelete === s.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}

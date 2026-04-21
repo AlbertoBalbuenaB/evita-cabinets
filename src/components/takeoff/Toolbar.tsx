@@ -62,14 +62,14 @@ function ToolBtn({ active, onClick, title, disabled, children }: {
   return (
     <button onClick={onClick} disabled={disabled} title={title}
       className={`p-1.5 rounded-md transition-colors ${
-        active ? 'bg-blue-100 text-blue-700 shadow-sm'
-        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed'
+        active ? 'bg-accent-tint-soft text-accent-text shadow-sm'
+        : 'text-fg-500 hover:text-fg-700 hover:bg-surf-muted disabled:opacity-40 disabled:cursor-not-allowed'
       }`}
     >{children}</button>
   );
 }
 
-function Divider() { return <div className="w-px h-6 bg-slate-200 mx-1" />; }
+function Divider() { return <div className="w-px h-6 bg-surf-muted mx-1" />; }
 
 export function Toolbar({
   activeTool, onToolChange, zoom, onZoomIn, onZoomOut, onFit,
@@ -79,7 +79,7 @@ export function Toolbar({
   onUpload, onExport, isCalibrated,
 }: ToolbarProps) {
   return (
-    <div className="flex items-center gap-1 px-3 py-1.5 border-b border-slate-200 bg-white/80 backdrop-blur-sm flex-shrink-0 overflow-x-auto">
+    <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border-soft bg-surf-card backdrop-blur-sm flex-shrink-0 overflow-x-auto">
       {tools.map((t) => {
         const Icon = t.icon;
         const disabled = t.needsCal && !isCalibrated;
@@ -96,7 +96,7 @@ export function Toolbar({
       <Divider />
 
       <ToolBtn onClick={onZoomOut} title="Zoom out"><ZoomOut className="h-4 w-4" /></ToolBtn>
-      <span className="text-xs text-slate-500 font-medium w-12 text-center tabular-nums select-none">{Math.round(zoom * 100)}%</span>
+      <span className="text-xs text-fg-500 font-medium w-12 text-center tabular-nums select-none">{Math.round(zoom * 100)}%</span>
       <ToolBtn onClick={onZoomIn} title="Zoom in"><ZoomIn className="h-4 w-4" /></ToolBtn>
       <ToolBtn onClick={onFit} title="Fit to screen (F)"><Maximize2 className="h-4 w-4" /></ToolBtn>
 
@@ -105,14 +105,14 @@ export function Toolbar({
       {pageCount > 1 && (
         <>
           <ToolBtn onClick={() => onPageChange(currentPage - 1)} disabled={currentPage <= 1} title="Previous page"><ChevronLeft className="h-4 w-4" /></ToolBtn>
-          <span className="text-xs text-slate-500 font-medium px-1 select-none tabular-nums">{currentPage}/{pageCount}</span>
+          <span className="text-xs text-fg-500 font-medium px-1 select-none tabular-nums">{currentPage}/{pageCount}</span>
           <ToolBtn onClick={() => onPageChange(currentPage + 1)} disabled={currentPage >= pageCount} title="Next page"><ChevronRight className="h-4 w-4" /></ToolBtn>
           <Divider />
         </>
       )}
 
       <select value={unit} onChange={(e) => onUnitChange(e.target.value as MeasurementUnit)}
-        className="text-xs border border-slate-200 rounded-md px-1.5 py-1 text-slate-600 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500" title="Display unit">
+        className="text-xs border border-border-soft rounded-md px-1.5 py-1 text-fg-600 bg-surf-card focus:outline-none focus:ring-1 focus-visible:ring-focus" title="Display unit">
         {unitOptions.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
       </select>
 

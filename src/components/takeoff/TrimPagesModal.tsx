@@ -124,26 +124,26 @@ export function TrimPagesModal({ isOpen, onClose, file, onApply }: TrimPagesModa
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Trim pages" size="xl">
       <div className="space-y-3">
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-fg-500">
           Mark the pages you want to keep. Everything unmarked will be removed when you click the red button.
         </p>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="font-medium text-slate-700">
+          <span className="font-medium text-fg-700">
             {keep.size} of {pageCount} kept
           </span>
           {keep.size > 0 && wouldDelete > 0 && (
-            <span className="text-red-600">· {wouldDelete} will be deleted</span>
+            <span className="text-status-red-fg">· {wouldDelete} will be deleted</span>
           )}
           <div className="flex-1" />
           <Button variant="ghost" size="sm" onClick={markAll} disabled={applying || pageCount === 0}>Keep all</Button>
           <Button variant="ghost" size="sm" onClick={clear} disabled={applying || keep.size === 0}>Clear</Button>
         </div>
 
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-status-red-fg">{error}</p>}
 
         {loading ? (
-          <div className="py-16 flex items-center justify-center text-slate-400">
+          <div className="py-16 flex items-center justify-center text-fg-400">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         ) : (
@@ -158,13 +158,13 @@ export function TrimPagesModal({ isOpen, onClose, file, onApply }: TrimPagesModa
                     type="button"
                     onClick={() => toggle(p)}
                     disabled={applying}
-                    className={`relative group border-2 rounded-lg overflow-hidden transition-all bg-white ${
+                    className={`relative group border-2 rounded-lg overflow-hidden transition-all bg-surf-card ${
                       isKept
                         ? 'border-blue-500 ring-2 ring-blue-500/30'
-                        : 'border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-95'
+                        : 'border-border-soft hover:border-border-solid opacity-70 hover:opacity-95'
                     } ${applying ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                   >
-                    <div className="bg-slate-50 flex items-center justify-center aspect-[3/4]">
+                    <div className="bg-surf-app flex items-center justify-center aspect-[3/4]">
                       <canvas
                         ref={(el) => {
                           if (el) canvasRefs.current.set(p, el);
@@ -173,10 +173,10 @@ export function TrimPagesModal({ isOpen, onClose, file, onApply }: TrimPagesModa
                         className="max-w-full max-h-full"
                         style={{ display: isRendered ? 'block' : 'none' }}
                       />
-                      {!isRendered && <Loader2 className="h-4 w-4 text-slate-300 animate-spin" />}
+                      {!isRendered && <Loader2 className="h-4 w-4 text-fg-300 animate-spin" />}
                     </div>
                     <div className={`absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center shadow-sm ${
-                      isKept ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300'
+                      isKept ? 'bg-blue-600 text-white' : 'bg-surf-card border border-border-solid'
                     }`}>
                       {isKept && <Check className="h-3 w-3" />}
                     </div>
@@ -192,7 +192,7 @@ export function TrimPagesModal({ isOpen, onClose, file, onApply }: TrimPagesModa
           </div>
         )}
 
-        <div className="flex justify-end gap-2 pt-1 border-t border-slate-200/60">
+        <div className="flex justify-end gap-2 pt-1 border-t border-border-soft">
           <Button variant="ghost" size="sm" onClick={onClose} disabled={applying}>Cancel</Button>
           <Button
             variant="danger"

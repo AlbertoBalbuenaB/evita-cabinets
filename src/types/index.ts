@@ -312,19 +312,19 @@ export interface EnhancedTask {
 }
 
 export const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; color: string; dot: string; border: string }> = {
-  pending:     { label: 'Pending',     color: 'bg-slate-100 text-slate-600',   dot: 'bg-slate-400',   border: 'border-slate-300' },
-  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-700',     dot: 'bg-blue-500',    border: 'border-blue-400' },
-  in_review:   { label: 'In Review',   color: 'bg-purple-100 text-purple-700', dot: 'bg-purple-500',  border: 'border-purple-400' },
-  blocked:     { label: 'Blocked',     color: 'bg-red-100 text-red-700',       dot: 'bg-red-500',     border: 'border-red-400' },
-  done:        { label: 'Done',        color: 'bg-green-100 text-green-700',   dot: 'bg-green-500',   border: 'border-green-400' },
-  cancelled:   { label: 'Cancelled',   color: 'bg-slate-100 text-slate-400',   dot: 'bg-slate-300',   border: 'border-slate-200' },
+  pending:     { label: 'Pending',     color: 'bg-surf-muted text-fg-600',   dot: 'bg-slate-400',   border: 'border-border-solid' },
+  in_progress: { label: 'In Progress', color: 'bg-accent-tint-soft text-accent-text',     dot: 'bg-blue-500',    border: 'border-accent-tint-border' },
+  in_review:   { label: 'In Review',   color: 'bg-accent-tint-soft text-accent-text', dot: 'bg-purple-500',  border: 'border-accent-tint-border' },
+  blocked:     { label: 'Blocked',     color: 'bg-status-red-bg text-status-red-fg',       dot: 'bg-red-500',     border: 'border-status-red-brd' },
+  done:        { label: 'Done',        color: 'bg-status-emerald-bg text-status-emerald-fg',   dot: 'bg-green-500',   border: 'border-status-emerald-brd' },
+  cancelled:   { label: 'Cancelled',   color: 'bg-surf-muted text-fg-400',   dot: 'bg-slate-300',   border: 'border-border-soft' },
 };
 
 export const TASK_PRIORITY_CONFIG: Record<TaskPriority, { label: string; color: string; bg: string; border: string }> = {
-  low:    { label: 'Low',    color: 'text-slate-500', bg: 'bg-slate-100',  border: 'border-l-slate-300' },
-  medium: { label: 'Medium', color: 'text-blue-600',  bg: 'bg-blue-50',   border: 'border-l-blue-400' },
-  high:   { label: 'High',   color: 'text-amber-600', bg: 'bg-amber-50',  border: 'border-l-amber-400' },
-  urgent: { label: 'Urgent', color: 'text-red-600',   bg: 'bg-red-50',    border: 'border-l-red-500' },
+  low:    { label: 'Low',    color: 'text-fg-500', bg: 'bg-surf-muted',  border: 'border-l-slate-300' },
+  medium: { label: 'Medium', color: 'text-accent-text',  bg: 'bg-accent-tint-soft',   border: 'border-l-blue-400' },
+  high:   { label: 'High',   color: 'text-status-amber-fg', bg: 'bg-status-amber-bg',  border: 'border-l-amber-400' },
+  urgent: { label: 'Urgent', color: 'text-status-red-fg',   bg: 'bg-status-red-bg',    border: 'border-l-red-500' },
 };
 
 export const TASK_STATUS_ORDER: Record<TaskStatus, number> = {

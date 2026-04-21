@@ -19,7 +19,7 @@ export function StaleBadge({ onRerun, size = 'sm' }: Props) {
       type="button"
       onClick={onRerun}
       disabled={!onRerun}
-      className={`inline-flex items-center gap-1 ${padding} ${text} rounded-full bg-amber-100 text-amber-800 font-medium ${onRerun ? 'hover:bg-amber-200 transition-colors cursor-pointer' : 'cursor-default'}`}
+      className={`inline-flex items-center gap-1 ${padding} ${text} rounded-full bg-status-amber-bg text-status-amber-fg font-medium ${onRerun ? 'hover:bg-amber-200 transition-colors cursor-pointer' : 'cursor-default'}`}
       title="Cabinets have been edited since this run was saved. Click to re-run."
     >
       <AlertTriangle className="h-3 w-3" />

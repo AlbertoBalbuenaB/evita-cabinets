@@ -86,7 +86,7 @@ function KpiCard({
   value,
   sub,
   icon,
-  accent = 'text-slate-900',
+  accent = 'text-fg-900',
 }: {
   label: string;
   value: React.ReactNode;
@@ -97,11 +97,11 @@ function KpiCard({
   return (
     <div className="glass-blue p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</span>
-        <span className="text-slate-300">{icon}</span>
+        <span className="text-xs font-medium text-fg-500 uppercase tracking-wide">{label}</span>
+        <span className="text-fg-300">{icon}</span>
       </div>
       <div className={`text-2xl font-bold leading-none ${accent}`}>{value}</div>
-      {sub && <div className="text-xs text-slate-400">{sub}</div>}
+      {sub && <div className="text-xs text-fg-400">{sub}</div>}
     </div>
   );
 }
@@ -305,7 +305,7 @@ export function ProjectCharts({ areas, products, pricingMethod, riskAmount = 0, 
           value={analytics.totalCabinets}
           sub={`${analytics.totalSKUs} unique SKUs`}
           icon={<Boxes className="h-5 w-5" />}
-          accent="text-blue-700"
+          accent="text-accent-text"
         />
         <KpiCard
           label="Avg / Cabinet"
@@ -329,8 +329,8 @@ export function ProjectCharts({ areas, products, pricingMethod, riskAmount = 0, 
 
       <div className="glass-white p-6">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-base font-semibold text-slate-900">Cost Distribution by Area</h3>
-          <BarChart3 className="h-4 w-4 text-slate-400" />
+          <h3 className="text-base font-semibold text-fg-900">Cost Distribution by Area</h3>
+          <BarChart3 className="h-4 w-4 text-fg-400" />
         </div>
         <div className="space-y-3">
           {areasCosts.map((area) => {
@@ -346,13 +346,13 @@ export function ProjectCharts({ areas, products, pricingMethod, riskAmount = 0, 
             return (
               <div key={area.name}>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-medium text-slate-800 truncate max-w-xs">{area.name}</span>
+                  <span className="text-sm font-medium text-fg-800 truncate max-w-xs">{area.name}</span>
                   <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                    <span className="text-sm font-semibold text-slate-900">{formatCurrency(area.total)}</span>
-                    <span className="text-xs text-slate-400 w-10 text-right">{pct.toFixed(1)}%</span>
+                    <span className="text-sm font-semibold text-fg-900">{formatCurrency(area.total)}</span>
+                    <span className="text-xs text-fg-400 w-10 text-right">{pct.toFixed(1)}%</span>
                   </div>
                 </div>
-                <div className="relative h-7 bg-slate-100 rounded-lg overflow-hidden">
+                <div className="relative h-7 bg-surf-muted rounded-lg overflow-hidden">
                   {parts.length > 0 ? (
                     (() => {
                       let offset = 0;
@@ -391,7 +391,7 @@ export function ProjectCharts({ areas, products, pricingMethod, riskAmount = 0, 
           ].map((l) => (
             <div key={l.label} className="flex items-center gap-1.5">
               <div className={`w-2.5 h-2.5 rounded-sm ${l.color}`} />
-              <span className="text-xs text-slate-500">{l.label}</span>
+              <span className="text-xs text-fg-500">{l.label}</span>
             </div>
           ))}
         </div>
@@ -399,8 +399,8 @@ export function ProjectCharts({ areas, products, pricingMethod, riskAmount = 0, 
 
       <div className="glass-white p-6">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-base font-semibold text-slate-900">Cost Composition by Category</h3>
-          <span className="text-xs text-slate-400">% of total project cost</span>
+          <h3 className="text-base font-semibold text-fg-900">Cost Composition by Category</h3>
+          <span className="text-xs text-fg-400">% of total project cost</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -413,14 +413,14 @@ export function ProjectCharts({ areas, products, pricingMethod, riskAmount = 0, 
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <div className={`w-2.5 h-2.5 rounded-sm flex-shrink-0 ${material.color}`} />
-                      <span className="text-sm text-slate-700">{material.name}</span>
+                      <span className="text-sm text-fg-700">{material.name}</span>
                     </div>
                     <div className="flex items-center gap-3 ml-4">
-                      <span className="text-sm font-semibold text-slate-900">{formatCurrency(material.cost)}</span>
-                      <span className="text-xs text-slate-400 w-10 text-right">{totalPct.toFixed(1)}%</span>
+                      <span className="text-sm font-semibold text-fg-900">{formatCurrency(material.cost)}</span>
+                      <span className="text-xs text-fg-400 w-10 text-right">{totalPct.toFixed(1)}%</span>
                     </div>
                   </div>
-                  <div className="relative h-5 bg-slate-100 rounded overflow-hidden">
+                  <div className="relative h-5 bg-surf-muted rounded overflow-hidden">
                     <div
                       className={`absolute top-0 left-0 h-full ${material.color} transition-all duration-500 rounded`}
                       style={{ width: `${barPct}%` }}
@@ -461,15 +461,15 @@ export function ProjectCharts({ areas, products, pricingMethod, riskAmount = 0, 
                 ).elements}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                <div className="text-xs text-slate-500 mb-0.5">Total</div>
-                <div className="text-base font-bold text-slate-900 leading-tight">
+                <div className="text-xs text-fg-500 mb-0.5">Total</div>
+                <div className="text-base font-bold text-fg-900 leading-tight">
                   {formatCurrency(totalCost)}
                 </div>
                 {materialsBreakdown.length > 0 && (() => {
                   const top = materialsBreakdown.reduce((max, m) => (m.cost > max.cost ? m : max));
                   const topPct = totalCost > 0 ? (top.cost / totalCost) * 100 : 0;
                   return (
-                    <div className="text-xs text-slate-400 mt-1 leading-tight">
+                    <div className="text-xs text-fg-400 mt-1 leading-tight">
                       {top.name}<br />{topPct.toFixed(0)}%
                     </div>
                   );

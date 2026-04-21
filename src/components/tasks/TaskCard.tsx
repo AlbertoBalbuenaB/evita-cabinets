@@ -14,11 +14,11 @@ interface Props {
 const STATUS_ORDER_CYCLE: TaskStatus[] = ['pending', 'in_progress', 'in_review', 'blocked', 'done', 'cancelled'];
 
 const AVATAR_COLORS = [
-  'bg-violet-100 text-violet-700',
-  'bg-blue-100 text-blue-700',
-  'bg-amber-100 text-amber-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-rose-100 text-rose-700',
+  'bg-accent-tint-soft text-accent-text',
+  'bg-accent-tint-soft text-accent-text',
+  'bg-status-amber-bg text-status-amber-fg',
+  'bg-status-emerald-bg text-status-emerald-fg',
+  'bg-status-red-bg text-status-red-fg',
 ];
 
 function getInitials(name: string) {
@@ -58,10 +58,10 @@ export function TaskCard({ task, selected, onSelect, onStatusChange, compact }: 
     <div
       onClick={() => onSelect(task.id)}
       className={`
-        task-enter group relative cursor-pointer rounded-xl border-l-4 bg-white/70 backdrop-blur-sm p-3 shadow-sm
-        hover:shadow-md hover:border-blue-200/60 transition-all duration-200
+        task-enter group relative cursor-pointer rounded-xl border-l-4 bg-surf-card backdrop-blur-sm p-3 shadow-sm
+        hover:shadow-md hover:border-accent-tint-border transition-all duration-200
         ${priorityCfg.border}
-        ${selected ? 'ring-2 ring-blue-400/70 ring-offset-1 border-blue-200/60' : 'border border-white/80'}
+        ${selected ? 'ring-2 ring-blue-400/70 ring-offset-1 border-accent-tint-border' : 'border border-white/80'}
         ${isDone ? 'opacity-60' : ''}
       `}
     >
@@ -77,13 +77,13 @@ export function TaskCard({ task, selected, onSelect, onStatusChange, compact }: 
 
         <div className="flex-1 min-w-0">
           {/* Title */}
-          <p className={`text-sm font-medium leading-snug ${isDone ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+          <p className={`text-sm font-medium leading-snug ${isDone ? 'line-through text-fg-400' : 'text-fg-800'}`}>
             {task.title}
           </p>
 
           {/* Description snippet */}
           {!compact && (task.description || task.details) && (
-            <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+            <p className="text-xs text-fg-400 mt-0.5 line-clamp-1">
               {task.description || task.details}
             </p>
           )}
@@ -111,12 +111,12 @@ export function TaskCard({ task, selected, onSelect, onStatusChange, compact }: 
               </span>
             ))}
             {task.tags.length > 2 && (
-              <span className="text-[10px] text-slate-400">+{task.tags.length - 2}</span>
+              <span className="text-[10px] text-fg-400">+{task.tags.length - 2}</span>
             )}
 
             {/* Due date */}
             {due && (
-              <span className={`flex items-center gap-0.5 text-[10px] font-medium ${due.urgent ? 'text-red-500' : 'text-slate-400'}`}>
+              <span className={`flex items-center gap-0.5 text-[10px] font-medium ${due.urgent ? 'text-red-500' : 'text-fg-400'}`}>
                 <Clock className="h-2.5 w-2.5" />
                 {due.text}
               </span>
@@ -138,14 +138,14 @@ export function TaskCard({ task, selected, onSelect, onStatusChange, compact }: 
                   </span>
                 ))}
                 {task.assignees.length > 4 && (
-                  <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[9px] font-bold ring-1 ring-white">
+                  <span className="w-5 h-5 rounded-full bg-surf-muted text-fg-500 flex items-center justify-center text-[9px] font-bold ring-1 ring-white">
                     +{task.assignees.length - 4}
                   </span>
                 )}
               </div>
 
               {/* Counters */}
-              <div className="flex items-center gap-2 text-slate-300">
+              <div className="flex items-center gap-2 text-fg-300">
                 {task.subtasks.length > 0 && (
                   <span className="flex items-center gap-0.5 text-[10px]">
                     <CheckSquare className="h-3 w-3" />

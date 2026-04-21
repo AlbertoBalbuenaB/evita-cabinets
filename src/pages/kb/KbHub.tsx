@@ -73,10 +73,10 @@ export function KbHub() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
         <div className="flex items-start gap-3">
-          <BookOpen className="w-6 h-6 text-indigo-600 mt-1" />
+          <BookOpen className="w-6 h-6 text-accent-text mt-1" />
           <div className="flex-1">
             <div className="flex items-start justify-between gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Knowledge Base</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-fg-900">Knowledge Base</h1>
               <div className="flex gap-2">
                 <Link to="/wiki">
                   <Button variant="ghost" size="sm">
@@ -100,10 +100,10 @@ export function KbHub() {
                 </Link>
               </div>
             </div>
-            <p className="text-sm text-slate-700 mt-1">
+            <p className="text-sm text-fg-700 mt-1">
               Base de referencia interna de Evita: acabados, cubrecantos, herrajes, reglas de fabricación, proveedores y constantes del proyecto.
             </p>
-            <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-600">
+            <div className="mt-3 flex flex-wrap gap-3 text-xs text-fg-600">
               <span>{categories.length} categorías</span>
               <span>·</span>
               <span>{suppliers.length} proveedores</span>
@@ -112,7 +112,7 @@ export function KbHub() {
               {needsEnrichmentCount > 0 && (
                 <>
                   <span>·</span>
-                  <span className="inline-flex items-center gap-1 text-amber-700">
+                  <span className="inline-flex items-center gap-1 text-status-amber-fg">
                     <AlertCircle className="w-3 h-3" /> {needsEnrichmentCount} necesitan enriquecimiento
                   </span>
                 </>
@@ -154,7 +154,7 @@ export function KbHub() {
       )}
 
       {error && (
-        <div className="glass-white rounded-xl p-4 border border-red-200/70 text-sm text-red-700">
+        <div className="glass-white rounded-xl p-4 border border-status-red-brd text-sm text-status-red-fg">
           Error: {error}
         </div>
       )}
@@ -166,7 +166,7 @@ export function KbHub() {
           ))}
         </div>
       ) : entries.length === 0 ? (
-        <div className="glass-white rounded-2xl p-8 text-center text-slate-500">
+        <div className="glass-white rounded-2xl p-8 text-center text-fg-500">
           {query ? 'No hay resultados para tu búsqueda.' : 'No hay entradas todavía.'}
         </div>
       ) : (

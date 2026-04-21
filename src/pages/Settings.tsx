@@ -471,7 +471,7 @@ export function Settings() {
           <div className="h-10 w-32 skeleton-shimmer" />
         </div>
         {[1,2,3].map(i => (
-          <div key={i} className="bg-white rounded-xl border border-slate-200 h-48 animate-pulse" style={{ borderRadius: '14px' }} />
+          <div key={i} className="bg-surf-card rounded-xl border border-border-soft h-48 animate-pulse" style={{ borderRadius: '14px' }} />
         ))}
       </div>
     );
@@ -481,8 +481,8 @@ export function Settings() {
     <div className="space-y-8 page-enter">
       <div className="flex items-center justify-between hero-enter">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
-          <p className="text-slate-600 mt-1">Configure system settings and import data</p>
+          <h1 className="text-3xl font-bold text-fg-900">Settings</h1>
+          <p className="text-fg-600 mt-1">Configure system settings and import data</p>
         </div>
         <Button onClick={() => setShowDataImport(!showDataImport)} variant="secondary">
           <Upload className="h-4 w-4 mr-2" />
@@ -494,8 +494,8 @@ export function Settings() {
         <div
           className={`flex items-center space-x-2 p-4 rounded-lg ${
             message.type === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : 'bg-red-50 text-red-800 border border-red-200'
+              ? 'bg-status-emerald-bg text-status-emerald-fg border border-status-emerald-brd'
+              : 'bg-status-red-bg text-status-red-fg border border-status-red-brd'
           }`}
         >
           <AlertCircle className="h-5 w-5" />
@@ -505,25 +505,25 @@ export function Settings() {
 
       <div className="glass-white p-6 section-enter" style={{ animationDelay: '0.03s' }}>
         <div className="flex items-start gap-3 mb-4">
-          <Languages className="h-5 w-5 text-indigo-600 mt-0.5" strokeWidth={1.75} />
+          <Languages className="h-5 w-5 text-accent-text mt-0.5" strokeWidth={1.75} />
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">Preferences</h2>
-            <p className="text-slate-500 text-sm mt-1">
+            <h2 className="text-xl font-semibold text-fg-900">Preferences</h2>
+            <p className="text-fg-500 text-sm mt-1">
               App-wide display preferences for this browser.
             </p>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Language</label>
-            <div className="inline-flex items-center rounded-lg border border-slate-200/70 bg-white/70 p-1 gap-1">
+            <label className="block text-sm font-medium text-fg-700 mb-1.5">Language</label>
+            <div className="inline-flex items-center rounded-lg border border-border-soft bg-surf-card p-1 gap-1">
               <button
                 type="button"
                 onClick={() => setLocale('es')}
                 className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
                   locale === 'es'
                     ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    : 'text-fg-600 hover:text-fg-900'
                 }`}
                 aria-pressed={locale === 'es'}
               >
@@ -535,25 +535,25 @@ export function Settings() {
                 className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
                   locale === 'en'
                     ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    : 'text-fg-600 hover:text-fg-900'
                 }`}
                 aria-pressed={locale === 'en'}
               >
                 English
               </button>
             </div>
-            <p className="text-xs text-slate-400 mt-1.5">
+            <p className="text-xs text-fg-400 mt-1.5">
               Controls the language used for catalog entries and Wiki content overlays.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter" style={{ animationDelay: '0.05s' }}>
+      <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter" style={{ animationDelay: '0.05s' }}>
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">Local Backup</h2>
-            <p className="text-slate-500 text-sm mt-1">
+            <h2 className="text-xl font-semibold text-fg-900">Local Backup</h2>
+            <p className="text-fg-500 text-sm mt-1">
               Download a ZIP archive with all your data for safe local storage. The files are compatible for re-importing into this system.
             </p>
           </div>
@@ -577,26 +577,26 @@ export function Settings() {
         </div>
 
         <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Projects</p>
-            <p className="text-sm text-slate-700">Exported as individual <code className="bg-slate-200 px-1 rounded text-xs">.evita.json</code> files, ready to re-import via the Projects page.</p>
+          <div className="bg-surf-app rounded-lg p-4 border border-border-soft">
+            <p className="text-xs font-semibold text-fg-500 uppercase tracking-wide mb-1">Projects</p>
+            <p className="text-sm text-fg-700">Exported as individual <code className="bg-surf-muted px-1 rounded text-xs">.evita.json</code> files, ready to re-import via the Projects page.</p>
           </div>
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Products Catalog</p>
-            <p className="text-sm text-slate-700">Exported as <code className="bg-slate-200 px-1 rounded text-xs">products_catalog.csv</code>, compatible with the CSV import in this page.</p>
+          <div className="bg-surf-app rounded-lg p-4 border border-border-soft">
+            <p className="text-xs font-semibold text-fg-500 uppercase tracking-wide mb-1">Products Catalog</p>
+            <p className="text-sm text-fg-700">Exported as <code className="bg-surf-muted px-1 rounded text-xs">products_catalog.csv</code>, compatible with the CSV import in this page.</p>
           </div>
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Price List</p>
-            <p className="text-sm text-slate-700">Exported as <code className="bg-slate-200 px-1 rounded text-xs">price_list.csv</code>, compatible with the CSV import in this page.</p>
+          <div className="bg-surf-app rounded-lg p-4 border border-border-soft">
+            <p className="text-xs font-semibold text-fg-500 uppercase tracking-wide mb-1">Price List</p>
+            <p className="text-sm text-fg-700">Exported as <code className="bg-surf-muted px-1 rounded text-xs">price_list.csv</code>, compatible with the CSV import in this page.</p>
           </div>
         </div>
 
         {backupResult && (
-          <div className="mt-4 flex items-start space-x-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+          <div className="mt-4 flex items-start space-x-3 p-4 bg-status-emerald-bg border border-status-emerald-brd rounded-lg">
+            <CheckCircle className="h-5 w-5 text-status-emerald-fg mt-0.5 shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-green-800">Backup downloaded successfully</p>
-              <p className="text-sm text-green-700 mt-0.5">
+              <p className="text-sm font-semibold text-status-emerald-fg">Backup downloaded successfully</p>
+              <p className="text-sm text-status-emerald-fg mt-0.5">
                 {backupResult.projectCount} {backupResult.projectCount === 1 ? 'project' : 'projects'},{' '}
                 {backupResult.productCount} {backupResult.productCount === 1 ? 'product' : 'products'},{' '}
                 {backupResult.priceListCount} price list {backupResult.priceListCount === 1 ? 'item' : 'items'} &mdash; saved as <strong>{backupResult.fileName}</strong>
@@ -607,37 +607,37 @@ export function Settings() {
       </div>
 
       {showDataImport && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">Import Data</h2>
+        <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter">
+          <h2 className="text-xl font-semibold text-fg-900 mb-4">Import Data</h2>
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium text-slate-700 mb-2">Import Products Catalog</h3>
-              <p className="text-sm text-slate-600 mb-3">
+              <h3 className="text-sm font-medium text-fg-700 mb-2">Import Products Catalog</h3>
+              <p className="text-sm text-fg-600 mb-3">
                 Upload a CSV file with product catalog data. The file should include columns for SKU,
                 description, dimensions, and other product details.
               </p>
               <input
                 type="file"
                 accept=".csv"
-                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="block w-full text-sm text-fg-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent-tint-soft file:text-accent-text hover:file:bg-accent-tint-soft"
               />
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-slate-700 mb-2">Import Price List</h3>
-              <p className="text-sm text-slate-600 mb-3">
+              <h3 className="text-sm font-medium text-fg-700 mb-2">Import Price List</h3>
+              <p className="text-sm text-fg-600 mb-3">
                 Upload a CSV file with price list data. The file should include columns for concept,
                 type, dimensions, price, and unit.
               </p>
               <input
                 type="file"
                 accept=".csv"
-                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="block w-full text-sm text-fg-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent-tint-soft file:text-accent-text hover:file:bg-accent-tint-soft"
               />
             </div>
 
-            <div className="pt-4 border-t border-slate-200">
-              <p className="text-xs text-slate-500">
+            <div className="pt-4 border-t border-border-soft">
+              <p className="text-xs text-fg-500">
                 For detailed information about CSV file formats, please refer to the CSV Format
                 Reference documentation included with the application.
               </p>
@@ -646,16 +646,16 @@ export function Settings() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter" style={{ animationDelay: '0.15s' }}>
-        <h2 className="text-xl font-semibold text-slate-900 mb-6">Taxes by Material Type</h2>
+      <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter" style={{ animationDelay: '0.15s' }}>
+        <h2 className="text-xl font-semibold text-fg-900 mb-6">Taxes by Material Type</h2>
         <div className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <p className="text-sm text-blue-800">
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4 mb-4">
+            <p className="text-sm text-accent-text">
               <strong>How it works:</strong> Configure tax percentages for different material types.
               These taxes are automatically applied to price list items based on their type.
               For example, all Metal items can have 25% tax, all Fabric items 25%, etc.
             </p>
-            <p className="text-sm text-blue-800 mt-2">
+            <p className="text-sm text-accent-text mt-2">
               <strong>Important:</strong> After changing tax rates, click "Apply Taxes to Price List"
               to recalculate all prices with the new tax rates.
             </p>
@@ -663,9 +663,9 @@ export function Settings() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {taxesByType.map((tax) => (
-              <div key={tax.id} className="flex items-center space-x-2 bg-slate-50 p-3 rounded-lg">
+              <div key={tax.id} className="flex items-center space-x-2 bg-surf-app p-3 rounded-lg">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-700">{tax.material_type}</p>
+                  <p className="text-sm font-medium text-fg-700">{tax.material_type}</p>
                   <div className="flex items-center space-x-2 mt-1">
                     <Input
                       type="number"
@@ -682,14 +682,14 @@ export function Settings() {
                       onBlur={() => updateTaxRate(tax.id, tax.tax_percentage)}
                       className="max-w-[100px]"
                     />
-                    <span className="text-slate-600">%</span>
+                    <span className="text-fg-600">%</span>
                   </div>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => deleteTaxByType(tax.id)}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-status-red-fg hover:text-status-red-fg"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -697,11 +697,11 @@ export function Settings() {
             ))}
           </div>
 
-          <div className="pt-4 border-t border-slate-200">
-            <h3 className="text-sm font-medium text-slate-700 mb-3">Add New Tax Rate</h3>
+          <div className="pt-4 border-t border-border-soft">
+            <h3 className="text-sm font-medium text-fg-700 mb-3">Add New Tax Rate</h3>
             <div className="flex items-end space-x-2">
               <div className="flex-1">
-                <label className="block text-xs text-slate-600 mb-1">Material Type</label>
+                <label className="block text-xs text-fg-600 mb-1">Material Type</label>
                 <Input
                   type="text"
                   value={newTaxType}
@@ -710,7 +710,7 @@ export function Settings() {
                 />
               </div>
               <div className="w-32">
-                <label className="block text-xs text-slate-600 mb-1">Tax %</label>
+                <label className="block text-xs text-fg-600 mb-1">Tax %</label>
                 <Input
                   type="number"
                   min="0"
@@ -728,34 +728,34 @@ export function Settings() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-200">
+          <div className="pt-4 border-t border-border-soft">
             <Button onClick={applyTaxesToPriceList} disabled={applyingTaxes} variant="secondary">
               <RefreshCw className="h-4 w-4 mr-2" />
               {applyingTaxes ? 'Applying Taxes...' : 'Apply Taxes to Price List'}
             </Button>
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-fg-500 mt-2">
               This will recalculate all price list items with their respective tax rates.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter" style={{ animationDelay: '0.2s' }}>
-        <h2 className="text-xl font-semibold text-slate-900 mb-6">Custom Types</h2>
+      <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter" style={{ animationDelay: '0.2s' }}>
+        <h2 className="text-xl font-semibold text-fg-900 mb-6">Custom Types</h2>
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-fg-600">
             Manage custom types for the price list. These types are used to categorize materials and products.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {customTypes.map((type) => (
-              <div key={type.id} className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-lg">
-                <span className="text-sm text-slate-700">{type.type_name}</span>
+              <div key={type.id} className="flex items-center justify-between bg-surf-app px-3 py-2 rounded-lg">
+                <span className="text-sm text-fg-700">{type.type_name}</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => deleteCustomType(type.id)}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-status-red-fg hover:text-status-red-fg"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
@@ -763,8 +763,8 @@ export function Settings() {
             ))}
           </div>
 
-          <div className="pt-4 border-t border-slate-200">
-            <h3 className="text-sm font-medium text-slate-700 mb-3">Add New Type</h3>
+          <div className="pt-4 border-t border-border-soft">
+            <h3 className="text-sm font-medium text-fg-700 mb-3">Add New Type</h3>
             <div className="flex items-center space-x-2">
               <Input
                 type="text"
@@ -782,22 +782,22 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
-        <h2 className="text-xl font-semibold text-slate-900 mb-6">Custom Units</h2>
+      <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter">
+        <h2 className="text-xl font-semibold text-fg-900 mb-6">Custom Units</h2>
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-fg-600">
             Manage custom units for the price list. These units are used for measuring quantities.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {customUnits.map((unit) => (
-              <div key={unit.id} className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-lg">
-                <span className="text-sm text-slate-700">{unit.unit_name}</span>
+              <div key={unit.id} className="flex items-center justify-between bg-surf-app px-3 py-2 rounded-lg">
+                <span className="text-sm text-fg-700">{unit.unit_name}</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => deleteCustomUnit(unit.id)}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-status-red-fg hover:text-status-red-fg"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
@@ -805,8 +805,8 @@ export function Settings() {
             ))}
           </div>
 
-          <div className="pt-4 border-t border-slate-200">
-            <h3 className="text-sm font-medium text-slate-700 mb-3">Add New Unit</h3>
+          <div className="pt-4 border-t border-border-soft">
+            <h3 className="text-sm font-medium text-fg-700 mb-3">Add New Unit</h3>
             <div className="flex items-center space-x-2">
               <Input
                 type="text"
@@ -824,16 +824,16 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
-        <h2 className="text-xl font-semibold text-slate-900 mb-6">Labor Costs</h2>
+      <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter">
+        <h2 className="text-xl font-semibold text-fg-900 mb-6">Labor Costs</h2>
         <div className="space-y-4">
           {laborSettings.map((setting) => (
             <div key={setting.id}>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 {setting.description}
               </label>
               <div className="flex items-center space-x-2">
-                <span className="text-slate-600">$</span>
+                <span className="text-fg-600">$</span>
                 <Input
                   type="number"
                   min="0"
@@ -842,23 +842,23 @@ export function Settings() {
                   onChange={(e) => updateSetting(setting.id, e.target.value)}
                   className="max-w-xs"
                 />
-                <span className="text-slate-600">MXN</span>
+                <span className="text-fg-600">MXN</span>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
-        <h2 className="text-xl font-semibold text-slate-900 mb-6">Currency Exchange Rate</h2>
+      <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter">
+        <h2 className="text-xl font-semibold text-fg-900 mb-6">Currency Exchange Rate</h2>
         <div className="space-y-4">
           {currencySettings.map((setting) => (
             <div key={setting.id}>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 {setting.description}
               </label>
               <div className="flex items-center space-x-2">
-                <span className="text-slate-600">$</span>
+                <span className="text-fg-600">$</span>
                 <Input
                   type="number"
                   min="0"
@@ -867,9 +867,9 @@ export function Settings() {
                   onChange={(e) => updateSetting(setting.id, e.target.value)}
                   className="max-w-xs"
                 />
-                <span className="text-slate-600">MXN per USD</span>
+                <span className="text-fg-600">MXN per USD</span>
               </div>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-fg-500 mt-1">
                 This rate is used when displaying amounts in Mexican Pesos
               </p>
             </div>
@@ -877,27 +877,27 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
-        <h2 className="text-xl font-semibold text-slate-900 mb-6">Company Logo</h2>
+      <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter">
+        <h2 className="text-xl font-semibold text-fg-900 mb-6">Company Logo</h2>
         <div className="space-y-4">
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <p className="text-sm text-amber-800 font-medium mb-2">
+          <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4">
+            <p className="text-sm text-status-amber-fg font-medium mb-2">
               How to upload your company logo:
             </p>
-            <ol className="text-sm text-amber-800 space-y-1 list-decimal list-inside">
+            <ol className="text-sm text-status-amber-fg space-y-1 list-decimal list-inside">
               <li>Go to your Supabase Dashboard</li>
               <li>Navigate to Storage in the left sidebar</li>
               <li>Open the "logos" bucket</li>
-              <li>Upload your logo file with the exact name: <code className="bg-amber-100 px-2 py-0.5 rounded font-mono text-xs">evita_logo.png</code></li>
+              <li>Upload your logo file with the exact name: <code className="bg-status-amber-bg px-2 py-0.5 rounded font-mono text-xs">evita_logo.png</code></li>
               <li>The logo will automatically appear in your quotation PDFs</li>
             </ol>
-            <p className="text-sm text-amber-800 mt-3">
+            <p className="text-sm text-status-amber-fg mt-3">
               <strong>Note:</strong> The file must be named exactly "evita_logo.png" (PNG format recommended for best quality)
             </p>
           </div>
 
-          <div className="flex items-start space-x-3 text-sm text-slate-600">
-            <AlertCircle className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start space-x-3 text-sm text-fg-600">
+            <AlertCircle className="h-5 w-5 text-fg-400 flex-shrink-0 mt-0.5" />
             <div>
               <p>Recommended logo specifications:</p>
               <ul className="list-disc list-inside mt-1 space-y-1">
@@ -910,17 +910,17 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
-        <h2 className="text-xl font-semibold text-slate-900 mb-6">Material Waste Percentages</h2>
+      <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter">
+        <h2 className="text-xl font-semibold text-fg-900 mb-6">Material Waste Percentages</h2>
         <div className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <p className="text-sm text-blue-800">
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4 mb-4">
+            <p className="text-sm text-accent-text">
               <strong>How it works:</strong> Waste percentages are applied directly to the Box SF
               and Doors SF values in the Products Catalog. For example, if a product has 24.58 Box SF
               and you apply 20% waste, it will become 29.49 SF. These adjusted values are then used
               in all quotations.
             </p>
-            <p className="text-sm text-blue-800 mt-2">
+            <p className="text-sm text-accent-text mt-2">
               <strong>Important:</strong> After changing these percentages, you must click "Apply to
               All Products" to update the catalog values. This will recalculate all products based on
               their original SF values.
@@ -929,7 +929,7 @@ export function Settings() {
 
           {wasteSettings.map((setting) => (
             <div key={setting.id}>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 {setting.description}
               </label>
               <div className="flex items-center space-x-2">
@@ -942,12 +942,12 @@ export function Settings() {
                   onChange={(e) => updateSetting(setting.id, e.target.value)}
                   className="max-w-xs"
                 />
-                <span className="text-slate-600">%</span>
+                <span className="text-fg-600">%</span>
               </div>
             </div>
           ))}
 
-          <div className="pt-4 mt-6 border-t border-slate-200">
+          <div className="pt-4 mt-6 border-t border-border-soft">
             <Button
               onClick={applyWastePercentage}
               disabled={applyingWaste}
@@ -955,17 +955,17 @@ export function Settings() {
             >
               {applyingWaste ? 'Applying to All Products...' : 'Apply to All Products'}
             </Button>
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-fg-500 mt-2">
               This will update all products in the catalog using the waste percentages above.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 section-enter">
-        <h2 className="text-xl font-semibold text-slate-900 mb-6">Team Members</h2>
+      <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter">
+        <h2 className="text-xl font-semibold text-fg-900 mb-6">Team Members</h2>
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-fg-600">
             Manage team members who can be assigned to project tasks.
           </p>
 
@@ -974,18 +974,18 @@ export function Settings() {
               {teamMembers.map((member) => {
                 const dept = departments.find(d => d.id === member.department_id);
                 return (
-                  <div key={member.id} className="flex items-center justify-between bg-slate-50 px-4 py-3 rounded-lg">
+                  <div key={member.id} className="flex items-center justify-between bg-surf-app px-4 py-3 rounded-lg">
                     <div className="flex items-center gap-4 min-w-0">
-                      <span className="text-sm font-medium text-slate-900">{member.name}</span>
-                      {member.job_title && <span className="text-sm text-slate-500">{member.job_title}</span>}
-                      {dept && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{dept.name}</span>}
-                      {member.email && <span className="text-sm text-slate-400">{member.email}</span>}
+                      <span className="text-sm font-medium text-fg-900">{member.name}</span>
+                      {member.job_title && <span className="text-sm text-fg-500">{member.job_title}</span>}
+                      {dept && <span className="text-xs bg-accent-tint-soft text-accent-text px-2 py-0.5 rounded-full">{dept.name}</span>}
+                      {member.email && <span className="text-sm text-fg-400">{member.email}</span>}
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => deleteTeamMember(member.id)}
-                      className="text-red-600 hover:text-red-700 flex-shrink-0"
+                      className="text-status-red-fg hover:text-status-red-fg flex-shrink-0"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -995,11 +995,11 @@ export function Settings() {
             </div>
           )}
 
-          <div className="pt-4 border-t border-slate-200">
-            <h3 className="text-sm font-medium text-slate-700 mb-3">Add Team Member</h3>
+          <div className="pt-4 border-t border-border-soft">
+            <h3 className="text-sm font-medium text-fg-700 mb-3">Add Team Member</h3>
             <div className="flex items-end gap-2 flex-wrap">
               <div className="flex-1 min-w-[140px]">
-                <label className="block text-xs text-slate-600 mb-1">Name *</label>
+                <label className="block text-xs text-fg-600 mb-1">Name *</label>
                 <Input
                   type="text"
                   value={newMemberName}
@@ -1008,7 +1008,7 @@ export function Settings() {
                 />
               </div>
               <div className="flex-1 min-w-[140px]">
-                <label className="block text-xs text-slate-600 mb-1">Job Title</label>
+                <label className="block text-xs text-fg-600 mb-1">Job Title</label>
                 <Input
                   type="text"
                   value={newMemberJobTitle}
@@ -1017,7 +1017,7 @@ export function Settings() {
                 />
               </div>
               <div className="flex-1 min-w-[140px]">
-                <label className="block text-xs text-slate-600 mb-1">Email</label>
+                <label className="block text-xs text-fg-600 mb-1">Email</label>
                 <Input
                   type="email"
                   value={newMemberEmail}
@@ -1026,11 +1026,11 @@ export function Settings() {
                 />
               </div>
               <div className="flex-1 min-w-[140px]">
-                <label className="block text-xs text-slate-600 mb-1">Department</label>
+                <label className="block text-xs text-fg-600 mb-1">Department</label>
                 <select
                   value={newMemberDepartment}
                   onChange={(e) => setNewMemberDepartment(e.target.value)}
-                  className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-sm border border-border-soft rounded-lg px-3 py-2 bg-surf-card text-fg-700 focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 >
                   <option value="">— None —</option>
                   {departments.map(d => (
@@ -1049,38 +1049,38 @@ export function Settings() {
 
       {/* ── Admin: User Management ──────────────────────────────────────── */}
       <div className="glass-white rounded-2xl p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">System Users</h2>
+        <h2 className="text-lg font-semibold text-fg-900 mb-4">System Users</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200">
-                <th className="text-left py-2 px-3 text-slate-500 font-medium">Name</th>
-                <th className="text-left py-2 px-3 text-slate-500 font-medium">Email</th>
-                <th className="text-left py-2 px-3 text-slate-500 font-medium">Department</th>
-                <th className="text-left py-2 px-3 text-slate-500 font-medium">Role</th>
-                <th className="text-center py-2 px-3 text-slate-500 font-medium">Linked</th>
-                <th className="text-center py-2 px-3 text-slate-500 font-medium">Status</th>
-                <th className="text-right py-2 px-3 text-slate-500 font-medium">Actions</th>
+              <tr className="border-b border-border-soft">
+                <th className="text-left py-2 px-3 text-fg-500 font-medium">Name</th>
+                <th className="text-left py-2 px-3 text-fg-500 font-medium">Email</th>
+                <th className="text-left py-2 px-3 text-fg-500 font-medium">Department</th>
+                <th className="text-left py-2 px-3 text-fg-500 font-medium">Role</th>
+                <th className="text-center py-2 px-3 text-fg-500 font-medium">Linked</th>
+                <th className="text-center py-2 px-3 text-fg-500 font-medium">Status</th>
+                <th className="text-right py-2 px-3 text-fg-500 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {allMembers.map(m => {
                 const isSelf = currentMember ? m.id === currentMember.id : false;
                 return (
-                  <tr key={m.id} className="border-b border-slate-100 last:border-0">
-                    <td className="py-2.5 px-3 font-medium text-slate-800">
+                  <tr key={m.id} className="border-b border-border-soft last:border-0">
+                    <td className="py-2.5 px-3 font-medium text-fg-800">
                       <div>
                         {m.name}
-                        {isSelf && <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold">You</span>}
+                        {isSelf && <span className="ml-2 text-[10px] bg-accent-tint-soft text-accent-text px-1.5 py-0.5 rounded-full font-semibold">You</span>}
                       </div>
-                      {m.job_title && <div className="text-xs text-slate-400 mt-0.5">{m.job_title}</div>}
+                      {m.job_title && <div className="text-xs text-fg-400 mt-0.5">{m.job_title}</div>}
                     </td>
-                    <td className="py-2.5 px-3 text-slate-500">{m.email || '—'}</td>
+                    <td className="py-2.5 px-3 text-fg-500">{m.email || '—'}</td>
                     <td className="py-2.5 px-3">
                       <select
                         value={m.department_id || ''}
                         onChange={e => changeMemberDepartment(m.id, e.target.value || null)}
-                        className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600"
+                        className="text-xs border border-border-soft rounded-lg px-2 py-1 bg-surf-card text-fg-600"
                       >
                         <option value="">— None —</option>
                         {departments.map(d => (
@@ -1093,7 +1093,7 @@ export function Settings() {
                         value={m.role || 'collaborator'}
                         onChange={e => changeMemberRole(m.id, e.target.value)}
                         disabled={isSelf}
-                        className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 disabled:opacity-50"
+                        className="text-xs border border-border-soft rounded-lg px-2 py-1 bg-surf-card text-fg-600 disabled:opacity-50"
                       >
                         {SYSTEM_ROLES.map(r => (
                           <option key={r} value={r}>{SYSTEM_ROLE_LABELS[r]}</option>
@@ -1102,13 +1102,13 @@ export function Settings() {
                     </td>
                     <td className="py-2.5 px-3 text-center">
                       {m.auth_user_id ? (
-                        <span className="text-green-600 font-bold">✓</span>
+                        <span className="text-status-emerald-fg font-bold">✓</span>
                       ) : (
-                        <span className="text-slate-300">✗</span>
+                        <span className="text-fg-300">✗</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3 text-center">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${m.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${m.is_active ? 'bg-status-emerald-bg text-status-emerald-fg' : 'bg-surf-muted text-fg-500'}`}>
                         {m.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
@@ -1116,7 +1116,7 @@ export function Settings() {
                       <button
                         onClick={() => toggleMemberActive(m.id, m.is_active)}
                         disabled={isSelf}
-                        className="text-xs text-slate-500 hover:text-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="text-xs text-fg-500 hover:text-fg-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                       >
                         {m.is_active ? 'Deactivate' : 'Activate'}
                       </button>

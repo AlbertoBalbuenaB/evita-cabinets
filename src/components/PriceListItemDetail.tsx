@@ -33,10 +33,10 @@ interface PriceChangeEntry {
 function DetailRow({ icon, label, value }: DetailRowProps) {
   return (
     <div className="flex items-start gap-3 py-2.5">
-      <div className="flex-shrink-0 mt-0.5 text-slate-400">{icon}</div>
+      <div className="flex-shrink-0 mt-0.5 text-fg-400">{icon}</div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
-        <div className="text-sm text-slate-800">{value}</div>
+        <p className="text-xs font-semibold text-fg-400 uppercase tracking-wide mb-0.5">{label}</p>
+        <div className="text-sm text-fg-800">{value}</div>
       </div>
     </div>
   );
@@ -98,7 +98,7 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal — bottom sheet on mobile, centered on desktop */}
-      <div className="absolute inset-x-0 bottom-0 md:relative md:inset-auto bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-t-2xl md:rounded-2xl max-h-[90vh] md:max-h-[92vh] w-full md:max-w-lg overflow-hidden flex flex-col">
+      <div className="absolute inset-x-0 bottom-0 md:relative md:inset-auto bg-surf-card backdrop-blur-xl border border-white/20 shadow-2xl rounded-t-2xl md:rounded-2xl max-h-[90vh] md:max-h-[92vh] w-full md:max-w-lg overflow-hidden flex flex-col">
 
         {/* Drag handle (mobile) */}
         <div className="flex justify-center pt-2 pb-0 md:hidden">
@@ -108,13 +108,13 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
         {/* Header with gradient accent */}
         <div className="bg-gradient-to-br from-blue-600 to-blue-700 mx-3 mt-2 md:mx-0 md:mt-0 rounded-xl md:rounded-none md:rounded-t-2xl px-5 sm:px-6 pt-4 pb-4">
           <div className="flex items-start justify-between mb-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/15 text-white/90 border border-white/10">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-surf-card text-white/90 border border-white/10">
               <Tag className="h-3 w-3" />
               {item.type}
             </span>
             <button
               onClick={onClose}
-              className="flex-shrink-0 p-2 rounded-full bg-white/15 hover:bg-white/25 text-white/80 hover:text-white transition-colors backdrop-blur-sm"
+              className="flex-shrink-0 p-2 rounded-full bg-surf-card hover:bg-surf-card text-white/80 hover:text-white transition-colors backdrop-blur-sm"
             >
               <X className="h-4 w-4" />
             </button>
@@ -148,7 +148,7 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
 
           {/* Reference Image */}
           {item.image_url && !imgError && (
-            <div className="relative rounded-xl overflow-hidden bg-slate-100 border border-slate-200/50" style={{ height: '180px' }}>
+            <div className="relative rounded-xl overflow-hidden bg-surf-muted border border-border-soft" style={{ height: '180px' }}>
               <img
                 src={item.image_url}
                 alt={item.concept_description}
@@ -173,12 +173,12 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
 
           {/* Specifications section */}
           {hasSpecs && (
-            <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-4">
+            <div className="bg-surf-app border border-border-soft rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Ruler className="h-4 w-4 text-slate-400" />
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Specifications</h3>
+                <Ruler className="h-4 w-4 text-fg-400" />
+                <h3 className="text-xs font-semibold text-fg-500 uppercase tracking-wide">Specifications</h3>
               </div>
-              <div className="divide-y divide-slate-200/40">
+              <div className="divide-y divide-border-soft">
                 {item.material && (
                   <DetailRow icon={<Layers className="h-4 w-4" />} label="Material" value={item.material} />
                 )}
@@ -189,7 +189,7 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
                   <DetailRow icon={<Grid className="h-4 w-4" />} label="Sq Ft / Sheet" value={`${item.sf_per_sheet} sf`} />
                 )}
                 {item.sku_code && (
-                  <DetailRow icon={<Hash className="h-4 w-4" />} label="SKU / Code" value={<span className="font-mono text-slate-700">{item.sku_code}</span>} />
+                  <DetailRow icon={<Hash className="h-4 w-4" />} label="SKU / Code" value={<span className="font-mono text-fg-700">{item.sku_code}</span>} />
                 )}
               </div>
             </div>
@@ -201,56 +201,56 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
               href={item.product_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 bg-slate-50/80 border border-slate-200/50 rounded-xl p-4 hover:bg-slate-100/80 transition-colors group"
+              className="flex items-center gap-3 bg-surf-app border border-border-soft rounded-xl p-4 hover:bg-surf-muted transition-colors group"
             >
-              <div className="p-2 rounded-lg bg-blue-50 text-blue-500 group-hover:bg-blue-100 transition-colors">
+              <div className="p-2 rounded-lg bg-accent-tint-soft text-blue-500 group-hover:bg-accent-tint-soft transition-colors">
                 <ExternalLink className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-700">View Product Page</p>
-                <p className="text-xs text-slate-400 truncate">{item.product_url}</p>
+                <p className="text-sm font-medium text-fg-700">View Product Page</p>
+                <p className="text-xs text-fg-400 truncate">{item.product_url}</p>
               </div>
             </a>
           )}
 
           {/* Notes */}
           {item.notes && (
-            <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-4">
+            <div className="bg-surf-app border border-border-soft rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <FileText className="h-4 w-4 text-slate-400" />
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Notes</h3>
+                <FileText className="h-4 w-4 text-fg-400" />
+                <h3 className="text-xs font-semibold text-fg-500 uppercase tracking-wide">Notes</h3>
               </div>
-              <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{item.notes}</p>
+              <p className="text-sm text-fg-700 whitespace-pre-wrap leading-relaxed">{item.notes}</p>
             </div>
           )}
 
           {/* Empty state */}
           {!hasAdditionalDetails && (
-            <div className="flex flex-col items-center justify-center py-6 text-center bg-slate-50/80 border border-slate-200/50 rounded-xl">
-              <div className="w-10 h-10 bg-white/80 rounded-full flex items-center justify-center mb-2 border border-slate-200/50">
-                <ImageOff className="h-5 w-5 text-slate-300" />
+            <div className="flex flex-col items-center justify-center py-6 text-center bg-surf-app border border-border-soft rounded-xl">
+              <div className="w-10 h-10 bg-surf-card rounded-full flex items-center justify-center mb-2 border border-border-soft">
+                <ImageOff className="h-5 w-5 text-fg-300" />
               </div>
-              <p className="text-sm text-slate-400">No additional details available.</p>
+              <p className="text-sm text-fg-400">No additional details available.</p>
             </div>
           )}
 
           {/* Price History */}
-          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-4">
+          <div className="bg-surf-app border border-border-soft rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Clock className="h-4 w-4 text-slate-400" />
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Price History</h3>
+              <Clock className="h-4 w-4 text-fg-400" />
+              <h3 className="text-xs font-semibold text-fg-500 uppercase tracking-wide">Price History</h3>
             </div>
 
             {historyLoading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-white/60 rounded-xl animate-pulse" />
+                  <div key={i} className="h-12 bg-surf-card rounded-xl animate-pulse" />
                 ))}
               </div>
             ) : history.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-6 bg-white/60 rounded-xl border border-slate-200/40">
-                <TrendingUp className="h-7 w-7 text-slate-300 mb-2" />
-                <p className="text-sm text-slate-400">No price changes recorded yet</p>
+              <div className="flex flex-col items-center justify-center py-6 bg-surf-card rounded-xl border border-border-soft">
+                <TrendingUp className="h-7 w-7 text-fg-300 mb-2" />
+                <p className="text-sm text-fg-400">No price changes recorded yet</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
@@ -262,46 +262,46 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
                   return (
                     <div
                       key={entry.id}
-                      className="flex items-center gap-3 px-3 py-2.5 bg-white/60 rounded-xl border border-slate-200/40 hover:border-slate-300/60 transition-colors"
+                      className="flex items-center gap-3 px-3 py-2.5 bg-surf-card rounded-xl border border-border-soft hover:border-border-solid transition-colors"
                     >
                       <div className="flex-shrink-0">
                         {increased ? (
-                          <div className="p-1.5 rounded-full bg-red-50">
+                          <div className="p-1.5 rounded-full bg-status-red-bg">
                             <TrendingUp className="h-3.5 w-3.5 text-red-500" />
                           </div>
                         ) : decreased ? (
-                          <div className="p-1.5 rounded-full bg-green-50">
+                          <div className="p-1.5 rounded-full bg-status-emerald-bg">
                             <TrendingDown className="h-3.5 w-3.5 text-green-500" />
                           </div>
                         ) : (
-                          <div className="p-1.5 rounded-full bg-slate-100">
-                            <Minus className="h-3.5 w-3.5 text-slate-400" />
+                          <div className="p-1.5 rounded-full bg-surf-muted">
+                            <Minus className="h-3.5 w-3.5 text-fg-400" />
                           </div>
                         )}
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 text-sm flex-wrap">
-                          <span className="text-slate-400 line-through text-xs">
+                          <span className="text-fg-400 line-through text-xs">
                             {formatCurrency(entry.old_price)}
                           </span>
-                          <span className="text-slate-400 text-xs">→</span>
-                          <span className={`font-semibold ${increased ? 'text-red-600' : decreased ? 'text-green-600' : 'text-slate-700'}`}>
+                          <span className="text-fg-400 text-xs">→</span>
+                          <span className={`font-semibold ${increased ? 'text-status-red-fg' : decreased ? 'text-status-emerald-fg' : 'text-fg-700'}`}>
                             {formatCurrency(entry.new_price)}
                           </span>
                           {pct !== null && (
                             <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
                               increased
-                                ? 'bg-red-50 text-red-600'
+                                ? 'bg-status-red-bg text-status-red-fg'
                                 : decreased
-                                ? 'bg-green-50 text-green-600'
-                                : 'bg-slate-100 text-slate-500'
+                                ? 'bg-status-emerald-bg text-status-emerald-fg'
+                                : 'bg-surf-muted text-fg-500'
                             }`}>
                               {pct}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-400 mt-0.5">{formatDate(entry.changed_at)}</p>
+                        <p className="text-xs text-fg-400 mt-0.5">{formatDate(entry.changed_at)}</p>
                       </div>
                     </div>
                   );
@@ -311,18 +311,18 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
           </div>
 
           {/* Metadata */}
-          <div className="flex items-center justify-center gap-3 text-xs text-slate-400 pt-1 pb-2">
+          <div className="flex items-center justify-center gap-3 text-xs text-fg-400 pt-1 pb-2">
             <span>Added {formatDate(item.created_at ?? '')}</span>
-            <span className="text-slate-300">·</span>
+            <span className="text-fg-300">·</span>
             <span>Updated {formatDate(item.updated_at ?? '')}</span>
           </div>
         </div>
 
         {/* Footer actions — sticky on mobile */}
-        <div className="sticky bottom-0 px-4 sm:px-5 py-4 border-t border-slate-200/40 flex items-center justify-end gap-2.5 bg-white/80 backdrop-blur-lg pb-safe">
+        <div className="sticky bottom-0 px-4 sm:px-5 py-4 border-t border-border-soft flex items-center justify-end gap-2.5 bg-surf-card backdrop-blur-lg pb-safe">
           <button
             onClick={onClose}
-            className="px-4 py-2.5 text-sm font-medium text-slate-700 bg-white/60 hover:bg-white/80 border border-slate-200/50 rounded-xl transition-colors"
+            className="px-4 py-2.5 text-sm font-medium text-fg-700 bg-surf-card hover:bg-surf-card border border-border-soft rounded-xl transition-colors"
           >
             Close
           </button>

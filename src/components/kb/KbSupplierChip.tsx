@@ -12,7 +12,7 @@ interface KbSupplierChipProps {
 export function KbSupplierChip({ supplier, compact, as = 'link' }: KbSupplierChipProps) {
   const { locale } = useLocaleStore();
   const name = pickText(supplier, 'name', locale);
-  const cls = `inline-flex items-center gap-1.5 rounded-lg border border-emerald-200/70 bg-emerald-50/60 text-emerald-800 font-medium ${
+  const cls = `inline-flex items-center gap-1.5 rounded-lg border border-status-emerald-brd bg-status-emerald-bg text-status-emerald-fg font-medium ${
     compact ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
   }`;
   const body = (
@@ -23,7 +23,7 @@ export function KbSupplierChip({ supplier, compact, as = 'link' }: KbSupplierChi
   );
   if (as === 'link') {
     return (
-      <Link to={`/kb/suppliers/${supplier.slug}`} className={`${cls} hover:bg-emerald-100/70 transition`} title={name}>
+      <Link to={`/kb/suppliers/${supplier.slug}`} className={`${cls} hover:bg-status-emerald-bg transition`} title={name}>
         {body}
       </Link>
     );

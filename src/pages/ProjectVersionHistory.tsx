@@ -57,25 +57,25 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
         return {
           icon: TrendingUp,
           label: 'Price Recalculation',
-          color: 'bg-blue-100 text-blue-800 border-blue-200',
+          color: 'bg-accent-tint-soft text-accent-text border-accent-tint-border',
         };
       case 'material_change':
         return {
           icon: Package,
           label: 'Material Change',
-          color: 'bg-purple-100 text-purple-800 border-purple-200',
+          color: 'bg-accent-tint-soft text-accent-text border-accent-tint-border',
         };
       case 'manual_snapshot':
         return {
           icon: GitBranch,
           label: 'Manual Snapshot',
-          color: 'bg-slate-100 text-slate-800 border-slate-200',
+          color: 'bg-surf-muted text-fg-800 border-border-soft',
         };
       default:
         return {
           icon: History,
           label: 'Unknown',
-          color: 'bg-slate-100 text-slate-800 border-slate-200',
+          color: 'bg-surf-muted text-fg-800 border-border-soft',
         };
     }
   }
@@ -99,16 +99,16 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">Version History</h1>
-              <p className="text-slate-600">{projectName}</p>
+              <h1 className="text-3xl font-bold text-fg-900 mb-2">Version History</h1>
+              <p className="text-fg-600">{projectName}</p>
             </div>
-            <div className="flex items-center space-x-2 bg-slate-100 rounded-lg p-1">
+            <div className="flex items-center space-x-2 bg-surf-muted rounded-lg p-1">
               <button
                 onClick={() => setFilterType('all')}
                 className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                   filterType === 'all'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-surf-card text-fg-900 shadow-sm'
+                    : 'text-fg-600 hover:text-fg-900'
                 }`}
               >
                 All ({versions.length})
@@ -117,8 +117,8 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                 onClick={() => setFilterType('price_update')}
                 className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                   filterType === 'price_update'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-surf-card text-fg-900 shadow-sm'
+                    : 'text-fg-600 hover:text-fg-900'
                 }`}
               >
                 Price Updates ({versions.filter(v => v.version_type === 'price_update').length})
@@ -127,8 +127,8 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                 onClick={() => setFilterType('material_change')}
                 className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                   filterType === 'material_change'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-surf-card text-fg-900 shadow-sm'
+                    : 'text-fg-600 hover:text-fg-900'
                 }`}
               >
                 Material Changes ({versions.filter(v => v.version_type === 'material_change').length})
@@ -144,10 +144,10 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
             </div>
           </div>
         ) : filteredVersions.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
-            <History className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">No Version History Yet</h3>
-            <p className="text-slate-600">
+          <div className="bg-surf-card rounded-lg shadow-sm border border-border-soft p-12 text-center">
+            <History className="h-12 w-12 text-fg-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-fg-900 mb-2">No Version History Yet</h3>
+            <p className="text-fg-600">
               {filterType === 'all'
                 ? 'Versions will appear here when you recalculate prices or change materials.'
                 : `No ${filterType === 'price_update' ? 'price updates' : 'material changes'} found.`}
@@ -163,8 +163,8 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
               return (
                 <div
                   key={version.id}
-                  className={`bg-white rounded-lg shadow-sm border-2 transition-all hover:shadow-md ${
-                    isFirst ? 'border-blue-300' : 'border-slate-200'
+                  className={`bg-surf-card rounded-lg shadow-sm border-2 transition-all hover:shadow-md ${
+                    isFirst ? 'border-accent-tint-border' : 'border-border-soft'
                   }`}
                 >
                   <div className="p-6">
@@ -175,16 +175,16 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-1">
-                            <h3 className="text-lg font-semibold text-slate-900">
+                            <h3 className="text-lg font-semibold text-fg-900">
                               {version.version_name}
                             </h3>
                             {isFirst && (
-                              <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                              <span className="px-2 py-0.5 bg-accent-tint-soft text-accent-text text-xs font-medium rounded-full">
                                 Latest
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center space-x-4 text-sm text-slate-600">
+                          <div className="flex items-center space-x-4 text-sm text-fg-600">
                             <span className="flex items-center">
                               <History className="h-3.5 w-3.5 mr-1" />
                               Version #{version.version_number}
@@ -197,10 +197,10 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-slate-900">
+                        <div className="text-2xl font-bold text-fg-900">
                           {formatCurrency(version.total_amount)}
                         </div>
-                        <div className="text-xs text-slate-500">Project Total</div>
+                        <div className="text-xs text-fg-500">Project Total</div>
                       </div>
                     </div>
 
@@ -210,22 +210,22 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
 
                     {version.affected_areas.length > 0 && (
                       <div className="mb-3">
-                        <span className="text-sm text-slate-600">
+                        <span className="text-sm text-fg-600">
                           Affected areas: <span className="font-medium">{version.affected_areas.length}</span>
                         </span>
                       </div>
                     )}
 
                     {version.notes && (
-                      <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <div className="mb-4 p-3 bg-surf-app rounded-lg border border-border-soft">
                         <div className="flex items-start">
-                          <FileText className="h-4 w-4 text-slate-400 mr-2 mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-slate-700">{version.notes}</p>
+                          <FileText className="h-4 w-4 text-fg-400 mr-2 mt-0.5 flex-shrink-0" />
+                          <p className="text-sm text-fg-700">{version.notes}</p>
                         </div>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-200">
+                    <div className="flex items-center justify-end space-x-3 pt-4 border-t border-border-soft">
                       <Button
                         variant="secondary"
                         size="sm"
@@ -254,41 +254,41 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
       >
         {selectedVersion && (
           <div className="space-y-6">
-            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div className="bg-surf-app rounded-lg p-4 border border-border-soft">
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <div className="text-sm text-slate-600 mb-1">Version Name</div>
-                  <div className="font-semibold text-slate-900">{selectedVersion.version_name}</div>
+                  <div className="text-sm text-fg-600 mb-1">Version Name</div>
+                  <div className="font-semibold text-fg-900">{selectedVersion.version_name}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-slate-600 mb-1">Version Number</div>
-                  <div className="font-semibold text-slate-900">#{selectedVersion.version_number}</div>
+                  <div className="text-sm text-fg-600 mb-1">Version Number</div>
+                  <div className="font-semibold text-fg-900">#{selectedVersion.version_number}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-slate-600 mb-1">Date</div>
-                  <div className="font-semibold text-slate-900">
+                  <div className="text-sm text-fg-600 mb-1">Date</div>
+                  <div className="font-semibold text-fg-900">
                     {format(new Date(selectedVersion.created_at), 'MMM d, yyyy h:mm a')}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-slate-600 mb-1">Project Total</div>
-                  <div className="font-semibold text-slate-900">
+                  <div className="text-sm text-fg-600 mb-1">Project Total</div>
+                  <div className="font-semibold text-fg-900">
                     {formatCurrency(selectedVersion.total_amount)}
                   </div>
                 </div>
               </div>
 
               {selectedVersion.notes && (
-                <div className="pt-4 border-t border-slate-200">
-                  <div className="text-sm text-slate-600 mb-1">Notes</div>
-                  <div className="text-slate-900">{selectedVersion.notes}</div>
+                <div className="pt-4 border-t border-border-soft">
+                  <div className="text-sm text-fg-600 mb-1">Notes</div>
+                  <div className="text-fg-900">{selectedVersion.notes}</div>
                 </div>
               )}
             </div>
 
             {versionDetails.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Changes by Area</h3>
+                <h3 className="text-lg font-semibold text-fg-900 mb-4">Changes by Area</h3>
                 <div className="space-y-3">
                   {versionDetails.map((detail) => {
                     const difference = detail.new_subtotal - detail.previous_subtotal;
@@ -300,24 +300,24 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                         className={`rounded-lg border p-4 ${
                           hasChange
                             ? difference > 0
-                              ? 'bg-red-50 border-red-200'
-                              : 'bg-green-50 border-green-200'
-                            : 'bg-slate-50 border-slate-200'
+                              ? 'bg-status-red-bg border-status-red-brd'
+                              : 'bg-status-emerald-bg border-status-emerald-brd'
+                            : 'bg-surf-app border-border-soft'
                         }`}
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div>
-                            <div className="font-semibold text-slate-900">{detail.area_name}</div>
-                            <div className="text-sm text-slate-600">
+                            <div className="font-semibold text-fg-900">{detail.area_name}</div>
+                            <div className="text-sm text-fg-600">
                               {detail.cabinets_affected_count} cabinet{detail.cabinets_affected_count !== 1 ? 's' : ''} affected
                             </div>
                           </div>
                           <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
                             detail.change_type === 'both'
-                              ? 'bg-purple-100 text-purple-800'
+                              ? 'bg-accent-tint-soft text-accent-text'
                               : detail.change_type === 'material_change'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-green-100 text-green-800'
+                              ? 'bg-accent-tint-soft text-accent-text'
+                              : 'bg-status-emerald-bg text-status-emerald-fg'
                           }`}>
                             {detail.change_type === 'both' ? 'Material + Price' :
                              detail.change_type === 'material_change' ? 'Material Change' : 'Price Update'}
@@ -326,35 +326,35 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
 
                         <div className="grid grid-cols-3 gap-4 text-sm">
                           <div>
-                            <div className="text-slate-600 mb-1">Previous</div>
-                            <div className="font-semibold text-slate-900">
+                            <div className="text-fg-600 mb-1">Previous</div>
+                            <div className="font-semibold text-fg-900">
                               {formatCurrency(detail.previous_subtotal)}
                             </div>
                           </div>
                           <div>
-                            <div className="text-slate-600 mb-1">New</div>
-                            <div className="font-semibold text-slate-900">
+                            <div className="text-fg-600 mb-1">New</div>
+                            <div className="font-semibold text-fg-900">
                               {formatCurrency(detail.new_subtotal)}
                             </div>
                           </div>
                           <div>
-                            <div className="text-slate-600 mb-1">Change</div>
+                            <div className="text-fg-600 mb-1">Change</div>
                             <div className="flex items-center space-x-2">
                               {hasChange && (
                                 difference > 0 ? (
-                                  <TrendingUp className="h-4 w-4 text-red-600" />
+                                  <TrendingUp className="h-4 w-4 text-status-red-fg" />
                                 ) : (
-                                  <TrendingDown className="h-4 w-4 text-green-600" />
+                                  <TrendingDown className="h-4 w-4 text-status-emerald-fg" />
                                 )
                               )}
                               <span className={`font-semibold ${
-                                difference > 0 ? 'text-red-600' : difference < 0 ? 'text-green-600' : 'text-slate-600'
+                                difference > 0 ? 'text-status-red-fg' : difference < 0 ? 'text-status-emerald-fg' : 'text-fg-600'
                               }`}>
                                 {difference > 0 ? '+' : ''}{formatCurrency(difference)}
                               </span>
                             </div>
                             {hasChange && (
-                              <div className="text-xs text-slate-500 mt-0.5">
+                              <div className="text-xs text-fg-500 mt-0.5">
                                 ({detail.difference_percentage > 0 ? '+' : ''}{detail.difference_percentage.toFixed(1)}%)
                               </div>
                             )}
@@ -365,10 +365,10 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                   })}
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-slate-200">
+                <div className="mt-6 pt-6 border-t border-border-soft">
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold text-slate-900">Total Project Change</span>
-                    <span className="text-2xl font-bold text-slate-900">
+                    <span className="text-lg font-semibold text-fg-900">Total Project Change</span>
+                    <span className="text-2xl font-bold text-fg-900">
                       {formatCurrency(selectedVersion.total_amount)}
                     </span>
                   </div>
@@ -376,7 +376,7 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
               </div>
             )}
 
-            <div className="flex justify-end pt-4 border-t border-slate-200">
+            <div className="flex justify-end pt-4 border-t border-border-soft">
               <Button onClick={() => setShowDetailsModal(false)}>Close</Button>
             </div>
           </div>

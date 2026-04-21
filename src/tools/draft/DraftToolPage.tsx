@@ -128,7 +128,7 @@ export function DraftToolPage() {
       {/* Back link */}
       <Link
         to="/tools"
-        className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors w-fit"
+        className="inline-flex items-center gap-1.5 text-xs text-fg-500 hover:text-fg-700 transition-colors w-fit"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Back to Tools
@@ -137,8 +137,8 @@ export function DraftToolPage() {
       {/* Header bar — compact to maximize canvas height */}
       <div className="glass-indigo rounded-xl px-3 py-1.5 flex flex-wrap items-center gap-2">
         <div className="flex-shrink-0">
-          <h1 className="text-sm font-semibold text-slate-800 leading-tight">Evita Draft</h1>
-          <p className="text-[10px] text-slate-500 leading-tight">
+          <h1 className="text-sm font-semibold text-fg-800 leading-tight">Evita Draft</h1>
+          <p className="text-[10px] text-fg-500 leading-tight">
             Floorplans &amp; elevations · AWI/NAAWS 4.0
           </p>
         </div>
@@ -148,7 +148,7 @@ export function DraftToolPage() {
           <select
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
-            className="px-2 py-1.5 rounded-lg border border-slate-300/60 bg-white/70 text-xs text-slate-700"
+            className="px-2 py-1.5 rounded-lg border border-border-solid bg-surf-card text-xs text-fg-700"
           >
             <option value="">Select project…</option>
             {quotations.map((q) => (
@@ -165,7 +165,7 @@ export function DraftToolPage() {
               if (e.target.value) handleSelectDrawing(e.target.value);
             }}
             disabled={!selectedProjectId}
-            className="px-2 py-1.5 rounded-lg border border-slate-300/60 bg-white/70 text-xs text-slate-700 disabled:opacity-50"
+            className="px-2 py-1.5 rounded-lg border border-border-solid bg-surf-card text-xs text-fg-700 disabled:opacity-50"
           >
             <option value="">Select drawing…</option>
             {drawings.map((d) => (
@@ -202,7 +202,7 @@ export function DraftToolPage() {
               })
             }
             disabled={!currentDrawing}
-            className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-slate-300/60 bg-white/70 text-xs text-slate-700 disabled:opacity-50"
+            className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border border-border-solid bg-surf-card text-xs text-fg-700 disabled:opacity-50"
           >
             <Languages className="h-3.5 w-3.5" />
             {currentDrawing?.export_language?.toUpperCase() ?? 'EN'}
@@ -219,8 +219,8 @@ export function DraftToolPage() {
             disabled={!currentDrawing}
             className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs disabled:opacity-50 ${
               currentDrawing?.show_position_tags
-                ? 'border-indigo-400 bg-indigo-50 text-indigo-700'
-                : 'border-slate-300/60 bg-white/70 text-slate-700'
+                ? 'border-indigo-400 bg-accent-tint-soft text-accent-text'
+                : 'border-border-solid bg-surf-card text-fg-700'
             }`}
             title="Show position tags (K-A1, K-A2…)"
           >
@@ -233,7 +233,7 @@ export function DraftToolPage() {
             value={(currentDrawing?.paper_size as string) ?? 'ANSI_A'}
             onChange={(e) => updateDrawingPatch({ paper_size: e.target.value })}
             disabled={!currentDrawing}
-            className="px-2 py-1 rounded-lg border border-slate-300/60 bg-white/70 text-[11px] text-slate-700 disabled:opacity-50"
+            className="px-2 py-1 rounded-lg border border-border-solid bg-surf-card text-[11px] text-fg-700 disabled:opacity-50"
             title="Paper size"
           >
             {Object.entries(PAPER_DIMENSIONS).map(([key, { label }]) => (
@@ -246,7 +246,7 @@ export function DraftToolPage() {
             value={(currentDrawing?.scale as string) ?? 'auto'}
             onChange={(e) => updateDrawingPatch({ scale: e.target.value })}
             disabled={!currentDrawing}
-            className="px-2 py-1 rounded-lg border border-slate-300/60 bg-white/70 text-[11px] text-slate-700 disabled:opacity-50"
+            className="px-2 py-1 rounded-lg border border-border-solid bg-surf-card text-[11px] text-fg-700 disabled:opacity-50"
             title="Drawing scale"
           >
             {SCALE_OPTIONS.map((opt) => (
@@ -262,7 +262,7 @@ export function DraftToolPage() {
       {/* View switcher + area/elevation selectors */}
       {currentDrawing && (
         <div className="glass-white rounded-lg px-2 py-1 flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 bg-slate-100/80 rounded-md p-0.5">
+          <div className="flex items-center gap-1 bg-surf-muted rounded-md p-0.5">
             <ViewTab label="Plan" active={currentView === 'plan'} onClick={() => setCurrentView('plan')} />
             <ViewTab
               label="Elevation"
@@ -292,7 +292,7 @@ export function DraftToolPage() {
           <select
             value={currentAreaId ?? ''}
             onChange={(e) => setCurrentArea(e.target.value || null)}
-            className="px-2 py-1.5 rounded-lg border border-slate-300/60 bg-white/70 text-xs text-slate-700"
+            className="px-2 py-1.5 rounded-lg border border-border-solid bg-surf-card text-xs text-fg-700"
           >
             {areas.map((a) => (
               <option key={a.id} value={a.id}>
@@ -305,7 +305,7 @@ export function DraftToolPage() {
             <select
               value={currentElevationId ?? ''}
               onChange={(e) => setCurrentElevation(e.target.value || null)}
-              className="px-2 py-1.5 rounded-lg border border-slate-300/60 bg-white/70 text-xs text-slate-700"
+              className="px-2 py-1.5 rounded-lg border border-border-solid bg-surf-card text-xs text-fg-700"
             >
               <option value="">Select elevation…</option>
               {currentElevations.map((ev) => (
@@ -324,9 +324,9 @@ export function DraftToolPage() {
         {currentDrawing ? (
           <DraftCanvas />
         ) : (
-          <div className="flex-1 glass-white rounded-2xl flex items-center justify-center text-slate-500">
+          <div className="flex-1 glass-white rounded-2xl flex items-center justify-center text-fg-500">
             <div className="text-center">
-              <FileText className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+              <FileText className="h-10 w-10 text-fg-300 mx-auto mb-2" />
               <div className="text-sm font-medium">No drawing open</div>
               <div className="text-xs mt-1">
                 Select a project and drawing, or click <strong>New</strong>.
@@ -363,7 +363,7 @@ function ViewTab({
       type="button"
       onClick={onClick}
       className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-        active ? 'bg-white shadow text-slate-800' : 'text-slate-600 hover:text-slate-800'
+        active ? 'bg-surf-card shadow text-fg-800' : 'text-fg-600 hover:text-fg-800'
       }`}
     >
       {label}
@@ -380,7 +380,7 @@ function SaveStatusPill({
 }) {
   if (status === 'saving') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px]">
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-accent-tint-soft text-accent-text text-[11px]">
         <Loader2 className="h-3 w-3 animate-spin" />
         Saving…
       </span>
@@ -388,7 +388,7 @@ function SaveStatusPill({
   }
   if (status === 'saved') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[11px]">
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-status-emerald-bg text-status-emerald-fg text-[11px]">
         <Save className="h-3 w-3" />
         Saved
       </span>
@@ -397,7 +397,7 @@ function SaveStatusPill({
   if (status === 'error') {
     return (
       <span
-        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 text-red-700 text-[11px]"
+        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-status-red-bg text-status-red-fg text-[11px]"
         title={error ?? ''}
       >
         <AlertCircle className="h-3 w-3" />
@@ -406,7 +406,7 @@ function SaveStatusPill({
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 text-slate-500 text-[11px]">
+    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-surf-muted text-fg-500 text-[11px]">
       Idle
     </span>
   );
@@ -429,13 +429,13 @@ function NewDrawingModal({
     <Modal isOpen={isOpen} onClose={onClose} title="New Drawing" size="sm">
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Drawing name</label>
+          <label className="block text-xs font-medium text-fg-600 mb-1">Drawing name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Kitchen plan — 2701 Beat Creek"
-            className="w-full px-3 py-2 rounded-lg border border-slate-300/80 bg-white/70 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="w-full px-3 py-2 rounded-lg border border-border-solid bg-surf-card text-sm text-fg-700 focus:outline-none focus:ring-2 focus-visible:ring-focus"
             autoFocus
           />
         </div>

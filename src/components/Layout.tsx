@@ -41,7 +41,7 @@ export function Layout({ children, onLogout }: LayoutProps) {
   };
 
   return (
-    <div className="app-bg min-h-screen" style={rootStyle}>
+    <div className="app-bg min-h-screen text-fg-700" style={rootStyle}>
       <Sidebar onLogout={onLogout} />
       <div className="min-h-screen flex flex-col transition-[margin-left] duration-[250ms] ease-[cubic-bezier(0.16,1,0.3,1)] lg:ml-[var(--rail-w)]">
         <Topbar

@@ -62,34 +62,34 @@ export function ConsumeInventoryModal({ item, projectName, onConfirm, onCancel }
     <Modal isOpen onClose={onCancel} title="Consume from Inventory" size="sm">
       <div className="space-y-4">
         {error && (
-          <div className="rounded-lg bg-red-50 border border-red-200/60 px-4 py-3 text-sm text-red-700">{error}</div>
+          <div className="rounded-lg bg-status-red-bg border border-status-red-brd px-4 py-3 text-sm text-status-red-fg">{error}</div>
         )}
 
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-slate-400">Item</span>
-            <span className="text-slate-800 font-medium">{item.concept}</span>
+            <span className="text-fg-400">Item</span>
+            <span className="text-fg-800 font-medium">{item.concept}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">Quantity to consume</span>
-            <span className="text-slate-800 font-medium">{item.quantity} {unit}</span>
+            <span className="text-fg-400">Quantity to consume</span>
+            <span className="text-fg-800 font-medium">{item.quantity} {unit}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">Current stock</span>
-            <span className="text-slate-800 font-medium">{stockQty} {unit}</span>
+            <span className="text-fg-400">Current stock</span>
+            <span className="text-fg-800 font-medium">{stockQty} {unit}</span>
           </div>
           {avgCost > 0 && (
             <div className="flex justify-between">
-              <span className="text-slate-400">WAC</span>
-              <span className="text-slate-800 font-medium">{formatCurrency(avgCost)}</span>
+              <span className="text-fg-400">WAC</span>
+              <span className="text-fg-800 font-medium">{formatCurrency(avgCost)}</span>
             </div>
           )}
         </div>
 
         {exceedsStock && (
-          <div className="flex items-start gap-2 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200/60">
+          <div className="flex items-start gap-2 px-4 py-3 rounded-lg bg-status-amber-bg border border-status-amber-brd">
             <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-amber-700">
+            <p className="text-sm text-status-amber-fg">
               Quantity exceeds current stock ({stockQty} available). Stock will be set to 0.
             </p>
           </div>

@@ -54,9 +54,9 @@ export function ProjectHeaderDemo() {
   return (
     <div className="space-y-8 py-4">
       <div className="glass-indigo rounded-2xl p-5">
-        <h1 className="text-xl font-bold text-slate-900 mb-1">ProjectHeader · Option B · Dev Preview</h1>
-        <p className="text-sm text-slate-600">
-          Three canonical states for design QA. Real page at <code className="text-[11px] px-1 py-0.5 rounded bg-white/70 border border-slate-200">/projects/:id/quotations/:quotationId</code>.
+        <h1 className="text-xl font-bold text-fg-900 mb-1">ProjectHeader · Option B · Dev Preview</h1>
+        <p className="text-sm text-fg-600">
+          Three canonical states for design QA. Real page at <code className="text-[11px] px-1 py-0.5 rounded bg-surf-card border border-border-soft">/projects/:id/quotations/:quotationId</code>.
         </p>
       </div>
 
@@ -74,16 +74,16 @@ function DemoBlock({ demo }: { demo: DemoCase }) {
   return (
     <div className="space-y-3">
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="text-[11px] font-bold tracking-[0.1em] uppercase text-indigo-700">
+        <div className="text-[11px] font-bold tracking-[0.1em] uppercase text-accent-text">
           {demo.title}
         </div>
-        <div className="text-xs text-slate-500">{demo.description}</div>
+        <div className="text-xs text-fg-500">{demo.description}</div>
       </div>
 
       {/* Remove the Layout padding so the sticky header spans edge-to-edge,
           as it does on the real quotation page. The wrapper below is just
           a stacking context; the header's inner `max-w-7xl` handles alignment. */}
-      <div className="-mx-4 sm:-mx-6 lg:-mx-8 border-y border-slate-200/60">
+      <div className="-mx-4 sm:-mx-6 lg:-mx-8 border-y border-border-soft">
         <ProjectHeader
           variant="inline"
           projectName="BHS Kona"

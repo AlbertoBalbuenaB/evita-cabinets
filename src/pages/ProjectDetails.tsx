@@ -1842,11 +1842,11 @@ const [isEditingDate, setIsEditingDate] = useState(false);
           and the total. */}
       {project.project_details && (
         <div className="mb-6 glass-white rounded-xl px-5 py-4 page-enter">
-          <h3 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-fg-700 mb-2 flex items-center gap-2">
             <Receipt className="h-4 w-4" />
             Notes
           </h3>
-          <p className="text-sm text-slate-600 whitespace-pre-wrap">{project.project_details}</p>
+          <p className="text-sm text-fg-600 whitespace-pre-wrap">{project.project_details}</p>
         </div>
       )}
 
@@ -1910,12 +1910,12 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       </Modal>
 
       {activeTab === 'pricing' && hasStalePrices && (
-        <div className="mb-6 bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+        <div className="mb-6 bg-status-amber-bg border-2 border-status-amber-brd rounded-lg p-4">
           <div className="flex items-start">
-            <AlertTriangle className="h-6 w-6 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-6 w-6 text-status-amber-fg mr-3 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h3 className="text-base font-semibold text-yellow-900 mb-1">Price Updates Available</h3>
-              <p className="text-sm text-yellow-800 mb-3">
+              <h3 className="text-base font-semibold text-status-amber-fg mb-1">Price Updates Available</h3>
+              <p className="text-sm text-status-amber-fg mb-3">
                 Some materials in this project have outdated prices. Your price list has been updated since these cabinets were created.
               </p>
               <div className="flex flex-col sm:flex-row gap-2">
@@ -1931,7 +1931,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                   size="sm"
                   variant="ghost"
                   onClick={() => setHasStalePrices(false)}
-                  className="text-yellow-800 hover:bg-yellow-100"
+                  className="text-status-amber-fg hover:bg-status-amber-bg"
                 >
                   Dismiss
                 </Button>
@@ -1946,13 +1946,13 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
         <div className="glass-indigo p-4">
           <div className="flex items-center mb-4">
-            <DollarSign className="h-5 w-5 text-blue-600 mr-2" />
-            <h3 className="text-lg font-semibold text-slate-900">Additional Costs</h3>
+            <DollarSign className="h-5 w-5 text-accent-text mr-2" />
+            <h3 className="text-lg font-semibold text-fg-900">Additional Costs</h3>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 Other Expenses Label
               </label>
               <input
@@ -1960,10 +1960,10 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 value={otherExpensesLabel}
                 onChange={(e) => setOtherExpensesLabel(e.target.value)}
                 onBlur={updateProjectCosts}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus mb-2"
                 placeholder="Other Expenses"
               />
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 {otherExpensesLabel || 'Other Expenses'} Amount
               </label>
               <input
@@ -1973,16 +1973,16 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 value={otherExpenses}
                 onChange={(e) => setOtherExpenses(parseFloat(e.target.value) || 0)}
                 onBlur={updateProjectCosts}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 placeholder="0.00"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 Flat amount{otherExpenses > 0 && exchangeRate > 0 ? ` · $${(otherExpenses / exchangeRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD` : ''}
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 Design services, Install & Delivery (USD)
               </label>
               <input
@@ -1995,13 +1995,13 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                   if (installDeliveryPerBox > 0) setInstallDeliveryPerBox(0);
                 }}
                 onBlur={updateProjectCosts}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 placeholder="0.00"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 Flat amount in USD{installDelivery > 0 && exchangeRate > 0 ? ` · $${(installDelivery * exchangeRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN` : ''}
               </p>
-              <label className="block text-sm font-medium text-slate-700 mb-1 mt-3">
+              <label className="block text-sm font-medium text-fg-700 mb-1 mt-3">
                 Per-box rate (USD)
               </label>
               <input
@@ -2011,10 +2011,10 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 value={installDeliveryPerBox}
                 onChange={(e) => setInstallDeliveryPerBox(parseFloat(e.target.value) || 0)}
                 onBlur={updateProjectCosts}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 placeholder="0.00"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 {installDeliveryPerBox > 0 && exchangeRate > 0
                   ? `$${installDeliveryPerBox.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD/box × ${totalProjectBoxes} boxes = $${(installDeliveryPerBox * totalProjectBoxes).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD (≈ $${(installDeliveryPerBox * totalProjectBoxes * exchangeRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN)`
                   : 'Multiplied by total project boxes'}
@@ -2022,7 +2022,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 Profit Multiplier
               </label>
               <input
@@ -2032,16 +2032,16 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 value={profitMultiplier}
                 onChange={(e) => setProfitMultiplier(parseFloat(e.target.value) || 0)}
                 onBlur={updateProjectCosts}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 placeholder="0.50"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 {profitMultiplier > 0 ? `${formatPrice(profitAmount)} (${(profitMultiplier * 100).toFixed(1)}%)` : 'e.g., 0.5 = 50% markup'}
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 Tariff Multiplier
               </label>
               <input
@@ -2051,16 +2051,16 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 value={tariffMultiplier}
                 onChange={(e) => setTariffMultiplier(parseFloat(e.target.value) || 0)}
                 onBlur={updateProjectCosts}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 placeholder="0.11"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 {tariffMultiplier > 0 ? `${formatPrice(tariffAmount)} (${(tariffMultiplier * 100).toFixed(2)}%)` : 'e.g., 0.11 = 11% of cost'}
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 Tax (%)
               </label>
               <input
@@ -2070,16 +2070,16 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 value={taxPercentage}
                 onChange={(e) => setTaxPercentage(parseFloat(e.target.value) || 0)}
                 onBlur={updateProjectCosts}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 placeholder="8.25"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 {taxPercentage > 0 ? formatPrice(taxAmount) : 'e.g., 8.25 for 8.25% tax'}
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 Referral %
               </label>
               <input
@@ -2089,18 +2089,18 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 value={referralRate}
                 onChange={(e) => setReferralRate(parseFloat(e.target.value) || 0)}
                 onBlur={updateProjectCosts}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 placeholder="0.06"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 {referralRate > 0 ? `${formatPrice(referralAmount)} (${(referralRate * 100).toFixed(2)}%) on Price + Install` : 'e.g., 0.06 = 6% of (Price + Install)'}
               </p>
             </div>
           </div>
 
           {/* ── Risk Factor ─────────────────────────────────────── */}
-          <div className="mt-4 pt-4 border-t border-slate-200">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Risk Factor %</label>
+          <div className="mt-4 pt-4 border-t border-border-soft">
+            <label className="block text-sm font-medium text-fg-700 mb-1">Risk Factor %</label>
             <input
               type="number"
               min="0"
@@ -2109,78 +2109,78 @@ const [isEditingDate, setIsEditingDate] = useState(false);
               value={riskFactorPct}
               onChange={(e) => setRiskFactorPct(parseFloat(e.target.value) || 0)}
               onBlur={updateProjectCosts}
-              className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
               placeholder="5"
             />
             <div className="flex gap-4 mt-2">
-              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                <input type="checkbox" checked={riskFactorAppliesSqft} onChange={(e) => { setRiskFactorAppliesSqft(e.target.checked); }} className="rounded border-slate-300" />
+              <label className="flex items-center gap-1.5 text-xs text-fg-600 cursor-pointer">
+                <input type="checkbox" checked={riskFactorAppliesSqft} onChange={(e) => { setRiskFactorAppliesSqft(e.target.checked); }} className="rounded border-border-solid" />
                 Apply to ft²
               </label>
-              <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
-                <input type="checkbox" checked={riskFactorAppliesOptimizer} onChange={(e) => { setRiskFactorAppliesOptimizer(e.target.checked); }} className="rounded border-slate-300" />
+              <label className="flex items-center gap-1.5 text-xs text-fg-600 cursor-pointer">
+                <input type="checkbox" checked={riskFactorAppliesOptimizer} onChange={(e) => { setRiskFactorAppliesOptimizer(e.target.checked); }} className="rounded border-border-solid" />
                 Apply to Optimizer
               </label>
             </div>
             {riskFactorPct > 0 && (
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 Adds {riskFactorPct}% to materials subtotal before profit gross-up
               </p>
             )}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-slate-200">
+          <div className="mt-4 pt-4 border-t border-border-soft">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-slate-600">Cabinets Subtotal:</p>
-                <p className="text-sm text-slate-600">Countertops Subtotal:</p>
-                <p className="text-sm text-slate-600">Prefab Closets Subtotal:</p>
-                <p className="text-sm text-slate-600">Prefab Cabinets Subtotal:</p>
-                <p className="text-sm text-slate-600">Individual Items Subtotal:</p>
-                {riskAmount > 0 && <p className="text-sm text-amber-700">Risk Factor ({riskFactorPct}%):</p>}
-                <p className="text-sm text-slate-600 mt-2 pt-2 border-t border-slate-300">Subtotal:</p>
-                {profitMultiplier > 0 && <p className="text-sm text-slate-600">Profit ({(profitMultiplier * 100).toFixed(1)}%):</p>}
-                <p className="text-sm font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">Price:</p>
-                {tariffMultiplier > 0 && <p className="text-sm text-slate-600">Tariff ({(tariffMultiplier * 100).toFixed(2)}%):</p>}
-                {referralRate > 0 && <p className="text-sm text-slate-600">Referral Fee ({(referralRate * 100).toFixed(2)}%):</p>}
-                {taxPercentage > 0 && <p className="text-sm text-slate-600">Tax ({taxPercentage}%):</p>}
-                <p className="text-sm text-slate-600">Design services, Install & Delivery:</p>
-                <p className="text-sm text-slate-600">{otherExpensesLabel || 'Other Expenses'}:</p>
-                <p className="text-base font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">Total:</p>
+                <p className="text-sm text-fg-600">Cabinets Subtotal:</p>
+                <p className="text-sm text-fg-600">Countertops Subtotal:</p>
+                <p className="text-sm text-fg-600">Prefab Closets Subtotal:</p>
+                <p className="text-sm text-fg-600">Prefab Cabinets Subtotal:</p>
+                <p className="text-sm text-fg-600">Individual Items Subtotal:</p>
+                {riskAmount > 0 && <p className="text-sm text-status-amber-fg">Risk Factor ({riskFactorPct}%):</p>}
+                <p className="text-sm text-fg-600 mt-2 pt-2 border-t border-border-solid">Subtotal:</p>
+                {profitMultiplier > 0 && <p className="text-sm text-fg-600">Profit ({(profitMultiplier * 100).toFixed(1)}%):</p>}
+                <p className="text-sm font-semibold text-fg-900 mt-2 pt-2 border-t border-border-solid">Price:</p>
+                {tariffMultiplier > 0 && <p className="text-sm text-fg-600">Tariff ({(tariffMultiplier * 100).toFixed(2)}%):</p>}
+                {referralRate > 0 && <p className="text-sm text-fg-600">Referral Fee ({(referralRate * 100).toFixed(2)}%):</p>}
+                {taxPercentage > 0 && <p className="text-sm text-fg-600">Tax ({taxPercentage}%):</p>}
+                <p className="text-sm text-fg-600">Design services, Install & Delivery:</p>
+                <p className="text-sm text-fg-600">{otherExpensesLabel || 'Other Expenses'}:</p>
+                <p className="text-base font-semibold text-fg-900 mt-2 pt-2 border-t border-border-solid">Total:</p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-medium text-slate-700">{formatPrice(cabinetsSubtotal)}</p>
-                <p className="text-sm font-medium text-slate-700">{formatPrice(countertopsSubtotal)}</p>
-                <p className="text-sm font-medium text-slate-700">{formatPrice(closetItemsSubtotal)}</p>
-                <p className="text-sm font-medium text-slate-700">{formatPrice(prefabItemsSubtotal)}</p>
-                <p className="text-sm font-medium text-slate-700">{formatPrice(itemsSubtotal)}</p>
-                {riskAmount > 0 && <p className="text-sm font-medium text-amber-700">{formatPrice(riskAmount)}</p>}
-                <p className="text-sm font-semibold text-slate-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(materialsSubtotal + riskAmount)}</p>
-                {profitMultiplier > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(profitAmount)}</p>}
-                <p className="text-sm font-bold text-blue-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(price)}</p>
-                {tariffMultiplier > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(tariffAmount)}</p>}
-                {referralRate > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(referralAmount)}</p>}
-                {taxPercentage > 0 && <p className="text-sm font-medium text-slate-700">{formatPrice(taxAmount)}</p>}
-                <p className="text-sm font-medium text-slate-700">{formatPrice(installDeliveryMxn)}</p>
-                <p className="text-sm font-medium text-slate-700">{formatPrice(otherExpenses)}</p>
-                <p className="text-base font-bold text-slate-900 mt-2 pt-2 border-t border-slate-300">{formatPrice(projectTotal)}</p>
+                <p className="text-sm font-medium text-fg-700">{formatPrice(cabinetsSubtotal)}</p>
+                <p className="text-sm font-medium text-fg-700">{formatPrice(countertopsSubtotal)}</p>
+                <p className="text-sm font-medium text-fg-700">{formatPrice(closetItemsSubtotal)}</p>
+                <p className="text-sm font-medium text-fg-700">{formatPrice(prefabItemsSubtotal)}</p>
+                <p className="text-sm font-medium text-fg-700">{formatPrice(itemsSubtotal)}</p>
+                {riskAmount > 0 && <p className="text-sm font-medium text-status-amber-fg">{formatPrice(riskAmount)}</p>}
+                <p className="text-sm font-semibold text-fg-900 mt-2 pt-2 border-t border-border-solid">{formatPrice(materialsSubtotal + riskAmount)}</p>
+                {profitMultiplier > 0 && <p className="text-sm font-medium text-fg-700">{formatPrice(profitAmount)}</p>}
+                <p className="text-sm font-bold text-accent-text mt-2 pt-2 border-t border-border-solid">{formatPrice(price)}</p>
+                {tariffMultiplier > 0 && <p className="text-sm font-medium text-fg-700">{formatPrice(tariffAmount)}</p>}
+                {referralRate > 0 && <p className="text-sm font-medium text-fg-700">{formatPrice(referralAmount)}</p>}
+                {taxPercentage > 0 && <p className="text-sm font-medium text-fg-700">{formatPrice(taxAmount)}</p>}
+                <p className="text-sm font-medium text-fg-700">{formatPrice(installDeliveryMxn)}</p>
+                <p className="text-sm font-medium text-fg-700">{formatPrice(otherExpenses)}</p>
+                <p className="text-base font-bold text-fg-900 mt-2 pt-2 border-t border-border-solid">{formatPrice(projectTotal)}</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
+        <div className="bg-surf-card rounded-lg border border-border-soft p-4">
           <div className="flex items-center mb-4">
-            <Receipt className="h-5 w-5 text-blue-600 mr-2" />
-            <h3 className="text-lg font-semibold text-slate-900">PDF Disclaimers</h3>
+            <Receipt className="h-5 w-5 text-accent-text mr-2" />
+            <h3 className="text-lg font-semibold text-fg-900">PDF Disclaimers</h3>
           </div>
-          <p className="text-sm text-slate-600 mb-4">
+          <p className="text-sm text-fg-600 mb-4">
             Customize the disclaimer text that appears in the USD Summary PDF below the pricing table.
           </p>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 Tariff Information Disclaimer
               </label>
               <textarea
@@ -2188,16 +2188,16 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 onChange={(e) => setDisclaimerTariffInfo(e.target.value)}
                 onBlur={updateProjectCosts}
                 rows={2}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus resize-none"
                 placeholder="e.g., Please note that the international tariff..."
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 Information about tariff percentages and impact
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 Price Validity & Conditions Disclaimer
               </label>
               <textarea
@@ -2205,21 +2205,21 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 onChange={(e) => setDisclaimerPriceValidity(e.target.value)}
                 onBlur={updateProjectCosts}
                 rows={3}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus resize-none"
                 placeholder="e.g., Grand Total includes delivery cost and tax..."
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 What's included/excluded and price validity period
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
+        <div className="bg-surf-card rounded-lg border border-border-soft p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center">
-              <FileText className="h-5 w-5 text-blue-600 mr-2" />
-              <h3 className="text-lg font-semibold text-slate-900">PDF Project Details</h3>
+              <FileText className="h-5 w-5 text-accent-text mr-2" />
+              <h3 className="text-lg font-semibold text-fg-900">PDF Project Details</h3>
             </div>
             {isAnyPdfFieldModified && (
               <button
@@ -2230,16 +2230,16 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                   setPdfProjectBrief(filterProjectBriefForPDF(project.project_brief || ''));
                   setTimeout(updateProjectCosts, 0);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-fg-600 bg-surf-muted hover:bg-surf-muted rounded-lg transition-colors"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 Reset All
               </button>
             )}
           </div>
-          <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg mb-4">
+          <div className="flex items-start gap-2 p-3 bg-accent-tint-soft border border-blue-100 rounded-lg mb-4">
             <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-blue-700 leading-relaxed">
+            <p className="text-xs text-accent-text leading-relaxed">
               These values default to your Project Brief. Changes here only affect PDF output and will not modify your original Project Brief.
             </p>
           </div>
@@ -2248,9 +2248,9 @@ const [isEditingDate, setIsEditingDate] = useState(false);
             <div>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-slate-700">Project Name</label>
+                  <label className="text-sm font-medium text-fg-700">Project Name</label>
                   {isPdfNameModified && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-status-amber-bg text-status-amber-fg rounded">
                       Modified
                     </span>
                   )}
@@ -2258,7 +2258,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 {isPdfNameModified && (
                   <button
                     onClick={() => { setPdfProjectName(project.name); setTimeout(updateProjectCosts, 0); }}
-                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                    className="flex items-center gap-1 text-xs text-fg-500 hover:text-fg-700 transition-colors"
                   >
                     <RotateCcw className="h-3 w-3" />
                     Reset
@@ -2270,7 +2270,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 value={pdfProjectName}
                 onChange={(e) => setPdfProjectName(e.target.value)}
                 onBlur={updateProjectCosts}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 placeholder="Project name as it appears on PDFs"
               />
             </div>
@@ -2278,9 +2278,9 @@ const [isEditingDate, setIsEditingDate] = useState(false);
             <div>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-slate-700">Customer</label>
+                  <label className="text-sm font-medium text-fg-700">Customer</label>
                   {isPdfCustomerModified && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-status-amber-bg text-status-amber-fg rounded">
                       Modified
                     </span>
                   )}
@@ -2288,7 +2288,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 {isPdfCustomerModified && (
                   <button
                     onClick={() => { setPdfCustomer(project.customer || ''); setTimeout(updateProjectCosts, 0); }}
-                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                    className="flex items-center gap-1 text-xs text-fg-500 hover:text-fg-700 transition-colors"
                   >
                     <RotateCcw className="h-3 w-3" />
                     Reset
@@ -2300,7 +2300,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 value={pdfCustomer}
                 onChange={(e) => setPdfCustomer(e.target.value)}
                 onBlur={updateProjectCosts}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 placeholder="Customer name as it appears on PDFs"
               />
             </div>
@@ -2308,9 +2308,9 @@ const [isEditingDate, setIsEditingDate] = useState(false);
             <div>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-slate-700">Address</label>
+                  <label className="text-sm font-medium text-fg-700">Address</label>
                   {isPdfAddressModified && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-status-amber-bg text-status-amber-fg rounded">
                       Modified
                     </span>
                   )}
@@ -2318,7 +2318,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 {isPdfAddressModified && (
                   <button
                     onClick={() => { setPdfAddress(project.address || ''); setTimeout(updateProjectCosts, 0); }}
-                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                    className="flex items-center gap-1 text-xs text-fg-500 hover:text-fg-700 transition-colors"
                   >
                     <RotateCcw className="h-3 w-3" />
                     Reset
@@ -2330,7 +2330,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 value={pdfAddress}
                 onChange={(e) => setPdfAddress(e.target.value)}
                 onBlur={updateProjectCosts}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 placeholder="Address as it appears on PDFs"
               />
             </div>
@@ -2338,9 +2338,9 @@ const [isEditingDate, setIsEditingDate] = useState(false);
             <div>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-slate-700">Project Brief / Details</label>
+                  <label className="text-sm font-medium text-fg-700">Project Brief / Details</label>
                   {isPdfBriefModified && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-status-amber-bg text-status-amber-fg rounded">
                       Modified
                     </span>
                   )}
@@ -2348,7 +2348,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 {isPdfBriefModified && (
                   <button
                     onClick={() => { setPdfProjectBrief(filterProjectBriefForPDF(project.project_brief || '')); setTimeout(updateProjectCosts, 0); }}
-                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                    className="flex items-center gap-1 text-xs text-fg-500 hover:text-fg-700 transition-colors"
                   >
                     <RotateCcw className="h-3 w-3" />
                     Reset
@@ -2360,10 +2360,10 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 onChange={(e) => setPdfProjectBrief(e.target.value)}
                 onBlur={updateProjectCosts}
                 rows={6}
-                className="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono"
+                className="block w-full px-3 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus resize-none font-mono"
                 placeholder="Project details as they appear on PDFs (CABINET TYPES, ACCESSORIES, and OTHER sections are excluded automatically)"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 This is the filtered version shown in PDFs — CABINET TYPES, ACCESSORIES, and OTHER sections are excluded.
               </p>
             </div>
@@ -2371,12 +2371,12 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         </div>
 
         {project.project_brief && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
-            <h3 className="text-sm font-semibold text-blue-900 flex items-center gap-2 mb-3">
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-5">
+            <h3 className="text-sm font-semibold text-accent-text flex items-center gap-2 mb-3">
               <Package className="h-4 w-4" />
               Project Brief
             </h3>
-            <p className="text-sm text-blue-900 whitespace-pre-wrap font-mono">{project.project_brief}</p>
+            <p className="text-sm text-fg-800 whitespace-pre-wrap font-mono">{project.project_brief}</p>
           </div>
         )}
       </div>
@@ -2386,9 +2386,9 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         <ErrorBoundary>
           <div className="mb-6 space-y-6">
             {loading ? (
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
+              <div className="bg-surf-card rounded-lg shadow-sm border border-border-soft p-12 text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-slate-600">Loading analytics...</p>
+                <p className="text-fg-600">Loading analytics...</p>
               </div>
             ) : areas.length > 0 ? (
               <>
@@ -2418,10 +2418,10 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <OptimizerRunsAnalytics quotationId={project.id} />
               </>
             ) : (
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
-                <BarChart3 className="h-10 w-10 mx-auto mb-3 text-slate-300" />
-                <p className="text-slate-500 font-medium">No data yet</p>
-                <p className="text-sm text-slate-400 mt-1">Add areas and cabinets to see analytics</p>
+              <div className="bg-surf-card rounded-lg shadow-sm border border-border-soft p-12 text-center">
+                <BarChart3 className="h-10 w-10 mx-auto mb-3 text-fg-300" />
+                <p className="text-fg-500 font-medium">No data yet</p>
+                <p className="text-sm text-fg-400 mt-1">Add areas and cabinets to see analytics</p>
               </div>
             )}
           </div>
@@ -2455,8 +2455,8 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       {activeTab === 'pricing' && (
       <div className="space-y-6">
         {areas.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
-            <p className="text-slate-600 mb-4">
+          <div className="bg-surf-card rounded-lg shadow-sm border border-border-soft p-12 text-center">
+            <p className="text-fg-600 mb-4">
               No areas yet. Add your first area to start building the quotation.
             </p>
             <Button onClick={() => setIsAreaModalOpen(true)}>Add First Area</Button>
@@ -2464,27 +2464,27 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         ) : (
           <>
             {areas.length > 3 && (
-              <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+              <div className="bg-surf-card rounded-lg shadow-sm border border-border-soft p-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-fg-400" />
                   <input
                     type="text"
                     value={areaSearchQuery}
                     onChange={(e) => setAreaSearchQuery(e.target.value)}
                     placeholder="Search areas by name..."
-                    className="w-full pl-10 pr-10 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full pl-10 pr-10 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                   />
                   {areaSearchQuery && (
                     <button
                       onClick={() => setAreaSearchQuery('')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-fg-400 hover:text-fg-600"
                     >
                       <X className="h-5 w-5" />
                     </button>
                   )}
                 </div>
                 {areaSearchQuery && (
-                  <p className="mt-2 text-xs text-slate-600">
+                  <p className="mt-2 text-xs text-fg-600">
                     Found {areas.filter(area => area.name.toLowerCase().includes(areaSearchQuery.toLowerCase())).length} area(s) matching "{areaSearchQuery}"
                   </p>
                 )}
@@ -2497,14 +2497,14 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
               if (filteredAreas.length === 0 && areaSearchQuery) {
                 return (
-                  <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
-                    <Search className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-600 mb-2">
+                  <div className="bg-surf-card rounded-lg shadow-sm border border-border-soft p-12 text-center">
+                    <Search className="h-12 w-12 text-fg-300 mx-auto mb-4" />
+                    <p className="text-fg-600 mb-2">
                       No areas found matching "{areaSearchQuery}"
                     </p>
                     <button
                       onClick={() => setAreaSearchQuery('')}
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      className="text-accent-text hover:text-accent-text text-sm font-medium"
                     >
                       Clear search
                     </button>
@@ -2515,9 +2515,9 @@ const [isEditingDate, setIsEditingDate] = useState(false);
               return filteredAreas.map((area, index) => (
             <div
               key={area.id}
-              className="bg-white rounded-lg shadow-sm border border-slate-200 transition-all duration-200 relative"
+              className="bg-surf-card rounded-lg shadow-sm border border-border-soft transition-all duration-200 relative"
             >
-              <div className="border-b border-slate-200 p-4 sm:p-6">
+              <div className="border-b border-border-soft p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                   <div className="flex items-start gap-2 flex-1">
                     {areas.length > 1 && (
@@ -2529,11 +2529,11 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                               moveAreaUp(index);
                             }}
                             disabled={index === 0}
-                            className="p-0.5 hover:bg-slate-200 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            className="p-0.5 hover:bg-surf-muted rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                             aria-label={`Move ${area.name} up`}
                             title="Move area up"
                           >
-                            <ChevronUp className="h-3.5 w-3.5 text-slate-600" />
+                            <ChevronUp className="h-3.5 w-3.5 text-fg-600" />
                           </button>
                           <button
                             onClick={(e) => {
@@ -2541,21 +2541,21 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                               moveAreaDown(index);
                             }}
                             disabled={index === filteredAreas.length - 1}
-                            className="p-0.5 hover:bg-slate-200 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            className="p-0.5 hover:bg-surf-muted rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                             aria-label={`Move ${area.name} down`}
                             title="Move area down"
                           >
-                            <ChevronDown className="h-3.5 w-3.5 text-slate-600" />
+                            <ChevronDown className="h-3.5 w-3.5 text-fg-600" />
                           </button>
                         </div>
                       </div>
                     )}
                     <div className="flex-1">
-                      <h2 className="text-lg sm:text-xl font-semibold text-slate-900">{area.name}</h2>
-                    <p className="mt-1 text-xs sm:text-sm text-slate-600">
+                      <h2 className="text-lg sm:text-xl font-semibold text-fg-900">{area.name}</h2>
+                    <p className="mt-1 text-xs sm:text-sm text-fg-600">
                       {countActualCabinets(area.cabinets)} cabinet{countActualCabinets(area.cabinets) !== 1 ? 's' : ''} ({countCabinetEntries(area.cabinets)} {countCabinetEntries(area.cabinets) !== 1 ? 'entries' : 'entry'})
                       {area.cabinets.length !== countCabinetEntries(area.cabinets) && (
-                        <span className="ml-2 text-purple-600">+ {area.cabinets.length - countCabinetEntries(area.cabinets)} accessories</span>
+                        <span className="ml-2 text-accent-text">+ {area.cabinets.length - countCabinetEntries(area.cabinets)} accessories</span>
                       )}
                     </p>
                     </div>
@@ -2578,8 +2578,8 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                         title={area.applies_tariff === true ? 'Tariff applied to this area — click to disable' : 'Tariff not applied — click to enable'}
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
                           area.applies_tariff === true
-                            ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
-                            : 'bg-slate-100 border-slate-200 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                            ? 'bg-status-amber-bg border-status-amber-brd text-status-amber-fg hover:bg-status-amber-bg'
+                            : 'bg-surf-muted border-border-soft text-fg-400 hover:bg-surf-muted hover:text-fg-600'
                         }`}
                       >
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${area.applies_tariff === true ? 'bg-amber-500' : 'bg-slate-300'}`} />
@@ -2588,7 +2588,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                     )}
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1.5">
-                        <label className="text-xs text-slate-500 font-medium whitespace-nowrap">Qty</label>
+                        <label className="text-xs text-fg-500 font-medium whitespace-nowrap">Qty</label>
                         <input
                           type="number"
                           min={1}
@@ -2601,19 +2601,19 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                               areas.map(a => a.id === area.id ? { ...a, quantity: newQty } : a)
                             );
                           }}
-                          className={`w-14 px-1.5 py-1 text-sm text-center border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-14 px-1.5 py-1 text-sm text-center border rounded focus:outline-none focus:ring-2 focus-visible:ring-focus ${
                             (area.quantity ?? 1) > 1
-                              ? 'border-blue-300 bg-blue-50 text-blue-800 font-semibold'
-                              : 'border-slate-200 bg-slate-50 text-slate-400'
+                              ? 'border-accent-tint-border bg-accent-tint-soft text-accent-text font-semibold'
+                              : 'border-border-soft bg-surf-app text-fg-400'
                           }`}
                           title="Area quantity multiplier — all subtotals are multiplied by this number"
                         />
                       </div>
                       <div className="text-left sm:text-right">
-                        <div className="text-xs sm:text-sm text-slate-600">
+                        <div className="text-xs sm:text-sm text-fg-600">
                           Area Total
                           {quotationView.usingOptimizer && (
-                            <span className="ml-1 inline-flex items-center gap-0.5 px-1 py-0 rounded bg-blue-50 border border-blue-200 text-blue-700 text-[9px] font-semibold uppercase tracking-wide">
+                            <span className="ml-1 inline-flex items-center gap-0.5 px-1 py-0 rounded bg-accent-tint-soft border border-accent-tint-border text-accent-text text-[9px] font-semibold uppercase tracking-wide">
                               OPT
                             </span>
                           )}
@@ -2642,11 +2642,11 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                           const adjustedRaw = rawTotal * riskMultiplier;
                           return qty > 1 ? (
                             <div>
-                              <div className="text-xs text-slate-500">{formatCurrency(adjustedRaw)} × {qty}</div>
-                              <div className="text-base sm:text-xl font-bold text-blue-900">{formatCurrency(adjustedRaw * qty)}</div>
+                              <div className="text-xs text-fg-500">{formatCurrency(adjustedRaw)} × {qty}</div>
+                              <div className="text-base sm:text-xl font-bold text-accent-text">{formatCurrency(adjustedRaw * qty)}</div>
                             </div>
                           ) : (
-                            <div className="text-base sm:text-xl font-bold text-slate-900">{formatCurrency(adjustedRaw)}</div>
+                            <div className="text-base sm:text-xl font-bold text-fg-900">{formatCurrency(adjustedRaw)}</div>
                           );
                         })()}
                       </div>
@@ -2685,7 +2685,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                         onClick={() => handleDuplicateArea(area)}
                         title="Duplicate area"
                       >
-                        <Copy className="h-4 w-4 text-slate-600" />
+                        <Copy className="h-4 w-4 text-fg-600" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -2702,7 +2702,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                         size="sm"
                         onClick={() => handleDeleteArea(area)}
                       >
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <Trash2 className="h-4 w-4 text-status-red-fg" />
                       </Button>
                     </div>
                   </div>
@@ -2715,7 +2715,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                     <Plus className="h-4 w-4 mr-2" />
                     Add Cabinet
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setSelectedAreaForCountertop(area.id)} className="w-full sm:w-auto border-orange-300 hover:bg-orange-50">
+                  <Button size="sm" variant="outline" onClick={() => setSelectedAreaForCountertop(area.id)} className="w-full sm:w-auto border-status-orange-brd hover:bg-status-orange-bg">
                     <Hammer className="h-4 w-4 mr-2" />
                     Add Countertop
                   </Button>
@@ -2723,7 +2723,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                     <ListPlus className="h-4 w-4 mr-2" />
                     Add Item
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleAddSection(area.id)} className="w-full sm:w-auto border-purple-300 hover:bg-purple-50 text-purple-700">
+                  <Button size="sm" variant="outline" onClick={() => handleAddSection(area.id)} className="w-full sm:w-auto border-accent-tint-border hover:bg-accent-tint-soft text-accent-text">
                     <SeparatorHorizontal className="h-4 w-4 mr-2" />
                     Add Section
                   </Button>
@@ -2733,7 +2733,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                     Add Closet
                   </Button>
                   */}
-                  <Button size="sm" variant="outline" onClick={() => { setSelectedAreaForPrefab(area.id); setEditingPrefabItem(null); }} className="w-full sm:w-auto border-indigo-300 hover:bg-indigo-50 text-indigo-700">
+                  <Button size="sm" variant="outline" onClick={() => { setSelectedAreaForPrefab(area.id); setEditingPrefabItem(null); }} className="w-full sm:w-auto border-indigo-300 hover:bg-accent-tint-soft text-accent-text">
                     <Boxes className="h-4 w-4 mr-2" />
                     Add Prefab
                   </Button>
@@ -2741,7 +2741,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
                 {area.cabinets.length === 0 && area.items.length === 0 && area.countertops.length === 0 && (area.closetItems || []).length === 0 && (area.prefabItems || []).length === 0 && (area.sections || []).length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-slate-600 mb-3">No cabinets, countertops, items, closets, or prefab in this area</p>
+                    <p className="text-fg-600 mb-3">No cabinets, countertops, items, closets, or prefab in this area</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -2804,18 +2804,18 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                               onDrop={(e) => handleMergedDrop(e, area.id, mergedIndex)}
                             >
                               {isDropBefore && (
-                                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-green-500 z-10" style={{ marginTop: '-1px' }} />
+                                <div className="absolute top-0 left-0 right-0 h-0.5 bg-accent-primary z-10" style={{ marginTop: '-1px' }} />
                               )}
                               {isDropAfter && (
-                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-green-500 z-10" style={{ marginBottom: '-1px' }} />
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent-primary z-10" style={{ marginBottom: '-1px' }} />
                               )}
                               <div className="flex items-start gap-2">
                                 {totalMerged > 1 && (
                                   <div
-                                    className="flex-shrink-0 mt-3 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-slate-100 transition-colors"
+                                    className="flex-shrink-0 mt-3 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-surf-muted transition-colors"
                                     title="Drag to reorder"
                                   >
-                                    <GripVertical className="h-4 w-4 text-slate-300" />
+                                    <GripVertical className="h-4 w-4 text-fg-300" />
                                   </div>
                                 )}
                                 <div className="flex-1 min-w-0">
@@ -2841,39 +2841,39 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
                     {area.countertops.length > 0 && (
                       <div className="space-y-2">
-                        <h4 className="font-semibold text-slate-700 text-sm">Countertops</h4>
+                        <h4 className="font-semibold text-fg-700 text-sm">Countertops</h4>
                         <div className="space-y-2">
                           {area.countertops.map((countertop) => (
                             <div
                               key={countertop.id}
-                              className="bg-orange-50 border border-orange-200 rounded-lg p-4"
+                              className="bg-status-orange-bg border border-status-orange-brd rounded-lg p-4"
                             >
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2">
-                                    <h4 className="font-semibold text-slate-900">{countertop.item_name}</h4>
-                                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded">
+                                    <h4 className="font-semibold text-fg-900">{countertop.item_name}</h4>
+                                    <span className="text-xs bg-status-orange-bg text-status-orange-fg px-2 py-0.5 rounded">
                                       Countertop
                                     </span>
                                   </div>
                                   <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                                     <div className="flex justify-between">
-                                      <span className="text-slate-600">Quantity:</span>
+                                      <span className="text-fg-600">Quantity:</span>
                                       <span className="font-medium">{countertop.quantity}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-slate-600">Unit Price:</span>
+                                      <span className="text-fg-600">Unit Price:</span>
                                       <span className="font-medium">{formatPrice(countertop.unit_price)}</span>
                                     </div>
-                                    <div className="flex justify-between col-span-2 pt-1 border-t border-orange-200">
-                                      <span className="text-slate-600 font-medium">Subtotal:</span>
-                                      <span className="font-semibold text-orange-900">
+                                    <div className="flex justify-between col-span-2 pt-1 border-t border-status-orange-brd">
+                                      <span className="text-fg-600 font-medium">Subtotal:</span>
+                                      <span className="font-semibold text-status-orange-fg">
                                         {formatPrice(countertop.subtotal)}
                                       </span>
                                     </div>
                                   </div>
                                   {countertop.notes && (
-                                    <div className="mt-2 text-xs text-slate-600 italic">
+                                    <div className="mt-2 text-xs text-fg-600 italic">
                                       Note: {countertop.notes}
                                     </div>
                                   )}
@@ -2887,14 +2887,14 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                       setEditingCountertop(countertop);
                                     }}
                                   >
-                                    <Edit2 className="h-4 w-4 text-slate-600" />
+                                    <Edit2 className="h-4 w-4 text-fg-600" />
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleDeleteCountertop(countertop.id)}
                                   >
-                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                    <Trash2 className="h-4 w-4 text-status-red-fg" />
                                   </Button>
                                 </div>
                               </div>
@@ -2906,39 +2906,39 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
                     {area.items.length > 0 && (
                       <div className="space-y-2">
-                        <h4 className="font-semibold text-slate-700 text-sm">Individual Items</h4>
+                        <h4 className="font-semibold text-fg-700 text-sm">Individual Items</h4>
                         <div className="space-y-2">
                           {area.items.map((item) => (
                             <div
                               key={item.id}
-                              className="bg-amber-50 border border-amber-200 rounded-lg p-4"
+                              className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4"
                             >
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2">
-                                    <h4 className="font-semibold text-slate-900">{item.item_name}</h4>
-                                    <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">
+                                    <h4 className="font-semibold text-fg-900">{item.item_name}</h4>
+                                    <span className="text-xs bg-status-amber-bg text-status-amber-fg px-2 py-0.5 rounded">
                                       Item
                                     </span>
                                   </div>
                                   <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                                     <div className="flex justify-between">
-                                      <span className="text-slate-600">Quantity:</span>
+                                      <span className="text-fg-600">Quantity:</span>
                                       <span className="font-medium">{item.quantity}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-slate-600">Unit Price:</span>
+                                      <span className="text-fg-600">Unit Price:</span>
                                       <span className="font-medium">{formatPrice(item.unit_price)}</span>
                                     </div>
-                                    <div className="flex justify-between col-span-2 pt-1 border-t border-amber-200">
-                                      <span className="text-slate-600 font-medium">Subtotal:</span>
-                                      <span className="font-semibold text-amber-900">
+                                    <div className="flex justify-between col-span-2 pt-1 border-t border-status-amber-brd">
+                                      <span className="text-fg-600 font-medium">Subtotal:</span>
+                                      <span className="font-semibold text-status-amber-fg">
                                         {formatPrice(item.subtotal)}
                                       </span>
                                     </div>
                                   </div>
                                   {item.notes && (
-                                    <div className="mt-2 text-xs text-slate-600 italic">
+                                    <div className="mt-2 text-xs text-fg-600 italic">
                                       Note: {item.notes}
                                     </div>
                                   )}
@@ -2949,14 +2949,14 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                     size="sm"
                                     onClick={() => handleEditItem(item)}
                                   >
-                                    <Edit2 className="h-4 w-4 text-slate-600" />
+                                    <Edit2 className="h-4 w-4 text-fg-600" />
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleDeleteItem(item.id)}
                                   >
-                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                    <Trash2 className="h-4 w-4 text-status-red-fg" />
                                   </Button>
                                 </div>
                               </div>
@@ -2968,60 +2968,60 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
                     {(area.prefabItems || []).length > 0 && (
                       <div className="space-y-2">
-                        <h4 className="font-semibold text-slate-700 text-sm">Prefab Cabinets</h4>
+                        <h4 className="font-semibold text-fg-700 text-sm">Prefab Cabinets</h4>
                         <div className="space-y-2">
                           {(area.prefabItems || []).map((prefabItem) => {
                             const catalog = (prefabItem as AreaPrefabItem & { catalog_item?: { cabinet_code: string; description: string | null; width_in: number | null; height_in: number | null; depth_in: number | null; category: string; brand?: { name: string } | null } }).catalog_item;
                             return (
                               <div
                                 key={prefabItem.id}
-                                className="bg-indigo-50 border border-indigo-200 rounded-lg p-4"
+                                className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4"
                               >
                                 <div className="flex justify-between items-start">
                                   <div className="flex-1">
                                     <div className="flex items-center space-x-2 flex-wrap gap-1">
-                                      <h4 className="font-semibold text-slate-900">
+                                      <h4 className="font-semibold text-fg-900">
                                         {catalog?.brand?.name ?? 'Prefab'} — {catalog?.description ?? catalog?.cabinet_code ?? 'Item'}
                                       </h4>
-                                      <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded">
+                                      <span className="text-xs bg-accent-tint-strong text-accent-text px-2 py-0.5 rounded">
                                         Prefab
                                       </span>
                                       {catalog && (
-                                        <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                                        <span className="text-xs font-mono bg-surf-muted text-fg-600 px-2 py-0.5 rounded">
                                           {catalog.cabinet_code}
                                         </span>
                                       )}
-                                      <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+                                      <span className="text-xs bg-surf-muted text-fg-700 px-2 py-0.5 rounded">
                                         {prefabItem.finish}
                                       </span>
                                     </div>
                                     {catalog && (
-                                      <div className="mt-1 text-xs text-indigo-700">
+                                      <div className="mt-1 text-xs text-accent-text">
                                         {catalog.category} · {catalog.width_in ?? '—'}" W × {catalog.height_in ?? '—'}" H × {catalog.depth_in ?? '—'}" D
                                       </div>
                                     )}
                                     <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                                       <div className="flex justify-between">
-                                        <span className="text-slate-600">Quantity:</span>
+                                        <span className="text-fg-600">Quantity:</span>
                                         <span className="font-medium">{prefabItem.quantity}</span>
                                       </div>
                                       <div className="flex justify-between">
-                                        <span className="text-slate-600">Unit Cost:</span>
+                                        <span className="text-fg-600">Unit Cost:</span>
                                         <span className="font-medium">${prefabItem.cost_usd.toFixed(2)} USD</span>
                                       </div>
                                       <div className="flex justify-between">
-                                        <span className="text-slate-600">FX (snapshot):</span>
+                                        <span className="text-fg-600">FX (snapshot):</span>
                                         <span className="font-medium">{prefabItem.fx_rate.toFixed(2)}</span>
                                       </div>
-                                      <div className="flex justify-between col-span-2 pt-1 border-t border-indigo-200">
-                                        <span className="text-slate-600 font-medium">Subtotal:</span>
-                                        <span className="font-semibold text-indigo-900">
+                                      <div className="flex justify-between col-span-2 pt-1 border-t border-accent-tint-border">
+                                        <span className="text-fg-600 font-medium">Subtotal:</span>
+                                        <span className="font-semibold text-accent-text">
                                           {formatPrice(prefabItem.cost_mxn)}
                                         </span>
                                       </div>
                                     </div>
                                     {prefabItem.notes && (
-                                      <div className="mt-2 text-xs text-slate-600 italic">
+                                      <div className="mt-2 text-xs text-fg-600 italic">
                                         Note: {prefabItem.notes}
                                       </div>
                                     )}
@@ -3035,14 +3035,14 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                         setEditingPrefabItem(prefabItem);
                                       }}
                                     >
-                                      <Edit2 className="h-4 w-4 text-slate-600" />
+                                      <Edit2 className="h-4 w-4 text-fg-600" />
                                     </Button>
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => handleDeletePrefabItem(prefabItem.id)}
                                     >
-                                      <Trash2 className="h-4 w-4 text-red-600" />
+                                      <Trash2 className="h-4 w-4 text-status-red-fg" />
                                     </Button>
                                   </div>
                                 </div>
@@ -3055,7 +3055,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
                     {(area.closetItems || []).length > 0 && (
                       <div className="space-y-2">
-                        <h4 className="font-semibold text-slate-700 text-sm">Prefab Closets</h4>
+                        <h4 className="font-semibold text-fg-700 text-sm">Prefab Closets</h4>
                         <div className="space-y-2">
                           {(area.closetItems || []).map((closetItem) => (
                             <div
@@ -3065,7 +3065,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2 flex-wrap gap-1">
-                                    <h4 className="font-semibold text-slate-900">
+                                    <h4 className="font-semibold text-fg-900">
                                       {closetItem.catalog_item
                                         ? `${closetItem.catalog_item.evita_line} — ${closetItem.catalog_item.description}`
                                         : 'Closet Item'}
@@ -3074,7 +3074,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                       Prefab Closet
                                     </span>
                                     {closetItem.catalog_item && (
-                                      <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                                      <span className="text-xs font-mono bg-surf-muted text-fg-600 px-2 py-0.5 rounded">
                                         {closetItem.catalog_item.cabinet_code}
                                       </span>
                                     )}
@@ -3089,22 +3089,22 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                   )}
                                   <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                                     <div className="flex justify-between">
-                                      <span className="text-slate-600">Quantity:</span>
+                                      <span className="text-fg-600">Quantity:</span>
                                       <span className="font-medium">{closetItem.quantity}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-slate-600">Unit Price:</span>
+                                      <span className="text-fg-600">Unit Price:</span>
                                       <span className="font-medium">${closetItem.unit_price_usd.toFixed(2)} USD</span>
                                     </div>
                                     <div className="flex justify-between col-span-2 pt-1 border-t border-teal-200">
-                                      <span className="text-slate-600 font-medium">Subtotal:</span>
+                                      <span className="text-fg-600 font-medium">Subtotal:</span>
                                       <span className="font-semibold text-teal-900">
                                         {formatPrice(closetItem.subtotal_mxn)}
                                       </span>
                                     </div>
                                   </div>
                                   {closetItem.notes && (
-                                    <div className="mt-2 text-xs text-slate-600 italic">
+                                    <div className="mt-2 text-xs text-fg-600 italic">
                                       Note: {closetItem.notes}
                                     </div>
                                   )}
@@ -3118,14 +3118,14 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                       setEditingClosetItem(closetItem);
                                     }}
                                   >
-                                    <Edit2 className="h-4 w-4 text-slate-600" />
+                                    <Edit2 className="h-4 w-4 text-fg-600" />
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleDeleteClosetItem(closetItem.id)}
                                   >
-                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                    <Trash2 className="h-4 w-4 text-status-red-fg" />
                                   </Button>
                                 </div>
                               </div>
@@ -3290,14 +3290,14 @@ function AreaFormModal({ area, onSave, onClose, tariffMultiplier }: AreaFormModa
 
         {!area && (
           <div>
-            <p className="text-sm text-slate-600 mb-2">Or choose a preset:</p>
+            <p className="text-sm text-fg-600 mb-2">Or choose a preset:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {areaPresets.map((preset) => (
                 <button
                   key={preset}
                   type="button"
                   onClick={() => setName(preset)}
-                  className="px-3 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50 text-left"
+                  className="px-3 py-2 text-sm border border-border-solid rounded-lg hover:bg-surf-app text-left"
                 >
                   {preset}
                 </button>
@@ -3307,7 +3307,7 @@ function AreaFormModal({ area, onSave, onClose, tariffMultiplier }: AreaFormModa
         )}
 
         {tariffMultiplier > 0 && (
-          <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
+          <div className="border border-border-soft rounded-lg p-3 bg-surf-app">
             <button
               type="button"
               onClick={() => setAppliesTariff((v) => !v)}
@@ -3319,14 +3319,14 @@ function AreaFormModal({ area, onSave, onClose, tariffMultiplier }: AreaFormModa
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-surf-card rounded-full shadow transition-transform ${
                     appliesTariff ? 'translate-x-4' : 'translate-x-0'
                   }`}
                 />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-700">Apply Tariff to this area</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm font-medium text-fg-700">Apply Tariff to this area</p>
+                <p className="text-xs text-fg-500">
                   {appliesTariff
                     ? 'Tariff will be included in this area\'s total'
                     : 'Tariff will not be applied to this area'}

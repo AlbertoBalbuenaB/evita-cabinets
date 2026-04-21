@@ -80,13 +80,13 @@ export function NewProjectModal({ isOpen, onClose, onSuccess }: NewProjectModalP
     <Modal isOpen={isOpen} onClose={handleClose} title="New Project" size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-lg bg-status-red-bg border border-status-red-brd px-4 py-3 text-sm text-status-red-fg">
             {error}
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="block text-sm font-medium text-fg-700 mb-1">
             Project Name <span className="text-red-500">*</span>
           </label>
           <Input
@@ -99,7 +99,7 @@ export function NewProjectModal({ isOpen, onClose, onSuccess }: NewProjectModalP
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Customer</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Customer</label>
           <Input
             value={customer}
             onChange={(e) => setCustomer(e.target.value)}
@@ -109,7 +109,7 @@ export function NewProjectModal({ isOpen, onClose, onSuccess }: NewProjectModalP
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Address</label>
           <Input
             value={address}
             onChange={(e) => setAddress(e.target.value)}
@@ -119,12 +119,12 @@ export function NewProjectModal({ isOpen, onClose, onSuccess }: NewProjectModalP
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Project Type</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Project Type</label>
           <select
             value={projectType}
             onChange={(e) => setProjectType(e.target.value)}
             disabled={saving}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80 text-slate-700"
+            className="w-full px-3 py-2 text-sm border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card text-fg-700"
           >
             <option value="">— Select type —</option>
             {PROJECT_TYPES.map(t => (

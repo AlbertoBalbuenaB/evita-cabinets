@@ -52,11 +52,11 @@ export function KbProposals() {
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <Link to="/kb" className="text-sm text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1 mb-2">
+            <Link to="/kb" className="text-sm text-accent-text hover:text-accent-text inline-flex items-center gap-1 mb-2">
               <BookOpen className="w-4 h-4" /> Knowledge Base
             </Link>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Proposals</h1>
-            <p className="text-sm text-slate-700 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-fg-900">Proposals</h1>
+            <p className="text-sm text-fg-700 mt-1">
               Cambios propuestos al KB. Los admins revisan, aprueban y mergean.
             </p>
           </div>
@@ -71,7 +71,7 @@ export function KbProposals() {
 
       <div className="glass-white rounded-2xl p-3 sm:p-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <Filter className="w-4 h-4 text-slate-500" />
+          <Filter className="w-4 h-4 text-fg-500" />
           {STATE_FILTERS.map((f) => {
             const active = f.value === stateFilter;
             const count = f.value ? counts[f.value] : proposals.length;
@@ -83,12 +83,12 @@ export function KbProposals() {
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition ${
                   active
                     ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'glass-white text-slate-700 border-slate-200/70 hover:bg-indigo-50'
+                    : 'glass-white text-fg-700 border-border-soft hover:bg-accent-tint-soft'
                 }`}
               >
                 {f.label}
                 {count !== undefined && (
-                  <span className={`text-[10px] ${active ? 'text-white/90' : 'text-slate-500'}`}>{count}</span>
+                  <span className={`text-[10px] ${active ? 'text-white/90' : 'text-fg-500'}`}>{count}</span>
                 )}
               </button>
             );
@@ -97,7 +97,7 @@ export function KbProposals() {
       </div>
 
       {error && (
-        <div className="glass-white rounded-xl p-4 border border-red-200/70 text-sm text-red-700">
+        <div className="glass-white rounded-xl p-4 border border-status-red-brd text-sm text-status-red-fg">
           {error}
         </div>
       )}
@@ -109,7 +109,7 @@ export function KbProposals() {
           ))}
         </div>
       ) : proposals.length === 0 ? (
-        <div className="glass-white rounded-2xl p-8 text-center text-slate-500">
+        <div className="glass-white rounded-2xl p-8 text-center text-fg-500">
           No hay propuestas en este filtro.
         </div>
       ) : (
@@ -118,16 +118,16 @@ export function KbProposals() {
             <li key={p.id}>
               <Link
                 to={`/kb/proposals/${p.id}`}
-                className="glass-white rounded-xl p-4 block transition hover:bg-indigo-50/30 hover:shadow-md row-enter"
+                className="glass-white rounded-xl p-4 block transition hover:bg-accent-tint-soft hover:shadow-md row-enter"
               >
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <KbProposalStateBadge state={p.state} compact />
-                      <span className="text-xs font-mono text-slate-500">{p.kind}</span>
+                      <span className="text-xs font-mono text-fg-500">{p.kind}</span>
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-900 truncate">{p.summary}</h3>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <h3 className="text-sm font-semibold text-fg-900 truncate">{p.summary}</h3>
+                    <p className="text-xs text-fg-500 mt-1">
                       {members[p.author_id] ?? 'Unknown'} · {new Date(p.created_at).toLocaleDateString()}
                       {p.target_entry_id && <span className="ml-1">· targets existing entry</span>}
                     </p>

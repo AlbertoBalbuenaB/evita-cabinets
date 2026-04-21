@@ -116,13 +116,13 @@ export function TemplateSelectorModal({
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-fg-400" />
               <input
                 type="text"
                 placeholder="Search templates..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
               />
             </div>
           </div>
@@ -130,7 +130,7 @@ export function TemplateSelectorModal({
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
           >
             <option value="All">All Categories</option>
             {TEMPLATE_CATEGORIES.map(cat => (
@@ -141,44 +141,44 @@ export function TemplateSelectorModal({
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="text-slate-600">Loading templates...</div>
+            <div className="text-fg-600">Loading templates...</div>
           </div>
         ) : filteredTemplates.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-slate-600">No templates found</p>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-fg-600">No templates found</p>
+            <p className="text-sm text-fg-500 mt-1">
               Try adjusting your search or create a new template
             </p>
           </div>
         ) : (
-          <div className="max-h-96 overflow-y-auto border border-slate-200 rounded-lg">
-            <div className="grid grid-cols-1 divide-y divide-slate-200">
+          <div className="max-h-96 overflow-y-auto border border-border-soft rounded-lg">
+            <div className="grid grid-cols-1 divide-y divide-border-soft">
               {filteredTemplates.map(template => (
                 <button
                   key={template.id}
                   onClick={() => setSelectedTemplate(template)}
-                  className={`text-left p-4 hover:bg-slate-50 transition-colors ${
-                    selectedTemplate?.id === template.id ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''
+                  className={`text-left p-4 hover:bg-surf-app transition-colors ${
+                    selectedTemplate?.id === template.id ? 'bg-accent-tint-soft border-l-4 border-l-blue-600' : ''
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-slate-900">{template.name}</h3>
-                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
+                        <h3 className="font-semibold text-fg-900">{template.name}</h3>
+                        <span className="px-2 py-0.5 bg-accent-tint-soft text-accent-text text-xs rounded">
                           {template.category}
                         </span>
                       </div>
                       {template.description && (
-                        <p className="text-sm text-slate-600 mt-1 line-clamp-1">
+                        <p className="text-sm text-fg-600 mt-1 line-clamp-1">
                           {template.description}
                         </p>
                       )}
-                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-fg-500">
                         <span>Product: {template.product_sku || 'N/A'}</span>
                         <span>Used {template.usage_count} times</span>
                         {(template.use_box_interior_finish || template.use_doors_interior_finish) && (
-                          <span className="flex items-center gap-1 text-amber-600 font-medium">
+                          <span className="flex items-center gap-1 text-status-amber-fg font-medium">
                             <Layers className="h-3 w-3" />
                             Composite Materials
                           </span>
@@ -186,7 +186,7 @@ export function TemplateSelectorModal({
                       </div>
                     </div>
                     {selectedTemplate?.id === template.id && (
-                      <Check className="h-5 w-5 text-blue-600 flex-shrink-0 ml-2" />
+                      <Check className="h-5 w-5 text-accent-text flex-shrink-0 ml-2" />
                     )}
                   </div>
                 </button>
@@ -196,24 +196,24 @@ export function TemplateSelectorModal({
         )}
 
         {selectedTemplate && validationStatus && !validationStatus.isValid && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4">
             <div className="flex items-start">
-              <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-status-amber-fg flex-shrink-0 mt-0.5" />
               <div className="ml-3 flex-1">
-                <h4 className="text-sm font-medium text-yellow-800 mb-2">
+                <h4 className="text-sm font-medium text-status-amber-fg mb-2">
                   Some materials are no longer available
                 </h4>
-                <ul className="text-sm text-yellow-700 space-y-1">
+                <ul className="text-sm text-status-amber-fg space-y-1">
                   {validationStatus.missingMaterials.map((material, index) => (
                     <li key={index}>• {material}</li>
                   ))}
                 </ul>
                 {validationStatus.inactiveProduct && (
-                  <p className="text-sm text-yellow-700 mt-2">
+                  <p className="text-sm text-status-amber-fg mt-2">
                     • The product associated with this template is inactive
                   </p>
                 )}
-                <p className="text-sm text-yellow-800 mt-2 font-medium">
+                <p className="text-sm text-status-amber-fg mt-2 font-medium">
                   You will need to select alternative materials after loading this template.
                 </p>
               </div>
@@ -222,19 +222,19 @@ export function TemplateSelectorModal({
         )}
 
         {selectedTemplate && validationStatus?.isValid && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="bg-status-emerald-bg border border-status-emerald-brd rounded-lg p-3">
             <div className="space-y-2">
-              <p className="text-sm text-green-800">
+              <p className="text-sm text-status-emerald-fg">
                 <Check className="h-4 w-4 inline mr-1" />
                 All materials are available. Template is ready to use.
               </p>
               {(selectedTemplate.use_box_interior_finish || selectedTemplate.use_doors_interior_finish) && (
-                <div className="bg-amber-50 border border-amber-200 rounded p-2 mt-2">
-                  <p className="text-xs text-amber-800 flex items-center gap-1">
+                <div className="bg-status-amber-bg border border-status-amber-brd rounded p-2 mt-2">
+                  <p className="text-xs text-status-amber-fg flex items-center gap-1">
                     <Layers className="h-3.5 w-3.5" />
                     <span className="font-medium">This template uses composite materials:</span>
                   </p>
-                  <ul className="text-xs text-amber-700 mt-1 ml-5 space-y-0.5">
+                  <ul className="text-xs text-status-amber-fg mt-1 ml-5 space-y-0.5">
                     {selectedTemplate.use_box_interior_finish && (
                       <li>• Box: {selectedTemplate.box_material_name} + {selectedTemplate.box_interior_finish_name}</li>
                     )}
@@ -242,7 +242,7 @@ export function TemplateSelectorModal({
                       <li>• Doors: {selectedTemplate.doors_material_name} + {selectedTemplate.doors_interior_finish_name}</li>
                     )}
                   </ul>
-                  <p className="text-xs text-amber-600 mt-1.5 italic">
+                  <p className="text-xs text-status-amber-fg mt-1.5 italic">
                     Both materials will require the same number of sheets.
                   </p>
                 </div>
@@ -251,7 +251,7 @@ export function TemplateSelectorModal({
           </div>
         )}
 
-        <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-border-soft">
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>

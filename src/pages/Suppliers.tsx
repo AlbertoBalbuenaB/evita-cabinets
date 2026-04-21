@@ -34,9 +34,9 @@ function computeHealth(supplier: Supplier): HealthScore {
 }
 
 const HEALTH_STYLES: Record<HealthScore, { label: string; className: string }> = {
-  green:  { label: 'Good',    className: 'bg-green-100 text-green-700 border border-green-200' },
-  yellow: { label: 'Average', className: 'bg-amber-100 text-amber-700 border border-amber-200' },
-  red:    { label: 'Poor',    className: 'bg-red-100 text-red-700 border border-red-200' },
+  green:  { label: 'Good',    className: 'bg-status-emerald-bg text-status-emerald-fg border border-status-emerald-brd' },
+  yellow: { label: 'Average', className: 'bg-status-amber-bg text-status-amber-fg border border-status-amber-brd' },
+  red:    { label: 'Poor',    className: 'bg-status-red-bg text-status-red-fg border border-status-red-brd' },
   none:   { label: '',        className: '' },
 };
 
@@ -63,7 +63,7 @@ function SupplierAvatar({ name, logoUrl, size = 'sm' }: { name: string; logoUrl?
   const sizeClass = size === 'lg' ? 'h-12 w-12 text-base' : 'h-9 w-9 text-xs';
   if (logoUrl) {
     return (
-      <div className={`rounded-xl overflow-hidden bg-white border border-slate-200/60 flex-shrink-0 flex items-center justify-center ${sizeClass}`}>
+      <div className={`rounded-xl overflow-hidden bg-surf-card border border-border-soft flex-shrink-0 flex items-center justify-center ${sizeClass}`}>
         <img src={logoUrl} alt={name} className="w-full h-full object-contain p-0.5" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.parentElement as HTMLElement).classList.add('bg-gradient-to-br', ...gradient.split(' ')); }} />
       </div>
     );
@@ -97,8 +97,8 @@ function SupplierCard({
   return (
     <div
       onClick={onClick}
-      className={`relative group bg-white border rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
-        supplier.is_active ? 'border-slate-200/80' : 'border-slate-200/40 opacity-60'
+      className={`relative group bg-surf-card border rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
+        supplier.is_active ? 'border-border-soft' : 'border-border-soft opacity-60'
       }`}
     >
       {/* Header row */}
@@ -112,7 +112,7 @@ function SupplierCard({
           )}
           <span
             className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-              supplier.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
+              supplier.is_active ? 'bg-status-emerald-bg text-status-emerald-fg' : 'bg-surf-muted text-fg-500'
             }`}
           >
             {supplier.is_active ? 'Active' : 'Inactive'}
@@ -121,49 +121,49 @@ function SupplierCard({
       </div>
 
       {/* Name */}
-      <h3 className="font-semibold text-slate-900 text-sm leading-tight mb-1">{supplier.name}</h3>
+      <h3 className="font-semibold text-fg-900 text-sm leading-tight mb-1">{supplier.name}</h3>
 
       {/* Categories */}
       {categories.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {categories.slice(0, 3).map((cat) => (
-            <span key={cat} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-600">
+            <span key={cat} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-accent-tint-soft text-accent-text">
               <Tag className="h-2.5 w-2.5" />
               {cat}
             </span>
           ))}
           {categories.length > 3 && (
-            <span className="text-xs text-slate-400">+{categories.length - 3}</span>
+            <span className="text-xs text-fg-400">+{categories.length - 3}</span>
           )}
         </div>
       )}
 
       {/* Contact info */}
-      <div className="space-y-1 text-xs text-slate-500">
+      <div className="space-y-1 text-xs text-fg-500">
         {supplier.contact_name && (
           <div className="flex items-center gap-1.5 truncate">
-            <span className="text-slate-400 text-[10px] uppercase font-semibold tracking-wide w-14 flex-shrink-0">Contact</span>
+            <span className="text-fg-400 text-[10px] uppercase font-semibold tracking-wide w-14 flex-shrink-0">Contact</span>
             <span className="truncate">{supplier.contact_name}</span>
           </div>
         )}
         {supplier.phone && (
           <div className="flex items-center gap-1.5 truncate">
-            <Phone className="h-3 w-3 text-slate-300 flex-shrink-0" />
+            <Phone className="h-3 w-3 text-fg-300 flex-shrink-0" />
             <span className="truncate">{supplier.phone}</span>
           </div>
         )}
         {supplier.email && (
           <div className="flex items-center gap-1.5 truncate">
-            <Mail className="h-3 w-3 text-slate-300 flex-shrink-0" />
+            <Mail className="h-3 w-3 text-fg-300 flex-shrink-0" />
             <span className="truncate">{supplier.email}</span>
           </div>
         )}
       </div>
 
       {/* Footer: item count + quality */}
-      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Package className="h-3.5 w-3.5 text-slate-300" />
+      <div className="mt-3 pt-3 border-t border-border-soft flex items-center justify-between">
+        <div className="flex items-center gap-1 text-xs text-fg-500">
+          <Package className="h-3.5 w-3.5 text-fg-300" />
           <span>{supplier.item_count} item{supplier.item_count !== 1 ? 's' : ''}</span>
         </div>
         {supplier.quality_score != null && (
@@ -171,7 +171,7 @@ function SupplierCard({
             {[1, 2, 3, 4, 5].map((i) => (
               <Star
                 key={i}
-                className={`h-3 w-3 ${i <= (supplier.quality_score ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-200'}`}
+                className={`h-3 w-3 ${i <= (supplier.quality_score ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-fg-400 fill-slate-200'}`}
               />
             ))}
           </div>
@@ -183,17 +183,17 @@ function SupplierCard({
         <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={onEdit}
-            className="p-1.5 rounded-lg bg-white shadow-sm border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-colors"
+            className="p-1.5 rounded-lg bg-surf-card shadow-sm border border-border-soft text-fg-400 hover:text-accent-text hover:border-accent-tint-border transition-colors"
             title="Edit supplier"
           >
             <Edit2 className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={onToggle}
-            className={`p-1.5 rounded-lg bg-white shadow-sm border border-slate-200 transition-colors ${
+            className={`p-1.5 rounded-lg bg-surf-card shadow-sm border border-border-soft transition-colors ${
               supplier.is_active
-                ? 'text-slate-400 hover:text-amber-600 hover:border-amber-200'
-                : 'text-slate-400 hover:text-green-600 hover:border-green-200'
+                ? 'text-fg-400 hover:text-status-amber-fg hover:border-status-amber-brd'
+                : 'text-fg-400 hover:text-status-emerald-fg hover:border-status-emerald-brd'
             }`}
             title={supplier.is_active ? 'Deactivate' : 'Activate'}
           >
@@ -363,8 +363,8 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
         {!embedded && (
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hero-enter">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">Suppliers</h1>
-              <p className="mt-1 text-slate-500 text-sm">
+              <h1 className="text-3xl font-bold text-fg-900">Suppliers</h1>
+              <p className="mt-1 text-fg-500 text-sm">
                 {suppliers.filter((s) => s.is_active).length} active supplier
                 {suppliers.filter((s) => s.is_active).length !== 1 ? 's' : ''}
                 {' '}· Manage vendor contacts and purchase sources
@@ -384,33 +384,33 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             {/* Search */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-400 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search by name, contact, email, or category..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+                className="w-full pl-10 pr-4 py-2.5 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-blue-500 text-sm bg-surf-card"
               />
             </div>
 
             {/* Show inactive */}
-            <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-slate-600 whitespace-nowrap">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-fg-600 whitespace-nowrap">
               <input
                 type="checkbox"
                 checked={showInactive}
                 onChange={(e) => setShowInactive(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-border-solid text-accent-text focus-visible:ring-focus"
               />
               Show inactive
             </label>
 
             {/* View mode toggle */}
-            <div className="flex p-1 bg-slate-100 rounded-lg flex-shrink-0">
+            <div className="flex p-1 bg-surf-muted rounded-lg flex-shrink-0">
               <button
                 onClick={() => setViewMode('card')}
                 className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === 'card' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                  viewMode === 'card' ? 'bg-surf-card text-accent-text shadow-sm' : 'text-fg-400 hover:text-fg-600'
                 }`}
                 title="Card view"
               >
@@ -419,7 +419,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
               <button
                 onClick={() => setViewMode('list')}
                 className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                  viewMode === 'list' ? 'bg-surf-card text-accent-text shadow-sm' : 'text-fg-400 hover:text-fg-600'
                 }`}
                 title="List view"
               >
@@ -439,7 +439,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
           {/* Category filter chips */}
           {allCategories.length > 0 && (
             <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-xs text-slate-400 font-medium whitespace-nowrap">Filter by type:</span>
+              <span className="text-xs text-fg-400 font-medium whitespace-nowrap">Filter by type:</span>
               {allCategories.map((cat) => {
                 const active = selectedCategories.includes(cat);
                 return (
@@ -448,8 +448,8 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                     onClick={() => toggleCategory(cat)}
                     className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                       active
-                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                        : 'bg-slate-100 text-slate-500 border border-transparent hover:bg-slate-200'
+                        ? 'bg-accent-tint-soft text-accent-text border border-accent-tint-border'
+                        : 'bg-surf-muted text-fg-500 border border-transparent hover:bg-surf-muted'
                     }`}
                   >
                     <Tag className="h-3 w-3" />
@@ -461,7 +461,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
               {selectedCategories.length > 0 && (
                 <button
                   onClick={() => setSelectedCategories([])}
-                  className="text-xs text-slate-400 hover:text-slate-600 underline"
+                  className="text-xs text-fg-400 hover:text-fg-600 underline"
                 >
                   Clear
                 </button>
@@ -473,8 +473,8 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
         {/* Content */}
         {filtered.length === 0 ? (
           <div className="glass-white rounded-2xl flex flex-col items-center justify-center py-20 text-center">
-            <Truck className="h-12 w-12 text-slate-300 mb-4" />
-            <p className="text-slate-500 font-medium">
+            <Truck className="h-12 w-12 text-fg-300 mb-4" />
+            <p className="text-fg-500 font-medium">
               {searchTerm || showInactive || selectedCategories.length > 0
                 ? 'No suppliers match your filters.'
                 : 'No suppliers yet.'}
@@ -508,16 +508,16 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200/60 bg-slate-50/60">
-                    <th className="text-left px-5 py-3 font-semibold text-slate-600">Name</th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-600 hidden sm:table-cell">Contact</th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-600 hidden md:table-cell">Phone</th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-600 hidden lg:table-cell">Categories</th>
-                    <th className="text-center px-4 py-3 font-semibold text-slate-600 hidden lg:table-cell">Lead Time</th>
-                    <th className="text-center px-4 py-3 font-semibold text-slate-600"># Items</th>
-                    <th className="text-center px-4 py-3 font-semibold text-slate-600">Status</th>
+                  <tr className="border-b border-border-soft bg-surf-app">
+                    <th className="text-left px-5 py-3 font-semibold text-fg-600">Name</th>
+                    <th className="text-left px-4 py-3 font-semibold text-fg-600 hidden sm:table-cell">Contact</th>
+                    <th className="text-left px-4 py-3 font-semibold text-fg-600 hidden md:table-cell">Phone</th>
+                    <th className="text-left px-4 py-3 font-semibold text-fg-600 hidden lg:table-cell">Categories</th>
+                    <th className="text-center px-4 py-3 font-semibold text-fg-600 hidden lg:table-cell">Lead Time</th>
+                    <th className="text-center px-4 py-3 font-semibold text-fg-600"># Items</th>
+                    <th className="text-center px-4 py-3 font-semibold text-fg-600">Status</th>
                     {isAdmin && (
-                      <th className="text-right px-5 py-3 font-semibold text-slate-600">Actions</th>
+                      <th className="text-right px-5 py-3 font-semibold text-fg-600">Actions</th>
                     )}
                   </tr>
                 </thead>
@@ -530,7 +530,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                     return (
                       <tr
                         key={supplier.id}
-                        className="hover:bg-slate-50/50 transition-colors cursor-pointer"
+                        className="hover:bg-surf-app transition-colors cursor-pointer"
                         onClick={() => navigate(`/suppliers/${supplier.id}`, {
                           state: embedded ? { from: '/prices?tab=suppliers' } : undefined,
                         })}
@@ -539,18 +539,18 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                           <div className="flex items-center gap-3">
                             <SupplierAvatar name={supplier.name} logoUrl={supplier.logo_url} />
                             <div>
-                              <p className="font-medium text-slate-900">{supplier.name}</p>
+                              <p className="font-medium text-fg-900">{supplier.name}</p>
                               {supplier.payment_terms && (
-                                <p className="text-xs text-slate-400 mt-0.5">{supplier.payment_terms}</p>
+                                <p className="text-xs text-fg-400 mt-0.5">{supplier.payment_terms}</p>
                               )}
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 text-slate-600 hidden sm:table-cell">
-                          {supplier.contact_name || <span className="text-slate-300">—</span>}
+                        <td className="px-4 py-3.5 text-fg-600 hidden sm:table-cell">
+                          {supplier.contact_name || <span className="text-fg-300">—</span>}
                         </td>
-                        <td className="px-4 py-3.5 text-slate-600 hidden md:table-cell">
-                          {supplier.phone || <span className="text-slate-300">—</span>}
+                        <td className="px-4 py-3.5 text-fg-600 hidden md:table-cell">
+                          {supplier.phone || <span className="text-fg-300">—</span>}
                         </td>
                         <td className="px-4 py-3.5 hidden lg:table-cell">
                           {categories.length > 0 ? (
@@ -558,28 +558,28 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                               {categories.slice(0, 3).map((cat) => (
                                 <span
                                   key={cat}
-                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-600"
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-accent-tint-soft text-accent-text"
                                 >
                                   {cat}
                                 </span>
                               ))}
                               {categories.length > 3 && (
-                                <span className="text-xs text-slate-400">+{categories.length - 3}</span>
+                                <span className="text-xs text-fg-400">+{categories.length - 3}</span>
                               )}
                             </div>
                           ) : (
-                            <span className="text-slate-300">—</span>
+                            <span className="text-fg-300">—</span>
                           )}
                         </td>
-                        <td className="px-4 py-3.5 text-center text-slate-600 hidden lg:table-cell">
+                        <td className="px-4 py-3.5 text-center text-fg-600 hidden lg:table-cell">
                           {supplier.lead_time_days != null ? (
                             <span>{supplier.lead_time_days}d</span>
                           ) : (
-                            <span className="text-slate-300">—</span>
+                            <span className="text-fg-300">—</span>
                           )}
                         </td>
                         <td className="px-4 py-3.5 text-center">
-                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-surf-muted text-fg-700 text-xs font-semibold">
                             {supplier.item_count}
                           </span>
                         </td>
@@ -588,8 +588,8 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 supplier.is_active
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-slate-100 text-slate-500'
+                                  ? 'bg-status-emerald-bg text-status-emerald-fg'
+                                  : 'bg-surf-muted text-fg-500'
                               }`}
                             >
                               {supplier.is_active ? 'Active' : 'Inactive'}
@@ -606,7 +606,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                             <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => handleEdit(supplier)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                className="p-1.5 rounded-lg text-fg-400 hover:text-accent-text hover:bg-accent-tint-soft transition-colors"
                                 title="Edit supplier"
                               >
                                 <Edit2 className="h-4 w-4" />
@@ -615,8 +615,8 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                                 onClick={() => handleToggleActive(supplier)}
                                 className={`p-1.5 rounded-lg transition-colors ${
                                   supplier.is_active
-                                    ? 'text-slate-400 hover:text-amber-600 hover:bg-amber-50'
-                                    : 'text-slate-400 hover:text-green-600 hover:bg-green-50'
+                                    ? 'text-fg-400 hover:text-status-amber-fg hover:bg-status-amber-bg'
+                                    : 'text-fg-400 hover:text-status-emerald-fg hover:bg-status-emerald-bg'
                                 }`}
                                 title={supplier.is_active ? 'Deactivate supplier' : 'Activate supplier'}
                               >

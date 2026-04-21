@@ -15,7 +15,7 @@ export function KbDiffViewer({ before, after, mode = 'line', label }: KbDiffView
 
   if (before === after) {
     return (
-      <div className="glass-white rounded-xl p-4 text-sm text-slate-500 italic">
+      <div className="glass-white rounded-xl p-4 text-sm text-fg-500 italic">
         Sin cambios en el contenido.
       </div>
     );
@@ -24,29 +24,29 @@ export function KbDiffViewer({ before, after, mode = 'line', label }: KbDiffView
   return (
     <div className="glass-white rounded-xl overflow-hidden">
       {label && (
-        <div className="grid grid-cols-2 border-b border-slate-200/60 text-xs font-medium text-slate-600">
-          <div className="px-3 py-1.5 bg-rose-50/60">− {label.before}</div>
-          <div className="px-3 py-1.5 bg-emerald-50/60">+ {label.after}</div>
+        <div className="grid grid-cols-2 border-b border-border-soft text-xs font-medium text-fg-600">
+          <div className="px-3 py-1.5 bg-status-red-bg">− {label.before}</div>
+          <div className="px-3 py-1.5 bg-status-emerald-bg">+ {label.after}</div>
         </div>
       )}
       <pre className="text-xs font-mono leading-relaxed overflow-x-auto p-3 whitespace-pre-wrap">
         {changes.map((part, i) => {
           if (part.added) {
             return (
-              <span key={i} className="bg-emerald-100/70 text-emerald-900">
+              <span key={i} className="bg-status-emerald-bg text-status-emerald-fg">
                 {part.value}
               </span>
             );
           }
           if (part.removed) {
             return (
-              <span key={i} className="bg-rose-100/70 text-rose-900 line-through">
+              <span key={i} className="bg-status-red-bg text-status-red-fg line-through">
                 {part.value}
               </span>
             );
           }
           return (
-            <span key={i} className="text-slate-700">
+            <span key={i} className="text-fg-700">
               {part.value}
             </span>
           );

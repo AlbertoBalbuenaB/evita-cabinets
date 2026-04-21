@@ -179,8 +179,8 @@ export function Templates({ embedded = false }: TemplatesProps) {
       {!embedded && (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Cabinet Templates</h1>
-            <p className="mt-1 text-sm text-slate-600">
+            <h1 className="text-2xl sm:text-3xl font-bold text-fg-900">Cabinet Templates</h1>
+            <p className="mt-1 text-sm text-fg-600">
               Reusable cabinet configurations for faster quotations
             </p>
           </div>
@@ -200,20 +200,20 @@ export function Templates({ embedded = false }: TemplatesProps) {
       )}
 
       {recentTemplates.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 section-enter" style={{ animationDelay: '0.05s' }}>
+        <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4 section-enter" style={{ animationDelay: '0.05s' }}>
           <div className="flex items-center mb-3">
-            <Clock className="h-5 w-5 text-blue-600 mr-2" />
-            <h2 className="font-semibold text-slate-900">Recently Used Templates</h2>
+            <Clock className="h-5 w-5 text-accent-text mr-2" />
+            <h2 className="font-semibold text-fg-900">Recently Used Templates</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {recentTemplates.map(template => (
               <button
                 key={template.id}
                 onClick={() => setPreviewTemplate(template)}
-                className="text-left px-3 py-2 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200"
+                className="text-left px-3 py-2 bg-surf-card border border-accent-tint-border rounded-lg hover:bg-accent-tint-soft hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200"
               >
-                <div className="font-medium text-slate-900 text-sm">{template.name}</div>
-                <div className="text-xs text-slate-600 mt-1">
+                <div className="font-medium text-fg-900 text-sm">{template.name}</div>
+                <div className="text-xs text-fg-600 mt-1">
                   Used {template.usage_count} times
                 </div>
               </button>
@@ -222,17 +222,17 @@ export function Templates({ embedded = false }: TemplatesProps) {
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
+      <div className="bg-surf-card rounded-lg border border-border-soft p-4">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-fg-400" />
               <input
                 type="text"
                 placeholder="Search templates..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
               />
             </div>
           </div>
@@ -241,7 +241,7 @@ export function Templates({ embedded = false }: TemplatesProps) {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
             >
               <option value="All">All Categories</option>
               {TEMPLATE_CATEGORIES.map(cat => (
@@ -252,7 +252,7 @@ export function Templates({ embedded = false }: TemplatesProps) {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
             >
               <option value="usage">Most Used</option>
               <option value="recent">Recently Used</option>
@@ -263,14 +263,14 @@ export function Templates({ embedded = false }: TemplatesProps) {
       </div>
 
       {filteredTemplates.length === 0 ? (
-        <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
-          <Bookmark className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-          <p className="text-slate-600 mb-2">
+        <div className="bg-surf-card rounded-lg border border-border-soft p-12 text-center">
+          <Bookmark className="h-12 w-12 text-fg-400 mx-auto mb-4" />
+          <p className="text-fg-600 mb-2">
             {searchTerm || selectedCategory !== 'All'
               ? 'No templates match your search criteria'
               : 'No templates yet'}
           </p>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-fg-500">
             {searchTerm || selectedCategory !== 'All'
               ? 'Try adjusting your filters'
               : 'Create a cabinet in a project and save it as a template to get started'}
@@ -278,7 +278,7 @@ export function Templates({ embedded = false }: TemplatesProps) {
         </div>
       ) : (
         <>
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-fg-600">
             Showing {filteredTemplates.length} of {templates.length} templates
           </div>
 
@@ -286,36 +286,36 @@ export function Templates({ embedded = false }: TemplatesProps) {
             {filteredTemplates.map((template, idx) => (
               <div
                 key={template.id}
-                className={`bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-lg hover:border-blue-300/60 hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
+                className={`bg-surf-card border border-border-soft rounded-lg overflow-hidden hover:shadow-lg hover:border-accent-tint-border hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
               >
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-slate-900">{template.name}</h3>
-                      <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
+                      <h3 className="font-semibold text-fg-900">{template.name}</h3>
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-accent-tint-soft text-accent-text text-xs rounded">
                         {template.category}
                       </span>
                     </div>
                   </div>
 
                   {template.description && (
-                    <p className="text-sm text-slate-600 mt-2 line-clamp-2">
+                    <p className="text-sm text-fg-600 mt-2 line-clamp-2">
                       {template.description}
                     </p>
                   )}
 
-                  <div className="mt-3 pt-3 border-t border-slate-200 space-y-1 text-sm">
-                    <div className="flex justify-between text-slate-600">
+                  <div className="mt-3 pt-3 border-t border-border-soft space-y-1 text-sm">
+                    <div className="flex justify-between text-fg-600">
                       <span>Product:</span>
                       <span className="font-medium">{template.product_sku || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between text-slate-600">
+                    <div className="flex justify-between text-fg-600">
                       <span>Box Material:</span>
                       <span className="font-medium truncate ml-2">
                         {template.box_material_name || 'N/A'}
                       </span>
                     </div>
-                    <div className="flex justify-between text-slate-600">
+                    <div className="flex justify-between text-fg-600">
                       <span>Doors Material:</span>
                       <span className="font-medium truncate ml-2">
                         {template.doors_material_name || 'N/A'}
@@ -323,8 +323,8 @@ export function Templates({ embedded = false }: TemplatesProps) {
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
-                    <div className="text-xs text-slate-500">
+                  <div className="mt-3 pt-3 border-t border-border-soft flex items-center justify-between">
+                    <div className="text-xs text-fg-500">
                       Used {template.usage_count} times
                     </div>
                     <div className="flex space-x-1">
@@ -347,7 +347,7 @@ export function Templates({ embedded = false }: TemplatesProps) {
                         size="sm"
                         onClick={() => setDeletingTemplate(template)}
                       >
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <Trash2 className="h-4 w-4 text-status-red-fg" />
                       </Button>
                     </div>
                   </div>
@@ -393,12 +393,12 @@ export function Templates({ embedded = false }: TemplatesProps) {
           size="sm"
         >
           <div className="space-y-4">
-            <p className="text-slate-700">
+            <p className="text-fg-700">
               Are you sure you want to delete the template "{deletingTemplate.name}"?
             </p>
             {deletingTemplate.usage_count > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p className="text-sm text-yellow-800">
+              <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-3">
+                <p className="text-sm text-status-amber-fg">
                   This template has been used {deletingTemplate.usage_count} times in projects.
                   Deleting it will not affect existing cabinets.
                 </p>
@@ -440,69 +440,69 @@ function TemplatePreviewModal({ template, onClose }: TemplatePreviewModalProps) 
     <Modal isOpen={true} onClose={onClose} title="Template Details" size="lg">
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">{template.name}</h3>
-          <span className="inline-block mt-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+          <h3 className="text-lg font-semibold text-fg-900">{template.name}</h3>
+          <span className="inline-block mt-1 px-2 py-1 bg-accent-tint-soft text-accent-text text-xs rounded">
             {template.category}
           </span>
         </div>
 
         {template.description && (
           <div>
-            <h4 className="text-sm font-medium text-slate-700 mb-1">Description</h4>
-            <p className="text-sm text-slate-600">{template.description}</p>
+            <h4 className="text-sm font-medium text-fg-700 mb-1">Description</h4>
+            <p className="text-sm text-fg-600">{template.description}</p>
           </div>
         )}
 
-        <div className="border-t border-slate-200 pt-4">
-          <h4 className="text-sm font-medium text-slate-700 mb-3">Configuration</h4>
+        <div className="border-t border-border-soft pt-4">
+          <h4 className="text-sm font-medium text-fg-700 mb-3">Configuration</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-slate-500">Product SKU</label>
-              <p className="text-sm font-medium text-slate-900">{template.product_sku || 'N/A'}</p>
+              <label className="text-xs text-fg-500">Product SKU</label>
+              <p className="text-sm font-medium text-fg-900">{template.product_sku || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-xs text-slate-500">RTA Status</label>
-              <p className="text-sm font-medium text-slate-900">
+              <label className="text-xs text-fg-500">RTA Status</label>
+              <p className="text-sm font-medium text-fg-900">
                 {template.is_rta ? 'Ready to Assemble' : 'Pre-Assembled'}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-slate-200 pt-4">
-          <h4 className="text-sm font-medium text-slate-700 mb-3">Box Construction</h4>
+        <div className="border-t border-border-soft pt-4">
+          <h4 className="text-sm font-medium text-fg-700 mb-3">Box Construction</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-600">Material:</span>
+              <span className="text-fg-600">Material:</span>
               <span className="font-medium">{template.box_material_name || 'N/A'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">Edgeband:</span>
+              <span className="text-fg-600">Edgeband:</span>
               <span className="font-medium">{template.box_edgeband_name || 'N/A'}</span>
             </div>
             {template.use_box_interior_finish && (
               <div className="flex justify-between">
-                <span className="text-slate-600">Interior Finish:</span>
+                <span className="text-fg-600">Interior Finish:</span>
                 <span className="font-medium">{template.box_interior_finish_name || 'N/A'}</span>
               </div>
             )}
           </div>
         </div>
 
-        <div className="border-t border-slate-200 pt-4">
-          <h4 className="text-sm font-medium text-slate-700 mb-3">Doors & Fronts</h4>
+        <div className="border-t border-border-soft pt-4">
+          <h4 className="text-sm font-medium text-fg-700 mb-3">Doors & Fronts</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-600">Material:</span>
+              <span className="text-fg-600">Material:</span>
               <span className="font-medium">{template.doors_material_name || 'N/A'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">Edgeband:</span>
+              <span className="text-fg-600">Edgeband:</span>
               <span className="font-medium">{template.doors_edgeband_name || 'N/A'}</span>
             </div>
             {template.use_doors_interior_finish && (
               <div className="flex justify-between">
-                <span className="text-slate-600">Interior Finish:</span>
+                <span className="text-fg-600">Interior Finish:</span>
                 <span className="font-medium">{template.doors_interior_finish_name || 'N/A'}</span>
               </div>
             )}
@@ -510,24 +510,24 @@ function TemplatePreviewModal({ template, onClose }: TemplatePreviewModalProps) 
         </div>
 
         {Array.isArray(template.hardware) && template.hardware.length > 0 && (
-          <div className="border-t border-slate-200 pt-4">
-            <h4 className="text-sm font-medium text-slate-700 mb-3">Hardware</h4>
-            <div className="text-sm text-slate-600">
+          <div className="border-t border-border-soft pt-4">
+            <h4 className="text-sm font-medium text-fg-700 mb-3">Hardware</h4>
+            <div className="text-sm text-fg-600">
               {template.hardware.length} hardware item(s) configured
             </div>
           </div>
         )}
 
-        <div className="border-t border-slate-200 pt-4">
-          <h4 className="text-sm font-medium text-slate-700 mb-3">Usage Statistics</h4>
+        <div className="border-t border-border-soft pt-4">
+          <h4 className="text-sm font-medium text-fg-700 mb-3">Usage Statistics</h4>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <label className="text-xs text-slate-500">Times Used</label>
-              <p className="text-lg font-semibold text-slate-900">{template.usage_count}</p>
+              <label className="text-xs text-fg-500">Times Used</label>
+              <p className="text-lg font-semibold text-fg-900">{template.usage_count}</p>
             </div>
             <div>
-              <label className="text-xs text-slate-500">Last Used</label>
-              <p className="text-sm font-medium text-slate-900">
+              <label className="text-xs text-fg-500">Last Used</label>
+              <p className="text-sm font-medium text-fg-900">
                 {template.last_used_at
                   ? new Date(template.last_used_at).toLocaleDateString()
                   : 'Never'}
@@ -578,7 +578,7 @@ function TemplateEditModal({ template, onClose, onSave }: TemplateEditModalProps
     <Modal isOpen={true} onClose={onClose} title="Edit Template" size="md">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="block text-sm font-medium text-fg-700 mb-1">
             Template Name <span className="text-red-500">*</span>
           </label>
           <Input
@@ -589,7 +589,7 @@ function TemplateEditModal({ template, onClose, onSave }: TemplateEditModalProps
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="block text-sm font-medium text-fg-700 mb-1">
             Description
           </label>
           <textarea
@@ -597,18 +597,18 @@ function TemplateEditModal({ template, onClose, onSave }: TemplateEditModalProps
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Enter template description (optional)"
             rows={3}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="block text-sm font-medium text-fg-700 mb-1">
             Category <span className="text-red-500">*</span>
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as TemplateCategory)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
           >
             {TEMPLATE_CATEGORIES.map(cat => (
               <option key={cat} value={cat}>{cat}</option>
@@ -616,8 +616,8 @@ function TemplateEditModal({ template, onClose, onSave }: TemplateEditModalProps
           </select>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm text-blue-800">
+        <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3">
+          <p className="text-sm text-accent-text">
             <strong>Note:</strong> Only the name, description, and category can be edited.
             To change materials or hardware, create a new template from a cabinet.
           </p>
@@ -646,17 +646,17 @@ function TemplateAnalyticsModal({ analytics, onClose }: TemplateAnalyticsModalPr
     <Modal isOpen={true} onClose={onClose} title="Template Analytics" size="xl">
       <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="text-sm text-blue-600 mb-1">Total Templates</div>
-            <div className="text-2xl font-bold text-slate-900">{analytics.totalTemplates}</div>
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4">
+            <div className="text-sm text-accent-text mb-1">Total Templates</div>
+            <div className="text-2xl font-bold text-fg-900">{analytics.totalTemplates}</div>
           </div>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="text-sm text-green-600 mb-1">Total Uses</div>
-            <div className="text-2xl font-bold text-slate-900">{analytics.totalUses}</div>
+          <div className="bg-status-emerald-bg border border-status-emerald-brd rounded-lg p-4">
+            <div className="text-sm text-status-emerald-fg mb-1">Total Uses</div>
+            <div className="text-2xl font-bold text-fg-900">{analytics.totalUses}</div>
           </div>
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <div className="text-sm text-purple-600 mb-1">Avg Uses per Template</div>
-            <div className="text-2xl font-bold text-slate-900">
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4">
+            <div className="text-sm text-accent-text mb-1">Avg Uses per Template</div>
+            <div className="text-2xl font-bold text-fg-900">
               {analytics.averageUsesPerTemplate.toFixed(1)}
             </div>
           </div>
@@ -664,26 +664,26 @@ function TemplateAnalyticsModal({ analytics, onClose }: TemplateAnalyticsModalPr
 
         {analytics.mostUsedTemplates.length > 0 && (
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-3">Top 10 Most Used Templates</h3>
+            <h3 className="text-lg font-semibold text-fg-900 mb-3">Top 10 Most Used Templates</h3>
             <div className="space-y-2">
               {analytics.mostUsedTemplates.map((template, index) => (
                 <div
                   key={template.id}
-                  className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-surf-app rounded-lg"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-700 rounded-full font-semibold text-sm">
+                    <div className="flex items-center justify-center w-8 h-8 bg-accent-tint-soft text-accent-text rounded-full font-semibold text-sm">
                       {index + 1}
                     </div>
                     <div>
-                      <div className="font-medium text-slate-900">{template.name}</div>
-                      <div className="text-xs text-slate-600">{template.category}</div>
+                      <div className="font-medium text-fg-900">{template.name}</div>
+                      <div className="text-xs text-fg-600">{template.category}</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold text-slate-900">{template.usage_count} uses</div>
+                    <div className="font-semibold text-fg-900">{template.usage_count} uses</div>
                     {template.last_used_at && (
-                      <div className="text-xs text-slate-600">
+                      <div className="text-xs text-fg-600">
                         Last: {new Date(template.last_used_at).toLocaleDateString()}
                       </div>
                     )}
@@ -696,14 +696,14 @@ function TemplateAnalyticsModal({ analytics, onClose }: TemplateAnalyticsModalPr
 
         {analytics.usageByCategory.length > 0 && (
           <div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-3">Usage by Category</h3>
+            <h3 className="text-lg font-semibold text-fg-900 mb-3">Usage by Category</h3>
             <div className="space-y-2">
               {analytics.usageByCategory.map(cat => (
-                <div key={cat.category} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                  <span className="font-medium text-slate-900">{cat.category}</span>
+                <div key={cat.category} className="flex items-center justify-between p-3 bg-surf-app rounded-lg">
+                  <span className="font-medium text-fg-900">{cat.category}</span>
                   <div className="text-right">
-                    <span className="font-semibold text-slate-900">{cat.total_uses} uses</span>
-                    <span className="text-slate-600 ml-2">
+                    <span className="font-semibold text-fg-900">{cat.total_uses} uses</span>
+                    <span className="text-fg-600 ml-2">
                       ({cat.total_templates} templates)
                     </span>
                   </div>

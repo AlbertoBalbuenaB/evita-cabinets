@@ -728,7 +728,7 @@ export function DraftCanvas() {
   return (
     <div
       ref={containerRef}
-      className={`relative flex-1 h-full overflow-hidden rounded-2xl glass-white text-slate-700 ${
+      className={`relative flex-1 h-full overflow-hidden rounded-2xl glass-white text-fg-700 ${
         isPanning ? 'cursor-grabbing' : wallToolActive ? 'cursor-crosshair' : 'cursor-grab'
       }`}
       onDragOver={(e) => {
@@ -749,7 +749,7 @@ export function DraftCanvas() {
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
             wallToolActive
               ? 'bg-indigo-600 text-white shadow-md'
-              : 'glass-white border border-slate-200/60 text-slate-700 hover:bg-white'
+              : 'glass-white border border-border-soft text-fg-700 hover:bg-surf-card'
           }`}
         >
           {wallToolActive ? 'Drawing wall…' : 'Draw wall'}
@@ -758,7 +758,7 @@ export function DraftCanvas() {
           type="button"
           onClick={handleAutoCountertopClick}
           disabled={currentView !== 'plan'}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium glass-white border border-slate-200/60 text-slate-700 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium glass-white border border-border-soft text-fg-700 hover:bg-surf-card disabled:opacity-40 disabled:cursor-not-allowed"
           title="Generate a countertop from the selected cabinets"
         >
           <Square className="h-3.5 w-3.5" />
@@ -767,7 +767,7 @@ export function DraftCanvas() {
         <button
           type="button"
           onClick={handleDimensionAllClick}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium glass-white border border-slate-200/60 text-slate-700 hover:bg-white"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium glass-white border border-border-soft text-fg-700 hover:bg-surf-card"
           title="Generate dimension chains for the current view"
         >
           <Ruler className="h-3.5 w-3.5" />
@@ -777,7 +777,7 @@ export function DraftCanvas() {
           type="button"
           onClick={handleAutoTagClick}
           disabled={currentView !== 'elevation' || Boolean(currentDrawing?.lock_tags)}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium glass-white border border-slate-200/60 text-slate-700 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium glass-white border border-border-soft text-fg-700 hover:bg-surf-card disabled:opacity-40 disabled:cursor-not-allowed"
           title="Assign position tags to cabinets in this elevation"
         >
           <TagIcon className="h-3.5 w-3.5" />
@@ -786,7 +786,7 @@ export function DraftCanvas() {
         <button
           type="button"
           onClick={fitToView}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium glass-white border border-slate-200/60 text-slate-700 hover:bg-white"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium glass-white border border-border-soft text-fg-700 hover:bg-surf-card"
           title="Fit visible elements to the viewport"
         >
           <Maximize2 className="h-3.5 w-3.5" />

@@ -129,77 +129,77 @@ export function ProjectsHub() {
     <>
     <div className="page-enter">
       <div className="mb-6 hero-enter">
-        <h1 className="text-3xl font-bold text-slate-900">Projects</h1>
-        <p className="mt-2 text-slate-600">Manage your millwork projects and quotations</p>
+        <h1 className="text-3xl font-bold text-fg-900">Projects</h1>
+        <p className="mt-2 text-fg-600">Manage your millwork projects and quotations</p>
       </div>
 
       {/* Filters */}
       <div className="glass-white p-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-fg-400" />
             <input
               type="text"
               placeholder="Search by name, customer, or address..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card"
             />
           </div>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200/60 rounded-lg bg-white/80"
+            className="px-3 py-2 text-sm border border-border-soft rounded-lg bg-surf-card"
           >
             <option value="all">All Types</option>
             {projectTypes.map(t => <option key={t} value={t ?? ''}>{t}</option>)}
           </select>
-          <span className="text-xs text-slate-400 self-center hidden sm:inline">{filtered.length} projects</span>
+          <span className="text-xs text-fg-400 self-center hidden sm:inline">{filtered.length} projects</span>
         </div>
       </div>
 
       {/* Project cards */}
       {filtered.length === 0 ? (
         <div className="glass-white p-12 text-center">
-          <FolderOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">{searchQuery ? 'No projects match your search.' : 'Create your first project to get started.'}</p>
+          <FolderOpen className="h-12 w-12 text-fg-300 mx-auto mb-3" />
+          <p className="text-fg-500">{searchQuery ? 'No projects match your search.' : 'Create your first project to get started.'}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((project, idx) => {
             const latest = project.latestQuotation;
             const statusColors: Record<string, string> = {
-              Awarded: 'bg-green-50 text-green-700 border-green-200/50',
-              Pending: 'bg-blue-50 text-blue-700 border-blue-200/50',
-              Estimating: 'bg-amber-50 text-amber-700 border-amber-200/50',
+              Awarded: 'bg-status-emerald-bg text-status-emerald-fg border-status-emerald-brd',
+              Pending: 'bg-accent-tint-soft text-accent-text border-accent-tint-border',
+              Estimating: 'bg-status-amber-bg text-status-amber-fg border-status-amber-brd',
               Sent: 'bg-cyan-50 text-cyan-700 border-cyan-200/50',
-              Lost: 'bg-red-50 text-red-700 border-red-200/50',
+              Lost: 'bg-status-red-bg text-status-red-fg border-status-red-brd',
             };
 
             return (
               <div
                 key={project.id}
                 onClick={() => navigate(`/projects/${project.id}`)}
-                className={`glass-white p-0 overflow-hidden cursor-pointer group hover:shadow-lg hover:border-blue-300/60 hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
+                className={`glass-white p-0 overflow-hidden cursor-pointer group hover:shadow-lg hover:border-accent-tint-border hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
               >
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 flex-1">{project.name}</h3>
+                    <h3 className="text-sm font-semibold text-fg-900 line-clamp-2 flex-1">{project.name}</h3>
                     {latest && (
-                      <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full border ${statusColors[latest.status ?? ''] || 'bg-slate-50 text-slate-600 border-slate-200/50'}`}>
+                      <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full border ${statusColors[latest.status ?? ''] || 'bg-surf-app text-fg-600 border-border-soft'}`}>
                         {latest.status}
                       </span>
                     )}
                   </div>
 
                   {project.customer && (
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+                    <div className="flex items-center gap-1.5 text-xs text-fg-500 mb-1">
                       <User className="h-3 w-3" />
                       <span className="truncate">{project.customer}</span>
                     </div>
                   )}
                   {project.address && (
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-2">
+                    <div className="flex items-center gap-1.5 text-xs text-fg-400 mb-2">
                       <MapPin className="h-3 w-3" />
                       <span className="truncate">{project.address}</span>
                     </div>
@@ -207,11 +207,11 @@ export function ProjectsHub() {
 
                   <div className="flex items-center gap-2 flex-wrap">
                     {project.project_type && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/50">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-accent-tint-soft text-accent-text border border-accent-tint-border">
                         {project.project_type}
                       </span>
                     )}
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-surf-muted text-fg-600">
                       <FileText className="h-3 w-3 inline mr-0.5" />
                       {project.quotationCount} {project.quotationCount === 1 ? 'quotation' : 'quotations'}
                     </span>
@@ -219,16 +219,16 @@ export function ProjectsHub() {
                 </div>
 
                 {latest && (
-                  <div className="px-5 py-3 bg-slate-50/60 border-t border-slate-200/40">
+                  <div className="px-5 py-3 bg-surf-app border-t border-border-soft">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-lg font-bold text-slate-900 tabular-nums">
+                        <div className="text-lg font-bold text-fg-900 tabular-nums">
                           {formatCurrency((latest.total_amount ?? 0) / exchangeRate, 'USD')}
                         </div>
-                        <span className="text-xs text-slate-400">Latest quotation</span>
+                        <span className="text-xs text-fg-400">Latest quotation</span>
                       </div>
                       <div className="text-right">
-                        <div className="flex items-center gap-1 text-xs text-slate-400">
+                        <div className="flex items-center gap-1 text-xs text-fg-400">
                           <Calendar className="h-3 w-3" />
                           {formatDate(latest.quote_date)}
                         </div>

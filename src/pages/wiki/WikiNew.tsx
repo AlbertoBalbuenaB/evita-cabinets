@@ -50,14 +50,14 @@ export function WikiNew() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
-      <Link to="/wiki" className="inline-flex items-center gap-1 text-sm text-violet-600 hover:text-violet-800">
+      <Link to="/wiki" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-accent-text">
         <ArrowLeft className="w-4 h-4" /> Wiki
       </Link>
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+        <h1 className="text-xl sm:text-2xl font-bold text-fg-900">
           {mode === 'edit' ? `Propose edit — ${baseArticle?.title}` : 'Propose new article'}
         </h1>
-        <p className="text-sm text-slate-700 mt-1">
+        <p className="text-sm text-fg-700 mt-1">
           Tu propuesta entra en estado <strong>open</strong> y un admin la revisará antes de mergear.
         </p>
       </div>

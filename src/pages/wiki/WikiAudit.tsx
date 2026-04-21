@@ -7,14 +7,14 @@ import type { WikiAuditRow } from '../../lib/wiki/wikiTypes';
 
 function styleForAction(action: string) {
   if (action.startsWith('proposal.')) {
-    if (action.endsWith('.merge')) return { bg: 'bg-violet-100/70', text: 'text-violet-800' };
-    if (action.includes('_to_approved'))  return { bg: 'bg-emerald-100/70', text: 'text-emerald-800' };
-    if (action.includes('_to_rejected'))  return { bg: 'bg-rose-100/70',    text: 'text-rose-800' };
-    if (action.includes('_to_changes_requested')) return { bg: 'bg-amber-100/70', text: 'text-amber-800' };
-    if (action.includes('_to_withdrawn')) return { bg: 'bg-slate-100/70',   text: 'text-slate-700' };
-    if (action.includes('_to_open'))      return { bg: 'bg-indigo-100/70',  text: 'text-indigo-800' };
+    if (action.endsWith('.merge')) return { bg: 'bg-accent-tint-soft', text: 'text-accent-text' };
+    if (action.includes('_to_approved'))  return { bg: 'bg-status-emerald-bg', text: 'text-status-emerald-fg' };
+    if (action.includes('_to_rejected'))  return { bg: 'bg-status-red-bg',    text: 'text-status-red-fg' };
+    if (action.includes('_to_changes_requested')) return { bg: 'bg-status-amber-bg', text: 'text-status-amber-fg' };
+    if (action.includes('_to_withdrawn')) return { bg: 'bg-surf-muted',   text: 'text-fg-700' };
+    if (action.includes('_to_open'))      return { bg: 'bg-accent-tint-strong',  text: 'text-accent-text' };
   }
-  return { bg: 'bg-slate-100/70', text: 'text-slate-700' };
+  return { bg: 'bg-surf-muted', text: 'text-fg-700' };
 }
 
 export function WikiAudit() {
@@ -41,16 +41,16 @@ export function WikiAudit() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
-      <Link to="/wiki" className="inline-flex items-center gap-1 text-sm text-violet-600 hover:text-violet-800">
+      <Link to="/wiki" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-accent-text">
         <ArrowLeft className="w-4 h-4" /> Wiki
       </Link>
 
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
         <div className="flex items-start gap-3">
-          <Shield className="w-6 h-6 text-violet-600 mt-1" />
+          <Shield className="w-6 h-6 text-accent-text mt-1" />
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Wiki audit log</h1>
-            <p className="text-sm text-slate-700 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-fg-900">Wiki audit log</h1>
+            <p className="text-sm text-fg-700 mt-1">
               Registro inmutable de mutaciones del Wiki: merges, cambios de estado de propuestas.
             </p>
           </div>
@@ -58,7 +58,7 @@ export function WikiAudit() {
       </div>
 
       {error && (
-        <div className="glass-white rounded-xl p-4 border border-red-200/70 text-sm text-red-700">
+        <div className="glass-white rounded-xl p-4 border border-status-red-brd text-sm text-status-red-fg">
           {error}
         </div>
       )}
@@ -70,18 +70,18 @@ export function WikiAudit() {
           ))}
         </div>
       ) : rows.length === 0 ? (
-        <div className="glass-white rounded-2xl p-8 text-center text-slate-500">
+        <div className="glass-white rounded-2xl p-8 text-center text-fg-500">
           Sin eventos registrados todavía.
         </div>
       ) : (
         <div className="glass-white rounded-2xl overflow-hidden">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50/60">
-              <tr className="border-b border-slate-200/60">
-                <th className="text-left px-3 py-2 font-semibold text-slate-800">When</th>
-                <th className="text-left px-3 py-2 font-semibold text-slate-800">Actor</th>
-                <th className="text-left px-3 py-2 font-semibold text-slate-800">Action</th>
-                <th className="text-left px-3 py-2 font-semibold text-slate-800">Article / Proposal</th>
+            <thead className="bg-surf-app">
+              <tr className="border-b border-border-soft">
+                <th className="text-left px-3 py-2 font-semibold text-fg-800">When</th>
+                <th className="text-left px-3 py-2 font-semibold text-fg-800">Actor</th>
+                <th className="text-left px-3 py-2 font-semibold text-fg-800">Action</th>
+                <th className="text-left px-3 py-2 font-semibold text-fg-800">Article / Proposal</th>
               </tr>
             </thead>
             <tbody>
@@ -89,11 +89,11 @@ export function WikiAudit() {
                 const style = styleForAction(row.action);
                 const actor = row.actor_id ? members[row.actor_id] ?? 'Unknown' : 'System';
                 return (
-                  <tr key={row.id} className="border-b border-slate-200/60 row-enter">
-                    <td className="px-3 py-2 text-slate-600 whitespace-nowrap">
+                  <tr key={row.id} className="border-b border-border-soft row-enter">
+                    <td className="px-3 py-2 text-fg-600 whitespace-nowrap">
                       {new Date(row.created_at).toLocaleString()}
                     </td>
-                    <td className="px-3 py-2 text-slate-800">{actor}</td>
+                    <td className="px-3 py-2 text-fg-800">{actor}</td>
                     <td className="px-3 py-2">
                       <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${style.bg} ${style.text}`}>
                         {row.action}
@@ -104,13 +104,13 @@ export function WikiAudit() {
                         {row.proposal_id && (
                           <Link
                             to={`/wiki/proposals/${row.proposal_id}`}
-                            className="text-violet-600 hover:text-violet-800 font-mono block"
+                            className="text-accent-text hover:text-accent-text font-mono block"
                           >
                             prop {row.proposal_id.slice(0, 8)}
                           </Link>
                         )}
                         {row.article_id && (
-                          <span className="text-slate-500 font-mono block">
+                          <span className="text-fg-500 font-mono block">
                             art {row.article_id.slice(0, 8)}
                           </span>
                         )}

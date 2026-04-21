@@ -69,8 +69,8 @@ export function SaveTemplateModal({
     <Modal isOpen={isOpen} onClose={handleClose} title="Save as Template" size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="bg-status-red-bg border border-status-red-brd rounded-lg p-3">
+            <p className="text-sm text-status-red-fg">{error}</p>
           </div>
         )}
 
@@ -84,8 +84,8 @@ export function SaveTemplateModal({
         />
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Description <span className="text-slate-500">(Optional)</span>
+          <label className="block text-sm font-medium text-fg-700 mb-1">
+            Description <span className="text-fg-500">(Optional)</span>
           </label>
           <textarea
             value={description}
@@ -93,19 +93,19 @@ export function SaveTemplateModal({
             placeholder="Add notes about this template..."
             rows={3}
             disabled={saving}
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus disabled:bg-surf-app"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="block text-sm font-medium text-fg-700 mb-1">
             Category
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             disabled={saving}
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus disabled:bg-surf-app"
           >
             {TEMPLATE_CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>
@@ -115,8 +115,8 @@ export function SaveTemplateModal({
           </select>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm text-blue-800">
+        <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3">
+          <p className="text-sm text-accent-text">
             This cabinet configuration will be saved as a reusable template. You can apply it to any
             area in any project. The quantity will be set when you load the template.
           </p>

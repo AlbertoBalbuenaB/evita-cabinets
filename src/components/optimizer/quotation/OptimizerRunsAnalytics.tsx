@@ -67,8 +67,8 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-        <div className="flex items-center gap-2 text-sm text-slate-500">
+      <div className="bg-surf-card rounded-lg shadow-sm border border-border-soft p-6">
+        <div className="flex items-center gap-2 text-sm text-fg-500">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
           Loading optimizer analytics…
         </div>
@@ -78,12 +78,12 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
 
   if (!runs || runs.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-1">
-          <Layers className="h-4 w-4 text-blue-600" />
+      <div className="bg-surf-card rounded-lg shadow-sm border border-border-soft p-6">
+        <div className="flex items-center gap-2 text-sm font-semibold text-fg-700 mb-1">
+          <Layers className="h-4 w-4 text-accent-text" />
           Breakdown Analytics
         </div>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-fg-400">
           Save at least one breakdown run from the Breakdown tab to see KPIs here.
         </p>
       </div>
@@ -91,21 +91,21 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 sm:p-6">
+    <div className="bg-surf-card rounded-lg shadow-sm border border-border-soft p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Layers className="h-4 w-4 text-blue-600" />
-          <h2 className="text-sm font-semibold text-slate-800">Breakdown Analytics</h2>
-          <span className="text-xs text-slate-400">
+          <Layers className="h-4 w-4 text-accent-text" />
+          <h2 className="text-sm font-semibold text-fg-800">Breakdown Analytics</h2>
+          <span className="text-xs text-fg-400">
             {runs.length} run{runs.length !== 1 ? 's' : ''}
-            {activeRun && <> · active: <span className="font-medium text-slate-600">{activeRun.name}</span></>}
+            {activeRun && <> · active: <span className="font-medium text-fg-600">{activeRun.name}</span></>}
           </span>
         </div>
         {runs.length >= 2 && (
           <button
             type="button"
             onClick={() => setCompareOpen(true)}
-            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded border border-border-soft bg-surf-card text-fg-700 hover:bg-surf-app"
           >
             <GitCompareArrows className="h-3.5 w-3.5" />
             Compare runs
@@ -182,11 +182,11 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
       )}
 
       {/* ── Versions table ─────────────────────────────────── */}
-      <div className="border border-slate-200 rounded overflow-hidden">
+      <div className="border border-border-soft rounded overflow-hidden">
         <div className="max-h-80 overflow-y-auto">
           <table className="w-full text-xs">
-            <thead className="bg-slate-50 sticky top-0">
-              <tr className="text-slate-500 border-b border-slate-200">
+            <thead className="bg-surf-app sticky top-0">
+              <tr className="text-fg-500 border-b border-border-soft">
                 <th className="text-left  px-3 py-2 font-medium">Name</th>
                 <th className="text-left  px-3 py-2 font-medium">Created</th>
                 <th className="text-right px-3 py-2 font-medium">Total Cost</th>
@@ -198,16 +198,16 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
             </thead>
             <tbody>
               {runs.map((r) => (
-                <tr key={r.id} className={`border-b border-slate-100 last:border-b-0 ${r.is_active ? 'bg-blue-50/40' : ''}`}>
-                  <td className="px-3 py-1.5 font-medium text-slate-800 truncate max-w-[12rem]">{r.name}</td>
-                  <td className="px-3 py-1.5 text-slate-500 whitespace-nowrap">{new Date(r.created_at).toLocaleDateString()}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums text-slate-800">{formatCurrency(r.total_cost)}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">{r.waste_pct.toFixed(1)}%</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">{r.board_count}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">{formatCurrency(r.cost_per_m2)}</td>
+                <tr key={r.id} className={`border-b border-border-soft last:border-b-0 ${r.is_active ? 'bg-accent-tint-soft' : ''}`}>
+                  <td className="px-3 py-1.5 font-medium text-fg-800 truncate max-w-[12rem]">{r.name}</td>
+                  <td className="px-3 py-1.5 text-fg-500 whitespace-nowrap">{new Date(r.created_at).toLocaleDateString()}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums text-fg-800">{formatCurrency(r.total_cost)}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums text-fg-600">{r.waste_pct.toFixed(1)}%</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums text-fg-600">{r.board_count}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums text-fg-600">{formatCurrency(r.cost_per_m2)}</td>
                   <td className="px-3 py-1.5 text-center">
                     {r.is_active && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-accent-text bg-accent-tint-soft px-1.5 py-0.5 rounded">
                         ACTIVE
                       </span>
                     )}
@@ -263,15 +263,15 @@ function AnalyticsKpiCard({
     (delta as number) > 0 ? TrendingUp   : Minus;
 
   return (
-    <div className="border border-slate-200 rounded-lg p-3 flex flex-col gap-2 bg-white">
+    <div className="border border-border-soft rounded-lg p-3 flex flex-col gap-2 bg-surf-card">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</span>
-        <span className="text-slate-300">{icon}</span>
+        <span className="text-xs font-medium text-fg-500 uppercase tracking-wide">{label}</span>
+        <span className="text-fg-300">{icon}</span>
       </div>
-      <div className="text-2xl font-bold leading-none text-slate-900 tabular-nums">{value}</div>
+      <div className="text-2xl font-bold leading-none text-fg-900 tabular-nums">{value}</div>
       <div className={`flex items-center gap-1 text-xs tabular-nums ${
-        tone === 'green' ? 'text-green-600' :
-        tone === 'red'   ? 'text-red-600'   : 'text-slate-400'
+        tone === 'green' ? 'text-status-emerald-fg' :
+        tone === 'red'   ? 'text-status-red-fg'   : 'text-fg-400'
       }`}>
         <DeltaIcon className="h-3 w-3" />
         <span>
@@ -301,10 +301,10 @@ function TrendPanel({
   const range = max - min || 1;
 
   return (
-    <div className="border border-slate-200 rounded-lg p-3">
+    <div className="border border-border-soft rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-slate-700">{title}</span>
-        <span className="text-[10px] text-slate-400 font-mono">lower is better</span>
+        <span className="text-xs font-semibold text-fg-700">{title}</span>
+        <span className="text-[10px] text-fg-400 font-mono">lower is better</span>
       </div>
       <div className="flex items-end gap-1 h-24">
         {runs.map((r, i) => {
@@ -327,7 +327,7 @@ function TrendPanel({
           );
         })}
       </div>
-      <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400 font-mono">
+      <div className="flex items-center justify-between mt-1 text-[10px] text-fg-400 font-mono">
         <span>min {format(min)}</span>
         <span>max {format(max)}</span>
       </div>

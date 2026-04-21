@@ -61,10 +61,10 @@ export function CommentInputModal() {
           }}
           rows={4}
           placeholder="What did you find? e.g. 'Confirm these base widths are 36&quot;'"
-          className="w-full text-sm border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+          className="w-full text-sm border border-border-soft rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus-visible:ring-focus resize-none"
         />
-        <p className="text-[10px] text-slate-400">Tip: ⌘↵ / Ctrl+↵ to post.</p>
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        <p className="text-[10px] text-fg-400">Tip: ⌘↵ / Ctrl+↵ to post.</p>
+        {error && <p className="text-xs text-status-red-fg">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={close} disabled={submitting}>Cancel</Button>
           <Button variant="primary" size="sm" onClick={submit} disabled={submitting || !text.trim()}>

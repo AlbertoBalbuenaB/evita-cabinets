@@ -67,24 +67,24 @@ function CompactAutocomplete({ options, value, onChange, placeholder, className 
       {open ? (
         <input ref={inputRef} value={search} onChange={e => setSearch(e.target.value)} onKeyDown={handleKey}
           placeholder="Search..." onClick={e => e.stopPropagation()}
-          className="w-full text-sm border border-blue-400 bg-white rounded-md px-2.5 py-1.5 outline-none" />
+          className="w-full text-sm border border-accent-tint-border bg-surf-card rounded-md px-2.5 py-1.5 outline-none" />
       ) : (
         <button onClick={() => setOpen(true)}
-          className="w-full text-sm text-left text-slate-600 truncate cursor-pointer hover:text-blue-600 py-1">
+          className="w-full text-sm text-left text-fg-600 truncate cursor-pointer hover:text-accent-text py-1">
           {selected?.label || placeholder || 'Select...'}
         </button>
       )}
       {open && dropPos && ReactDOM.createPortal(
         <div id="ca-dropdown" style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width, zIndex: 9999 }}
-          className="bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-auto">
+          className="bg-surf-card border border-border-soft rounded-lg shadow-xl max-h-48 overflow-auto">
           <div ref={listRef}>
             {filtered.length > 0 ? filtered.map((o, i) => (
               <div key={o.value} onClick={() => { onChange(o.value); setOpen(false); setSearch(''); }}
-                className={`px-3 py-1.5 text-sm cursor-pointer truncate ${i === hlIdx ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-50'} ${value === o.value ? 'font-semibold' : ''}`}>
+                className={`px-3 py-1.5 text-sm cursor-pointer truncate ${i === hlIdx ? 'bg-accent-tint-soft text-accent-text' : 'hover:bg-surf-app'} ${value === o.value ? 'font-semibold' : ''}`}>
                 {o.label}
               </div>
             )) : (
-              <div className="px-3 py-2 text-sm text-slate-400 text-center">No results</div>
+              <div className="px-3 py-2 text-sm text-fg-400 text-center">No results</div>
             )}
           </div>
         </div>,
@@ -101,11 +101,11 @@ function Section({ icon: Icon, title, children, defaultOpen = true, className = 
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className={`glass-white hover:shadow-lg transition-all duration-200 section-enter ${className}`}>
-      <div className="flex items-center gap-2.5 px-5 py-3.5 cursor-pointer select-none hover:bg-white/40 transition-colors"
+      <div className="flex items-center gap-2.5 px-5 py-3.5 cursor-pointer select-none hover:bg-surf-card transition-colors"
         onClick={() => setOpen(v => !v)}>
-        <Icon className="h-4 w-4 text-slate-400 shrink-0" />
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex-1">{title}</span>
-        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
+        <Icon className="h-4 w-4 text-fg-400 shrink-0" />
+        <span className="text-xs font-semibold text-fg-500 uppercase tracking-wide flex-1">{title}</span>
+        <ChevronDown className={`h-4 w-4 text-fg-400 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
       </div>
       {open && <div className="border-t border-white/60">{children}</div>}
     </div>
@@ -113,7 +113,7 @@ function Section({ icon: Icon, title, children, defaultOpen = true, className = 
 }
 
 // ── Shared input styles ─────────────────────────────────────
-const inputCls = "w-full text-sm border border-slate-200/70 rounded-lg px-3 py-2 bg-white/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 tabular-nums transition-colors";
+const inputCls = "w-full text-sm border border-border-soft rounded-lg px-3 py-2 bg-surf-card backdrop-blur-sm focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-blue-500 tabular-nums transition-colors";
 
 interface PriceListItem {
   id: string;
@@ -264,7 +264,7 @@ export function OptimizerSidebar() {
     <div className="flex h-full overflow-hidden">
 
       {/* ═══ LEFT SIDEBAR: Areas + Stock Sheets + Options ════ */}
-      <div className="shrink-0 border-r border-slate-200/60 bg-white/40 backdrop-blur-sm overflow-y-auto transition-[width] duration-200"
+      <div className="shrink-0 border-r border-border-soft bg-surf-card backdrop-blur-sm overflow-y-auto transition-[width] duration-200"
         style={{ width: sidebarOpen ? sidebarW : 0 }}>
         {sidebarOpen && (
           <div className="p-3 space-y-3" style={{ width: sidebarW }}>
@@ -283,7 +283,7 @@ export function OptimizerSidebar() {
                 {store.areas.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {store.areas.map(a => (
-                      <span key={a} className="inline-flex items-center gap-1 text-xs bg-blue-600/10 text-blue-800 px-2 py-0.5 rounded-full font-medium border border-blue-600/15">
+                      <span key={a} className="inline-flex items-center gap-1 text-xs bg-blue-600/10 text-accent-text px-2 py-0.5 rounded-full font-medium border border-blue-600/15">
                         {a}
                         <button onClick={() => store.removeArea(a)} className="text-blue-400 hover:text-red-500 transition-colors"><X className="h-2.5 w-2.5" /></button>
                       </span>
@@ -291,7 +291,7 @@ export function OptimizerSidebar() {
                   </div>
                 )}
                 {store.areas.length === 0 && (
-                  <p className="text-xs text-slate-400 mt-2">No areas defined.</p>
+                  <p className="text-xs text-fg-400 mt-2">No areas defined.</p>
                 )}
               </div>
             </Section>
@@ -301,15 +301,15 @@ export function OptimizerSidebar() {
               <div className="px-4 py-3 space-y-2">
                 <div className="grid grid-cols-3 gap-2 items-end">
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Width</label>
+                    <label className="block text-xs font-medium text-fg-500 mb-1">Width</label>
                     <input value={sAncho} onChange={e => setSAncho(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Height</label>
+                    <label className="block text-xs font-medium text-fg-500 mb-1">Height</label>
                     <input value={sAlto} onChange={e => setSAlto(e.target.value)} onKeyDown={handleStockKey} className={inputCls + ' text-center'} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Material</label>
+                    <label className="block text-xs font-medium text-fg-500 mb-1">Material</label>
                     <input value={sNombre} onChange={e => setSNombre(e.target.value)} onKeyDown={handleStockKey} placeholder="Name" className={inputCls} />
                   </div>
                 </div>
@@ -317,14 +317,14 @@ export function OptimizerSidebar() {
                   className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors">
                   <Plus className="h-3.5 w-3.5" />Add Sheet
                 </button>
-                <p className="text-[10px] text-slate-400">Qty 0 = unlimited</p>
+                <p className="text-[10px] text-fg-400">Qty 0 = unlimited</p>
               </div>
               {store.stocks.length > 0 && (
-                <div className="border-t border-slate-100/60">
+                <div className="border-t border-border-soft">
                   {store.stocks.map(s => (
-                    <div key={s.id} className="flex items-center justify-between px-4 py-1.5 text-xs hover:bg-slate-50 group border-b border-slate-50 last:border-0">
-                      <span className="tabular-nums text-slate-700">{parseFloat(fromMM(s.ancho, unit).toFixed(0))}×{parseFloat(fromMM(s.alto, unit).toFixed(0))}</span>
-                      <span className="text-slate-500 truncate mx-2 flex-1 min-w-0">
+                    <div key={s.id} className="flex items-center justify-between px-4 py-1.5 text-xs hover:bg-surf-app group border-b border-slate-50 last:border-0">
+                      <span className="tabular-nums text-fg-700">{parseFloat(fromMM(s.ancho, unit).toFixed(0))}×{parseFloat(fromMM(s.alto, unit).toFixed(0))}</span>
+                      <span className="text-fg-500 truncate mx-2 flex-1 min-w-0">
                         {sheetMaterials.length > 0 ? (
                           <CompactAutocomplete
                             value={s.materialId || ''} onChange={val => handleSelectSheet(val, s.id)}
@@ -335,9 +335,9 @@ export function OptimizerSidebar() {
                       </span>
                       <input type="number" min="0" value={s.qty || 0}
                         onChange={e => store.updateStock(s.id, { qty: parseInt(e.target.value) || 0 })}
-                        className="w-10 text-xs text-center border border-transparent hover:border-slate-200/70 focus:border-blue-500 rounded bg-transparent tabular-nums" />
+                        className="w-10 text-xs text-center border border-transparent hover:border-border-soft focus:border-blue-500 rounded bg-transparent tabular-nums" />
                       <button onClick={() => store.removeStock(s.id)}
-                        className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 ml-1"><X className="h-3 w-3" /></button>
+                        className="text-fg-300 hover:text-red-500 opacity-0 group-hover:opacity-100 ml-1"><X className="h-3 w-3" /></button>
                     </div>
                   ))}
                 </div>
@@ -349,17 +349,17 @@ export function OptimizerSidebar() {
               <div className="px-4 py-3 space-y-3">
                 <div className="space-y-2">
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Kerf (mm)</label>
+                    <label className="block text-xs font-medium text-fg-500 mb-1">Kerf (mm)</label>
                     <input type="number" step="0.1" value={store.globalSierra} onChange={e => store.setGlobalSierra(+e.target.value)}
                       className={inputCls + ' text-center'} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Min. offcut (mm)</label>
+                    <label className="block text-xs font-medium text-fg-500 mb-1">Min. offcut (mm)</label>
                     <input type="number" value={store.minOffcut} onChange={e => store.setMinOffcut(+e.target.value)}
                       className={inputCls + ' text-center'} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Board trim (mm)</label>
+                    <label className="block text-xs font-medium text-fg-500 mb-1">Board trim (mm)</label>
                     <input type="number" min={0} max={50} step={1} value={store.boardTrim}
                       onChange={e => store.setBoardTrim(Math.max(0, parseFloat(e.target.value) || 0))}
                       className={inputCls + ' text-center'} />
@@ -368,13 +368,13 @@ export function OptimizerSidebar() {
 
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={store.trimIncludesKerf} onChange={e => store.setTrimIncludesKerf(e.target.checked)}
-                    className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600" />
-                  <span className="text-xs text-slate-500">Include kerf in board trim</span>
+                    className="w-3.5 h-3.5 rounded border-border-solid text-accent-text" />
+                  <span className="text-xs text-fg-500">Include kerf in board trim</span>
                 </label>
 
                 {/* Engine mode */}
-                <div className="pt-2 border-t border-slate-100/60">
-                  <p className="text-xs font-medium text-slate-500 mb-1.5">Engine</p>
+                <div className="pt-2 border-t border-border-soft">
+                  <p className="text-xs font-medium text-fg-500 mb-1.5">Engine</p>
                   <div className="flex flex-col gap-1">
                     {(['guillotine', 'both'] as const).map((mode) => (
                       <label key={mode} className="flex items-center gap-2 cursor-pointer">
@@ -384,9 +384,9 @@ export function OptimizerSidebar() {
                           value={mode}
                           checked={store.engineMode === mode}
                           onChange={() => store.setEngineMode(mode)}
-                          className="border-slate-300 text-blue-600"
+                          className="border-border-solid text-accent-text"
                         />
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-fg-500">
                           {mode === 'guillotine' ? 'Guillotine only (panel saw)' : 'Both engines (+ MaxRect)'}
                         </span>
                       </label>
@@ -395,8 +395,8 @@ export function OptimizerSidebar() {
                 </div>
 
                 {/* Objective */}
-                <div className="pt-2 border-t border-slate-100/60">
-                  <p className="text-xs font-medium text-slate-500 mb-1.5">Optimize for</p>
+                <div className="pt-2 border-t border-border-soft">
+                  <p className="text-xs font-medium text-fg-500 mb-1.5">Optimize for</p>
                   <div className="flex flex-col gap-1">
                     {([
                       ['min-boards', 'Fewer boards'],
@@ -410,17 +410,17 @@ export function OptimizerSidebar() {
                           value={val}
                           checked={store.objective === val}
                           onChange={() => store.setObjective(val)}
-                          className="border-slate-300 text-blue-600"
+                          className="border-border-solid text-accent-text"
                         />
-                        <span className="text-xs text-slate-500">{label}</span>
+                        <span className="text-xs text-fg-500">{label}</span>
                       </label>
                     ))}
                   </div>
                 </div>
 
                 {edgebandItems.length > 0 && (
-                  <div className="pt-3 border-t border-slate-100/60">
-                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Edge Banding</div>
+                  <div className="pt-3 border-t border-border-soft">
+                    <div className="text-xs font-semibold text-fg-500 uppercase tracking-wide mb-2">Edge Banding</div>
                     <div className="space-y-2">
                       {(['a', 'b', 'c'] as const).map(key => {
                         const label = key.toUpperCase();
@@ -428,7 +428,7 @@ export function OptimizerSidebar() {
                         const selected = store.ebConfig[key];
                         return (
                           <div key={key}>
-                            <label className="text-xs text-slate-500 font-medium">Type {label} ({lineStyle})</label>
+                            <label className="text-xs text-fg-500 font-medium">Type {label} ({lineStyle})</label>
                             <CompactAutocomplete
                               value={selected.id}
                               onChange={val => {
@@ -469,16 +469,16 @@ export function OptimizerSidebar() {
                   store.addRemnant({ material: remMat || 'Default',
                     grosor: toMM(parseFloat(remGrosor) || 18, unit),
                     ancho: toMM(parseFloat(remAncho) || 0, unit), alto: toMM(parseFloat(remAlto) || 0, unit) });
-                }} className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 border border-slate-200/70 hover:bg-white/60 text-slate-600 text-xs rounded-lg transition-colors">
+                }} className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 border border-border-soft hover:bg-surf-card text-fg-600 text-xs rounded-lg transition-colors">
                   <Plus className="h-3.5 w-3.5" />Add Remnant
                 </button>
                 {store.remnants.length > 0 && (
-                  <div className="space-y-1 pt-2 mt-2 border-t border-slate-100/60">
+                  <div className="space-y-1 pt-2 mt-2 border-t border-border-soft">
                     {store.remnants.map(r => (
                       <div key={r.id} className="flex justify-between items-center text-xs group">
-                        <span className="text-slate-600">{r.material} — {parseFloat(fromMM(r.ancho, unit).toFixed(0))}×{parseFloat(fromMM(r.alto, unit).toFixed(0))}</span>
+                        <span className="text-fg-600">{r.material} — {parseFloat(fromMM(r.ancho, unit).toFixed(0))}×{parseFloat(fromMM(r.alto, unit).toFixed(0))}</span>
                         <button onClick={() => store.removeRemnant(r.id)}
-                          className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><X className="h-3 w-3" /></button>
+                          className="text-fg-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><X className="h-3 w-3" /></button>
                       </div>
                     ))}
                   </div>
@@ -490,14 +490,14 @@ export function OptimizerSidebar() {
       </div>
 
       {/* Sidebar toggle + resize handle */}
-      <div className="shrink-0 flex flex-col border-r border-slate-200/60">
+      <div className="shrink-0 flex flex-col border-r border-border-soft">
         <button onClick={() => setSidebarOpen(v => !v)}
-          className="w-5 h-8 flex items-center justify-center hover:bg-slate-100 transition-colors"
+          className="w-5 h-8 flex items-center justify-center hover:bg-surf-muted transition-colors"
           title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}>
-          <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${sidebarOpen ? '-rotate-90' : 'rotate-90'}`} />
+          <ChevronDown className={`h-3.5 w-3.5 text-fg-400 transition-transform duration-200 ${sidebarOpen ? '-rotate-90' : 'rotate-90'}`} />
         </button>
         {sidebarOpen && (
-          <div className="flex-1 w-5 cursor-col-resize hover:bg-blue-100 active:bg-blue-200 transition-colors"
+          <div className="flex-1 w-5 cursor-col-resize hover:bg-accent-tint-soft active:bg-blue-200 transition-colors"
             onMouseDown={e => { dragRef.current = { startX: e.clientX, startW: sidebarW }; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; }} />
         )}
       </div>
@@ -507,26 +507,26 @@ export function OptimizerSidebar() {
 
       <Section icon={LayoutList} title="Parts">
         {/* Add piece form */}
-        <div className="px-5 py-4 bg-blue-50/30 border-b border-slate-100/60 space-y-2">
+        <div className="px-5 py-4 bg-accent-tint-soft border-b border-border-soft space-y-2">
           {/* Row 1: dimensions + name */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 items-end">
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Width</label>
+              <label className="block text-xs font-medium text-fg-500 mb-1">Width</label>
               <input value={pAncho} onChange={e => setPAncho(e.target.value)} onKeyDown={handlePieceKey}
                 placeholder={unit === 'in' ? '24' : '600'} className={inputCls} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Height</label>
+              <label className="block text-xs font-medium text-fg-500 mb-1">Height</label>
               <input value={pAlto} onChange={e => setPAlto(e.target.value)} onKeyDown={handlePieceKey}
                 placeholder={unit === 'in' ? '16' : '400'} className={inputCls} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Qty</label>
+              <label className="block text-xs font-medium text-fg-500 mb-1">Qty</label>
               <input value={pCant} onChange={e => setPCant(e.target.value)} onKeyDown={handlePieceKey}
                 className={inputCls + ' text-center'} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Name</label>
+              <label className="block text-xs font-medium text-fg-500 mb-1">Name</label>
               <input value={pNombre} onChange={e => setPNombre(e.target.value)} onKeyDown={handlePieceKey}
                 placeholder="Optional" className={inputCls} />
             </div>
@@ -534,30 +534,30 @@ export function OptimizerSidebar() {
           {/* Row 2: material + area + thickness + grain + add button */}
           <div className="flex flex-wrap items-end gap-2">
             <div className="flex-1 min-w-[120px]">
-              <label className="block text-xs font-medium text-slate-500 mb-1">Material</label>
+              <label className="block text-xs font-medium text-fg-500 mb-1">Material</label>
               <select value={pMat} onChange={e => setPMat(e.target.value)} className={inputCls}>
                 <option value="">Default</option>
                 {stockNames.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
             <div className="flex-1 min-w-[100px]">
-              <label className="block text-xs font-medium text-slate-500 mb-1">Area</label>
+              <label className="block text-xs font-medium text-fg-500 mb-1">Area</label>
               <select value={pArea} onChange={e => setPArea(e.target.value)} className={inputCls}>
                 <option value="">None</option>
                 {store.areas.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
             <div className="w-20">
-              <label className="block text-xs font-medium text-slate-500 mb-1">Thick.</label>
+              <label className="block text-xs font-medium text-fg-500 mb-1">Thick.</label>
               <input value={pGrosor} onChange={e => setPGrosor(e.target.value)} className={inputCls + ' text-center'} />
             </div>
             <div className="shrink-0 flex items-end pb-0.5">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Grain</label>
+                <label className="block text-xs font-medium text-fg-500 mb-1">Grain</label>
                 <button type="button" onClick={() => setPVeta(v => v === 'none' ? 'horizontal' : v === 'horizontal' ? 'vertical' : 'none')}
                   title={`Grain: ${pVeta} — click to cycle`}
                   className={`w-10 h-[38px] rounded-lg text-sm font-bold flex items-center justify-center transition-all border
-                    ${pVeta === 'none' ? 'border-slate-200/70 bg-white/60 text-slate-300' : 'border-amber-300 bg-amber-50 text-amber-700'}`}>
+                    ${pVeta === 'none' ? 'border-border-soft bg-surf-card text-fg-300' : 'border-status-amber-brd bg-status-amber-bg text-status-amber-fg'}`}>
                   {pVeta === 'none' ? '—' : pVeta === 'horizontal' ? '↔' : '↕'}
                 </button>
               </div>
@@ -574,18 +574,18 @@ export function OptimizerSidebar() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200/60">
-                  <th className="py-2.5 px-4 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Name</th>
-                  <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Width</th>
-                  <th className="py-2.5 px-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Height</th>
-                  <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">Qty</th>
-                  <th className="py-2.5 px-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wide">Grain</th>
-                  <th className="py-2.5 px-1 w-9 text-center text-xs font-medium text-slate-400 uppercase" title="Top">T</th>
-                  <th className="py-2.5 px-1 w-9 text-center text-xs font-medium text-slate-400 uppercase" title="Bottom">B</th>
-                  <th className="py-2.5 px-1 w-9 text-center text-xs font-medium text-slate-400 uppercase" title="Left">L</th>
-                  <th className="py-2.5 px-1 w-9 text-center text-xs font-medium text-slate-400 uppercase" title="Right">R</th>
-                  <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Material</th>
-                  <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Area</th>
+                <tr className="border-b border-border-soft">
+                  <th className="py-2.5 px-4 text-left text-xs font-medium text-fg-500 uppercase tracking-wide">Name</th>
+                  <th className="py-2.5 px-3 text-right text-xs font-medium text-fg-500 uppercase tracking-wide">Width</th>
+                  <th className="py-2.5 px-3 text-right text-xs font-medium text-fg-500 uppercase tracking-wide">Height</th>
+                  <th className="py-2.5 px-3 text-center text-xs font-medium text-fg-500 uppercase tracking-wide">Qty</th>
+                  <th className="py-2.5 px-3 text-center text-xs font-medium text-fg-500 uppercase tracking-wide">Grain</th>
+                  <th className="py-2.5 px-1 w-9 text-center text-xs font-medium text-fg-400 uppercase" title="Top">T</th>
+                  <th className="py-2.5 px-1 w-9 text-center text-xs font-medium text-fg-400 uppercase" title="Bottom">B</th>
+                  <th className="py-2.5 px-1 w-9 text-center text-xs font-medium text-fg-400 uppercase" title="Left">L</th>
+                  <th className="py-2.5 px-1 w-9 text-center text-xs font-medium text-fg-400 uppercase" title="Right">R</th>
+                  <th className="py-2.5 px-3 text-left text-xs font-medium text-fg-500 uppercase tracking-wide">Material</th>
+                  <th className="py-2.5 px-3 text-left text-xs font-medium text-fg-500 uppercase tracking-wide">Area</th>
                   <th className="py-2.5 px-2 w-10"></th>
                 </tr>
               </thead>
@@ -594,32 +594,32 @@ export function OptimizerSidebar() {
                   <Fragment key={`${area}|||${material}`}>
                     {/* Area group header */}
                     {(gi === 0 || area !== groupedPieces[gi - 1].area) && (
-                      <tr className="bg-blue-50/40">
+                      <tr className="bg-accent-tint-soft">
                         <td colSpan={13} className="py-1.5 px-4">
-                          <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">{area === '—' ? 'Unassigned' : area}</span>
+                          <span className="text-xs font-semibold text-accent-text uppercase tracking-wide">{area === '—' ? 'Unassigned' : area}</span>
                         </td>
                       </tr>
                     )}
                     {pieces.map(p => (
-                    <tr key={p.id} className="hover:bg-slate-100/50 transition-colors group">
+                    <tr key={p.id} className="hover:bg-surf-muted transition-colors group">
                       <td className="py-1 px-3">
                         <input value={p.nombre} onChange={e => store.updatePiece(p.id, { nombre: e.target.value })}
-                          placeholder="—" className="w-full bg-transparent text-sm border border-transparent hover:border-slate-200/70 focus:border-blue-500 rounded px-1 py-0.5 outline-none text-slate-800" />
+                          placeholder="—" className="w-full bg-transparent text-sm border border-transparent hover:border-border-soft focus:border-blue-500 rounded px-1 py-0.5 outline-none text-fg-800" />
                       </td>
                       <td className="py-1 px-2">
                         <input type="number" key={`w-${p.id}-${unit}`} defaultValue={parseFloat(fromMM(p.ancho, unit).toFixed(3))}
                           onBlur={e => { const v = parseFloat(e.target.value); if (v > 0) store.updatePiece(p.id, { ancho: toMM(v, unit) }); }}
-                          className="w-full bg-transparent text-sm text-right border border-transparent hover:border-slate-200/70 focus:border-blue-500 rounded px-1 py-0.5 outline-none tabular-nums text-slate-700" />
+                          className="w-full bg-transparent text-sm text-right border border-transparent hover:border-border-soft focus:border-blue-500 rounded px-1 py-0.5 outline-none tabular-nums text-fg-700" />
                       </td>
                       <td className="py-1 px-2">
                         <input type="number" key={`h-${p.id}-${unit}`} defaultValue={parseFloat(fromMM(p.alto, unit).toFixed(3))}
                           onBlur={e => { const v = parseFloat(e.target.value); if (v > 0) store.updatePiece(p.id, { alto: toMM(v, unit) }); }}
-                          className="w-full bg-transparent text-sm text-right border border-transparent hover:border-slate-200/70 focus:border-blue-500 rounded px-1 py-0.5 outline-none tabular-nums text-slate-700" />
+                          className="w-full bg-transparent text-sm text-right border border-transparent hover:border-border-soft focus:border-blue-500 rounded px-1 py-0.5 outline-none tabular-nums text-fg-700" />
                       </td>
                       <td className="py-1 px-2">
                         <input type="number" min="1" value={p.cantidad}
                           onChange={e => store.updatePiece(p.id, { cantidad: Math.max(1, parseInt(e.target.value) || 1) })}
-                          className="w-full bg-transparent text-sm text-center font-semibold border border-transparent hover:border-slate-200/70 focus:border-blue-500 rounded px-1 py-0.5 outline-none tabular-nums text-slate-700" />
+                          className="w-full bg-transparent text-sm text-center font-semibold border border-transparent hover:border-border-soft focus:border-blue-500 rounded px-1 py-0.5 outline-none tabular-nums text-fg-700" />
                       </td>
                       <td className="py-1 px-2 text-center">
                         <button onClick={() => {
@@ -627,7 +627,7 @@ export function OptimizerSidebar() {
                           store.updatePiece(p.id, { veta: next });
                         }} title={`Grain: ${p.veta} — click to cycle`}
                           className={`w-7 h-6 rounded text-xs font-bold flex items-center justify-center mx-auto transition-all
-                            ${p.veta !== 'none' ? 'bg-amber-100 text-amber-700 ring-1 ring-offset-1 ring-amber-300' : 'bg-slate-50 text-slate-300 hover:bg-slate-100'}`}>
+                            ${p.veta !== 'none' ? 'bg-status-amber-bg text-status-amber-fg ring-1 ring-offset-1 ring-amber-300' : 'bg-surf-app text-fg-300 hover:bg-surf-muted'}`}>
                           {p.veta === 'none' ? '—' : p.veta === 'horizontal' ? '↔' : '↕'}
                         </button>
                       </td>
@@ -645,20 +645,20 @@ export function OptimizerSidebar() {
                       </td>
                       <td className="py-1.5 px-2">
                         <select value={p.material} onChange={e => store.updatePiece(p.id, { material: e.target.value })}
-                          className="text-xs border border-transparent hover:border-slate-200/70 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded bg-transparent text-slate-600 cursor-pointer py-0.5 px-1 transition-colors">
+                          className="text-xs border border-transparent hover:border-border-soft focus:border-blue-500 focus:ring-1 focus-visible:ring-focus rounded bg-transparent text-fg-600 cursor-pointer py-0.5 px-1 transition-colors">
                           {stockNames.map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
                       </td>
                       <td className="py-1.5 px-2">
                         <select value={p.area || ''} onChange={e => store.updatePiece(p.id, { area: e.target.value || undefined })}
-                          className="text-xs border border-transparent hover:border-slate-200/70 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded bg-transparent text-slate-600 cursor-pointer py-0.5 px-1 transition-colors">
+                          className="text-xs border border-transparent hover:border-border-soft focus:border-blue-500 focus:ring-1 focus-visible:ring-focus rounded bg-transparent text-fg-600 cursor-pointer py-0.5 px-1 transition-colors">
                           <option value="">—</option>
                           {store.areas.map(a => <option key={a} value={a}>{a}</option>)}
                         </select>
                       </td>
                       <td className="py-1.5 px-2">
                         <button onClick={() => store.removePiece(p.id)}
-                          className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                          className="text-fg-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1">
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </td>
@@ -670,19 +670,19 @@ export function OptimizerSidebar() {
             </table>
           </div>
         ) : (
-          <div className="px-4 py-8 text-center text-sm text-slate-400">
+          <div className="px-4 py-8 text-center text-sm text-fg-400">
             No parts added yet. Use the form above or import from CSV/Excel.
           </div>
         )}
 
         {/* Summary bar */}
         {store.pieces.length > 0 && (
-          <div className="flex items-center gap-4 px-5 py-2.5 bg-blue-50/30 border-t border-slate-100/60 text-sm text-slate-500">
-            <span className="font-medium text-slate-700">{store.pieces.length} part{store.pieces.length !== 1 ? 's' : ''}</span>
+          <div className="flex items-center gap-4 px-5 py-2.5 bg-accent-tint-soft border-t border-border-soft text-sm text-fg-500">
+            <span className="font-medium text-fg-700">{store.pieces.length} part{store.pieces.length !== 1 ? 's' : ''}</span>
             <span>{(store.pieces.reduce((s, p) => s + p.ancho * p.alto * p.cantidad, 0) / 1e6).toFixed(2)} m²</span>
-            {totalEB > 0 && <span className="text-amber-600">EB: {(totalEB / 1000).toFixed(2)} m</span>}
+            {totalEB > 0 && <span className="text-status-amber-fg">EB: {(totalEB / 1000).toFixed(2)} m</span>}
             <div className="flex-1" />
-            <button onClick={() => store.clearPieces()} className="text-red-400 hover:text-red-600 text-sm flex items-center gap-1">
+            <button onClick={() => store.clearPieces()} className="text-red-400 hover:text-status-red-fg text-sm flex items-center gap-1">
               <Trash2 className="h-3.5 w-3.5" />Clear all
             </button>
           </div>

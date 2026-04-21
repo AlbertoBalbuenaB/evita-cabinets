@@ -527,22 +527,22 @@ export function Dashboard() {
       label: 'Won',
       value: stats.wonProjects,
       icon: CheckCircle2,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      color: 'text-status-emerald-fg',
+      bgColor: 'bg-status-emerald-bg',
     },
     {
       label: 'Pending',
       value: stats.pendingProjects,
       icon: Clock,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      color: 'text-accent-text',
+      bgColor: 'bg-accent-tint-soft',
     },
     {
       label: 'Lost',
       value: stats.lostProjects,
       icon: XCircle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
+      color: 'text-status-red-fg',
+      bgColor: 'bg-status-red-bg',
     },
   ];
 
@@ -575,8 +575,8 @@ export function Dashboard() {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
-        <p className="text-red-600 font-semibold mb-2">Error Loading Dashboard</p>
-        <p className="text-slate-600 mb-4">{error}</p>
+        <p className="text-status-red-fg font-semibold mb-2">Error Loading Dashboard</p>
+        <p className="text-fg-600 mb-4">{error}</p>
         <Button
           onClick={() => {
             setError(null);
@@ -606,8 +606,8 @@ export function Dashboard() {
     <div className="page-enter">
       <div className="mb-8 flex justify-between items-start hero-enter">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-          <p className="mt-2 text-slate-600">
+          <h1 className="text-3xl font-bold text-fg-900">Dashboard</h1>
+          <p className="mt-2 text-fg-600">
             Performance metrics and conversion analytics
           </p>
         </div>
@@ -626,15 +626,15 @@ export function Dashboard() {
           return (
             <div
               key={card.label}
-              className={`glass-blue p-6 overflow-hidden stat-enter stagger-${idx + 1} hover:shadow-lg hover:border-blue-300/60 transition-all duration-200`}
+              className={`glass-blue p-6 overflow-hidden stat-enter stagger-${idx + 1} hover:shadow-lg hover:border-accent-tint-border transition-all duration-200`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-600">{card.label}</p>
-                  <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 truncate">
+                  <p className="text-sm font-medium text-fg-600">{card.label}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-fg-900 mt-2 truncate">
                     {card.value}
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">{card.subtext}</p>
+                  <p className="text-xs text-fg-500 mt-1">{card.subtext}</p>
                 </div>
                 <div className={`${card.color} rounded-lg p-3 flex-shrink-0`}>
                   <Icon className="h-6 w-6 text-white" />
@@ -647,7 +647,7 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 section-enter" style={{ animationDelay: '0.15s' }}>
         <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Project Status</h2>
+          <h2 className="text-lg font-semibold text-fg-900 mb-4">Project Status</h2>
           <div className="space-y-3">
             {statusCards.map((card) => {
               const Icon = card.icon;
@@ -673,10 +673,10 @@ export function Dashboard() {
 
         <div className="lg:col-span-2 glass-white p-6 hover:shadow-lg transition-shadow duration-200">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-fg-900">
               Monthly Projects (Last 6 Months)
             </h2>
-            <div className="flex items-center gap-3 text-xs text-slate-500">
+            <div className="flex items-center gap-3 text-xs text-fg-500">
               <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-gradient-to-r from-green-400 to-green-500" /> Won</span>
               <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-gradient-to-r from-blue-300 to-blue-400" /> Other</span>
             </div>
@@ -695,19 +695,19 @@ export function Dashboard() {
                 return (
                   <div key={data.month}>
                     <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-sm font-medium text-slate-700">
+                      <span className="text-sm font-medium text-fg-700">
                         {data.month}
                       </span>
                       <div className="flex items-center space-x-3">
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-fg-500">
                           {data.wonProjects}/{data.totalProjects} projects
                         </span>
-                        <span className="text-sm font-semibold text-green-600">
+                        <span className="text-sm font-semibold text-status-emerald-fg">
                           {convRate.toFixed(0)}%
                         </span>
                       </div>
                     </div>
-                    <div className="h-7 bg-slate-100 rounded-lg overflow-hidden">
+                    <div className="h-7 bg-surf-muted rounded-lg overflow-hidden">
                       <div
                         className="h-full flex rounded-lg overflow-hidden transition-all duration-500"
                         style={{ width: `${Math.max(percentage, 2)}%` }}
@@ -726,7 +726,7 @@ export function Dashboard() {
               })}
             </div>
           ) : (
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-fg-500">
               No project data available yet
             </div>
           )}
@@ -734,7 +734,7 @@ export function Dashboard() {
       </div>
 
       <div className="glass-white p-6 section-enter hover:shadow-lg transition-shadow duration-200" style={{ animationDelay: '0.25s' }}>
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">
+        <h2 className="text-lg font-semibold text-fg-900 mb-4">
           Monthly Quoted Value (Last 6 Months)
         </h2>
         {monthlyData.length > 0 ? (
@@ -746,19 +746,19 @@ export function Dashboard() {
               return (
                 <div key={`value-${data.month}`}>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-slate-700">
+                    <span className="text-sm font-medium text-fg-700">
                       {data.month}
                     </span>
                     <div className="flex items-center space-x-4">
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-fg-500">
                         Total: {formatCurrency(data.totalValue / exchangeRate, 'USD')}
                       </span>
-                      <span className="text-xs font-semibold text-green-600">
+                      <span className="text-xs font-semibold text-status-emerald-fg">
                         Won: {formatCurrency(data.wonValue / exchangeRate, 'USD')}
                       </span>
                     </div>
                   </div>
-                  <div className="relative h-10 bg-slate-100 rounded-lg overflow-hidden">
+                  <div className="relative h-10 bg-surf-muted rounded-lg overflow-hidden">
                     <div
                       className="absolute top-0 left-0 h-full bg-gradient-to-r from-slate-300 to-slate-400 rounded-lg transition-all duration-500"
                       style={{ width: `${percentage}%` }}
@@ -773,7 +773,7 @@ export function Dashboard() {
             })}
           </div>
         ) : (
-          <div className="text-center py-8 text-slate-500">
+          <div className="text-center py-8 text-fg-500">
             No value data available yet
           </div>
         )}
@@ -781,8 +781,8 @@ export function Dashboard() {
 
       {(topCabinets.length > 0 || doorMaterialTrends.length > 0 || boxMaterialTrends.length > 0 || hardwareTrends.length > 0) && (
         <div className="mt-6 mb-6 section-enter" style={{ animationDelay: '0.35s' }}>
-          <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center">
-            <TrendingUp className="h-6 w-6 text-blue-600 mr-3" />
+          <h2 className="text-2xl font-bold text-fg-900 mb-4 flex items-center">
+            <TrendingUp className="h-6 w-6 text-accent-text mr-3" />
             Quotation Trends & Analytics
           </h2>
 
@@ -790,38 +790,38 @@ export function Dashboard() {
             {topCabinets.length > 0 && (
               <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
                 <div className="flex items-center mb-4">
-                  <Package className="h-5 w-5 text-blue-600 mr-2" />
-                  <h3 className="text-lg font-semibold text-slate-900">Top 5 Most Quoted Cabinets</h3>
+                  <Package className="h-5 w-5 text-accent-text mr-2" />
+                  <h3 className="text-lg font-semibold text-fg-900">Top 5 Most Quoted Cabinets</h3>
                 </div>
                 <div className="space-y-3">
                   {topCabinets.map((cabinet, index) => (
                     <div
                       key={cabinet.product_sku}
-                      className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-lg bg-surf-app hover:bg-surf-muted transition-colors"
                     >
                       <div className="flex items-center flex-1">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mr-3 ${
                           index === 0 ? 'bg-amber-500 text-white' :
                           index === 1 ? 'bg-slate-400 text-white' :
                           index === 2 ? 'bg-orange-600 text-white' :
-                          'bg-slate-300 text-slate-700'
+                          'bg-slate-300 text-fg-700'
                         }`}>
                           {index + 1}
                         </div>
                         <div className="flex-1">
-                          <div className="font-semibold text-slate-900 text-sm">
+                          <div className="font-semibold text-fg-900 text-sm">
                             {cabinet.product_sku}
                           </div>
-                          <div className="text-xs text-slate-600 truncate">
+                          <div className="text-xs text-fg-600 truncate">
                             {cabinet.product_description}
                           </div>
                         </div>
                       </div>
                       <div className="text-right ml-3">
-                        <div className="text-lg font-bold text-blue-600">
+                        <div className="text-lg font-bold text-accent-text">
                           {cabinet.total_quantity}
                         </div>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-fg-500">
                           {cabinet.times_quoted} {cabinet.times_quoted === 1 ? 'quote' : 'quotes'}
                         </div>
                       </div>
@@ -834,26 +834,26 @@ export function Dashboard() {
             {doorMaterialTrends.length > 0 && (
               <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
                 <div className="flex items-center mb-4">
-                  <Package className="h-5 w-5 text-purple-600 mr-2" />
-                  <h3 className="text-lg font-semibold text-slate-900">Popular Door Materials</h3>
+                  <Package className="h-5 w-5 text-accent-text mr-2" />
+                  <h3 className="text-lg font-semibold text-fg-900">Popular Door Materials</h3>
                 </div>
                 <div className="space-y-3">
                   {doorMaterialTrends.map((material, index) => (
                     <div key={material.material_id} className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-700 truncate flex-1">
+                        <span className="text-sm font-medium text-fg-700 truncate flex-1">
                           {material.material_name}
                         </span>
                         <div className="flex items-center ml-3">
-                          <span className="text-sm font-bold text-purple-600">
+                          <span className="text-sm font-bold text-accent-text">
                             {material.percentage.toFixed(1)}%
                           </span>
-                          <span className="text-xs text-slate-500 ml-2">
+                          <span className="text-xs text-fg-500 ml-2">
                             ({material.usage_count})
                           </span>
                         </div>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div className="w-full bg-surf-muted rounded-full h-2">
                         <div
                           className={`h-2 rounded-full transition-all duration-500 ${
                             index === 0 ? 'bg-purple-600' :
@@ -873,26 +873,26 @@ export function Dashboard() {
             {boxMaterialTrends.length > 0 && (
               <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
                 <div className="flex items-center mb-4">
-                  <Package className="h-5 w-5 text-orange-600 mr-2" />
-                  <h3 className="text-lg font-semibold text-slate-900">Popular Box Materials</h3>
+                  <Package className="h-5 w-5 text-status-orange-fg mr-2" />
+                  <h3 className="text-lg font-semibold text-fg-900">Popular Box Materials</h3>
                 </div>
                 <div className="space-y-3">
                   {boxMaterialTrends.map((material, index) => (
                     <div key={material.material_id} className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-700 truncate flex-1">
+                        <span className="text-sm font-medium text-fg-700 truncate flex-1">
                           {material.material_name}
                         </span>
                         <div className="flex items-center ml-3">
-                          <span className="text-sm font-bold text-orange-600">
+                          <span className="text-sm font-bold text-status-orange-fg">
                             {material.percentage.toFixed(1)}%
                           </span>
-                          <span className="text-xs text-slate-500 ml-2">
+                          <span className="text-xs text-fg-500 ml-2">
                             ({material.usage_count})
                           </span>
                         </div>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div className="w-full bg-surf-muted rounded-full h-2">
                         <div
                           className={`h-2 rounded-full transition-all duration-500 ${
                             index === 0 ? 'bg-orange-600' :
@@ -913,13 +913,13 @@ export function Dashboard() {
               <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
                 <div className="flex items-center mb-4">
                   <Package className="h-5 w-5 text-teal-600 mr-2" />
-                  <h3 className="text-lg font-semibold text-slate-900">Most Used Hardware</h3>
+                  <h3 className="text-lg font-semibold text-fg-900">Most Used Hardware</h3>
                 </div>
                 <div className="space-y-3">
                   {hardwareTrends.map((hardware, index) => (
                     <div
                       key={hardware.hardware_name}
-                      className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-lg bg-surf-app hover:bg-surf-muted transition-colors"
                     >
                       <div className="flex items-center flex-1">
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs mr-3 ${
@@ -929,7 +929,7 @@ export function Dashboard() {
                         }`}>
                           {index + 1}
                         </div>
-                        <span className="text-sm font-medium text-slate-700 truncate">
+                        <span className="text-sm font-medium text-fg-700 truncate">
                           {hardware.hardware_name}
                         </span>
                       </div>
@@ -937,7 +937,7 @@ export function Dashboard() {
                         <div className="text-lg font-bold text-teal-600">
                           {hardware.usage_count}
                         </div>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-fg-500">
                           {hardware.total_quantity} total
                         </div>
                       </div>
@@ -953,8 +953,8 @@ export function Dashboard() {
       {projectTypeStats.length > 0 && (
         <div className="mt-6 glass-white p-6">
           <div className="flex items-center mb-4">
-            <Tag className="h-5 w-5 text-blue-600 mr-2" />
-            <h2 className="text-lg font-semibold text-slate-900">Project Type Analytics</h2>
+            <Tag className="h-5 w-5 text-accent-text mr-2" />
+            <h2 className="text-lg font-semibold text-fg-900">Project Type Analytics</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {projectTypeStats.map((typeData) => {
@@ -1010,22 +1010,22 @@ export function Dashboard() {
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="glass-white p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-slate-900">Catalog Status</h2>
-            <Package className="h-5 w-5 text-slate-400" />
+            <h2 className="text-lg font-semibold text-fg-900">Catalog Status</h2>
+            <Package className="h-5 w-5 text-fg-400" />
           </div>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-600">Products in Catalog</span>
-              <span className="text-2xl font-bold text-slate-900">{stats.totalProducts}</span>
+              <span className="text-sm text-fg-600">Products in Catalog</span>
+              <span className="text-2xl font-bold text-fg-900">{stats.totalProducts}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-600">Price List Items</span>
-              <span className="text-2xl font-bold text-slate-900">{stats.totalPriceItems}</span>
+              <span className="text-sm text-fg-600">Price List Items</span>
+              <span className="text-2xl font-bold text-fg-900">{stats.totalPriceItems}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-sm p-6 text-white">
+        <div className="bg-accent-primary rounded-xl shadow-sm p-6 text-white">
           <h2 className="text-lg font-semibold mb-2">Quick Actions</h2>
           <p className="text-sm text-blue-100 mb-4">
             Get started with your quotation system
@@ -1033,19 +1033,19 @@ export function Dashboard() {
           <div className="space-y-2">
             <button
               onClick={() => navigate('/projects')}
-              className="w-full text-left bg-white/25 hover:bg-white/40 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+              className="w-full text-left bg-surf-card hover:bg-surf-card rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
             >
               Create New Project
             </button>
             <button
               onClick={() => navigate('/products')}
-              className="w-full text-left bg-white/25 hover:bg-white/40 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+              className="w-full text-left bg-surf-card hover:bg-surf-card rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
             >
               Manage Products
             </button>
             <button
               onClick={() => navigate('/prices')}
-              className="w-full text-left bg-white/25 hover:bg-white/40 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+              className="w-full text-left bg-surf-card hover:bg-surf-card rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
             >
               Update Prices
             </button>

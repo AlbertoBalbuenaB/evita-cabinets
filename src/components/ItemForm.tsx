@@ -98,7 +98,7 @@ export function ItemForm({ areaId, item, onClose }: ItemFormProps) {
         size="lg"
       >
         <div className="flex items-center justify-center h-64">
-          <div className="text-slate-600">Loading price list...</div>
+          <div className="text-fg-600">Loading price list...</div>
         </div>
       </Modal>
     );
@@ -113,7 +113,7 @@ export function ItemForm({ areaId, item, onClose }: ItemFormProps) {
     >
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="block text-sm font-medium text-fg-700 mb-1">
             Select Item from Price List
           </label>
           <AutocompleteSelect
@@ -131,28 +131,28 @@ export function ItemForm({ areaId, item, onClose }: ItemFormProps) {
         </div>
 
         {selectedPriceListItem && (
-          <div className="bg-slate-50 p-4 rounded-lg space-y-2">
+          <div className="bg-surf-app p-4 rounded-lg space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Description:</span>
+              <span className="text-fg-600">Description:</span>
               <span className="font-medium text-right ml-2">{selectedPriceListItem.concept_description}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Type:</span>
+              <span className="text-fg-600">Type:</span>
               <span className="font-medium">{selectedPriceListItem.type}</span>
             </div>
             {selectedPriceListItem.dimensions && (
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Dimensions:</span>
+                <span className="text-fg-600">Dimensions:</span>
                 <span className="font-medium">{selectedPriceListItem.dimensions}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Unit:</span>
+              <span className="text-fg-600">Unit:</span>
               <span className="font-medium">{selectedPriceListItem.unit}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Unit Price:</span>
-              <span className="font-medium text-blue-600">{formatCurrency(unitPrice)}</span>
+              <span className="text-fg-600">Unit Price:</span>
+              <span className="font-medium text-accent-text">{formatCurrency(unitPrice)}</span>
             </div>
           </div>
         )}
@@ -168,31 +168,31 @@ export function ItemForm({ areaId, item, onClose }: ItemFormProps) {
         />
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Notes</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Optional notes about this item..."
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
             rows={3}
           />
         </div>
 
         {selectedPriceListItem && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4">
             <div className="flex justify-between items-center">
               <div>
-                <div className="text-sm text-blue-800 font-medium">Subtotal</div>
-                <div className="text-xs text-blue-600">
+                <div className="text-sm text-accent-text font-medium">Subtotal</div>
+                <div className="text-xs text-accent-text">
                   {quantity} × {formatCurrency(unitPrice)}
                 </div>
               </div>
-              <div className="text-2xl font-bold text-blue-900">{formatCurrency(subtotal)}</div>
+              <div className="text-2xl font-bold text-accent-text">{formatCurrency(subtotal)}</div>
             </div>
           </div>
         )}
 
-        <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-border-soft">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>

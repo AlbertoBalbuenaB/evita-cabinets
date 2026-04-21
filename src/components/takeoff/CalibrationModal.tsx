@@ -43,7 +43,7 @@ export function CalibrationModal({ isOpen, onClose, pointA, pointB, onConfirm }:
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Calibrate Scale" size="sm">
       <div className="space-y-4">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-fg-600">
           Enter the real-world distance between the two points you selected on the drawing.
         </p>
 
@@ -64,11 +64,11 @@ export function CalibrationModal({ isOpen, onClose, pointA, pointB, onConfirm }:
             />
           </div>
           <div className="w-36">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Unit</label>
+            <label className="block text-sm font-medium text-fg-700 mb-1">Unit</label>
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value as MeasurementUnit)}
-              className="block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="block w-full px-3 py-2 border border-border-solid rounded-lg shadow-sm focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-blue-500 text-sm"
             >
               {units.map((u) => (
                 <option key={u.value} value={u.value}>

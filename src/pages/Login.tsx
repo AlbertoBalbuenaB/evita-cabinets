@@ -4,7 +4,7 @@ export function Login() {
   const { signInWithGoogle, loading } = useAuth();
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-[#eef0f8]">
+    <div className="min-h-screen relative overflow-hidden" style={{ background: 'var(--gradient-login)' }}>
       {/* ── Animated mesh gradient background ─────────────────────────────── */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 mesh-bg" />
@@ -13,10 +13,10 @@ export function Login() {
 
       {/* ── Gradient orbs ─────────────────────────────────────────────────── */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute w-[500px] h-[500px] -top-32 -left-32 bg-blue-400/20 rounded-full blur-[120px] animate-orb1" />
-        <div className="absolute w-[400px] h-[400px] top-1/4 -right-20 bg-indigo-400/20 rounded-full blur-[100px] animate-orb2" />
-        <div className="absolute w-[350px] h-[350px] -bottom-20 left-1/4 bg-violet-400/15 rounded-full blur-[100px] animate-orb3" />
-        <div className="absolute w-[300px] h-[300px] bottom-1/3 right-1/4 bg-purple-400/12 rounded-full blur-[80px] animate-orb4" />
+        <div className="absolute w-[500px] h-[500px] -top-32 -left-32 rounded-full blur-[120px] animate-orb1" style={{ background: 'var(--login-orb-a)' }} />
+        <div className="absolute w-[400px] h-[400px] top-1/4 -right-20 rounded-full blur-[100px] animate-orb2" style={{ background: 'var(--login-orb-b)' }} />
+        <div className="absolute w-[350px] h-[350px] -bottom-20 left-1/4 rounded-full blur-[100px] animate-orb3" style={{ background: 'var(--login-orb-c)' }} />
+        <div className="absolute w-[300px] h-[300px] bottom-1/3 right-1/4 rounded-full blur-[80px] animate-orb4" style={{ background: 'var(--login-orb-d)' }} />
       </div>
 
       {/* ── Floating particles ────────────────────────────────────────────── */}
@@ -24,8 +24,9 @@ export function Login() {
         {[...Array(8)].map((_, i) => (
           <div
             key={i}
-            className="absolute rounded-full bg-indigo-400/[0.06] animate-particle"
+            className="absolute rounded-full animate-particle"
             style={{
+              background: 'var(--accent-tint-soft)',
               width: `${4 + (i % 3) * 3}px`,
               height: `${4 + (i % 3) * 3}px`,
               left: `${10 + i * 11}%`,
@@ -43,35 +44,44 @@ export function Login() {
           {/* ── Glass card ──────────────────────────────────────────────── */}
           <div className="relative group">
             {/* Glow ring */}
-            <div className="absolute -inset-[1px] rounded-[28px] bg-gradient-to-br from-indigo-300/30 via-transparent to-violet-300/30 animate-shimmer opacity-60 group-hover:opacity-100 transition-opacity duration-700" />
+            <div
+              className="absolute -inset-[1px] rounded-[28px] bg-login-ring animate-shimmer opacity-60 group-hover:opacity-100 transition-opacity duration-700"
+            />
 
-            <div className="relative backdrop-blur-2xl bg-white/70 rounded-[28px] border border-white/60 shadow-[0_8px_64px_rgba(0,0,0,0.08)] p-8 md:p-10">
+            <div
+              className="relative backdrop-blur-2xl rounded-[28px] border border-border-rail p-8 md:p-10"
+              style={{
+                background: 'var(--login-card-bg)',
+                boxShadow: 'var(--login-card-shadow)',
+              }}
+            >
               {/* Logo */}
               <div className="flex justify-center mb-6">
                 <img
                   src="/evita_logo.png"
                   alt="Evita Cabinets"
                   className="h-14 w-auto object-contain"
+                  style={{ filter: 'var(--logo-filter)' }}
                 />
               </div>
 
               {/* Subtitle */}
-              <p className="text-center text-[11px] font-medium tracking-[0.25em] uppercase text-gray-400 mb-8">
+              <p className="text-center text-[11px] font-medium tracking-[0.25em] uppercase text-fg-400 mb-8">
                 Project Management Platform
               </p>
 
               {/* Divider */}
-              <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-8" />
+              <div className="h-px bg-gradient-to-r from-transparent via-[color:var(--border-soft)] to-transparent mb-8" />
 
               {/* Google sign-in button */}
               <button
                 onClick={signInWithGoogle}
                 disabled={loading}
-                className="w-full relative group/btn flex items-center justify-center gap-3 bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 text-gray-700 hover:text-gray-900 font-medium py-3.5 px-5 rounded-2xl transition-all duration-300 hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                className="w-full relative group/btn flex items-center justify-center gap-3 bg-surf-input hover:bg-surf-hover border border-border-input hover:border-border-solid text-fg-700 hover:text-fg-900 font-medium py-3.5 px-5 rounded-2xl transition-all duration-300 hover:shadow-card hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 {loading ? (
                   <div className="flex items-center gap-3">
-                    <svg className="animate-spin h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-5 w-5 text-fg-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
@@ -93,7 +103,7 @@ export function Login() {
           </div>
 
           {/* Footer */}
-          <p className="text-center text-[10px] text-gray-400 mt-8 tracking-wide">
+          <p className="text-center text-[10px] text-fg-400 mt-8 tracking-wide">
             &copy; 2025 Evita Cabinets
           </p>
         </div>
@@ -103,14 +113,14 @@ export function Login() {
       <style>{`
         .mesh-bg {
           background:
-            radial-gradient(ellipse 80% 60% at 20% 40%, rgba(129,140,248,0.18) 0%, transparent 70%),
-            radial-gradient(ellipse 60% 80% at 80% 20%, rgba(167,139,250,0.15) 0%, transparent 70%),
-            radial-gradient(ellipse 70% 50% at 50% 90%, rgba(139,92,246,0.10) 0%, transparent 70%);
+            radial-gradient(ellipse 80% 60% at 20% 40%, var(--login-orb-b) 0%, transparent 70%),
+            radial-gradient(ellipse 60% 80% at 80% 20%, var(--login-orb-c) 0%, transparent 70%),
+            radial-gradient(ellipse 70% 50% at 50% 90%, var(--login-orb-d) 0%, transparent 70%);
           animation: meshShift 20s ease-in-out infinite alternate;
         }
 
         .dot-grid {
-          background-image: radial-gradient(circle, rgba(0,0,0,0.3) 1px, transparent 1px);
+          background-image: radial-gradient(circle, var(--fg-400) 1px, transparent 1px);
           background-size: 32px 32px;
         }
 

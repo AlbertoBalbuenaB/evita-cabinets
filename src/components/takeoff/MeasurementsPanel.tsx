@@ -166,7 +166,7 @@ export function MeasurementsPanel() {
 
     // Calculate screen center position and offset to center the measurement
     const screenPt = pdfToScreen(center, viewport, RENDER_SCALE);
-    const container = document.querySelector('.flex-1.relative.overflow-hidden.bg-slate-100');
+    const container = document.querySelector('.flex-1.relative.overflow-hidden.bg-surf-muted');
     if (!container) return;
     const rect = container.getBoundingClientRect();
     const targetZoom = Math.max(viewport.zoom, 1.5);
@@ -216,42 +216,42 @@ export function MeasurementsPanel() {
 
   return (
     <>
-    <div className="w-72 border-l border-slate-200 bg-white/80 backdrop-blur-sm flex flex-col flex-shrink-0 overflow-hidden">
+    <div className="w-72 border-l border-border-soft bg-surf-card backdrop-blur-sm flex flex-col flex-shrink-0 overflow-hidden">
       {/* Calibration status */}
-      <div className="px-3 py-2.5 border-b border-slate-200">
+      <div className="px-3 py-2.5 border-b border-border-soft">
         <div className="flex items-center gap-2">
           {calibration ? (
             <>
-              <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+              <CheckCircle2 className="h-4 w-4 text-status-emerald-fg flex-shrink-0" />
               <div className="text-xs">
-                <span className="font-medium text-green-700">Calibrated</span>
-                <span className="text-slate-500 ml-1.5">{formatMeasurement(calibration.realDistance, calibration.unit)}</span>
+                <span className="font-medium text-status-emerald-fg">Calibrated</span>
+                <span className="text-fg-500 ml-1.5">{formatMeasurement(calibration.realDistance, calibration.unit)}</span>
               </div>
             </>
           ) : (
             <>
               <XCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-              <span className="text-xs text-amber-600 font-medium">Not calibrated</span>
+              <span className="text-xs text-status-amber-fg font-medium">Not calibrated</span>
             </>
           )}
         </div>
       </div>
 
       {/* Actions bar */}
-      <div className="px-3 py-1.5 flex items-center gap-1 border-b border-slate-100">
-        <button onClick={copyAll} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100" title="Copy all measurements">
+      <div className="px-3 py-1.5 flex items-center gap-1 border-b border-border-soft">
+        <button onClick={copyAll} className="p-1 rounded text-fg-400 hover:text-fg-600 hover:bg-surf-muted" title="Copy all measurements">
           <ClipboardCopy className="h-3.5 w-3.5" />
         </button>
-        <button onClick={exportCsv} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100" title="Export CSV">
+        <button onClick={exportCsv} className="p-1 rounded text-fg-400 hover:text-fg-600 hover:bg-surf-muted" title="Export CSV">
           <FileDown className="h-3.5 w-3.5" />
         </button>
-        <button ref={sessionBtnRef} onClick={toggleSessionMenu} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100" title="Session">
+        <button ref={sessionBtnRef} onClick={toggleSessionMenu} className="p-1 rounded text-fg-400 hover:text-fg-600 hover:bg-surf-muted" title="Session">
           <Save className="h-3.5 w-3.5" />
         </button>
         {sessionProjectId && (
           <button
             onClick={() => setShowSendToQuotation(true)}
-            className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+            className="p-1 rounded text-fg-400 hover:text-accent-text hover:bg-accent-tint-soft"
             title="Send linked measurements to a quotation in this project"
           >
             <Send className="h-3.5 w-3.5" />
@@ -259,24 +259,24 @@ export function MeasurementsPanel() {
         )}
         <div className="flex-1" />
         {filteredMeasurements.length > 0 && (
-          <button onClick={clearAllMeasurements} className="text-[10px] text-red-500 hover:text-red-700 font-medium">Clear all</button>
+          <button onClick={clearAllMeasurements} className="text-[10px] text-red-500 hover:text-status-red-fg font-medium">Clear all</button>
         )}
       </div>
 
       {/* Categories — layer/takeoff categories with color. Active one auto-assigns to new measurements. */}
-      <div className="px-3 py-1.5 border-b border-slate-100">
+      <div className="px-3 py-1.5 border-b border-border-soft">
         <div className="flex items-center gap-1 flex-wrap">
           <button
             onClick={() => setActiveCategory(null)}
             className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors ${
-              !activeCategoryId ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              !activeCategoryId ? 'bg-accent-tint-soft text-accent-text' : 'bg-surf-muted text-fg-500 hover:bg-surf-muted'
             }`}
             title="Show all / no active category"
           >All</button>
           {categories.map((c) => (
             <button key={c.id} onClick={() => setActiveCategory(c.id === activeCategoryId ? null : c.id)}
               className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors flex items-center gap-1 ${
-                activeCategoryId === c.id ? 'text-slate-800' : 'text-slate-600 hover:bg-slate-100'
+                activeCategoryId === c.id ? 'text-fg-800' : 'text-fg-600 hover:bg-surf-muted'
               }`}
               style={activeCategoryId === c.id ? { backgroundColor: c.color + '33', border: `1px solid ${c.color}` } : { backgroundColor: c.color + '18' }}
               title={`${c.name} — click to ${c.id === activeCategoryId ? 'deactivate' : 'activate'}`}
@@ -289,7 +289,7 @@ export function MeasurementsPanel() {
             </button>
           ))}
           {!showCategoryInput && (
-            <button onClick={() => setShowCategoryInput(true)} className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-0.5 px-1">
+            <button onClick={() => setShowCategoryInput(true)} className="text-[10px] text-blue-500 hover:text-accent-text flex items-center gap-0.5 px-1">
               <Plus className="h-3 w-3" /> Category
             </button>
           )}
@@ -306,27 +306,27 @@ export function MeasurementsPanel() {
             </div>
             <input autoFocus value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') submitNewCategory(); if (e.key === 'Escape') { setShowCategoryInput(false); setNewCategoryName(''); } }}
-              className="text-xs border border-slate-200 rounded px-1.5 py-0.5 flex-1 min-w-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="text-xs border border-border-soft rounded px-1.5 py-0.5 flex-1 min-w-0 focus:outline-none focus:ring-1 focus-visible:ring-focus"
               placeholder="e.g. Base Cabinets"
             />
-            <button onClick={submitNewCategory} disabled={!newCategoryName.trim()} className="text-[10px] text-blue-600 hover:text-blue-800 disabled:text-slate-300 font-medium px-1">Add</button>
+            <button onClick={submitNewCategory} disabled={!newCategoryName.trim()} className="text-[10px] text-accent-text hover:text-accent-text disabled:text-fg-300 font-medium px-1">Add</button>
           </div>
         )}
       </div>
 
       {/* Groups (legacy) */}
       {groups.length > 0 && (
-        <div className="px-3 py-1.5 border-b border-slate-100 flex items-center gap-1 flex-wrap">
+        <div className="px-3 py-1.5 border-b border-border-soft flex items-center gap-1 flex-wrap">
           <button
             onClick={() => setActiveGroup(undefined)}
             className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors ${
-              !activeGroup ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              !activeGroup ? 'bg-accent-tint-soft text-accent-text' : 'bg-surf-muted text-fg-500 hover:bg-surf-muted'
             }`}
           >All</button>
           {groups.map((g) => (
             <button key={g} onClick={() => setActiveGroup(g === activeGroup ? undefined : g)}
               className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors flex items-center gap-1 ${
-                activeGroup === g ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                activeGroup === g ? 'bg-accent-tint-soft text-accent-text' : 'bg-surf-muted text-fg-500 hover:bg-surf-muted'
               }`}
             >
               {g}
@@ -337,32 +337,32 @@ export function MeasurementsPanel() {
       )}
 
       {/* Add group */}
-      <div className="px-3 py-1 border-b border-slate-100">
+      <div className="px-3 py-1 border-b border-border-soft">
         {showGroupInput ? (
           <div className="flex items-center gap-1">
             <input autoFocus value={newGroup} onChange={(e) => setNewGroup(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && newGroup.trim()) { addGroup(newGroup.trim()); setNewGroup(''); setShowGroupInput(false); } if (e.key === 'Escape') setShowGroupInput(false); }}
-              className="text-xs border border-slate-200 rounded px-1.5 py-0.5 flex-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="text-xs border border-border-soft rounded px-1.5 py-0.5 flex-1 focus:outline-none focus:ring-1 focus-visible:ring-focus"
               placeholder="Group name..."
             />
           </div>
         ) : (
-          <button onClick={() => setShowGroupInput(true)} className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-0.5">
+          <button onClick={() => setShowGroupInput(true)} className="text-[10px] text-blue-500 hover:text-accent-text flex items-center gap-0.5">
             <Plus className="h-3 w-3" /> Add group
           </button>
         )}
       </div>
 
       {/* Header */}
-      <div className="px-3 py-1.5 border-b border-slate-100">
-        <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Measurements</span>
+      <div className="px-3 py-1.5 border-b border-border-soft">
+        <span className="text-xs font-semibold text-fg-700 uppercase tracking-wider">Measurements</span>
       </div>
 
       {/* List */}
       <div className="flex-1 overflow-y-auto">
         {filteredMeasurements.length === 0 ? (
           <div className="px-3 py-6 text-center">
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-fg-400">
               {calibration ? 'Click on the drawing to start measuring' : 'Calibrate the scale first to begin measuring'}
             </p>
           </div>
@@ -382,8 +382,8 @@ export function MeasurementsPanel() {
         {/* Annotations */}
         {pageAnnotations.length > 0 && (
           <>
-            <div className="px-3 py-1.5 border-t border-slate-100">
-              <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Annotations</span>
+            <div className="px-3 py-1.5 border-t border-border-soft">
+              <span className="text-xs font-semibold text-fg-700 uppercase tracking-wider">Annotations</span>
             </div>
             {pageAnnotations.map((a) => (
               <AnnotationRow key={a.id} annotation={a} onDelete={() => deleteAnnotation(a.id)} />
@@ -392,44 +392,44 @@ export function MeasurementsPanel() {
         )}
 
         {otherPageCount > 0 && (
-          <div className="px-3 py-2 border-t border-slate-100">
-            <p className="text-[10px] text-slate-400">+{otherPageCount} on other pages</p>
+          <div className="px-3 py-2 border-t border-border-soft">
+            <p className="text-[10px] text-fg-400">+{otherPageCount} on other pages</p>
           </div>
         )}
       </div>
 
       {/* Totals — grand total + per-category breakdown */}
       {(totalLinear > 0 || totalArea > 0 || totalCount > 0) && (
-        <div className="px-3 py-2 border-t border-slate-200 bg-slate-50/80 max-h-52 overflow-y-auto">
-          <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">Totals</div>
+        <div className="px-3 py-2 border-t border-border-soft bg-surf-app max-h-52 overflow-y-auto">
+          <div className="text-[10px] font-semibold text-fg-600 uppercase tracking-wider mb-1">Totals</div>
           {totalLinear > 0 && (
             <div className="flex justify-between text-xs">
-              <span className="text-slate-500">Linear</span>
-              <span className="font-mono font-medium text-slate-700">{formatMeasurement(totalLinear, unit)}</span>
+              <span className="text-fg-500">Linear</span>
+              <span className="font-mono font-medium text-fg-700">{formatMeasurement(totalLinear, unit)}</span>
             </div>
           )}
           {totalArea > 0 && (
             <div className="flex justify-between text-xs">
-              <span className="text-slate-500">Area</span>
-              <span className="font-mono font-medium text-slate-700">{formatArea(totalArea, unit)}</span>
+              <span className="text-fg-500">Area</span>
+              <span className="font-mono font-medium text-fg-700">{formatArea(totalArea, unit)}</span>
             </div>
           )}
           {totalCount > 0 && (
             <div className="flex justify-between text-xs">
-              <span className="text-slate-500">Count</span>
-              <span className="font-mono font-medium text-slate-700">{totalCount}</span>
+              <span className="text-fg-500">Count</span>
+              <span className="font-mono font-medium text-fg-700">{totalCount}</span>
             </div>
           )}
           {categoryTotals.length > 1 && (
-            <div className="mt-2 pt-2 border-t border-slate-200/70 space-y-1.5">
-              <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">By category</div>
+            <div className="mt-2 pt-2 border-t border-border-soft space-y-1.5">
+              <div className="text-[9px] font-semibold text-fg-400 uppercase tracking-wider">By category</div>
               {categoryTotals.map((b) => (
                 <div key={b.categoryId ?? '__uncat__'} className="text-[11px]">
                   <div className="flex items-center gap-1 mb-0.5">
                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: b.color ?? '#cbd5e1' }} />
-                    <span className="font-medium text-slate-600 truncate">{b.name}</span>
+                    <span className="font-medium text-fg-600 truncate">{b.name}</span>
                   </div>
-                  <div className="pl-3 text-slate-500 font-mono space-y-0.5">
+                  <div className="pl-3 text-fg-500 font-mono space-y-0.5">
                     {b.linear > 0 && <div className="flex justify-between"><span>Linear</span><span>{formatMeasurement(b.linear, unit)}</span></div>}
                     {b.area > 0 && <div className="flex justify-between"><span>Area</span><span>{formatArea(b.area, unit)}</span></div>}
                     {b.count > 0 && <div className="flex justify-between"><span>Count</span><span>{b.count}</span></div>}
@@ -471,13 +471,13 @@ export function MeasurementsPanel() {
       <div
         ref={sessionMenuRef}
         style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 60 }}
-        className="bg-white rounded-lg shadow-lg border border-slate-200 py-1 w-40"
+        className="bg-surf-card rounded-lg shadow-lg border border-border-soft py-1 w-40"
       >
-        <button onClick={handleSave} className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50">Save to browser</button>
-        <button onClick={() => { store.loadSession(); closeSessionMenu(); }} className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50">Load from browser</button>
-        <hr className="my-1 border-slate-100" />
-        <button onClick={handleExportJson} className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50">Export JSON</button>
-        <button onClick={handleImportJson} className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-50">Import JSON</button>
+        <button onClick={handleSave} className="w-full px-3 py-1.5 text-xs text-left hover:bg-surf-app">Save to browser</button>
+        <button onClick={() => { store.loadSession(); closeSessionMenu(); }} className="w-full px-3 py-1.5 text-xs text-left hover:bg-surf-app">Load from browser</button>
+        <hr className="my-1 border-border-soft" />
+        <button onClick={handleExportJson} className="w-full px-3 py-1.5 text-xs text-left hover:bg-surf-app">Export JSON</button>
+        <button onClick={handleImportJson} className="w-full px-3 py-1.5 text-xs text-left hover:bg-surf-app">Import JSON</button>
       </div>,
       document.body
     )}
@@ -508,7 +508,7 @@ function MeasurementRow({ measurement: m, selected, displayUnit, categories, all
   const commitRename = () => { setEditing(false); if (editName.trim() && editName !== m.name) onRename(editName.trim()); else setEditName(m.name); };
 
   return (
-    <div className={`px-3 py-2 flex items-start gap-2 cursor-pointer transition-colors ${selected ? 'bg-blue-50' : 'hover:bg-slate-50'}`} onClick={onSelect}>
+    <div className={`px-3 py-2 flex items-start gap-2 cursor-pointer transition-colors ${selected ? 'bg-accent-tint-soft' : 'hover:bg-surf-app'}`} onClick={onSelect}>
       <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: effectiveColor + '20' }}>
         <TypeIcon className="h-3 w-3" style={{ color: effectiveColor }} />
       </div>
@@ -516,22 +516,22 @@ function MeasurementRow({ measurement: m, selected, displayUnit, categories, all
         {editing ? (
           <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} onBlur={commitRename}
             onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') { setEditing(false); setEditName(m.name); } }}
-            className="text-xs font-medium text-slate-800 w-full bg-white border border-blue-300 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="text-xs font-medium text-fg-800 w-full bg-surf-card border border-accent-tint-border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus-visible:ring-focus"
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          <span className="text-xs font-medium text-slate-700 cursor-text hover:text-blue-600 block truncate"
+          <span className="text-xs font-medium text-fg-700 cursor-text hover:text-accent-text block truncate"
             onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}>{m.name}</span>
         )}
-        <span className="text-[11px] text-slate-500 font-mono">{displayValue}</span>
+        <span className="text-[11px] text-fg-500 font-mono">{displayValue}</span>
         <div className="flex items-center gap-1 flex-wrap mt-0.5">
           {category && (
             <span className="text-[9px] rounded px-1 font-medium" style={{ backgroundColor: category.color + '22', color: category.color }}>{category.name}</span>
           )}
-          {m.group && <span className="text-[9px] bg-slate-100 text-slate-500 rounded px-1">{m.group}</span>}
+          {m.group && <span className="text-[9px] bg-surf-muted text-fg-500 rounded px-1">{m.group}</span>}
           {m.linkedProduct && (
             <span
-              className="text-[9px] bg-blue-50 text-blue-700 rounded px-1 inline-flex items-center gap-0.5 max-w-[11rem]"
+              className="text-[9px] bg-accent-tint-soft text-accent-text rounded px-1 inline-flex items-center gap-0.5 max-w-[11rem]"
               title={`Linked to ${m.linkedProduct.label}`}
             >
               <Link2 className="h-2.5 w-2.5 flex-shrink-0" />
@@ -544,16 +544,16 @@ function MeasurementRow({ measurement: m, selected, displayUnit, categories, all
         {linkable && (
           <button
             onClick={(e) => { e.stopPropagation(); onLink(); }}
-            className={`p-1 rounded ${m.linkedProduct ? 'text-blue-600 hover:bg-blue-50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+            className={`p-1 rounded ${m.linkedProduct ? 'text-accent-text hover:bg-accent-tint-soft' : 'text-fg-400 hover:text-fg-600 hover:bg-surf-muted'}`}
             title={m.linkedProduct ? `Linked: ${m.linkedProduct.label}` : 'Link to price list'}
           >
             {m.linkedProduct ? <Link2 className="h-3 w-3" /> : <Link2Off className="h-3 w-3" />}
           </button>
         )}
-        <button onClick={(e) => { e.stopPropagation(); handleCopy(); }} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100" title="Copy">
+        <button onClick={(e) => { e.stopPropagation(); handleCopy(); }} className="p-1 rounded text-fg-400 hover:text-fg-600 hover:bg-surf-muted" title="Copy">
           {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
         </button>
-        <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-50" title="Delete">
+        <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 rounded text-fg-400 hover:text-red-500 hover:bg-status-red-bg" title="Delete">
           <Trash2 className="h-3 w-3" />
         </button>
       </div>
@@ -563,10 +563,10 @@ function MeasurementRow({ measurement: m, selected, displayUnit, categories, all
 
 function AnnotationRow({ annotation: a, onDelete }: { annotation: Annotation; onDelete: () => void }) {
   return (
-    <div className="px-3 py-1.5 flex items-center gap-2 hover:bg-slate-50">
+    <div className="px-3 py-1.5 flex items-center gap-2 hover:bg-surf-app">
       <Type className="h-3 w-3 flex-shrink-0" style={{ color: a.color }} />
-      <span className="text-xs text-slate-600 flex-1 truncate">{a.text}</span>
-      <button onClick={onDelete} className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-50"><Trash2 className="h-3 w-3" /></button>
+      <span className="text-xs text-fg-600 flex-1 truncate">{a.text}</span>
+      <button onClick={onDelete} className="p-1 rounded text-fg-400 hover:text-red-500 hover:bg-status-red-bg"><Trash2 className="h-3 w-3" /></button>
     </div>
   );
 }

@@ -17,9 +17,27 @@ function getIcon(type: string) {
 }
 
 function getIconStyle(type: string) {
-  if (TASK_TYPES.includes(type)) return { bg: 'bg-blue-100/70', text: 'text-blue-600', ring: 'ring-blue-200/50' };
-  if (type.includes('task_comment')) return { bg: 'bg-amber-100/70', text: 'text-amber-600', ring: 'ring-amber-200/50' };
-  return { bg: 'bg-violet-100/70', text: 'text-violet-600', ring: 'ring-violet-200/50' };
+  // Status tokens give us themed fills; blue/violet notification types
+  // map onto the existing accent/status palette.
+  if (TASK_TYPES.includes(type)) {
+    return {
+      bg: 'bg-accent-tint-strong',
+      text: 'text-accent-text',
+      ring: 'ring-[color:var(--accent-tint-border)]',
+    };
+  }
+  if (type.includes('task_comment')) {
+    return {
+      bg: 'bg-status-amber-bg',
+      text: 'text-status-amber-fg',
+      ring: 'ring-[color:var(--status-amber-brd)]',
+    };
+  }
+  return {
+    bg: 'bg-accent-tint-soft',
+    text: 'text-accent-text',
+    ring: 'ring-[color:var(--accent-tint-border)]',
+  };
 }
 
 function getActionLabel(type: string): string {
@@ -72,38 +90,32 @@ export function NotificationPanel({ open, onClose }: Props) {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[60]"
-        style={{ background: 'rgba(15, 23, 42, 0.18)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
+        className="fixed inset-0 z-[60] bg-modal-backdrop"
+        style={{ backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
         onClick={onClose}
       />
 
       {/* Panel */}
       <div
-        className="fixed right-0 top-0 z-[61] h-full w-full sm:w-[400px] flex flex-col animate-slide-in-right overflow-hidden"
+        className="fixed right-0 top-0 z-[61] h-full w-full sm:w-[400px] flex flex-col animate-slide-in-right overflow-hidden bg-surf-card border-l border-border-soft"
         style={{
-          background: 'rgba(255, 255, 255, 0.78)',
           backdropFilter: 'blur(28px)',
           WebkitBackdropFilter: 'blur(28px)',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.6)',
-          boxShadow: '-8px 0 40px rgba(99, 102, 241, 0.08), -2px 0 12px rgba(0, 0, 0, 0.04)',
+          boxShadow: 'var(--shadow-card)',
         }}
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between px-5 py-4"
-          style={{
-            background: 'linear-gradient(135deg, rgba(224, 231, 255, 0.4), rgba(219, 234, 254, 0.25))',
-            borderBottom: '1px solid rgba(165, 180, 252, 0.2)',
-          }}
+          className="flex items-center justify-between px-5 py-4 bg-accent-tint-card border-b border-accent-tint-border"
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-indigo-100/70 flex items-center justify-center">
-              <Bell className="h-4 w-4 text-indigo-600" />
+            <div className="w-8 h-8 rounded-xl bg-accent-tint-strong flex items-center justify-center">
+              <Bell className="h-4 w-4 text-accent-text" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Notifications</h2>
+              <h2 className="text-sm font-semibold text-fg-900">Notifications</h2>
               {unreadCount > 0 && (
-                <p className="text-[10px] text-indigo-600 font-medium">{unreadCount} unread</p>
+                <p className="text-[10px] text-accent-text font-medium">{unreadCount} unread</p>
               )}
             </div>
           </div>
@@ -111,7 +123,7 @@ export function NotificationPanel({ open, onClose }: Props) {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-[11px] text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-indigo-50/60 transition-colors"
+                className="text-[11px] text-accent-text hover:text-fg-900 font-medium flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-accent-tint-soft transition-colors"
               >
                 <CheckCheck className="h-3.5 w-3.5" />
                 Read all
@@ -119,7 +131,7 @@ export function NotificationPanel({ open, onClose }: Props) {
             )}
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-white/60 transition-colors"
+              className="p-1.5 rounded-lg text-fg-400 hover:text-fg-700 hover:bg-surf-hover transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -127,20 +139,20 @@ export function NotificationPanel({ open, onClose }: Props) {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 px-5 py-2.5" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
+        <div className="flex gap-1 px-5 py-2.5 border-b border-border-hair">
           {tabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all duration-200 ${
                 tab === t.key
-                  ? 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-sm shadow-indigo-200/50'
-                  : 'text-slate-500 hover:bg-white/70 hover:text-slate-700'
+                  ? 'bg-accent-primary text-accent-on shadow-btn'
+                  : 'text-fg-500 hover:bg-surf-btn-hover hover:text-fg-700'
               }`}
             >
               {t.label}
               {t.count > 0 && (
-                <span className={`ml-1.5 ${tab === t.key ? 'text-white/70' : 'text-slate-400'}`}>
+                <span className={`ml-1.5 ${tab === t.key ? 'opacity-75' : 'text-fg-400'}`}>
                   {t.count}
                 </span>
               )}
@@ -152,15 +164,15 @@ export function NotificationPanel({ open, onClose }: Props) {
         <div className="flex-1 overflow-y-auto px-3 py-2">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="w-6 h-6 border-2 border-indigo-100 border-t-indigo-500 rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-accent-tint-strong border-t-accent-a rounded-full animate-spin" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-              <div className="w-14 h-14 rounded-2xl bg-slate-100/60 flex items-center justify-center mb-3">
+            <div className="flex flex-col items-center justify-center py-20 text-fg-400">
+              <div className="w-14 h-14 rounded-2xl bg-surf-muted flex items-center justify-center mb-3">
                 <Bell className="h-6 w-6 opacity-40" />
               </div>
-              <p className="text-sm font-medium text-slate-500">All caught up</p>
-              <p className="text-xs text-slate-400 mt-0.5">No notifications yet</p>
+              <p className="text-sm font-medium text-fg-500">All caught up</p>
+              <p className="text-xs text-fg-400 mt-0.5">No notifications yet</p>
             </div>
           ) : (
             <div className="space-y-1.5">
@@ -174,8 +186,8 @@ export function NotificationPanel({ open, onClose }: Props) {
                     onClick={() => handleClick(n)}
                     className={`w-full text-left px-3.5 py-3 flex gap-3 rounded-xl transition-all duration-200 group ${
                       isUnread
-                        ? 'bg-white/70 shadow-sm shadow-indigo-100/30 border border-indigo-100/40 hover:shadow-md hover:shadow-indigo-100/40'
-                        : 'hover:bg-white/50 border border-transparent'
+                        ? 'bg-surf-card shadow-card border border-accent-tint-border hover:shadow-card'
+                        : 'hover:bg-surf-hover border border-transparent'
                     }`}
                   >
                     <div className={`flex-shrink-0 w-9 h-9 rounded-xl ${style.bg} ring-1 ${style.ring} flex items-center justify-center`}>
@@ -184,39 +196,39 @@ export function NotificationPanel({ open, onClose }: Props) {
                     <div className="flex-1 min-w-0">
                       {/* Actor + action */}
                       <div className="flex items-start gap-2">
-                        <p className={`text-[13px] leading-snug ${isUnread ? 'font-semibold text-slate-900' : 'font-medium text-slate-600'}`}>
+                        <p className={`text-[13px] leading-snug ${isUnread ? 'font-semibold text-fg-900' : 'font-medium text-fg-600'}`}>
                           {n.actor_name ? (
-                            <><span className="text-indigo-600">{n.actor_name}</span>{' '}{getActionLabel(n.type)}</>
+                            <><span className="text-accent-text">{n.actor_name}</span>{' '}{getActionLabel(n.type)}</>
                           ) : (
                             getActionLabel(n.type)
                           )}
                         </p>
                         {isUnread && (
-                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-indigo-500 mt-1.5 ring-2 ring-indigo-200/50" />
+                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-accent-a mt-1.5 ring-2 ring-[color:var(--accent-tint-strong)]" />
                         )}
                       </div>
 
                       {/* Title (task name, log title, etc.) */}
                       {n.title && (
-                        <p className={`text-xs mt-0.5 leading-snug font-medium truncate ${isUnread ? 'text-slate-800' : 'text-slate-500'}`}>
+                        <p className={`text-xs mt-0.5 leading-snug font-medium truncate ${isUnread ? 'text-fg-800' : 'text-fg-500'}`}>
                           {n.title}
                         </p>
                       )}
 
                       {/* Body detail (status/priority for tasks, content preview for logs) */}
                       {n.body && (
-                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">{n.body}</p>
+                        <p className="text-[11px] text-fg-500 mt-0.5 line-clamp-2 leading-relaxed">{n.body}</p>
                       )}
 
                       {/* Footer: project name + time */}
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         {n.project_name && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-600/80 bg-indigo-50/70 px-1.5 py-0.5 rounded-md border border-indigo-100/50">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-accent-text bg-accent-tint-soft px-1.5 py-0.5 rounded-md border border-accent-tint-border">
                             <FolderOpen className="h-2.5 w-2.5" />
                             {n.project_name}
                           </span>
                         )}
-                        <span className="text-[10px] text-slate-400/80 font-medium">{formatTime(n.created_at)}</span>
+                        <span className="text-[10px] text-fg-400 font-medium">{formatTime(n.created_at)}</span>
                       </div>
                     </div>
                   </button>

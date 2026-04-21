@@ -101,7 +101,7 @@ export function CountertopForm({ areaId, countertop, onClose }: CountertopFormPr
         size="lg"
       >
         <div className="flex items-center justify-center h-64">
-          <div className="text-slate-600">Loading countertop options...</div>
+          <div className="text-fg-600">Loading countertop options...</div>
         </div>
       </Modal>
     );
@@ -117,8 +117,8 @@ export function CountertopForm({ areaId, countertop, onClose }: CountertopFormPr
       >
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="text-slate-600 mb-2">No countertops available in price list</div>
-            <div className="text-sm text-slate-500">
+            <div className="text-fg-600 mb-2">No countertops available in price list</div>
+            <div className="text-sm text-fg-500">
               Please add countertop items (Quartz, Granite, Marble, Solid Surface, or Plastic Laminate) to the price list first.
             </div>
           </div>
@@ -136,7 +136,7 @@ export function CountertopForm({ areaId, countertop, onClose }: CountertopFormPr
     >
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="block text-sm font-medium text-fg-700 mb-1">
             Select Countertop from Price List
           </label>
           <AutocompleteSelect
@@ -154,28 +154,28 @@ export function CountertopForm({ areaId, countertop, onClose }: CountertopFormPr
         </div>
 
         {selectedPriceListItem && (
-          <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg space-y-2">
+          <div className="bg-status-orange-bg border border-status-orange-brd p-4 rounded-lg space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Description:</span>
+              <span className="text-fg-600">Description:</span>
               <span className="font-medium text-right ml-2">{selectedPriceListItem.concept_description}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Type:</span>
-              <span className="font-medium text-orange-700">{selectedPriceListItem.type}</span>
+              <span className="text-fg-600">Type:</span>
+              <span className="font-medium text-status-orange-fg">{selectedPriceListItem.type}</span>
             </div>
             {selectedPriceListItem.dimensions && (
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Dimensions:</span>
+                <span className="text-fg-600">Dimensions:</span>
                 <span className="font-medium">{selectedPriceListItem.dimensions}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Unit:</span>
+              <span className="text-fg-600">Unit:</span>
               <span className="font-medium">{selectedPriceListItem.unit}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Unit Price:</span>
-              <span className="font-medium text-orange-600">{formatCurrency(unitPrice)}</span>
+              <span className="text-fg-600">Unit Price:</span>
+              <span className="font-medium text-status-orange-fg">{formatCurrency(unitPrice)}</span>
             </div>
           </div>
         )}
@@ -191,31 +191,31 @@ export function CountertopForm({ areaId, countertop, onClose }: CountertopFormPr
         />
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Notes</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Optional notes about this countertop..."
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             rows={3}
           />
         </div>
 
         {selectedPriceListItem && (
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="bg-status-orange-bg border border-status-orange-brd rounded-lg p-4">
             <div className="flex justify-between items-center">
               <div>
-                <div className="text-sm text-orange-800 font-medium">Subtotal</div>
-                <div className="text-xs text-orange-600">
+                <div className="text-sm text-status-orange-fg font-medium">Subtotal</div>
+                <div className="text-xs text-status-orange-fg">
                   {quantity} × {formatCurrency(unitPrice)}
                 </div>
               </div>
-              <div className="text-2xl font-bold text-orange-900">{formatCurrency(subtotal)}</div>
+              <div className="text-2xl font-bold text-status-orange-fg">{formatCurrency(subtotal)}</div>
             </div>
           </div>
         )}
 
-        <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-border-soft">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>

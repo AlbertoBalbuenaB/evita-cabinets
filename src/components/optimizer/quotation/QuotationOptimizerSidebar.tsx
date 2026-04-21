@@ -69,25 +69,25 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
   ]).size;
 
   return (
-    <div className="h-full overflow-y-auto bg-white border-r border-slate-200">
+    <div className="h-full overflow-y-auto bg-surf-card border-r border-border-soft">
       <div className="p-3 space-y-4">
 
         {/* ── Build summary ─────────────────────────────────── */}
         <section>
           <header className="flex items-center gap-1.5 mb-2">
-            <Layers className="h-3.5 w-3.5 text-blue-600" />
-            <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wide">Build Summary</h3>
+            <Layers className="h-3.5 w-3.5 text-accent-text" />
+            <h3 className="text-xs font-semibold text-fg-800 uppercase tracking-wide">Build Summary</h3>
           </header>
           {pendingBuiltAt ? (
-            <div className="text-xs space-y-1 text-slate-600">
+            <div className="text-xs space-y-1 text-fg-600">
               <div className="flex justify-between"><span>Pieces</span><span className="font-mono tabular-nums">{totalPieceCount}</span></div>
               <div className="flex justify-between"><span>Cabinet types</span><span className="font-mono tabular-nums">{uniqueCabinets}</span></div>
               <div className="flex justify-between"><span>Cabinet units</span><span className="font-mono tabular-nums">{pendingCabinetInstanceCount}</span></div>
               <div className="flex justify-between"><span>Areas</span><span className="font-mono tabular-nums">{uniqueAreas}</span></div>
-              <div className="text-[10px] text-slate-400 mt-1">Built {formatRelative(pendingBuiltAt)}</div>
+              <div className="text-[10px] text-fg-400 mt-1">Built {formatRelative(pendingBuiltAt)}</div>
             </div>
           ) : (
-            <p className="text-xs text-slate-400 italic">Click "Build from Quotation" in the header to populate.</p>
+            <p className="text-xs text-fg-400 italic">Click "Build from Quotation" in the header to populate.</p>
           )}
 
           {hasPending && (
@@ -97,7 +97,7 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
                 onClick={handleRefreshStocks}
                 disabled={refreshingStocks}
                 title="Re-fetch material prices from the price list. Invalidates the current result."
-                className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium rounded border border-border-soft bg-surf-card text-fg-700 hover:bg-surf-app disabled:opacity-50"
               >
                 {refreshingStocks
                   ? <Loader2 className="h-3 w-3 animate-spin" />
@@ -108,7 +108,7 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
                 type="button"
                 onClick={handleClear}
                 title="Discard the current build."
-                className="inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium rounded border border-slate-200 bg-white text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                className="inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium rounded border border-border-soft bg-surf-card text-fg-600 hover:bg-status-red-bg hover:text-status-red-fg hover:border-status-red-brd"
               >
                 <Eraser className="h-3 w-3" />
                 Clear
@@ -120,25 +120,25 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
         {/* ── Stocks list ────────────────────────────────────── */}
         <section>
           <header className="flex items-center gap-1.5 mb-2">
-            <Package className="h-3.5 w-3.5 text-blue-600" />
-            <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wide">Stocks ({pendingStocks.length})</h3>
+            <Package className="h-3.5 w-3.5 text-accent-text" />
+            <h3 className="text-xs font-semibold text-fg-800 uppercase tracking-wide">Stocks ({pendingStocks.length})</h3>
           </header>
           {pendingStocks.length === 0 ? (
-            <p className="text-xs text-slate-400 italic">No stocks yet.</p>
+            <p className="text-xs text-fg-400 italic">No stocks yet.</p>
           ) : (
             <ul className="space-y-1">
               {pendingStocks.map((s) => (
-                <li key={s.id} className={`rounded border px-2 py-1.5 text-xs ${selectedStockIds.has(s.id) ? 'border-slate-200' : 'border-dashed border-slate-300 opacity-60'}`}>
+                <li key={s.id} className={`rounded border px-2 py-1.5 text-xs ${selectedStockIds.has(s.id) ? 'border-border-soft' : 'border-dashed border-border-solid opacity-60'}`}>
                   <label className="flex items-start gap-1.5 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={selectedStockIds.has(s.id)}
                       onChange={() => toggleStockSelected(s.id)}
-                      className="mt-0.5 rounded border-slate-300 shrink-0"
+                      className="mt-0.5 rounded border-border-solid shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-slate-800 truncate" title={s.nombre}>{s.nombre}</div>
-                      <div className="flex justify-between text-slate-500 mt-0.5">
+                      <div className="font-medium text-fg-800 truncate" title={s.nombre}>{s.nombre}</div>
+                      <div className="flex justify-between text-fg-500 mt-0.5">
                         <span className="font-mono tabular-nums">{s.ancho}×{s.alto}mm</span>
                         <span className="font-mono tabular-nums">${s.costo.toFixed(2)}</span>
                       </div>
@@ -153,19 +153,19 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
         {/* ── Edge banding types ─────────────────────────────── */}
         <section>
           <header className="flex items-center gap-1.5 mb-2">
-            <Scissors className="h-3.5 w-3.5 text-blue-600" />
-            <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wide">Edge Banding</h3>
+            <Scissors className="h-3.5 w-3.5 text-accent-text" />
+            <h3 className="text-xs font-semibold text-fg-800 uppercase tracking-wide">Edge Banding</h3>
           </header>
           <ul className="space-y-1">
             {Object.keys(pendingEbTypeSummary).length > 0 ? (
               Object.values(pendingEbTypeSummary).map((eb) => (
-                <li key={eb.plId} className="rounded border border-slate-200 px-2 py-1.5 text-xs">
+                <li key={eb.plId} className="rounded border border-border-soft px-2 py-1.5 text-xs">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase text-slate-400">{eb.roles.join(' + ')}</span>
-                      <span className="font-mono tabular-nums text-slate-500">${eb.pricePerMeter.toFixed(2)}/m</span>
+                      <span className="text-[10px] uppercase text-fg-400">{eb.roles.join(' + ')}</span>
+                      <span className="font-mono tabular-nums text-fg-500">${eb.pricePerMeter.toFixed(2)}/m</span>
                     </div>
-                    <div className="mt-0.5 truncate text-slate-800" title={eb.name}>
+                    <div className="mt-0.5 truncate text-fg-800" title={eb.name}>
                       {eb.name}
                     </div>
                   </div>
@@ -178,24 +178,24 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
                 const isSet = cfg.id !== '';
                 const isSelected = selectedEbSlots.has(slot);
                 return (
-                  <li key={slot} className={`rounded border px-2 py-1.5 text-xs ${isSet ? (isSelected ? 'border-slate-200' : 'border-dashed border-slate-300 opacity-60') : 'border-dashed border-slate-200 bg-slate-50'}`}>
+                  <li key={slot} className={`rounded border px-2 py-1.5 text-xs ${isSet ? (isSelected ? 'border-border-soft' : 'border-dashed border-border-solid opacity-60') : 'border-dashed border-border-soft bg-surf-app'}`}>
                     <label className="flex items-start gap-1.5 cursor-pointer">
                       {isSet && (
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleEbSlot(slot)}
-                          className="mt-0.5 rounded border-slate-300 shrink-0"
+                          className="mt-0.5 rounded border-border-solid shrink-0"
                         />
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <span className="font-mono uppercase text-slate-400">{slot}</span>
-                          <span className="font-mono tabular-nums text-slate-500">
+                          <span className="font-mono uppercase text-fg-400">{slot}</span>
+                          <span className="font-mono tabular-nums text-fg-500">
                             {isSet ? `$${cfg.price.toFixed(2)}/m` : '—'}
                           </span>
                         </div>
-                        <div className={`mt-0.5 truncate ${isSet ? 'text-slate-800' : 'text-slate-400 italic'}`} title={cfg.name || 'not configured'}>
+                        <div className={`mt-0.5 truncate ${isSet ? 'text-fg-800' : 'text-fg-400 italic'}`} title={cfg.name || 'not configured'}>
                           {cfg.name || 'not configured'}
                         </div>
                       </div>
@@ -210,8 +210,8 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
         {/* ── Settings ────────────────────────────────────────── */}
         <section>
           <header className="flex items-center gap-1.5 mb-2">
-            <Settings className="h-3.5 w-3.5 text-blue-600" />
-            <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wide">Settings</h3>
+            <Settings className="h-3.5 w-3.5 text-accent-text" />
+            <h3 className="text-xs font-semibold text-fg-800 uppercase tracking-wide">Settings</h3>
           </header>
           <div className="space-y-2">
             <NumberField
@@ -235,29 +235,29 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
               step={1}
               min={0}
             />
-            <label className="flex items-center gap-2 text-xs text-slate-700">
+            <label className="flex items-center gap-2 text-xs text-fg-700">
               <input
                 type="checkbox"
                 checked={trimIncludesKerf}
                 onChange={(e) => setTrimIncludesKerf(e.target.checked)}
-                className="rounded border-slate-300"
+                className="rounded border-border-solid"
               />
               <span>Trim includes kerf</span>
             </label>
 
             {/* Engine mode */}
-            <div className="pt-2 border-t border-slate-100">
-              <p className="text-xs text-slate-500 mb-1.5 font-medium">Engine</p>
+            <div className="pt-2 border-t border-border-soft">
+              <p className="text-xs text-fg-500 mb-1.5 font-medium">Engine</p>
               <div className="flex flex-col gap-1">
                 {(['guillotine', 'both'] as const).map((mode) => (
-                  <label key={mode} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                  <label key={mode} className="flex items-center gap-2 text-xs text-fg-700 cursor-pointer">
                     <input
                       type="radio"
                       name="quotation-engine-mode"
                       value={mode}
                       checked={engineMode === mode}
                       onChange={() => setEngineMode(mode)}
-                      className="border-slate-300 text-blue-600"
+                      className="border-border-solid text-accent-text"
                     />
                     {mode === 'guillotine' ? 'Guillotine only (panel saw)' : 'Both engines (+ MaxRect)'}
                   </label>
@@ -266,22 +266,22 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
             </div>
 
             {/* Objective */}
-            <div className="pt-2 border-t border-slate-100">
-              <p className="text-xs text-slate-500 mb-1.5 font-medium">Optimize for</p>
+            <div className="pt-2 border-t border-border-soft">
+              <p className="text-xs text-fg-500 mb-1.5 font-medium">Optimize for</p>
               <div className="flex flex-col gap-1">
                 {([
                   ['min-boards', 'Fewer boards'],
                   ['min-waste',  'Less waste'],
                   ['min-cuts',   'Fewer cuts'],
                 ] as const).map(([val, label]) => (
-                  <label key={val} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                  <label key={val} className="flex items-center gap-2 text-xs text-fg-700 cursor-pointer">
                     <input
                       type="radio"
                       name="quotation-objective"
                       value={val}
                       checked={objective === val}
                       onChange={() => setObjective(val)}
-                      className="border-slate-300 text-blue-600"
+                      className="border-border-solid text-accent-text"
                     />
                     {label}
                   </label>
@@ -310,14 +310,14 @@ function NumberField({
 }) {
   return (
     <label className="block">
-      <span className="text-xs text-slate-600">{label}</span>
+      <span className="text-xs text-fg-600">{label}</span>
       <input
         type="number"
         value={value}
         step={step}
         min={min}
         onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-        className="mt-0.5 w-full px-2 py-1 text-xs border border-slate-200 rounded font-mono tabular-nums focus:ring-1 focus:ring-blue-500 focus:outline-none"
+        className="mt-0.5 w-full px-2 py-1 text-xs border border-border-soft rounded font-mono tabular-nums focus:ring-1 focus-visible:ring-focus focus:outline-none"
       />
     </label>
   );

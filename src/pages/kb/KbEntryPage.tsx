@@ -67,8 +67,8 @@ export function KbEntryPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="glass-white rounded-2xl p-6 text-center">
           <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
-          <p className="text-slate-700">{error ?? 'Entrada no disponible.'}</p>
-          <Link to="/kb" className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 mt-3 text-sm">
+          <p className="text-fg-700">{error ?? 'Entrada no disponible.'}</p>
+          <Link to="/kb" className="inline-flex items-center gap-1 text-accent-text hover:text-accent-text mt-3 text-sm">
             <ArrowLeft className="w-4 h-4" /> Volver al KB
           </Link>
         </div>
@@ -85,13 +85,13 @@ export function KbEntryPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
       <div className="flex items-center gap-2 text-sm">
-        <Link to="/kb" className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800">
+        <Link to="/kb" className="inline-flex items-center gap-1 text-accent-text hover:text-accent-text">
           <ArrowLeft className="w-4 h-4" /> Knowledge Base
         </Link>
         {category && (
           <>
-            <span className="text-slate-400">/</span>
-            <span className="text-slate-600">
+            <span className="text-fg-400">/</span>
+            <span className="text-fg-600">
               {category.section_num && <span className="font-mono mr-1">{category.section_num}</span>}
               {categoryName}
             </span>
@@ -102,9 +102,9 @@ export function KbEntryPage() {
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{title}</h1>
-            <div className="mt-2 flex items-center gap-2 flex-wrap text-xs text-slate-600">
-              <span className="font-mono px-2 py-0.5 rounded bg-indigo-100/70 text-indigo-800">{entry.entry_type}</span>
+            <h1 className="text-2xl sm:text-3xl font-bold text-fg-900">{title}</h1>
+            <div className="mt-2 flex items-center gap-2 flex-wrap text-xs text-fg-600">
+              <span className="font-mono px-2 py-0.5 rounded bg-accent-tint-strong text-accent-text">{entry.entry_type}</span>
               <span>·</span>
               <span className="font-mono">v{entry.current_version}</span>
               <span>·</span>
@@ -113,7 +113,7 @@ export function KbEntryPage() {
             {entry.tags.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
                 {entry.tags.map((t) => (
-                  <span key={t} className="px-1.5 py-0.5 rounded bg-white/60 text-[11px] text-slate-700 font-mono">
+                  <span key={t} className="px-1.5 py-0.5 rounded bg-surf-card text-[11px] text-fg-700 font-mono">
                     {t}
                   </span>
                 ))}
@@ -129,10 +129,10 @@ export function KbEntryPage() {
         </div>
 
         {entry.needs_enrichment && (
-          <div className="mt-4 flex items-start gap-2 glass-white rounded-xl p-3 border border-amber-200/60">
+          <div className="mt-4 flex items-start gap-2 glass-white rounded-xl p-3 border border-status-amber-brd">
             <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-            <div className="text-xs text-slate-700">
-              <strong className="text-amber-700">Esta entrada necesita enriquecimiento.</strong>
+            <div className="text-xs text-fg-700">
+              <strong className="text-status-amber-fg">Esta entrada necesita enriquecimiento.</strong>
               {entry.enrichment_notes && <> {entry.enrichment_notes}</>}
             </div>
           </div>
@@ -141,7 +141,7 @@ export function KbEntryPage() {
 
       {entrySuppliers.length > 0 && (
         <div className="glass-white rounded-2xl p-4 sm:p-5 section-enter">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wide">Proveedores</h3>
+          <h3 className="text-sm font-semibold text-fg-900 mb-3 uppercase tracking-wide">Proveedores</h3>
           <div className="flex flex-wrap gap-2">
             {entrySuppliers.map((s) => (
               <KbSupplierChip key={s.id} supplier={s} />
@@ -152,18 +152,18 @@ export function KbEntryPage() {
 
       {(entry.product_refs.length > 0 || entry.price_item_refs.length > 0) && (
         <div className="glass-white rounded-2xl p-4 sm:p-5 section-enter">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wide">Referencias</h3>
+          <h3 className="text-sm font-semibold text-fg-900 mb-3 uppercase tracking-wide">Referencias</h3>
           <div className="space-y-2">
             {entry.product_refs.length > 0 && (
               <div className="flex items-start gap-2 text-sm">
-                <Package className="w-4 h-4 text-slate-500 mt-0.5" />
+                <Package className="w-4 h-4 text-fg-500 mt-0.5" />
                 <div>
-                  <span className="text-slate-600">products_catalog: </span>
+                  <span className="text-fg-600">products_catalog: </span>
                   {entry.product_refs.map((id) => (
                     <Link
                       key={id}
                       to={`/products/${id}`}
-                      className="font-mono text-xs text-indigo-600 hover:text-indigo-800 mr-2"
+                      className="font-mono text-xs text-accent-text hover:text-accent-text mr-2"
                     >
                       {id.slice(0, 8)}
                     </Link>
@@ -173,14 +173,14 @@ export function KbEntryPage() {
             )}
             {entry.price_item_refs.length > 0 && (
               <div className="flex items-start gap-2 text-sm">
-                <Package className="w-4 h-4 text-slate-500 mt-0.5" />
+                <Package className="w-4 h-4 text-fg-500 mt-0.5" />
                 <div>
-                  <span className="text-slate-600">price_list: </span>
+                  <span className="text-fg-600">price_list: </span>
                   {entry.price_item_refs.map((id) => (
                     <Link
                       key={id}
                       to={`/prices/${id}`}
-                      className="font-mono text-xs text-indigo-600 hover:text-indigo-800 mr-2"
+                      className="font-mono text-xs text-accent-text hover:text-accent-text mr-2"
                     >
                       {id.slice(0, 8)}
                     </Link>

@@ -93,12 +93,12 @@ export function FloatingActionBar({
           // hasn't been set (JS disabled).
           top: 'calc(56px + var(--ph-h, 200px))',
           boxShadow: scrolled
-            ? '0 2px 12px rgba(99,102,241,0.1), 0 1px 0 rgba(0,0,0,0.05)'
-            : '0 1px 0 rgba(0,0,0,0.05)',
-          background: 'rgba(255,255,255,0.72)',
+            ? 'var(--shadow-card)'
+            : 'none',
+          background: 'var(--surf-projhdr)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255,255,255,0.85)',
+          borderBottom: '1px solid var(--border-soft)',
           borderRadius: 0,
         }}
       >
@@ -106,26 +106,11 @@ export function FloatingActionBar({
 
           <button
             onClick={onSaveChanges}
+            className="h-[30px] px-3 rounded-md text-[12.5px] font-semibold text-white inline-flex items-center gap-[5px] shrink-0 tracking-[0.01em] transition-opacity hover:opacity-90"
             style={{
-              height: '30px',
-              padding: '0 12px',
-              borderRadius: '6px',
               background: 'linear-gradient(135deg, #16a34a, #15803d)',
-              color: 'white',
-              fontSize: '12.5px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              border: 'none',
-              cursor: 'pointer',
-              flexShrink: 0,
-              letterSpacing: '0.01em',
               boxShadow: '0 2px 8px rgba(22,163,74,0.3)',
-              transition: 'opacity 0.15s',
             }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
           >
             <Save style={{ width: 13, height: 13 }} />
             <span>Save</span>
@@ -133,65 +118,23 @@ export function FloatingActionBar({
 
           <button
             onClick={onAddArea}
-            style={{
-              height: '30px',
-              padding: '0 12px',
-              borderRadius: '6px',
-              background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
-              color: 'white',
-              fontSize: '12.5px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              border: 'none',
-              cursor: 'pointer',
-              flexShrink: 0,
-              letterSpacing: '0.01em',
-              boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
-              transition: 'opacity 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+            className="h-[30px] px-3 rounded-md bg-accent-primary text-accent-on text-[12.5px] font-semibold inline-flex items-center gap-[5px] shrink-0 tracking-[0.01em] shadow-btn transition-opacity hover:opacity-90"
           >
             <Plus style={{ width: 13, height: 13 }} />
             <span className="hidden sm:inline">Add Area</span>
           </button>
 
-          <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.1)', margin: '0 4px', flexShrink: 0 }} />
+          <div className="w-px h-5 bg-sep mx-1 shrink-0" />
 
           <button
             onClick={onAddProduct}
-            style={{
-              height: '30px',
-              padding: '0 10px',
-              borderRadius: '6px',
-              background: 'rgba(255,255,255,0.6)',
-              color: '#374151',
-              fontSize: '12.5px',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              border: '1px solid rgba(0,0,0,0.1)',
-              cursor: 'pointer',
-              flexShrink: 0,
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
-              e.currentTarget.style.borderColor = 'rgba(99,102,241,0.3)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.6)';
-              e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)';
-            }}
+            className="h-[30px] px-2.5 rounded-md bg-surf-btn text-fg-700 text-[12.5px] font-medium border border-border-soft inline-flex items-center gap-[5px] shrink-0 transition-colors hover:bg-surf-btn-hover hover:border-accent-tint-border"
           >
-            <Package style={{ width: 13, height: 13, color: '#6366f1' }} />
+            <Package style={{ width: 13, height: 13 }} className="text-accent-a" />
             <span className="hidden sm:inline">Create Cabinet</span>
           </button>
 
-          <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.1)', margin: '0 4px', flexShrink: 0 }} />
+          <div className="w-px h-5 bg-sep mx-1 shrink-0" />
 
           {[
             { icon: RefreshCw, label: 'Materials', onClick: onChangeMaterials, color: '#0891b2', disabled: false },
@@ -201,27 +144,13 @@ export function FloatingActionBar({
               key={label}
               onClick={onClick}
               disabled={disabled}
-              style={{
-                height: '30px',
-                padding: '0 10px',
-                borderRadius: '6px',
-                background: 'transparent',
-                color: disabled ? '#9ca3af' : '#374151',
-                fontSize: '12.5px',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                border: 'none',
-                cursor: disabled ? 'not-allowed' : 'pointer',
-                flexShrink: 0,
-                transition: 'background 0.15s',
-                opacity: disabled ? 0.5 : 1,
-              }}
-              onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = 'rgba(255,255,255,0.8)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+              className={`h-[30px] px-2.5 rounded-md bg-transparent text-[12.5px] font-medium inline-flex items-center gap-[5px] shrink-0 transition-colors ${
+                disabled
+                  ? 'text-fg-400 cursor-not-allowed opacity-50'
+                  : 'text-fg-700 hover:bg-surf-btn-hover'
+              }`}
             >
-              <Icon style={{ width: 13, height: 13, color: disabled ? '#9ca3af' : color }} />
+              <Icon style={{ width: 13, height: 13, color: disabled ? 'var(--fg-400)' : color }} />
               <span className="hidden sm:inline">{label}</span>
             </button>
           ))}
@@ -230,30 +159,16 @@ export function FloatingActionBar({
             <button
               onClick={onSaveAreasOrder}
               disabled={savingAreasOrder}
-              style={{
-                height: '30px',
-                padding: '0 10px',
-                borderRadius: '6px',
-                background: '#f59e0b',
-                color: 'white',
-                fontSize: '12.5px',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                border: 'none',
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
+              className="h-[30px] px-2.5 rounded-md bg-status-amber-fg text-white text-[12.5px] font-semibold inline-flex items-center gap-[5px] shrink-0"
             >
               <ArrowDownUp style={{ width: 13, height: 13 }} />
               <span className="hidden sm:inline">{savingAreasOrder ? 'Saving...' : 'Save Order'}</span>
             </button>
           )}
 
-          <div style={{ flex: 1 }} />
+          <div className="flex-1" />
 
-          <div style={{ width: 1, height: 20, background: 'rgba(0,0,0,0.1)', margin: '0 4px', flexShrink: 0 }} />
+          <div className="w-px h-5 bg-sep mx-1 shrink-0" />
 
           {/*
             Global Pricing Method switch — flips FT² ↔ Optimizer for the whole
@@ -262,7 +177,7 @@ export function FloatingActionBar({
             once the first optimizer run is saved, the method auto-switches to
             Optimizer (one-shot — further manual toggles are respected).
           */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <div className="flex items-center gap-1.5 shrink-0">
             <PricingMethodToggle
               value={pricingMethod}
               onChange={(next) => onPricingMethodChange?.(next)}
@@ -272,22 +187,7 @@ export function FloatingActionBar({
             {isOptimizerMode && optimizerStale && (
               <div
                 title="The active optimizer run is stale because cabinets changed after it was saved. Values shown are from the last run. Re-optimize in the Breakdown tab to refresh."
-                style={{
-                  height: 22,
-                  padding: '0 8px',
-                  borderRadius: 11,
-                  background: 'rgba(245,158,11,0.12)',
-                  color: '#b45309',
-                  border: '1px solid rgba(245,158,11,0.35)',
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: '0.05em',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  cursor: 'help',
-                  userSelect: 'none',
-                }}
+                className="h-[22px] px-2 rounded-full bg-status-amber-bg text-status-amber-fg border border-status-amber-brd text-[10px] font-bold tracking-[0.05em] flex items-center gap-1 cursor-help select-none"
               >
                 <AlertTriangle style={{ width: 10, height: 10 }} />
                 STALE
@@ -295,46 +195,30 @@ export function FloatingActionBar({
             )}
           </div>
 
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div className="relative shrink-0">
             <button
               onClick={() => { setIsPrintMenuOpen(!isPrintMenuOpen); setIsCSVMenuOpen(false); }}
-              style={{
-                height: '30px',
-                padding: '0 10px',
-                borderRadius: '6px',
-                background: isPrintMenuOpen ? 'rgba(255,255,255,0.8)' : 'transparent',
-                color: '#374151',
-                fontSize: '12.5px',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.8)'; }}
-              onMouseLeave={e => { if (!isPrintMenuOpen) e.currentTarget.style.background = 'transparent'; }}
+              className={`h-[30px] px-2.5 rounded-md text-fg-700 text-[12.5px] font-medium inline-flex items-center gap-[5px] transition-colors hover:bg-surf-btn-hover ${
+                isPrintMenuOpen ? 'bg-surf-btn-hover' : 'bg-transparent'
+              }`}
             >
-              <Printer style={{ width: 13, height: 13, color: '#64748b' }} />
+              <Printer style={{ width: 13, height: 13 }} className="text-fg-500" />
               <span className="hidden sm:inline">Print</span>
-              <ChevronDown style={{ width: 11, height: 11, color: '#94a3b8', transform: isPrintMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+              <ChevronDown
+                style={{ width: 11, height: 11, transform: isPrintMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+                className="text-fg-400"
+              />
             </button>
             {isPrintMenuOpen && (
-              <div style={{
-                position: 'absolute',
-                top: 'calc(100% + 6px)',
-                right: 0,
-                width: 220,
-                background: 'rgba(255,255,255,0.88)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                borderRadius: '10px',
-                border: '1px solid rgba(255,255,255,0.9)',
-                boxShadow: '0 8px 24px rgba(99,102,241,0.1), 0 2px 8px rgba(0,0,0,0.08)',
-                zIndex: 60,
-                overflow: 'hidden',
-              }}>
+              <div
+                className="absolute right-0 top-[calc(100%+6px)] w-[220px] rounded-[10px] border border-border-soft overflow-hidden z-[60]"
+                style={{
+                  background: 'var(--surf-card)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  boxShadow: 'var(--shadow-card)',
+                }}
+              >
                 {[
                   {
                     icon: Printer,
@@ -354,27 +238,14 @@ export function FloatingActionBar({
                   <button
                     key={label}
                     onClick={onClick}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.06)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    className="w-full px-3.5 py-2.5 flex items-center gap-2.5 bg-transparent border-0 cursor-pointer text-left hover:bg-accent-tint-soft transition-colors"
                   >
-                    <div style={{ width: 30, height: 30, borderRadius: 8, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Icon style={{ width: 14, height: 14, color: '#475569' }} />
+                    <div className="w-[30px] h-[30px] rounded-lg bg-surf-muted flex items-center justify-center shrink-0">
+                      <Icon style={{ width: 14, height: 14 }} className="text-fg-600" />
                     </div>
                     <div>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1e293b' }}>{label}</div>
-                      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 1 }}>{sub}</div>
+                      <div className="text-[12.5px] font-semibold text-fg-800">{label}</div>
+                      <div className="text-[11px] text-fg-400 mt-px">{sub}</div>
                     </div>
                   </button>
                 ))}
@@ -382,46 +253,30 @@ export function FloatingActionBar({
             )}
           </div>
 
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div className="relative shrink-0">
             <button
               onClick={() => { setIsCSVMenuOpen(!isCSVMenuOpen); setIsPrintMenuOpen(false); }}
-              style={{
-                height: '30px',
-                padding: '0 10px',
-                borderRadius: '6px',
-                background: isCSVMenuOpen ? 'rgba(255,255,255,0.8)' : 'transparent',
-                color: '#374151',
-                fontSize: '12.5px',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.8)'; }}
-              onMouseLeave={e => { if (!isCSVMenuOpen) e.currentTarget.style.background = 'transparent'; }}
+              className={`h-[30px] px-2.5 rounded-md text-fg-700 text-[12.5px] font-medium inline-flex items-center gap-[5px] transition-colors hover:bg-surf-btn-hover ${
+                isCSVMenuOpen ? 'bg-surf-btn-hover' : 'bg-transparent'
+              }`}
             >
-              <FileSpreadsheet style={{ width: 13, height: 13, color: '#64748b' }} />
+              <FileSpreadsheet style={{ width: 13, height: 13 }} className="text-fg-500" />
               <span className="hidden sm:inline">CSV</span>
-              <ChevronDown style={{ width: 11, height: 11, color: '#94a3b8', transform: isCSVMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+              <ChevronDown
+                style={{ width: 11, height: 11, transform: isCSVMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+                className="text-fg-400"
+              />
             </button>
             {isCSVMenuOpen && (
-              <div style={{
-                position: 'absolute',
-                top: 'calc(100% + 6px)',
-                right: 0,
-                width: 220,
-                background: 'rgba(255,255,255,0.88)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                borderRadius: '10px',
-                border: '1px solid rgba(255,255,255,0.9)',
-                boxShadow: '0 8px 24px rgba(99,102,241,0.1), 0 2px 8px rgba(0,0,0,0.08)',
-                zIndex: 60,
-                overflow: 'hidden',
-              }}>
+              <div
+                className="absolute right-0 top-[calc(100%+6px)] w-[220px] rounded-[10px] border border-border-soft overflow-hidden z-[60]"
+                style={{
+                  background: 'var(--surf-card)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  boxShadow: 'var(--shadow-card)',
+                }}
+              >
                 {[
                   { icon: Download, label: 'Areas Summary', sub: 'Export area totals', onClick: () => { onExportCSV(); closeMenus(); } },
                   { icon: FileSpreadsheet, label: 'Detailed Report', sub: 'All items & details', onClick: () => { onExportDetailedCSV(); closeMenus(); } },
@@ -429,27 +284,14 @@ export function FloatingActionBar({
                   <button
                     key={label}
                     onClick={onClick}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.06)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    className="w-full px-3.5 py-2.5 flex items-center gap-2.5 bg-transparent border-0 cursor-pointer text-left hover:bg-accent-tint-soft transition-colors"
                   >
-                    <div style={{ width: 30, height: 30, borderRadius: 8, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Icon style={{ width: 14, height: 14, color: '#475569' }} />
+                    <div className="w-[30px] h-[30px] rounded-lg bg-surf-muted flex items-center justify-center shrink-0">
+                      <Icon style={{ width: 14, height: 14 }} className="text-fg-600" />
                     </div>
                     <div>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1e293b' }}>{label}</div>
-                      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 1 }}>{sub}</div>
+                      <div className="text-[12.5px] font-semibold text-fg-800">{label}</div>
+                      <div className="text-[11px] text-fg-400 mt-px">{sub}</div>
                     </div>
                   </button>
                 ))}
@@ -459,26 +301,9 @@ export function FloatingActionBar({
 
           <button
             onClick={onExportJSON}
-            style={{
-              height: '30px',
-              padding: '0 10px',
-              borderRadius: '6px',
-              background: 'transparent',
-              color: '#374151',
-              fontSize: '12.5px',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              border: 'none',
-              cursor: 'pointer',
-              flexShrink: 0,
-              transition: 'background 0.15s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.8)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+            className="h-[30px] px-2.5 rounded-md bg-transparent text-fg-700 text-[12.5px] font-medium inline-flex items-center gap-[5px] shrink-0 transition-colors hover:bg-surf-btn-hover"
           >
-            <FileJson style={{ width: 13, height: 13, color: '#64748b' }} />
+            <FileJson style={{ width: 13, height: 13 }} className="text-fg-500" />
             <span className="hidden sm:inline">JSON</span>
           </button>
 

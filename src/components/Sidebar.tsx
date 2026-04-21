@@ -82,17 +82,17 @@ export function Sidebar({ onLogout }: SidebarProps) {
       />
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 flex flex-col
+          fixed inset-y-0 left-0 z-50 flex flex-col bg-surf-rail
           w-[220px] lg:w-[var(--rail-w)]
           transition-[transform,width] duration-[250ms] ease-[cubic-bezier(0.16,1,0.3,1)]
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0
         `}
         style={{
-          background: 'rgba(255,255,255,0.55)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          borderRight: '1px solid rgba(148,163,184,0.2)',
+          borderRight: '1px solid var(--border-rail)',
+          boxShadow: 'var(--shadow-rail)',
         }}
       >
         <SidebarHeader />
@@ -106,7 +106,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
           onClick={toggleExpanded}
           aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
           aria-expanded={expanded}
-          className="hidden lg:flex absolute top-5 right-[-12px] z-50 h-6 w-6 rounded-full bg-white border border-slate-200 shadow-sm items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="hidden lg:flex absolute top-5 right-[-12px] z-50 h-6 w-6 rounded-full bg-surf-input border border-border-solid shadow-card items-center justify-center text-fg-500 hover:text-fg-900 hover:bg-surf-hover transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           {expanded ? (
             <ChevronLeft className="h-3.5 w-3.5" strokeWidth={2} />
@@ -138,14 +138,14 @@ export function Sidebar({ onLogout }: SidebarProps) {
           </ul>
         </nav>
 
-        <div className="shrink-0 border-t border-slate-200/60 p-2.5 space-y-1">
+        <div className="shrink-0 border-t border-border-soft p-2.5 space-y-1">
           <NavLink
             to="/settings"
             className={({ isActive }) =>
               `flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-colors ${
                 isActive
-                  ? 'text-indigo-600 bg-indigo-50/60 font-semibold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  ? 'text-accent-text bg-accent-tint-soft font-semibold'
+                  : 'text-fg-600 hover:text-fg-900 hover:bg-rail-item-hover'
               } ${expanded ? '' : 'lg:justify-center'}`
             }
           >
@@ -161,7 +161,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
 
 function SidebarHeader() {
   return (
-    <div className="shrink-0 h-14 flex items-center px-3 border-b border-slate-200/50">
+    <div className="shrink-0 h-14 flex items-center px-3 border-b border-border-soft">
       <Link
         to="/"
         className="flex items-center min-w-0"
@@ -171,10 +171,7 @@ function SidebarHeader() {
           src="/evita_logo.png"
           alt="Evita Cabinets"
           className="shrink-0 h-10 w-auto object-contain"
-          style={{
-            filter:
-              'brightness(0) saturate(100%) invert(20%) sepia(80%) saturate(700%) hue-rotate(200deg)',
-          }}
+          style={{ filter: 'var(--logo-filter)' }}
         />
       </Link>
     </div>
@@ -190,7 +187,7 @@ function GroupLabel({
 }) {
   return (
     <div
-      className={`px-2.5 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 ${
+      className={`px-2.5 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-fg-400 ${
         expanded ? '' : 'lg:hidden'
       }`}
     >
@@ -210,8 +207,8 @@ function RailItem({ item, expanded }: { item: Item; expanded: boolean }) {
         className={({ isActive }) =>
           `group relative flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-150 ${
             isActive
-              ? 'bg-gradient-to-br from-indigo-500/[0.12] to-blue-500/[0.12] text-indigo-600 font-semibold'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+              ? 'bg-accent-tint-soft text-accent-text font-semibold'
+              : 'text-fg-600 hover:text-fg-900 hover:bg-rail-item-hover'
           } ${expanded ? '' : 'lg:justify-center'}`
         }
       >
@@ -220,7 +217,7 @@ function RailItem({ item, expanded }: { item: Item; expanded: boolean }) {
             {isActive && (
               <span
                 aria-hidden
-                className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-gradient-to-b from-indigo-500 to-blue-500"
+                className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-gradient-to-b from-accent-a to-accent-b"
               />
             )}
             <Icon
@@ -234,7 +231,7 @@ function RailItem({ item, expanded }: { item: Item; expanded: boolean }) {
             </span>
             {typeof item.badge === 'number' && item.badge > 0 && (
               <span
-                className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-200/80 text-slate-600 ${
+                className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-accent-badge-bg text-accent-badge-fg ${
                   expanded ? '' : 'lg:hidden'
                 }`}
               >
@@ -243,7 +240,7 @@ function RailItem({ item, expanded }: { item: Item; expanded: boolean }) {
             )}
             {item.newBadge && (
               <span
-                className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-amber-400/90 text-amber-950 tracking-wider ${
+                className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-status-amber-bg text-status-amber-fg tracking-wider ${
                   expanded ? '' : 'lg:hidden'
                 }`}
               >
@@ -252,7 +249,7 @@ function RailItem({ item, expanded }: { item: Item; expanded: boolean }) {
             )}
             {/* Collapsed-state tooltip */}
             <span
-              className={`hidden lg:group-hover:block absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-md bg-slate-900 text-white text-xs whitespace-nowrap pointer-events-none z-50 shadow-lg ${
+              className={`hidden lg:group-hover:block absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-md bg-fg-900 text-fg-inverse text-xs whitespace-nowrap pointer-events-none z-50 shadow-card ${
                 expanded ? 'lg:hidden' : ''
               }`}
             >

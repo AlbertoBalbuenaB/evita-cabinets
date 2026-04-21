@@ -102,7 +102,7 @@ export function PrefabCatalogForm({
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-fg-700 mb-1">
               Cabinet Code <span className="text-red-500">*</span>
             </label>
             <input
@@ -110,15 +110,15 @@ export function PrefabCatalogForm({
               value={cabinetCode}
               onChange={(e) => setCabinetCode(e.target.value.toUpperCase())}
               placeholder="e.g. B24, W3030, SB36"
-              className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+              className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus font-mono text-sm"
               readOnly={isEdit}
             />
             {isEdit && (
-              <p className="text-xs text-slate-400 mt-0.5">Code is immutable after creation</p>
+              <p className="text-xs text-fg-400 mt-0.5">Code is immutable after creation</p>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-fg-700 mb-1">
               Category <span className="text-red-500">*</span>
             </label>
             <input
@@ -126,34 +126,34 @@ export function PrefabCatalogForm({
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               placeholder="e.g. BASE CABINETS"
-              className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Description</label>
           <input
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Optional human-friendly name"
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Item Type</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Item Type</label>
           <select
             value={itemType}
             onChange={(e) => setItemType(e.target.value as PrefabItemType)}
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card"
           >
             {ITEM_TYPES.map((t) => (
               <option key={t} value={t}>{t}</option>
             ))}
           </select>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-fg-400 mt-0.5">
             cabinet = standard box; linear = molding / filler / toe kick (no full dims);
             panel = decorative; accessory = singleton
           </p>
@@ -189,20 +189,20 @@ export function PrefabCatalogForm({
           />
         </div>
         {isEdit && dimsChanged && (
-          <p className="text-xs text-indigo-600">
+          <p className="text-xs text-accent-text">
             Dimensions changed — this row will be locked and won't be overwritten on
             future price-list re-imports.
           </p>
         )}
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Notes</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
             placeholder="Optional notes"
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
           />
         </div>
 
@@ -212,14 +212,14 @@ export function PrefabCatalogForm({
             type="checkbox"
             checked={isActive}
             onChange={(e) => setIsActive(e.target.checked)}
-            className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            className="w-4 h-4 rounded border-border-solid text-accent-text focus-visible:ring-focus"
           />
-          <label htmlFor="prefab-is-active" className="text-sm text-slate-700">
+          <label htmlFor="prefab-is-active" className="text-sm text-fg-700">
             Active (show in "Add Prefab" picker and in importer diffs)
           </label>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+        <div className="flex justify-end gap-3 pt-4 border-t border-border-soft">
           <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? 'Saving…' : isEdit ? 'Update' : 'Add Prefab'}

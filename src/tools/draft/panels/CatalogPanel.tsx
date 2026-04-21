@@ -93,7 +93,7 @@ export function CatalogPanel() {
         <button
           type="button"
           onClick={() => setCollapsed(false)}
-          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-white/70"
+          className="p-1.5 rounded-lg text-fg-500 hover:text-fg-700 hover:bg-surf-card"
           title="Expand catalog"
         >
           <PanelLeftOpen className="h-4 w-4" />
@@ -104,24 +104,24 @@ export function CatalogPanel() {
 
   return (
     <aside className="glass-white w-64 min-w-[16rem] max-w-[16rem] flex-shrink-0 flex flex-col h-full rounded-2xl overflow-hidden">
-      <div className="p-3 border-b border-slate-200/60 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-800">Catalog Library</h2>
+      <div className="p-3 border-b border-border-soft flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-fg-800">Catalog Library</h2>
         <button
           type="button"
           onClick={() => setCollapsed(true)}
-          className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-white/70"
+          className="p-1 rounded-md text-fg-400 hover:text-fg-700 hover:bg-surf-card"
           title="Collapse panel"
         >
           <PanelLeftClose className="h-3.5 w-3.5" />
         </button>
         <div className="relative mt-2">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-fg-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search SKU or description…"
-            className="w-full pl-7 pr-2 py-1.5 rounded-lg border border-slate-300/80 bg-white/70 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="w-full pl-7 pr-2 py-1.5 rounded-lg border border-border-solid bg-surf-card text-xs text-fg-700 focus:outline-none focus:ring-2 focus-visible:ring-focus"
           />
         </div>
       </div>
@@ -150,15 +150,15 @@ export function CatalogPanel() {
                   className="w-full flex items-center justify-between p-2 text-left"
                 >
                   <div>
-                    <div className="text-xs font-semibold text-slate-800">{section.title}</div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="text-xs font-semibold text-fg-800">{section.title}</div>
+                    <div className="text-[11px] text-fg-500">
                       {section.subtitle} · {items.length}
                     </div>
                   </div>
                   {isOpen ? (
-                    <ChevronDown className="h-4 w-4 text-slate-500" />
+                    <ChevronDown className="h-4 w-4 text-fg-500" />
                   ) : (
-                    <ChevronRight className="h-4 w-4 text-slate-500" />
+                    <ChevronRight className="h-4 w-4 text-fg-500" />
                   )}
                 </button>
                 {isOpen && items.length > 0 && (
@@ -167,7 +167,7 @@ export function CatalogPanel() {
                       <CatalogEntry key={p.id} product={p} />
                     ))}
                     {items.length > 50 && (
-                      <li className="text-[11px] text-slate-500 px-2 py-1">
+                      <li className="text-[11px] text-fg-500 px-2 py-1">
                         {items.length - 50} more — refine the search to see.
                       </li>
                     )}
@@ -223,17 +223,17 @@ function CatalogEntry({ product }: { product: ProductsCatalogRow }) {
     <li
       draggable
       onDragStart={handleDragStart}
-      className="flex items-center gap-2 p-1.5 rounded-md hover:bg-white/70 cursor-grab active:cursor-grabbing group transition-colors"
+      className="flex items-center gap-2 p-1.5 rounded-md hover:bg-surf-card cursor-grab active:cursor-grabbing group transition-colors"
     >
       <div
-        className="w-11 h-11 flex-shrink-0 flex items-center justify-center overflow-hidden rounded-md bg-white/60 border border-slate-200/60 text-slate-700 p-1"
+        className="w-11 h-11 flex-shrink-0 flex items-center justify-center overflow-hidden rounded-md bg-surf-card border border-border-soft text-fg-700 p-1"
         dangerouslySetInnerHTML={{ __html: thumb }}
       />
       <div className="min-w-0 flex-1">
-        <div className="text-[11px] font-mono text-slate-800 truncate">{product.sku}</div>
-        <div className="text-[10px] text-slate-500 truncate">{product.description}</div>
+        <div className="text-[11px] font-mono text-fg-800 truncate">{product.sku}</div>
+        <div className="text-[10px] text-fg-500 truncate">{product.description}</div>
       </div>
-      <Grip className="h-3 w-3 text-slate-300 group-hover:text-slate-500 flex-shrink-0" />
+      <Grip className="h-3 w-3 text-fg-300 group-hover:text-fg-500 flex-shrink-0" />
     </li>
   );
 }

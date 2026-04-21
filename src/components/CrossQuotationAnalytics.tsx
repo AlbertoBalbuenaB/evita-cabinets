@@ -22,11 +22,11 @@ function KpiCard({ label, value, sub, icon }: { label: string; value: React.Reac
   return (
     <div className="glass-blue p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</span>
+        <span className="text-xs font-medium text-fg-500 uppercase tracking-wide">{label}</span>
         <div className="text-blue-500">{icon}</div>
       </div>
-      <div className="text-xl font-bold text-slate-900 tabular-nums">{value}</div>
-      {sub && <span className="text-xs text-slate-500">{sub}</span>}
+      <div className="text-xl font-bold text-fg-900 tabular-nums">{value}</div>
+      {sub && <span className="text-xs text-fg-500">{sub}</span>}
     </div>
   );
 }
@@ -42,13 +42,13 @@ const STATUS_GRADIENTS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  Awarded: 'bg-green-50 text-green-700 border-green-200/50',
-  Pending: 'bg-blue-50 text-blue-700 border-blue-200/50',
-  Estimating: 'bg-amber-50 text-amber-700 border-amber-200/50',
+  Awarded: 'bg-status-emerald-bg text-status-emerald-fg border-status-emerald-brd',
+  Pending: 'bg-accent-tint-soft text-accent-text border-accent-tint-border',
+  Estimating: 'bg-status-amber-bg text-status-amber-fg border-status-amber-brd',
   Sent: 'bg-cyan-50 text-cyan-700 border-cyan-200/50',
-  Lost: 'bg-red-50 text-red-700 border-red-200/50',
-  Discarded: 'bg-slate-100 text-slate-600 border-slate-200/50',
-  Cancelled: 'bg-slate-100 text-slate-500 border-slate-200/50',
+  Lost: 'bg-status-red-bg text-status-red-fg border-status-red-brd',
+  Discarded: 'bg-surf-muted text-fg-600 border-border-soft',
+  Cancelled: 'bg-surf-muted text-fg-500 border-border-soft',
 };
 
 export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAreas = {} }: CrossQuotationAnalyticsProps) {
@@ -119,8 +119,8 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
   if (quotations.length === 0) {
     return (
       <div className="glass-white p-12 text-center">
-        <BarChart3 className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-        <p className="text-slate-500">No quotation data available for analytics.</p>
+        <BarChart3 className="h-12 w-12 text-fg-300 mx-auto mb-3" />
+        <p className="text-fg-500">No quotation data available for analytics.</p>
       </div>
     );
   }
@@ -163,49 +163,49 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
 
       {/* Section 2: Version Comparison Table */}
       <div className="glass-white p-5">
-        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">Version Comparison</h3>
+        <h3 className="text-sm font-semibold text-fg-500 uppercase tracking-wide mb-4">Version Comparison</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200/60">
-                <th className="py-2 px-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Ver</th>
-                <th className="py-2 px-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Label</th>
-                <th className="py-2 px-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wide hidden sm:table-cell">Date</th>
-                <th className="py-2 px-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Total MXN</th>
-                <th className="py-2 px-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Total USD</th>
-                <th className="py-2 px-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wide hidden md:table-cell">Status</th>
+              <tr className="border-b border-border-soft">
+                <th className="py-2 px-2 text-left text-xs font-medium text-fg-500 uppercase tracking-wide">Ver</th>
+                <th className="py-2 px-2 text-left text-xs font-medium text-fg-500 uppercase tracking-wide">Label</th>
+                <th className="py-2 px-2 text-left text-xs font-medium text-fg-500 uppercase tracking-wide hidden sm:table-cell">Date</th>
+                <th className="py-2 px-2 text-right text-xs font-medium text-fg-500 uppercase tracking-wide">Total MXN</th>
+                <th className="py-2 px-2 text-right text-xs font-medium text-fg-500 uppercase tracking-wide">Total USD</th>
+                <th className="py-2 px-2 text-center text-xs font-medium text-fg-500 uppercase tracking-wide hidden md:table-cell">Status</th>
                 {multiVersion && (
-                  <th className="py-2 px-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Δ vs Prev</th>
+                  <th className="py-2 px-2 text-right text-xs font-medium text-fg-500 uppercase tracking-wide">Δ vs Prev</th>
                 )}
               </tr>
             </thead>
             <tbody>
               {analytics.withDeltas.map((q) => (
-                <tr key={q.id} className="border-b border-slate-100 last:border-0">
+                <tr key={q.id} className="border-b border-border-soft last:border-0">
                   <td className="py-3 px-2">
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-accent-tint-soft text-accent-text text-xs font-bold">
                       {q.version_number ?? '?'}
                     </span>
                   </td>
-                  <td className="py-3 px-2 font-medium text-slate-800 truncate max-w-[150px]">{q.version_label || q.name}</td>
-                  <td className="py-3 px-2 text-slate-500 hidden sm:table-cell">{formatDate(q.quote_date)}</td>
-                  <td className="py-3 px-2 text-right tabular-nums text-slate-800">{formatCurrency(q.total_amount ?? 0)}</td>
-                  <td className="py-3 px-2 text-right tabular-nums text-slate-800">{formatCurrency((q.total_amount ?? 0) / fx, 'USD')}</td>
+                  <td className="py-3 px-2 font-medium text-fg-800 truncate max-w-[150px]">{q.version_label || q.name}</td>
+                  <td className="py-3 px-2 text-fg-500 hidden sm:table-cell">{formatDate(q.quote_date)}</td>
+                  <td className="py-3 px-2 text-right tabular-nums text-fg-800">{formatCurrency(q.total_amount ?? 0)}</td>
+                  <td className="py-3 px-2 text-right tabular-nums text-fg-800">{formatCurrency((q.total_amount ?? 0) / fx, 'USD')}</td>
                   <td className="py-3 px-2 text-center hidden md:table-cell">
-                    <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[q.status ?? ''] || 'bg-slate-100 text-slate-600 border-slate-200/50'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[q.status ?? ''] || 'bg-surf-muted text-fg-600 border-border-soft'}`}>
                       {q.status}
                     </span>
                   </td>
                   {multiVersion && (
                     <td className="py-3 px-2 text-right tabular-nums">
                       {q.deltaAbs === null ? (
-                        <span className="text-slate-300">—</span>
+                        <span className="text-fg-300">—</span>
                       ) : (
-                        <div className={`flex items-center justify-end gap-1 ${q.deltaAbs > 0 ? 'text-red-600' : q.deltaAbs < 0 ? 'text-green-600' : 'text-slate-400'}`}>
+                        <div className={`flex items-center justify-end gap-1 ${q.deltaAbs > 0 ? 'text-status-red-fg' : q.deltaAbs < 0 ? 'text-status-emerald-fg' : 'text-fg-400'}`}>
                           {q.deltaAbs !== 0 && (q.deltaAbs > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />)}
                           <span className="text-xs">
                             {q.deltaAbs > 0 ? '+' : ''}{formatCurrency(q.deltaAbs / fx, 'USD')}
-                            {q.deltaPct !== null && <span className="text-slate-400 ml-1">({q.deltaPct > 0 ? '+' : ''}{q.deltaPct.toFixed(1)}%)</span>}
+                            {q.deltaPct !== null && <span className="text-fg-400 ml-1">({q.deltaPct > 0 ? '+' : ''}{q.deltaPct.toFixed(1)}%)</span>}
                           </span>
                         </div>
                       )}
@@ -217,47 +217,47 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
           </table>
         </div>
         {!multiVersion && (
-          <p className="text-xs text-slate-400 mt-3 text-center">Add more quotation versions to see comparisons.</p>
+          <p className="text-xs text-fg-400 mt-3 text-center">Add more quotation versions to see comparisons.</p>
         )}
       </div>
 
       {/* Section 2.5: Change Summaries between versions */}
       {multiVersion && analytics.changeSummaries.length > 0 && (
         <div className="glass-white p-5">
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">What Changed Between Versions</h3>
+          <h3 className="text-sm font-semibold text-fg-500 uppercase tracking-wide mb-4">What Changed Between Versions</h3>
           <div className="space-y-2">
             {analytics.changeSummaries.map((summary) => {
               const key = `${summary.fromId}-${summary.toId}`;
               const expanded = expandedDiffs.has(key);
               const hasChanges = summary.changes.length > 0;
               return (
-                <div key={key} className="border border-slate-200/50 rounded-xl overflow-hidden">
+                <div key={key} className="border border-border-soft rounded-xl overflow-hidden">
                   <button
                     onClick={() => hasChanges && toggleDiff(key)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${hasChanges ? 'hover:bg-slate-50' : ''}`}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${hasChanges ? 'hover:bg-surf-app' : ''}`}
                   >
                     {hasChanges ? (
-                      expanded ? <ChevronDown className="h-4 w-4 text-slate-400 flex-shrink-0" /> : <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                      expanded ? <ChevronDown className="h-4 w-4 text-fg-400 flex-shrink-0" /> : <ChevronRight className="h-4 w-4 text-fg-400 flex-shrink-0" />
                     ) : (
-                      <RefreshCw className="h-4 w-4 text-slate-300 flex-shrink-0" />
+                      <RefreshCw className="h-4 w-4 text-fg-300 flex-shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium text-slate-700">{summary.fromLabel}</span>
-                      <span className="text-slate-400 mx-2">→</span>
-                      <span className="text-sm font-medium text-slate-700">{summary.toLabel}</span>
+                      <span className="text-sm font-medium text-fg-700">{summary.fromLabel}</span>
+                      <span className="text-fg-400 mx-2">→</span>
+                      <span className="text-sm font-medium text-fg-700">{summary.toLabel}</span>
                     </div>
-                    <div className="flex-shrink-0 text-xs text-slate-500">
+                    <div className="flex-shrink-0 text-xs text-fg-500">
                       {hasChanges ? (
                         <span>{summary.changes.length} area{summary.changes.length !== 1 ? 's' : ''} changed</span>
                       ) : (
-                        <span className="text-slate-400">No area-level changes</span>
+                        <span className="text-fg-400">No area-level changes</span>
                       )}
                     </div>
                   </button>
                   {expanded && hasChanges && (
                     <div className="px-4 pb-3 space-y-1.5">
                       {summary.changes.map((change) => (
-                        <div key={change.name} className="flex items-center gap-2 text-sm py-1.5 px-3 rounded-lg bg-slate-50/80">
+                        <div key={change.name} className="flex items-center gap-2 text-sm py-1.5 px-3 rounded-lg bg-surf-app">
                           {change.type === 'added' && <Plus className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />}
                           {change.type === 'removed' && <Minus className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />}
                           {change.type === 'changed' && (
@@ -265,15 +265,15 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
                               ? <ArrowUpRight className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
                               : <ArrowDownRight className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
                           )}
-                          <span className="flex-1 text-slate-700 truncate">{change.name}</span>
+                          <span className="flex-1 text-fg-700 truncate">{change.name}</span>
                           <div className="flex items-center gap-2 flex-shrink-0 tabular-nums">
-                            {change.type === 'added' && <span className="text-xs text-green-600">New area: {formatCurrency(change.currAmount)}</span>}
-                            {change.type === 'removed' && <span className="text-xs text-red-600">Removed: {formatCurrency(change.prevAmount)}</span>}
+                            {change.type === 'added' && <span className="text-xs text-status-emerald-fg">New area: {formatCurrency(change.currAmount)}</span>}
+                            {change.type === 'removed' && <span className="text-xs text-status-red-fg">Removed: {formatCurrency(change.prevAmount)}</span>}
                             {change.type === 'changed' && (
-                              <span className={`text-xs ${change.delta > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              <span className={`text-xs ${change.delta > 0 ? 'text-status-red-fg' : 'text-status-emerald-fg'}`}>
                                 {change.delta > 0 ? '+' : ''}{formatCurrency(change.delta)}
                                 {change.prevAmount > 0 && (
-                                  <span className="text-slate-400 ml-1">({change.delta > 0 ? '+' : ''}{((change.delta / change.prevAmount) * 100).toFixed(1)}%)</span>
+                                  <span className="text-fg-400 ml-1">({change.delta > 0 ? '+' : ''}{((change.delta / change.prevAmount) * 100).toFixed(1)}%)</span>
                                 )}
                               </span>
                             )}
@@ -281,7 +281,7 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
                         </div>
                       ))}
                       {summary.unchangedCount > 0 && (
-                        <p className="text-xs text-slate-400 px-3 pt-1">{summary.unchangedCount} area{summary.unchangedCount !== 1 ? 's' : ''} unchanged</p>
+                        <p className="text-xs text-fg-400 px-3 pt-1">{summary.unchangedCount} area{summary.unchangedCount !== 1 ? 's' : ''} unchanged</p>
                       )}
                     </div>
                   )}
@@ -294,7 +294,7 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
 
       {/* Section 3: Cost Evolution Chart */}
       <div className="glass-white p-5">
-        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">Cost Evolution</h3>
+        <h3 className="text-sm font-semibold text-fg-500 uppercase tracking-wide mb-4">Cost Evolution</h3>
         <div className="space-y-3">
           {analytics.sorted.map((q) => {
             const amount = q.total_amount ?? 0;
@@ -303,16 +303,16 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
             return (
               <div key={q.id}>
                 <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-sm text-slate-700">
+                  <span className="text-sm text-fg-700">
                     <span className="font-medium">v{q.version_number}</span>
-                    <span className="text-slate-400 ml-1.5">{q.version_label || ''}</span>
+                    <span className="text-fg-400 ml-1.5">{q.version_label || ''}</span>
                   </span>
                   <div className="flex items-center gap-3 text-sm tabular-nums">
-                    <span className="text-slate-500">{formatCurrency(amount)}</span>
-                    <span className="font-semibold text-slate-800">{formatCurrency(amount / fx, 'USD')}</span>
+                    <span className="text-fg-500">{formatCurrency(amount)}</span>
+                    <span className="font-semibold text-fg-800">{formatCurrency(amount / fx, 'USD')}</span>
                   </div>
                 </div>
-                <div className="h-7 bg-slate-100 rounded-lg overflow-hidden">
+                <div className="h-7 bg-surf-muted rounded-lg overflow-hidden">
                   <div
                     className={`h-full ${gradient} rounded-lg transition-all duration-500`}
                     style={{ width: `${Math.max(pct, 2)}%` }}
@@ -323,7 +323,7 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
           })}
         </div>
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-3 mt-4 text-xs text-slate-500">
+        <div className="flex flex-wrap items-center gap-3 mt-4 text-xs text-fg-500">
           {['Awarded', 'Estimating', 'Sent', 'Pending', 'Lost'].map(s => (
             <span key={s} className="flex items-center gap-1.5">
               <span className={`inline-block w-3 h-3 rounded-sm ${STATUS_GRADIENTS[s]}`} />
@@ -336,27 +336,27 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
       {/* Section 4: Financial Settings Comparison */}
       {multiVersion && (
         <div className="glass-white p-5">
-          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">Financial Settings</h3>
+          <h3 className="text-sm font-semibold text-fg-500 uppercase tracking-wide mb-4">Financial Settings</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200/60">
-                  <th className="py-2 px-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">Ver</th>
-                  <th className="py-2 px-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Profit</th>
-                  <th className="py-2 px-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Tax %</th>
-                  <th className="py-2 px-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">Tariff</th>
-                  <th className="py-2 px-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wide hidden sm:table-cell">Install</th>
-                  <th className="py-2 px-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wide hidden sm:table-cell">Other</th>
+                <tr className="border-b border-border-soft">
+                  <th className="py-2 px-2 text-left text-xs font-medium text-fg-500 uppercase tracking-wide">Ver</th>
+                  <th className="py-2 px-2 text-right text-xs font-medium text-fg-500 uppercase tracking-wide">Profit</th>
+                  <th className="py-2 px-2 text-right text-xs font-medium text-fg-500 uppercase tracking-wide">Tax %</th>
+                  <th className="py-2 px-2 text-right text-xs font-medium text-fg-500 uppercase tracking-wide">Tariff</th>
+                  <th className="py-2 px-2 text-right text-xs font-medium text-fg-500 uppercase tracking-wide hidden sm:table-cell">Install</th>
+                  <th className="py-2 px-2 text-right text-xs font-medium text-fg-500 uppercase tracking-wide hidden sm:table-cell">Other</th>
                 </tr>
               </thead>
               <tbody>
                 {analytics.sorted.map((q, i) => {
                   const prev = i > 0 ? analytics.sorted[i - 1] : null;
                   const ch = (curr: number | null | undefined, prv: number | null | undefined) =>
-                    prev && curr !== prv ? 'bg-amber-50 text-amber-700 font-semibold' : 'text-slate-700';
+                    prev && curr !== prv ? 'bg-status-amber-bg text-status-amber-fg font-semibold' : 'text-fg-700';
                   return (
-                    <tr key={q.id} className="border-b border-slate-100 last:border-0">
-                      <td className="py-2.5 px-2 font-medium text-slate-600">v{q.version_number}</td>
+                    <tr key={q.id} className="border-b border-border-soft last:border-0">
+                      <td className="py-2.5 px-2 font-medium text-fg-600">v{q.version_number}</td>
                       <td className={`py-2.5 px-2 text-right tabular-nums ${ch(q.profit_multiplier, prev?.profit_multiplier)}`}>
                         {((q.profit_multiplier ?? 0) * 100).toFixed(0)}%
                       </td>

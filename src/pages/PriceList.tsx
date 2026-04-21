@@ -323,8 +323,8 @@ export function PriceList() {
     <>
     <div className="page-enter">
       <div className="mb-6 hero-enter">
-        <h1 className="text-3xl font-bold text-slate-900">Inventory</h1>
-        <p className="mt-1 text-slate-500 text-sm">
+        <h1 className="text-3xl font-bold text-fg-900">Inventory</h1>
+        <p className="mt-1 text-fg-500 text-sm">
           {items.length} item{items.length !== 1 ? 's' : ''} &middot; Manage materials, hardware, and pricing
         </p>
       </div>
@@ -332,20 +332,20 @@ export function PriceList() {
       {activeTab === 'catalog' && (<>
       <div className="mb-5 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-400 pointer-events-none" />
           <input
             type="text"
             placeholder="Search by description, type, or SKU..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 pr-4 py-2.5 w-full text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 shadow-sm"
+            className="pl-9 pr-4 py-2.5 w-full text-sm border border-border-soft rounded-lg bg-surf-card focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-transparent placeholder:text-fg-400 shadow-sm"
           />
         </div>
 
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-3 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm text-slate-700 min-w-[160px]"
+          className="px-3 py-2.5 text-sm border border-border-soft rounded-lg bg-surf-card focus:outline-none focus:ring-2 focus-visible:ring-focus shadow-sm text-fg-700 min-w-[160px]"
         >
           <option value="">All Types</option>
           {uniqueTypes.map((type) => (
@@ -353,17 +353,17 @@ export function PriceList() {
           ))}
         </select>
 
-        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg self-start sm:self-auto">
+        <div className="flex items-center gap-1 p-1 bg-surf-muted rounded-lg self-start sm:self-auto">
           <button
             onClick={() => setViewMode('list')}
-            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-surf-card shadow-sm text-accent-text' : 'text-fg-500 hover:text-fg-700'}`}
             title="List view"
           >
             <LayoutList className="h-4 w-4" />
           </button>
           <button
             onClick={() => setViewMode('card')}
-            className={`p-2 rounded-md transition-all ${viewMode === 'card' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`p-2 rounded-md transition-all ${viewMode === 'card' ? 'bg-surf-card shadow-sm text-accent-text' : 'text-fg-500 hover:text-fg-700'}`}
             title="Card view"
           >
             <LayoutGrid className="h-4 w-4" />
@@ -372,12 +372,12 @@ export function PriceList() {
       </div>
 
       {filteredItems.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center py-20 px-6">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-            <Search className="h-7 w-7 text-slate-400" />
+        <div className="bg-surf-card rounded-xl border border-border-soft shadow-sm flex flex-col items-center justify-center py-20 px-6">
+          <div className="w-16 h-16 bg-surf-muted rounded-full flex items-center justify-center mb-4">
+            <Search className="h-7 w-7 text-fg-400" />
           </div>
-          <p className="text-slate-700 font-medium mb-1">No items found</p>
-          <p className="text-sm text-slate-400 text-center max-w-xs">
+          <p className="text-fg-700 font-medium mb-1">No items found</p>
+          <p className="text-sm text-fg-400 text-center max-w-xs">
             {searchTerm || typeFilter
               ? 'Try adjusting your search or filters.'
               : 'Add your first price list item to get started.'}
@@ -385,7 +385,7 @@ export function PriceList() {
           {!searchTerm && !typeFilter && (
             <button
               onClick={handleAddNew}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-accent-text border border-accent-tint-border rounded-lg hover:bg-accent-tint-soft transition-colors"
             >
               <Plus className="h-4 w-4" />
               Add Item
@@ -452,12 +452,12 @@ function SortableHeader({ field, label, sortField, sortDirection, onSort, align 
 
   return (
     <th
-      className={`px-5 py-3.5 text-xs font-semibold uppercase tracking-wider cursor-pointer select-none group transition-colors hover:bg-slate-100 ${align === 'right' ? 'text-right' : 'text-left'}`}
+      className={`px-5 py-3.5 text-xs font-semibold uppercase tracking-wider cursor-pointer select-none group transition-colors hover:bg-surf-muted ${align === 'right' ? 'text-right' : 'text-left'}`}
       onClick={() => onSort(field)}
     >
-      <span className={`inline-flex items-center gap-1 ${align === 'right' ? 'flex-row-reverse' : ''} ${isActive ? 'text-blue-600' : 'text-slate-500'}`}>
+      <span className={`inline-flex items-center gap-1 ${align === 'right' ? 'flex-row-reverse' : ''} ${isActive ? 'text-accent-text' : 'text-fg-500'}`}>
         {label}
-        <Icon className={`h-3.5 w-3.5 transition-colors ${isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+        <Icon className={`h-3.5 w-3.5 transition-colors ${isActive ? 'text-accent-text' : 'text-fg-400 group-hover:text-fg-600'}`} />
       </span>
     </th>
   );
@@ -479,32 +479,32 @@ interface ListViewProps extends ViewProps {
 
 function ListView({ items, sortField, sortDirection, onSort, onOpenDetail, onEdit, onDuplicate, onDelete }: ListViewProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft overflow-hidden">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-100">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-surf-app border-b border-border-soft">
             <tr>
               <th className="px-5 py-3.5 text-left w-10" />
               <SortableHeader field="concept_description" label="Description" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
               <SortableHeader field="type" label="Type" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
-              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Material</th>
-              <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Dimensions</th>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-fg-500 uppercase tracking-wider">Material</th>
+              <th className="px-5 py-3.5 text-left text-xs font-semibold text-fg-500 uppercase tracking-wider">Dimensions</th>
               <SortableHeader field="unit" label="Unit" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
               <SortableHeader field="price" label="Price" sortField={sortField} sortDirection={sortDirection} onSort={onSort} align="right" />
               <SortableHeader field="price_last_updated_at" label="Updated" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
-              <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+              <th className="px-5 py-3.5 text-right text-xs font-semibold text-fg-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-slate-100">
+          <tbody className="bg-surf-card divide-y divide-slate-100">
             {items.map((item) => (
               <tr
                 key={item.id}
-                className="hover:bg-blue-50/40 cursor-pointer transition-colors group"
+                className="hover:bg-accent-tint-soft cursor-pointer transition-colors group"
                 onClick={() => onOpenDetail(item)}
               >
                 <td className="pl-5 py-3" onClick={(e) => e.stopPropagation()}>
                   {item.image_url ? (
-                    <div className="w-9 h-9 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0">
+                    <div className="w-9 h-9 rounded-lg overflow-hidden border border-border-soft bg-surf-app flex-shrink-0">
                       <img
                         src={item.image_url}
                         alt=""
@@ -515,35 +515,35 @@ function ListView({ items, sortField, sortDirection, onSort, onOpenDetail, onEdi
                       />
                     </div>
                   ) : (
-                    <div className="w-9 h-9 rounded-lg border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center flex-shrink-0">
-                      <ImageOff className="h-3.5 w-3.5 text-slate-300" />
+                    <div className="w-9 h-9 rounded-lg border border-dashed border-border-soft bg-surf-app flex items-center justify-center flex-shrink-0">
+                      <ImageOff className="h-3.5 w-3.5 text-fg-300" />
                     </div>
                   )}
                 </td>
-                <td className="px-5 py-3.5 text-sm font-medium text-slate-900 max-w-xs">
+                <td className="px-5 py-3.5 text-sm font-medium text-fg-900 max-w-xs">
                   <span className="line-clamp-2 leading-snug">{item.concept_description}</span>
                   {item.sku_code && (
-                    <span className="block text-xs text-slate-400 font-mono mt-0.5">{item.sku_code}</span>
+                    <span className="block text-xs text-fg-400 font-mono mt-0.5">{item.sku_code}</span>
                   )}
                 </td>
                 <td className="px-5 py-3.5 whitespace-nowrap text-sm">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-accent-tint-soft text-accent-text border border-blue-100">
                     {item.type}
                   </span>
                 </td>
-                <td className="px-5 py-3.5 whitespace-nowrap text-sm text-slate-500">
-                  {item.material || <span className="text-slate-300">—</span>}
+                <td className="px-5 py-3.5 whitespace-nowrap text-sm text-fg-500">
+                  {item.material || <span className="text-fg-300">—</span>}
                 </td>
-                <td className="px-5 py-3.5 whitespace-nowrap text-sm text-slate-500">
-                  {item.dimensions || <span className="text-slate-300">—</span>}
+                <td className="px-5 py-3.5 whitespace-nowrap text-sm text-fg-500">
+                  {item.dimensions || <span className="text-fg-300">—</span>}
                 </td>
-                <td className="px-5 py-3.5 whitespace-nowrap text-sm text-slate-600">
+                <td className="px-5 py-3.5 whitespace-nowrap text-sm text-fg-600">
                   {item.unit}
                 </td>
-                <td className="px-5 py-3.5 whitespace-nowrap text-sm text-right font-semibold text-slate-900">
+                <td className="px-5 py-3.5 whitespace-nowrap text-sm text-right font-semibold text-fg-900">
                   {formatCurrency(item.price)}
                 </td>
-                <td className="px-5 py-3.5 whitespace-nowrap text-xs text-slate-400">
+                <td className="px-5 py-3.5 whitespace-nowrap text-xs text-fg-400">
                   {new Date(item.price_last_updated_at).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
@@ -552,13 +552,13 @@ function ListView({ items, sortField, sortDirection, onSort, onOpenDetail, onEdi
                 </td>
                 <td className="px-5 py-3.5 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ActionButton onClick={() => onEdit(item)} title="Edit" className="hover:text-blue-600 hover:bg-blue-50">
+                    <ActionButton onClick={() => onEdit(item)} title="Edit" className="hover:text-accent-text hover:bg-accent-tint-soft">
                       <Edit2 className="h-3.5 w-3.5" />
                     </ActionButton>
-                    <ActionButton onClick={() => onDuplicate(item)} title="Duplicate" className="hover:text-blue-600 hover:bg-blue-50">
+                    <ActionButton onClick={() => onDuplicate(item)} title="Duplicate" className="hover:text-accent-text hover:bg-accent-tint-soft">
                       <Copy className="h-3.5 w-3.5" />
                     </ActionButton>
-                    <ActionButton onClick={() => onDelete(item)} title="Delete" className="hover:text-red-600 hover:bg-red-50">
+                    <ActionButton onClick={() => onDelete(item)} title="Delete" className="hover:text-status-red-fg hover:bg-status-red-bg">
                       <Trash2 className="h-3.5 w-3.5" />
                     </ActionButton>
                   </div>
@@ -578,10 +578,10 @@ function CardView({ items, onOpenDetail, onEdit, onDuplicate, onDelete }: ViewPr
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden cursor-pointer group hover:shadow-lg hover:border-blue-300/60 hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
+          className={`bg-surf-card rounded-xl border border-border-soft shadow-sm overflow-hidden cursor-pointer group hover:shadow-lg hover:border-accent-tint-border hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
           onClick={() => onOpenDetail(item)}
         >
-          <div className="relative h-40 bg-slate-50 overflow-hidden">
+          <div className="relative h-40 bg-surf-app overflow-hidden">
             {item.image_url ? (
               <img
                 src={item.image_url}
@@ -590,19 +590,19 @@ function CardView({ items, onOpenDetail, onEdit, onDuplicate, onDelete }: ViewPr
                 onError={(e) => {
                   const parent = (e.target as HTMLImageElement).parentElement;
                   if (parent) {
-                    parent.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-300"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg><span class="text-xs text-slate-400">Image unavailable</span></div>`;
+                    parent.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-fg-300"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg><span class="text-xs text-fg-400">Image unavailable</span></div>`;
                   }
                 }}
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-                <ImageOff className="h-8 w-8 text-slate-300" />
-                <span className="text-xs text-slate-400">No image</span>
+                <ImageOff className="h-8 w-8 text-fg-300" />
+                <span className="text-xs text-fg-400">No image</span>
               </div>
             )}
 
             <div className="absolute top-2 left-2">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-white/90 backdrop-blur-sm text-blue-700 border border-blue-100 shadow-sm">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-surf-card backdrop-blur-sm text-accent-text border border-blue-100 shadow-sm">
                 <Tag className="h-2.5 w-2.5" />
                 {item.type}
               </span>
@@ -611,21 +611,21 @@ function CardView({ items, onOpenDetail, onEdit, onDuplicate, onDelete }: ViewPr
             <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => onEdit(item)}
-                className="p-1.5 rounded-lg bg-white/90 backdrop-blur-sm text-slate-600 hover:text-blue-600 hover:bg-white shadow-sm transition-colors"
+                className="p-1.5 rounded-lg bg-surf-card backdrop-blur-sm text-fg-600 hover:text-accent-text hover:bg-surf-card shadow-sm transition-colors"
                 title="Edit"
               >
                 <Edit2 className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => onDuplicate(item)}
-                className="p-1.5 rounded-lg bg-white/90 backdrop-blur-sm text-slate-600 hover:text-blue-600 hover:bg-white shadow-sm transition-colors"
+                className="p-1.5 rounded-lg bg-surf-card backdrop-blur-sm text-fg-600 hover:text-accent-text hover:bg-surf-card shadow-sm transition-colors"
                 title="Duplicate"
               >
                 <Copy className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => onDelete(item)}
-                className="p-1.5 rounded-lg bg-white/90 backdrop-blur-sm text-slate-600 hover:text-red-600 hover:bg-white shadow-sm transition-colors"
+                className="p-1.5 rounded-lg bg-surf-card backdrop-blur-sm text-fg-600 hover:text-status-red-fg hover:bg-surf-card shadow-sm transition-colors"
                 title="Delete"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -634,20 +634,20 @@ function CardView({ items, onOpenDetail, onEdit, onDuplicate, onDelete }: ViewPr
           </div>
 
           <div className="p-4">
-            <p className="text-sm font-semibold text-slate-900 line-clamp-2 leading-snug mb-0.5">
+            <p className="text-sm font-semibold text-fg-900 line-clamp-2 leading-snug mb-0.5">
               {item.concept_description}
             </p>
             {item.sku_code && (
-              <p className="text-xs text-slate-400 font-mono mb-2">{item.sku_code}</p>
+              <p className="text-xs text-fg-400 font-mono mb-2">{item.sku_code}</p>
             )}
 
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-soft">
               <div>
-                <p className="text-base font-bold text-slate-900">{formatCurrency(item.price)}</p>
-                <p className="text-xs text-slate-400">per {item.unit}</p>
+                <p className="text-base font-bold text-fg-900">{formatCurrency(item.price)}</p>
+                <p className="text-xs text-fg-400">per {item.unit}</p>
               </div>
               <div className="text-right">
-                <div className="flex items-center gap-1 text-xs text-slate-400 justify-end">
+                <div className="flex items-center gap-1 text-xs text-fg-400 justify-end">
                   <Calendar className="h-3 w-3" />
                   {new Date(item.price_last_updated_at).toLocaleDateString('en-US', {
                     month: 'short',
@@ -661,7 +661,7 @@ function CardView({ items, onOpenDetail, onEdit, onDuplicate, onDelete }: ViewPr
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center gap-0.5 text-xs text-blue-500 hover:text-blue-700 mt-1 transition-colors"
+                    className="inline-flex items-center gap-0.5 text-xs text-blue-500 hover:text-accent-text mt-1 transition-colors"
                   >
                     <ExternalLink className="h-3 w-3" />
                     Link
@@ -686,7 +686,7 @@ function ActionButton({ onClick, title, className, children }: {
     <button
       onClick={onClick}
       title={title}
-      className={`p-1.5 rounded-md text-slate-400 transition-colors ${className}`}
+      className={`p-1.5 rounded-md text-fg-400 transition-colors ${className}`}
     >
       {children}
     </button>
@@ -914,7 +914,7 @@ function PriceListFormModal({
               placeholder="https://example.com/image.jpg"
             />
             {showImagePreview && (
-              <div className="mt-2 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 h-28 relative">
+              <div className="mt-2 rounded-lg overflow-hidden border border-border-soft bg-surf-app h-28 relative">
                 <img
                   src={formData.image_url!}
                   alt="Preview"
@@ -987,27 +987,27 @@ function PriceListFormModal({
           />
         </div>
 
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-fg-500">
           For sheet materials, if Square Feet Per Sheet is not provided, it will be
           calculated from dimensions (e.g., "4ft x 8ft" = 32 sq ft)
         </p>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Notes / Observations <span className="text-slate-400 font-normal">(Optional)</span>
+          <label className="block text-sm font-medium text-fg-700 mb-1">
+            Notes / Observations <span className="text-fg-400 font-normal">(Optional)</span>
           </label>
           <textarea
             value={formData.notes || ''}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value || null })}
             rows={3}
             placeholder="Add any relevant notes, observations, or supplier details..."
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-border-solid rounded-lg text-sm text-fg-900 placeholder:text-fg-400 focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-transparent resize-none"
           />
         </div>
 
         {/* Technical Information */}
-        <div className="border-t border-slate-100 pt-4">
-          <p className="text-sm font-semibold text-slate-700 mb-3">Technical Information</p>
+        <div className="border-t border-border-soft pt-4">
+          <p className="text-sm font-semibold text-fg-700 mb-3">Technical Information</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {([
               { key: 'technical_width_mm', label: 'Width (mm)' },
@@ -1029,7 +1029,7 @@ function PriceListFormModal({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Weight</label>
+              <label className="block text-sm font-medium text-fg-700 mb-1">Weight</label>
               <div className="flex gap-2">
                 <input
                   type="number"
@@ -1038,12 +1038,12 @@ function PriceListFormModal({
                   value={techData.weight}
                   onChange={(e) => setTechData((p) => ({ ...p, weight: e.target.value }))}
                   placeholder="—"
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-3 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-transparent"
                 />
                 <select
                   value={techData.weight_unit}
                   onChange={(e) => setTechData((p) => ({ ...p, weight_unit: e.target.value }))}
-                  className="px-2 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="px-2 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card"
                 >
                   <option value="kg">kg</option>
                   <option value="g">g</option>
@@ -1068,9 +1068,9 @@ function PriceListFormModal({
         </div>
 
         {/* Inventory */}
-        <div className="border-t border-slate-100 pt-4">
-          <p className="text-sm font-semibold text-slate-700 mb-1">Inventory</p>
-          <p className="text-xs text-slate-400 mb-3">
+        <div className="border-t border-border-soft pt-4">
+          <p className="text-sm font-semibold text-fg-700 mb-1">Inventory</p>
+          <p className="text-xs text-fg-400 mb-3">
             {item ? 'Directly editing stock is for corrections. Use "Record Movement" on the item page for accurate tracking.' : 'Set the initial stock for this item.'}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1100,38 +1100,38 @@ function PriceListFormModal({
         </div>
 
         {/* Suppliers */}
-        <div className="border-t border-slate-100 pt-4">
-          <p className="text-sm font-semibold text-slate-700 mb-3">Suppliers</p>
+        <div className="border-t border-border-soft pt-4">
+          <p className="text-sm font-semibold text-fg-700 mb-3">Suppliers</p>
           {localSuppliers.length > 0 && (
             <div className="overflow-x-auto mb-3">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200/60">
-                    <th className="text-left py-1.5 pr-2 font-medium text-slate-500">Supplier</th>
-                    <th className="text-left py-1.5 px-2 font-medium text-slate-500">SKU</th>
-                    <th className="text-right py-1.5 px-2 font-medium text-slate-500">Price</th>
-                    <th className="text-center py-1.5 px-2 font-medium text-slate-500">Primary</th>
+                  <tr className="border-b border-border-soft">
+                    <th className="text-left py-1.5 pr-2 font-medium text-fg-500">Supplier</th>
+                    <th className="text-left py-1.5 px-2 font-medium text-fg-500">SKU</th>
+                    <th className="text-right py-1.5 px-2 font-medium text-fg-500">Price</th>
+                    <th className="text-center py-1.5 px-2 font-medium text-fg-500">Primary</th>
                     <th className="py-1.5 pl-2"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {localSuppliers.map((s, i) => (
-                    <tr key={i} className="border-b border-slate-100">
-                      <td className="py-1.5 pr-2 font-medium text-slate-700">{s.supplier_name}</td>
-                      <td className="py-1.5 px-2 font-mono text-slate-500">{s.supplier_sku || '—'}</td>
-                      <td className="py-1.5 px-2 text-right tabular-nums text-slate-700">
+                    <tr key={i} className="border-b border-border-soft">
+                      <td className="py-1.5 pr-2 font-medium text-fg-700">{s.supplier_name}</td>
+                      <td className="py-1.5 px-2 font-mono text-fg-500">{s.supplier_sku || '—'}</td>
+                      <td className="py-1.5 px-2 text-right tabular-nums text-fg-700">
                         {s.supplier_price ? formatCurrency(parseFloat(s.supplier_price)) : '—'}
                       </td>
                       <td className="py-1.5 px-2 text-center">
                         {s.is_primary && (
-                          <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Primary</span>
+                          <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-status-amber-bg text-status-amber-fg">Primary</span>
                         )}
                       </td>
                       <td className="py-1.5 pl-2 text-center">
                         <button
                           type="button"
                           onClick={() => handleRemoveLocalSupplier(i)}
-                          className="p-1 text-slate-400 hover:text-red-500 rounded transition-colors"
+                          className="p-1 text-fg-400 hover:text-red-500 rounded transition-colors"
                           title="Remove"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -1144,7 +1144,7 @@ function PriceListFormModal({
             </div>
           )}
           {showAddSupplier ? (
-            <div className="space-y-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="space-y-3 p-3 bg-surf-app rounded-lg border border-border-soft">
               <AutocompleteSelect
                 label="Supplier"
                 required
@@ -1170,12 +1170,12 @@ function PriceListFormModal({
                   placeholder="0.00"
                 />
               </div>
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-fg-700">
                 <input
                   type="checkbox"
                   checked={supplierForm.is_primary}
                   onChange={(e) => setSupplierForm((p) => ({ ...p, is_primary: e.target.checked }))}
-                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-border-solid text-accent-text focus-visible:ring-focus"
                 />
                 Set as Primary Supplier
               </label>
@@ -1188,7 +1188,7 @@ function PriceListFormModal({
             <button
               type="button"
               onClick={() => setShowAddSupplier(true)}
-              className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm text-accent-text hover:text-accent-text font-medium transition-colors"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Supplier
@@ -1196,7 +1196,7 @@ function PriceListFormModal({
           )}
         </div>
 
-        <div className="flex justify-end space-x-3 pt-2 border-t border-slate-100">
+        <div className="flex justify-end space-x-3 pt-2 border-t border-border-soft">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>

@@ -92,8 +92,8 @@ export function ProjectHeader({
   const deltaColor = delta == null
     ? ''
     : deltaIsNegative
-    ? 'text-emerald-600'
-    : 'text-rose-600';
+    ? 'text-status-emerald-fg'
+    : 'text-status-red-fg';
 
   // z-40 sits above the FloatingActionBar (z-[36]) so the StatusChip's
   // dropdown can render over it when it extends below the header's bounds.
@@ -134,10 +134,10 @@ export function ProjectHeader({
       ref={outerRef}
       className={outerClass}
       style={{
-        background: 'rgba(255,255,255,0.65)',
+        background: 'var(--surf-projhdr)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(226,232,240,0.7)',
+        borderBottom: '1px solid var(--border-soft)',
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -151,18 +151,18 @@ export function ProjectHeader({
                   type="button"
                   onClick={onBack}
                   aria-label="Back to project"
-                  className="flex-shrink-0 h-7 w-7 rounded-[7px] bg-white/70 border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-white inline-flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                  className="flex-shrink-0 h-7 w-7 rounded-[7px] bg-surf-card border border-border-soft text-fg-500 hover:text-fg-900 hover:bg-surf-card inline-flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus-visible:ring-focus/40"
                 >
                   <ArrowLeft className="h-[13px] w-[13px]" strokeWidth={1.5} />
                 </button>
               )}
-              <span className="text-[14px] text-slate-500 font-medium truncate max-w-[180px]">
+              <span className="text-[14px] text-fg-500 font-medium truncate max-w-[180px]">
                 {projectName}
               </span>
-              <span className="text-slate-300 font-normal text-base select-none" aria-hidden>
+              <span className="text-fg-300 font-normal text-base select-none" aria-hidden>
                 /
               </span>
-              <h1 className="text-[20px] font-bold text-slate-900 tracking-[-0.015em] leading-[1.15] truncate">
+              <h1 className="text-[20px] font-bold text-fg-900 tracking-[-0.015em] leading-[1.15] truncate">
                 {variantName}
               </h1>
             </div>
@@ -172,7 +172,7 @@ export function ProjectHeader({
               <StatusChip status={status} onChange={onStatusChange} />
               {isStale && (
                 <span
-                  className="inline-flex items-center gap-1 px-[8px] py-[2px] rounded-full border bg-amber-500/[0.12] text-amber-700 border-amber-500/30 text-[10px] font-bold tracking-[0.04em] uppercase"
+                  className="inline-flex items-center gap-1 px-[8px] py-[2px] rounded-full border bg-status-amber-bg text-status-amber-fg border-status-amber-brd text-[10px] font-bold tracking-[0.04em] uppercase"
                   title="The optimizer run is stale because cabinets changed after it was saved. Re-optimize in the Breakdown tab to refresh these numbers."
                 >
                   <AlertTriangle className="h-[10px] w-[10px]" strokeWidth={1.5} />
@@ -180,7 +180,7 @@ export function ProjectHeader({
                 </span>
               )}
               {projectType && (
-                <span className="inline-flex items-center gap-1 px-[8px] py-[2px] rounded-full border bg-indigo-500/[0.08] text-indigo-700 border-indigo-500/20 text-[11px] font-medium">
+                <span className="inline-flex items-center gap-1 px-[8px] py-[2px] rounded-full border bg-accent-tint-soft text-accent-text border-accent-tint-border text-[11px] font-medium">
                   <Box className="h-[10px] w-[10px]" strokeWidth={1.5} />
                   {projectType}
                 </span>
@@ -188,7 +188,7 @@ export function ProjectHeader({
             </div>
 
             {/* Meta row */}
-            <div className="flex items-center gap-[14px] flex-wrap text-[12px] text-slate-500">
+            <div className="flex items-center gap-[14px] flex-wrap text-[12px] text-fg-500">
               {address && (
                 <span className="inline-flex items-center gap-[6px] min-w-0">
                   <MapPin className="h-[12px] w-[12px] flex-shrink-0" strokeWidth={1.5} />
@@ -200,7 +200,7 @@ export function ProjectHeader({
                   <Calendar className="h-[12px] w-[12px] flex-shrink-0" strokeWidth={1.5} />
                   <span>
                     Quoted{' '}
-                    <span className="text-slate-700 font-medium">
+                    <span className="text-fg-700 font-medium">
                       {formatQuotedDate(quotedAt)}
                     </span>
                   </span>
@@ -210,7 +210,7 @@ export function ProjectHeader({
                 <button
                   type="button"
                   onClick={onEdit}
-                  className="text-blue-600 hover:text-blue-700 font-medium transition-colors focus:outline-none focus:underline"
+                  className="text-accent-text hover:text-accent-text font-medium transition-colors focus:outline-none focus:underline"
                 >
                   Edit
                 </button>
@@ -220,35 +220,33 @@ export function ProjectHeader({
 
           {/* Right column — financial card */}
           <div
-            className="lg:min-w-[270px] rounded-[12px] px-[16px] py-[10px] border"
+            className="lg:min-w-[270px] rounded-[12px] px-[16px] py-[10px] border border-accent-tint-border"
             style={{
-              background:
-                'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(59,130,246,0.06))',
-              borderColor: 'rgba(165,180,252,0.55)',
+              background: 'var(--accent-tint-card)',
             }}
           >
-            <div className="text-[10px] font-semibold tracking-[0.14em] uppercase text-indigo-700 mb-[2px] flex items-center gap-[6px]">
+            <div className="text-[10px] font-semibold tracking-[0.14em] uppercase text-accent-text mb-[2px] flex items-center gap-[6px]">
               <Zap className="h-[11px] w-[11px]" strokeWidth={1.5} />
               Project Total · {methodLabel}
             </div>
 
             {totalMode === 'Both' ? (
               <div className="leading-tight">
-                <div className="text-[20px] font-bold text-slate-900 tabular-nums tracking-[-0.02em]">
+                <div className="text-[20px] font-bold text-fg-900 tabular-nums tracking-[-0.02em]">
                   {formatMoney(total.usd, 'USD')}
-                  <span className="text-[12px] text-slate-500 font-medium ml-[5px]">USD</span>
+                  <span className="text-[12px] text-fg-500 font-medium ml-[5px]">USD</span>
                 </div>
-                <div className="text-[13px] text-slate-500 font-medium tabular-nums mt-0.5">
+                <div className="text-[13px] text-fg-500 font-medium tabular-nums mt-0.5">
                   {formatMoney(total.mxn, 'MXN')}
                   <span className="ml-[4px]">MXN</span>
                 </div>
               </div>
             ) : (
               <div className="leading-none">
-                <span className="text-[22px] font-bold text-slate-900 tabular-nums tracking-[-0.02em]">
+                <span className="text-[22px] font-bold text-fg-900 tabular-nums tracking-[-0.02em]">
                   {formatMoney(totalMode === 'USD' ? total.usd : total.mxn, totalMode)}
                 </span>
-                <span className="text-[12px] text-slate-500 font-medium ml-[5px]">
+                <span className="text-[12px] text-fg-500 font-medium ml-[5px]">
                   {totalMode}
                 </span>
               </div>

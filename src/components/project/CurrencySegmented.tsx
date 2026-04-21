@@ -27,7 +27,7 @@ export function CurrencySegmented({ value, onChange }: CurrencySegmentedProps) {
       role="radiogroup"
       aria-label="Currency display"
       onKeyDown={handleKeyDown}
-      className="inline-flex gap-[2px] p-[2px] bg-white/75 rounded-[7px] border border-slate-200/60"
+      className="inline-flex gap-[2px] p-[2px] bg-surf-card rounded-[7px] border border-border-soft"
     >
       {OPTIONS.map((mode, i) => {
         const active = mode === value;
@@ -42,10 +42,10 @@ export function CurrencySegmented({ value, onChange }: CurrencySegmentedProps) {
             aria-checked={active}
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(mode)}
-            className={`px-[10px] py-[3px] rounded-[5px] text-[10.5px] font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${
+            className={`px-[10px] py-[3px] rounded-[5px] text-[10.5px] font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus-visible:ring-focus/40 ${
               active
-                ? 'bg-white text-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.06)]'
-                : 'text-slate-500 hover:text-slate-700'
+                ? 'bg-surf-card text-fg-800 shadow-[0_1px_2px_rgba(15,23,42,0.06)]'
+                : 'text-fg-500 hover:text-fg-700'
             }`}
           >
             {mode}

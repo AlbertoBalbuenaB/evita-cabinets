@@ -325,13 +325,13 @@ export function ProjectPage() {
   ];
 
   const statusColors: Record<string, string> = {
-    Awarded: 'bg-green-50 text-green-700 border-green-200/50',
-    Pending: 'bg-blue-50 text-blue-700 border-blue-200/50',
-    Estimating: 'bg-amber-50 text-amber-700 border-amber-200/50',
+    Awarded: 'bg-status-emerald-bg text-status-emerald-fg border-status-emerald-brd',
+    Pending: 'bg-accent-tint-soft text-accent-text border-accent-tint-border',
+    Estimating: 'bg-status-amber-bg text-status-amber-fg border-status-amber-brd',
     Sent: 'bg-cyan-50 text-cyan-700 border-cyan-200/50',
-    Lost: 'bg-red-50 text-red-700 border-red-200/50',
-    Discarded: 'bg-slate-100 text-slate-600 border-slate-200/50',
-    Cancelled: 'bg-slate-100 text-slate-500 border-slate-200/50',
+    Lost: 'bg-status-red-bg text-status-red-fg border-status-red-brd',
+    Discarded: 'bg-surf-muted text-fg-600 border-border-soft',
+    Cancelled: 'bg-surf-muted text-fg-500 border-border-soft',
   };
 
   const latestQuotation = quotations.length > 0
@@ -371,15 +371,15 @@ export function ProjectPage() {
       <div className="flex items-center gap-3 hero-enter">
         <button
           onClick={() => navigate('/projects')}
-          className="flex-shrink-0 p-2 rounded-xl bg-white/60 hover:bg-white/80 border border-slate-200/50 text-slate-600 hover:text-slate-800 transition-colors"
+          className="flex-shrink-0 p-2 rounded-xl bg-surf-card hover:bg-surf-card border border-border-soft text-fg-600 hover:text-fg-800 transition-colors"
           aria-label="Back to projects"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="min-w-0">
-          <h1 className="text-lg font-semibold text-slate-900 truncate">{project.name}</h1>
+          <h1 className="text-lg font-semibold text-fg-900 truncate">{project.name}</h1>
           {Boolean((project as Record<string, unknown>).last_modified_at) && Boolean((project as Record<string, unknown>).last_modified_by_member_id) && (
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-fg-400 mt-0.5">
               Last modified: {(project as Record<string, unknown>).last_modified_member_name as string || 'Unknown'} · {formatRelativeDate(((project as Record<string, unknown>).last_modified_at as string).split('T')[0])}
             </p>
           )}
@@ -387,7 +387,7 @@ export function ProjectPage() {
       </div>
 
       {/* Tab navigation */}
-      <div className="flex border-b border-slate-200 gap-1 overflow-x-auto scrollbar-none">
+      <div className="flex border-b border-border-soft gap-1 overflow-x-auto scrollbar-none">
         {tabs.map(tab => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -395,11 +395,11 @@ export function ProjectPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${active ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${active ? 'border-blue-600 text-accent-text' : 'border-transparent text-fg-500 hover:text-fg-800'}`}
             >
               <Icon className="h-4 w-4" />
               {tab.label}
-              {tab.id === 'quotations' && <span className="ml-1 text-xs bg-slate-100 px-1.5 py-0.5 rounded-full">{quotations.length}</span>}
+              {tab.id === 'quotations' && <span className="ml-1 text-xs bg-surf-muted px-1.5 py-0.5 rounded-full">{quotations.length}</span>}
             </button>
           );
         })}
@@ -408,59 +408,59 @@ export function ProjectPage() {
       {/* Overview tab */}
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
+          <div className="bg-surf-app border border-border-soft rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Project Info</h3>
+              <h3 className="text-sm font-semibold text-fg-500 uppercase tracking-wide">Project Info</h3>
               {editing ? (
                 <div className="flex gap-2">
-                  <button onClick={() => setEditing(false)} className="p-1.5 rounded-lg hover:bg-slate-200/50 text-slate-400"><X className="h-4 w-4" /></button>
-                  <button onClick={handleSaveOverview} disabled={saving} className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600"><Save className="h-4 w-4" /></button>
+                  <button onClick={() => setEditing(false)} className="p-1.5 rounded-lg hover:bg-surf-muted text-fg-400"><X className="h-4 w-4" /></button>
+                  <button onClick={handleSaveOverview} disabled={saving} className="p-1.5 rounded-lg hover:bg-accent-tint-soft text-accent-text"><Save className="h-4 w-4" /></button>
                 </div>
               ) : (
-                <button onClick={() => setEditing(true)} className="p-1.5 rounded-lg hover:bg-slate-200/50 text-slate-400"><Edit2 className="h-4 w-4" /></button>
+                <button onClick={() => setEditing(true)} className="p-1.5 rounded-lg hover:bg-surf-muted text-fg-400"><Edit2 className="h-4 w-4" /></button>
               )}
             </div>
             {editing ? (
               <div className="space-y-3">
-                <div><label className="text-xs text-slate-500">Name</label><input value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} className="w-full mt-1 px-3 py-2 text-sm border border-slate-200 rounded-lg" /></div>
-                <div><label className="text-xs text-slate-500">Customer</label><input value={editForm.customer} onChange={e => setEditForm({...editForm, customer: e.target.value})} className="w-full mt-1 px-3 py-2 text-sm border border-slate-200 rounded-lg" /></div>
-                <div><label className="text-xs text-slate-500">Address</label><input value={editForm.address} onChange={e => setEditForm({...editForm, address: e.target.value})} className="w-full mt-1 px-3 py-2 text-sm border border-slate-200 rounded-lg" /></div>
+                <div><label className="text-xs text-fg-500">Name</label><input value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} className="w-full mt-1 px-3 py-2 text-sm border border-border-soft rounded-lg" /></div>
+                <div><label className="text-xs text-fg-500">Customer</label><input value={editForm.customer} onChange={e => setEditForm({...editForm, customer: e.target.value})} className="w-full mt-1 px-3 py-2 text-sm border border-border-soft rounded-lg" /></div>
+                <div><label className="text-xs text-fg-500">Address</label><input value={editForm.address} onChange={e => setEditForm({...editForm, address: e.target.value})} className="w-full mt-1 px-3 py-2 text-sm border border-border-soft rounded-lg" /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="text-xs text-slate-500">Type</label>
-                    <select value={editForm.project_type} onChange={e => setEditForm({...editForm, project_type: e.target.value})} className="w-full mt-1 px-3 py-2 text-sm border border-slate-200 rounded-lg">
+                  <div><label className="text-xs text-fg-500">Type</label>
+                    <select value={editForm.project_type} onChange={e => setEditForm({...editForm, project_type: e.target.value})} className="w-full mt-1 px-3 py-2 text-sm border border-border-soft rounded-lg">
                       <option>Custom</option><option>Bids</option><option>Prefab</option><option>Stores</option>
                     </select>
                   </div>
-                  <div><label className="text-xs text-slate-500">Status</label>
-                    <select value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value})} className="w-full mt-1 px-3 py-2 text-sm border border-slate-200 rounded-lg">
+                  <div><label className="text-xs text-fg-500">Status</label>
+                    <select value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value})} className="w-full mt-1 px-3 py-2 text-sm border border-border-soft rounded-lg">
                       <option>Estimating</option><option>Pending</option><option>Sent</option><option>Awarded</option><option>Lost</option><option>Discarded</option><option>Cancelled</option>
                     </select>
                   </div>
                 </div>
-                <div><label className="text-xs text-slate-500">Details</label><textarea value={editForm.project_details} onChange={e => setEditForm({...editForm, project_details: e.target.value})} rows={3} className="w-full mt-1 px-3 py-2 text-sm border border-slate-200 rounded-lg" /></div>
+                <div><label className="text-xs text-fg-500">Details</label><textarea value={editForm.project_details} onChange={e => setEditForm({...editForm, project_details: e.target.value})} rows={3} className="w-full mt-1 px-3 py-2 text-sm border border-border-soft rounded-lg" /></div>
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="flex items-center justify-between py-2 border-b border-slate-200/40"><span className="text-sm text-slate-500">Name</span><span className="text-sm font-medium text-slate-800">{project.name}</span></div>
-                <div className="flex items-center justify-between py-2 border-b border-slate-200/40"><span className="text-sm text-slate-500">Customer</span><span className="text-sm text-slate-800">{project.customer || '—'}</span></div>
-                <div className="flex items-center justify-between py-2 border-b border-slate-200/40"><span className="text-sm text-slate-500">Address</span><span className="text-sm text-slate-800 text-right max-w-[200px] truncate">{project.address || '—'}</span></div>
-                <div className="flex items-center justify-between py-2 border-b border-slate-200/40"><span className="text-sm text-slate-500">Type</span><span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{project.project_type}</span></div>
-                <div className="flex items-center justify-between py-2"><span className="text-sm text-slate-500">Status</span><span className={`text-xs px-2 py-0.5 rounded-full border ${statusColors[project.status || ''] || 'bg-slate-100 text-slate-600'}`}>{project.status}</span></div>
+                <div className="flex items-center justify-between py-2 border-b border-border-soft"><span className="text-sm text-fg-500">Name</span><span className="text-sm font-medium text-fg-800">{project.name}</span></div>
+                <div className="flex items-center justify-between py-2 border-b border-border-soft"><span className="text-sm text-fg-500">Customer</span><span className="text-sm text-fg-800">{project.customer || '—'}</span></div>
+                <div className="flex items-center justify-between py-2 border-b border-border-soft"><span className="text-sm text-fg-500">Address</span><span className="text-sm text-fg-800 text-right max-w-[200px] truncate">{project.address || '—'}</span></div>
+                <div className="flex items-center justify-between py-2 border-b border-border-soft"><span className="text-sm text-fg-500">Type</span><span className="text-xs px-2 py-0.5 rounded-full bg-accent-tint-soft text-accent-text">{project.project_type}</span></div>
+                <div className="flex items-center justify-between py-2"><span className="text-sm text-fg-500">Status</span><span className={`text-xs px-2 py-0.5 rounded-full border ${statusColors[project.status || ''] || 'bg-surf-muted text-fg-600'}`}>{project.status}</span></div>
               </div>
             )}
           </div>
 
           <div className="space-y-4">
-            <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Summary</h3>
+            <div className="bg-surf-app border border-border-soft rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-fg-500 uppercase tracking-wide mb-3">Summary</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div><div className="text-2xl font-bold text-slate-900">{quotations.length}</div><span className="text-xs text-slate-500">Quotations</span></div>
-                <div><div className="text-2xl font-bold text-slate-900">{quotations.filter(q => q.status === 'Awarded').length}</div><span className="text-xs text-slate-500">Awarded</span></div>
+                <div><div className="text-2xl font-bold text-fg-900">{quotations.length}</div><span className="text-xs text-fg-500">Quotations</span></div>
+                <div><div className="text-2xl font-bold text-fg-900">{quotations.filter(q => q.status === 'Awarded').length}</div><span className="text-xs text-fg-500">Awarded</span></div>
               </div>
             </div>
-            <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Details</h3>
-              <p className="text-sm text-slate-700 whitespace-pre-wrap">{project.project_details || 'No details added yet.'}</p>
+            <div className="bg-surf-app border border-border-soft rounded-xl p-5">
+              <h3 className="text-sm font-semibold text-fg-500 uppercase tracking-wide mb-3">Details</h3>
+              <p className="text-sm text-fg-700 whitespace-pre-wrap">{project.project_details || 'No details added yet.'}</p>
             </div>
           </div>
         </div>
@@ -472,14 +472,14 @@ export function ProjectPage() {
           {/* Header */}
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div className="flex items-center gap-3 flex-wrap">
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-lg font-semibold text-fg-900">
                 {quotations.length} Quotation{quotations.length !== 1 ? 's' : ''}
               </h3>
               {quotations.length > 0 && pipelineTotal > 0 && (
-                <span className="flex items-center gap-1.5 text-sm text-slate-500">
-                  <TrendingUp className="h-3.5 w-3.5 text-slate-400" />
+                <span className="flex items-center gap-1.5 text-sm text-fg-500">
+                  <TrendingUp className="h-3.5 w-3.5 text-fg-400" />
                   Pipeline:{' '}
-                  <span className="font-semibold text-slate-700">
+                  <span className="font-semibold text-fg-700">
                     {formatCurrency(pipelineTotal / exchangeRate, 'USD')}
                   </span>
                 </span>
@@ -489,7 +489,7 @@ export function ProjectPage() {
               {quotations.length > 1 && (
                 <button
                   onClick={() => setSortOrder(s => s === 'desc' ? 'asc' : 'desc')}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-fg-500 hover:text-fg-700 bg-surf-card border border-border-soft rounded-lg hover:bg-surf-app transition-colors"
                 >
                   <ArrowUpDown className="h-3.5 w-3.5" />
                   {sortOrder === 'desc' ? 'Newest first' : 'Oldest first'}
@@ -512,7 +512,7 @@ export function ProjectPage() {
               {Object.entries(statusCounts).map(([status, count]) => (
                 <span
                   key={status}
-                  className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full border ${statusColors[status] || 'bg-slate-100 text-slate-600 border-slate-200/50'}`}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full border ${statusColors[status] || 'bg-surf-muted text-fg-600 border-border-soft'}`}
                 >
                   {count} {status}
                 </span>
@@ -522,9 +522,9 @@ export function ProjectPage() {
 
           {quotations.length === 0 ? (
             <div className="glass-white p-12 text-center">
-              <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-base font-medium text-slate-700 mb-1">No quotations yet</p>
-              <p className="text-sm text-slate-400 mb-6">Start by creating your first quotation or importing an existing one.</p>
+              <FileText className="h-12 w-12 text-fg-300 mx-auto mb-4" />
+              <p className="text-base font-medium text-fg-700 mb-1">No quotations yet</p>
+              <p className="text-sm text-fg-400 mb-6">Start by creating your first quotation or importing an existing one.</p>
               <div className="flex items-center justify-center gap-3">
                 <Button onClick={handleNewQuotation}>
                   <Plus className="h-4 w-4 mr-2" />New Quotation
@@ -547,33 +547,33 @@ export function ProjectPage() {
                   <div
                     key={q.id}
                     onClick={() => navigate(`/projects/${projectId}/quotations/${q.id}`)}
-                    className={`glass-white p-4 cursor-pointer hover:shadow-md hover:border-blue-200 transition-all ${isLatest ? 'border-l-4 border-l-blue-400' : ''} ${isMenuOpen ? 'relative z-10' : ''}`}
+                    className={`glass-white p-4 cursor-pointer hover:shadow-md hover:border-accent-tint-border transition-all ${isLatest ? 'border-l-4 border-l-blue-400' : ''} ${isMenuOpen ? 'relative z-10' : ''}`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       {/* Left: version badge + info */}
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold ${isLatest ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
+                        <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold ${isLatest ? 'bg-blue-600 text-white' : 'bg-accent-tint-soft text-accent-text'}`}>
                           {q.version_number || '?'}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-slate-900 truncate">{q.version_label || q.name}</span>
-                            <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full border ${statusColors[q.status || ''] || 'bg-slate-100 text-slate-600 border-slate-200/50'}`}>{q.status}</span>
+                            <span className="text-sm font-medium text-fg-900 truncate">{q.version_label || q.name}</span>
+                            <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full border ${statusColors[q.status || ''] || 'bg-surf-muted text-fg-600 border-border-soft'}`}>{q.status}</span>
                             {isLatest && (
-                              <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200/60 font-medium">Latest</span>
+                              <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-status-emerald-bg text-status-emerald-fg border border-status-emerald-brd font-medium">Latest</span>
                             )}
                             {marginPct !== null && (
-                              <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200/50">
+                              <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-surf-muted text-fg-500 border border-border-soft">
                                 {marginPct}% margin
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-slate-400 flex-wrap">
+                          <div className="flex items-center gap-2 mt-1 text-xs text-fg-400 flex-wrap">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
                               {formatDate(q.quote_date)}
                             </span>
-                            <span className="text-slate-300">·</span>
+                            <span className="text-fg-300">·</span>
                             <span>{formatRelativeDate(q.quote_date)}</span>
                           </div>
                         </div>
@@ -582,43 +582,43 @@ export function ProjectPage() {
                       {/* Right: amounts + kebab menu */}
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <div className="text-right">
-                          <div className="text-sm font-bold text-slate-900 tabular-nums">{formatCurrency((q.total_amount || 0) / exchangeRate, 'USD')}</div>
-                          <div className="text-xs text-slate-400 tabular-nums">{formatCurrency(q.total_amount || 0)}</div>
+                          <div className="text-sm font-bold text-fg-900 tabular-nums">{formatCurrency((q.total_amount || 0) / exchangeRate, 'USD')}</div>
+                          <div className="text-xs text-fg-400 tabular-nums">{formatCurrency(q.total_amount || 0)}</div>
                         </div>
 
                         {/* Kebab menu */}
                         <div className="relative" onClick={e => e.stopPropagation()}>
                           <button
                             onClick={() => setOpenMenuId(isMenuOpen ? null : q.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                            className="p-1.5 rounded-lg text-fg-400 hover:text-fg-700 hover:bg-surf-muted transition-colors"
                             title="More options"
                           >
                             <MoreVertical className="h-4 w-4" />
                           </button>
                           {isMenuOpen && (
-                            <div className="absolute right-0 top-9 z-50 w-44 bg-white rounded-xl shadow-lg border border-slate-200 py-1 text-sm">
+                            <div className="absolute right-0 top-9 z-50 w-44 bg-surf-card rounded-xl shadow-lg border border-border-soft py-1 text-sm">
                               <button
                                 onClick={() => { setOpenMenuId(null); navigate(`/projects/${projectId}/quotations/${q.id}`); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-fg-700 hover:bg-accent-tint-soft hover:text-accent-text transition-colors"
                               >
                                 <FileText className="h-3.5 w-3.5" />View Details
                               </button>
                               <button
                                 onClick={() => { setOpenMenuId(null); handleDuplicate(q); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-fg-700 hover:bg-surf-app transition-colors"
                               >
                                 <Copy className="h-3.5 w-3.5" />Duplicate
                               </button>
                               <button
                                 onClick={() => { setOpenMenuId(null); handleEditQuotation(q); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-fg-700 hover:bg-surf-app transition-colors"
                               >
                                 <Edit2 className="h-3.5 w-3.5" />Edit
                               </button>
-                              <div className="border-t border-slate-100 my-1" />
+                              <div className="border-t border-border-soft my-1" />
                               <button
                                 onClick={() => { setOpenMenuId(null); handleDeleteQuotation(q); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-status-red-fg hover:bg-status-red-bg transition-colors"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />Delete
                               </button>
