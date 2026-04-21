@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { useOptimizerStore } from '../../hooks/useOptimizerStore';
 import { OptimizationResult } from '../../lib/optimizer/types';
@@ -19,6 +19,8 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
   const [globalOpen, setGlobalOpen] = useState(true);
   const [sheetOpen,  setSheetOpen]  = useState(true);
   const [cutsOpen,   setCutsOpen]   = useState(false);
+
+  const sheetStatsRef = useRef<HTMLDivElement>(null);
 
   // Compute all cut sequences once per result+unit change — avoids 3× redundant calls per render.
   // Must be called unconditionally before any early return (Rules of Hooks).
@@ -54,10 +56,21 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
 
   // Stock sheets grouped by material name (for per-material board count)
   const materialGroups: Record<string, number> = {};
-  result.boards.forEach((b) => {
+  const firstBoardByMaterial: Record<string, number> = {};
+  result.boards.forEach((b, i) => {
     const key = b.material; // piece material group — semantically the correct label
     materialGroups[key] = (materialGroups[key] || 0) + 1;
+    if (!(key in firstBoardByMaterial)) firstBoardByMaterial[key] = i;
   });
+
+  const activeMaterial = board?.material ?? '';
+
+  function handleJumpToMaterial(name: string) {
+    const idx = firstBoardByMaterial[name];
+    if (typeof idx !== 'number') return;
+    onSelectBoard(idx);
+    sheetStatsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 
   // Also group by dimension for the compact summary string
   const stockGroups: Record<string, number> = {};
@@ -103,16 +116,51 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
     </div>
   );
 
+  const MaterialRow = ({
+    name,
+    count,
+    active,
+    onClick,
+  }: {
+    name: string;
+    count: number;
+    active: boolean;
+    onClick: () => void;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      title={name}
+      aria-current={active ? 'true' : undefined}
+      className={`w-full flex items-baseline gap-2 py-1 px-1.5 -mx-1.5 text-xs rounded border-b border-slate-50 last:border-0 transition-colors ${
+        active
+          ? 'bg-indigo-50 text-indigo-700'
+          : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+      }`}
+    >
+      <span className="flex-1 min-w-0 truncate text-left">{name}</span>
+      <span
+        className={`shrink-0 font-medium tabular-nums ${
+          active ? 'text-indigo-700' : 'text-slate-800'
+        }`}
+      >
+        {count} board{count !== 1 ? 's' : ''}
+      </span>
+    </button>
+  );
+
   // ── Render ────────────────────────────────────────────────
   return (
     <div className="flex-1 bg-white flex flex-col overflow-y-auto overflow-x-hidden text-sm">
 
       <Section title="Global statistics" open={globalOpen} onToggle={() => setGlobalOpen((v) => !v)}>
         {Object.entries(materialGroups).map(([name, count]) => (
-          <StatRow
+          <MaterialRow
             key={name}
-            label={name}
-            value={`${count} board${count !== 1 ? 's' : ''}`}
+            name={name}
+            count={count}
+            active={name === activeMaterial}
+            onClick={() => handleJumpToMaterial(name)}
           />
         ))}
         <StatRow label="By dimension" value={stockStr} />
@@ -145,6 +193,7 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
         <StatRow label="Time"             value={`${result.timeMs.toFixed(0)}ms`} />
       </Section>
 
+      <div ref={sheetStatsRef}>
       <Section title="Sheet statistics" open={sheetOpen} onToggle={() => setSheetOpen((v) => !v)}>
         {/* Board navigation */}
         <div className="flex items-center justify-between mb-2 -mx-1">
@@ -187,6 +236,7 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
         <StatRow label="Cut length"     value={fmtDim(boardCutLen, unit)} />
         <StatRow label="Cost"           value={`$${board.stockInfo.costo.toFixed(2)}`} />
       </Section>
+      </div>
 
       <Section title="Cuts" open={cutsOpen} onToggle={() => setCutsOpen((v) => !v)}>
         <div className="-mx-4">
