@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import { PIECE_COLORS } from './engine';
-import { fmtDim, fmtNum } from './units';
+import { fmtArea, fmtDim, fmtNum } from './units';
 import { EbConfig, EbCabinetMap, OptimizationResult, UnitSystem } from './types';
 
 const EB_LABELS: Record<number, string> = { 1: 'A', 2: 'B', 3: 'C', 4: 'D' };
@@ -56,6 +56,7 @@ const i18n: Record<PdfLang, Record<string, string>> = {
     sheets: 'Sheets',
     parts: 'Parts',
     efficiency: 'Efficiency',
+    totalUsedArea: 'Total used area',
     totalCost: 'Total cost',
     edgeBanding: 'Edge banding',
     strategy: 'Strategy',
@@ -102,6 +103,7 @@ const i18n: Record<PdfLang, Record<string, string>> = {
     sheets: 'Láminas',
     parts: 'Piezas',
     efficiency: 'Eficiencia',
+    totalUsedArea: 'Área total utilizada',
     totalCost: 'Costo total',
     edgeBanding: 'Cubrecanto',
     strategy: 'Estrategia',
@@ -167,6 +169,10 @@ export async function exportOptimizerPDF(
     if (cb.izq > 0) totalEB += p.piece.alto + 30;
     if (cb.der > 0) totalEB += p.piece.alto + 30;
   }));
+
+  // Area unit for PDF follows language: English → ft², Spanish → m².
+  const pdfImperial = lang === 'en';
+  const totalUsedAreaM2 = result.boards.reduce((s, b) => s + b.areaUsed, 0);
 
   // ── Group identical boards ───────────────────────────────
   // Boards with the same stock and same placed pieces in the same coordinates
@@ -275,7 +281,7 @@ export async function exportOptimizerPDF(
 
   // Key stats — compact
   doc.setFontSize(9); doc.setTextColor(100, 116, 139); doc.setFont('Helvetica', 'normal');
-  const summaryLine = `${t.sheets}: ${result.boards.length}  ·  ${t.parts}: ${result.totalPieces}  ·  ${t.efficiency}: ${result.efficiency.toFixed(1)}%`;
+  const summaryLine = `${t.sheets}: ${result.boards.length}  ·  ${t.parts}: ${result.totalPieces}  ·  ${t.efficiency}: ${result.efficiency.toFixed(1)}%  ·  ${t.totalUsedArea}: ${fmtArea(totalUsedAreaM2, pdfImperial)}`;
   doc.text(summaryLine, pageW / 2, curY, { align: 'center' });
   curY += 6;
   if (totalEB > 0) {
@@ -300,7 +306,7 @@ export async function exportOptimizerPDF(
     const titleSuffix = count > 1 ? `  ×${count}` : '';
     doc.text((projectName || t.unnamed) + titleSuffix, 20, 20);
     doc.setFontSize(10); doc.setFont('Helvetica', 'normal'); doc.setTextColor(71, 85, 105);
-    doc.text(`${t.material}: ${board.material} | ${t.thickness}: ${fmtDim(board.grosor, unit)} | ${t.size}: ${fmtDim(board.ancho, unit)}×${fmtDim(board.alto, unit)}`, 20, 28);
+    doc.text(`${t.material}: ${board.material} | ${t.thickness}: ${fmtDim(board.grosor, unit)} | ${t.size}: ${fmtDim(board.ancho, unit)}×${fmtDim(board.alto, unit)} | ${t.totalUsedArea}: ${fmtArea(board.areaUsed, pdfImperial)}`, 20, 28);
     doc.text(`${t.usage}: ${board.usage.toFixed(1)}% | ${board.placed.length} ${t.parts.toLowerCase()} | ${t.trim}: ${board.trim}mm`, 20, 35);
 
     // Sheet number footer — bottom right. Show range when grouped.

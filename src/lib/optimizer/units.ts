@@ -7,6 +7,7 @@
 import { UnitSystem } from './types';
 
 export const IN_TO_MM = 25.4;
+export const M2_TO_FT2 = 10.7639104;
 
 /** Convert a display-unit value to mm for storage */
 export const toMM = (val: number, unit: UnitSystem): number =>
@@ -27,3 +28,9 @@ export const fmtNum = (val: number, unit: UnitSystem): string =>
 /** Unit label for input field headers */
 export const unitLabel = (unit: UnitSystem): string =>
   unit === 'in' ? '"' : 'mm';
+
+/** Format an area (stored in m²) as "137.39 ft²" or "12.7635 m²" */
+export const fmtArea = (m2: number, imperial: boolean): string =>
+  imperial
+    ? `${(m2 * M2_TO_FT2).toFixed(2)} ft²`
+    : `${m2.toFixed(4)} m²`;

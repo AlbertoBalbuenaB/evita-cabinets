@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { useOptimizerStore } from '../../hooks/useOptimizerStore';
 import { OptimizationResult } from '../../lib/optimizer/types';
-import { fmtDim, fmtNum } from '../../lib/optimizer/units';
+import { fmtArea, fmtDim, fmtNum } from '../../lib/optimizer/units';
 import { generateCutSequence } from '../../lib/optimizer/engine';
 
 interface Props {
@@ -45,6 +45,8 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
   const board      = result.boards[safeIdx];
 
   const cuts = allCuts[safeIdx] ?? [];
+
+  const imperial = unit === 'in';
 
   // Global totals
   const totalUsed  = result.boards.reduce((s, b) => s + b.areaUsed,  0);
@@ -166,12 +168,12 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
         <StatRow label="By dimension" value={stockStr} />
         <StatRow
           label="Total used area"
-          value={`${totalUsed.toFixed(4)} m²`}
+          value={fmtArea(totalUsed, imperial)}
           sub={`${result.efficiency.toFixed(0)}%`}
         />
         <StatRow
           label="Total wasted area"
-          value={`${totalWaste.toFixed(4)} m²`}
+          value={fmtArea(totalWaste, imperial)}
           sub={`${(100 - result.efficiency).toFixed(0)}%`}
         />
         <StatRow label="Total cuts"       value={String(totalCuts)} />
@@ -219,15 +221,15 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
         <StatRow label="Material"    value={board.material} />
         <StatRow label="Thickness"   value={fmtDim(board.grosor, unit)} />
         <StatRow label="Board trim"  value={`${boardTrim}mm`} />
-        <StatRow label="Usable area" value={`${((board.ancho - 2*boardTrim) * (board.alto - 2*boardTrim) / 1e6).toFixed(4)} m²`} />
+        <StatRow label="Usable area" value={fmtArea((board.ancho - 2*boardTrim) * (board.alto - 2*boardTrim) / 1e6, imperial)} />
         <StatRow
           label="Used area"
-          value={`${(boardAreaUsed / 1e6).toFixed(4)} m²`}
+          value={fmtArea(boardAreaUsed / 1e6, imperial)}
           sub={`${board.usage.toFixed(0)}%`}
         />
         <StatRow
           label="Wasted area"
-          value={`${(boardAreaWaste / 1e6).toFixed(4)} m²`}
+          value={fmtArea(boardAreaWaste / 1e6, imperial)}
           sub={`${(100 - board.usage).toFixed(0)}%`}
         />
         <StatRow label="Parts placed" value={String(board.placed.length)} />
