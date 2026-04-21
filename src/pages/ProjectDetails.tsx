@@ -1798,9 +1798,12 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         onStatusChange={handleStatusChange}
         onBack={onBack}
       />
-      {/* Spacer matching the fixed header's height. Wider at narrow widths
-          where the left block + financial card stack vertically. */}
-      <div className="h-[224px] md:h-[160px] lg:h-[124px]" aria-hidden />
+      {/* Spacer covering both fixed bars: ProjectHeader + FloatingActionBar.
+          ProjectHeader only restacks at `lg:`, so two breakpoints is enough:
+          - base (< lg): columns stack, header ≈ 226 px → spacer 260 px
+          - lg+: side-by-side, header ≈ 130 px → spacer 160 px
+          Both include the FAB's 44 px plus a small gap. */}
+      <div className="h-[260px] lg:h-[160px]" aria-hidden />
 
       <FloatingActionBar
         onAddArea={() => setIsAreaModalOpen(true)}
