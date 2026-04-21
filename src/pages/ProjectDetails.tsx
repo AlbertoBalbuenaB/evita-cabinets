@@ -1799,13 +1799,17 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         onBack={onBack}
       />
       {/* Spacer covering both fixed bars: ProjectHeader + FloatingActionBar.
-          ProjectHeader only restacks at `lg:`, so two breakpoints is enough:
-          - base (< lg): columns stack, compacted header ≈ 200 px, FAB sits
-            16 px below → 252 px spacer (header + FAB + breathing room at
-            the mobile py-6 main padding).
-          - lg+: side-by-side, compacted header ≈ 112 px, FAB sits 16 px
-            below → 148 px spacer. */}
-      <div className="h-[252px] lg:h-[148px]" aria-hidden />
+          Uses the `--ph-h` CSS var ProjectHeader writes on mount/resize,
+          so the page content always starts exactly below the FAB
+          regardless of viewport, font size, or whether the Stale chip
+          (etc.) is currently visible.
+          Formula: header + 44 FAB + 8 gap-above + 8 gap-below − 24 worst-
+          case main padding (py-6 on mobile) = header + 36.
+          Fallback 200 px only used if `--ph-h` hasn't been set. */}
+      <div
+        aria-hidden
+        style={{ height: 'calc(var(--ph-h, 200px) + 36px)' }}
+      />
 
       <FloatingActionBar
         onAddArea={() => setIsAreaModalOpen(true)}

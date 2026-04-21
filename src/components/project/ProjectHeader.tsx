@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -102,8 +103,35 @@ export function ProjectHeader({
       ? 'fixed top-14 right-0 left-0 lg:left-[var(--rail-w)] z-40 transition-[left] duration-[250ms] ease-[cubic-bezier(0.16,1,0.3,1)]'
       : 'relative';
 
+  // Measure the rendered header height and expose it as `--ph-h` on the
+  // document root so the FloatingActionBar's `top` and the page's content
+  // spacer can track it with `calc(... + var(--ph-h))`. Runs synchronously
+  // before paint (useLayoutEffect) so there's no flash. ResizeObserver
+  // keeps it accurate across viewport resize, font load, or content
+  // changes (e.g. the Stale chip toggling in or out). Only the `fixed`
+  // variant writes the var — the dev-demo `inline` variant would pollute
+  // a value the real page relies on.
+  const outerRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (variant !== 'fixed') return;
+    const el = outerRef.current;
+    if (!el) return;
+    const sync = () => {
+      const h = Math.ceil(el.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--ph-h', `${h}px`);
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty('--ph-h');
+    };
+  }, [variant]);
+
   return (
     <div
+      ref={outerRef}
       className={outerClass}
       style={{
         background: 'rgba(255,255,255,0.65)',

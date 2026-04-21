@@ -82,8 +82,15 @@ export function FloatingActionBar({
       )}
 
       <div
-        className="fixed top-[280px] lg:top-[184px] right-0 left-0 lg:left-[var(--rail-w)] z-[36] transition-[left,box-shadow] duration-[250ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+        className="fixed right-0 left-0 lg:left-[var(--rail-w)] z-[36] transition-[left,box-shadow] duration-[250ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
         style={{
+          // Tracks the ProjectHeader's measured height via the `--ph-h`
+          // CSS var written from ProjectHeader on mount + every resize.
+          // The constants: 56 px Topbar, 8 px gap between header and FAB.
+          // Fallback 200 px is used only if the var hasn't been set (JS
+          // disabled); with JS it's overridden before first paint via
+          // `useLayoutEffect`.
+          top: 'calc(56px + var(--ph-h, 200px) + 8px)',
           boxShadow: scrolled
             ? '0 2px 12px rgba(99,102,241,0.1), 0 1px 0 rgba(0,0,0,0.05)'
             : '0 1px 0 rgba(0,0,0,0.05)',
