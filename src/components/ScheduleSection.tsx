@@ -138,21 +138,21 @@ export function ScheduleSection({ projectId }: Props) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <div className="animate-pulse h-6 bg-slate-100 rounded w-32" />
+      <div className="bg-surf-card rounded-lg border border-border-soft p-4">
+        <div className="animate-pulse h-6 bg-surf-muted rounded w-32" />
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4">
+    <div className="bg-surf-card rounded-lg border border-border-soft p-4">
       <div className="flex items-center mb-4">
         <CalendarDays className="h-5 w-5 text-blue-600 mr-2" />
-        <h3 className="text-lg font-semibold text-slate-900">Schedule</h3>
+        <h3 className="text-lg font-semibold text-fg-900">Schedule</h3>
       </div>
 
       {activities.length === 0 ? (
-        <div className="py-8 text-center text-slate-400">
+        <div className="py-8 text-center text-fg-400">
           <CalendarDays className="h-8 w-8 mx-auto mb-2 opacity-40" />
           <p className="text-sm">No activities scheduled yet</p>
         </div>
@@ -176,7 +176,7 @@ export function ScheduleSection({ projectId }: Props) {
                         if (e.key === 'Enter') updateActivityName(activity.id, editingName);
                         if (e.key === 'Escape') setEditingId(null);
                       }}
-                      className="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-2 focus-visible:ring-focus"
                     />
                   ) : (
                     <button
@@ -184,7 +184,7 @@ export function ScheduleSection({ projectId }: Props) {
                         setEditingId(activity.id);
                         setEditingName(activity.name);
                       }}
-                      className="text-sm font-medium text-slate-700 hover:text-blue-600 truncate block w-full text-left"
+                      className="text-sm font-medium text-fg-700 hover:text-blue-600 truncate block w-full text-left"
                     >
                       {activity.name}
                     </button>
@@ -194,15 +194,15 @@ export function ScheduleSection({ projectId }: Props) {
                   type="date"
                   value={activity.start_date}
                   onChange={(e) => updateActivityDate(activity.id, 'start_date', e.target.value)}
-                  className="w-full sm:w-auto text-xs px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full sm:w-auto text-xs px-2 py-1 border border-border-solid rounded focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 />
                 <input
                   type="date"
                   value={activity.end_date}
                   onChange={(e) => updateActivityDate(activity.id, 'end_date', e.target.value)}
-                  className="w-full sm:w-auto text-xs px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full sm:w-auto text-xs px-2 py-1 border border-border-solid rounded focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 />
-                <div className="hidden sm:block flex-1 bg-slate-200 rounded h-2">
+                <div className="hidden sm:block flex-1 bg-surf-muted rounded h-2">
                   <div
                     className="bg-blue-400 h-2 rounded"
                     style={{ width: `${barWidth}%` }}
@@ -210,7 +210,7 @@ export function ScheduleSection({ projectId }: Props) {
                 </div>
                 <button
                   onClick={() => deleteActivity(activity.id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-fg-400 hover:text-red-500"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -220,35 +220,35 @@ export function ScheduleSection({ projectId }: Props) {
         </div>
       )}
 
-      <div className="pt-3 border-t border-slate-200">
+      <div className="pt-3 border-t border-border-soft">
         <div className="flex flex-col sm:flex-row sm:items-end gap-2">
           <div className="flex-1">
-            <label className="block text-xs text-slate-600 mb-1">Activity</label>
+            <label className="block text-xs text-fg-600 mb-1">Activity</label>
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Activity name"
-              className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="block w-full px-3 py-2 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
               onKeyDown={(e) => { if (e.key === 'Enter') addActivity(); }}
             />
           </div>
           <div className="w-full sm:w-auto">
-            <label className="block text-xs text-slate-600 mb-1">Start</label>
+            <label className="block text-xs text-fg-600 mb-1">Start</label>
             <input
               type="date"
               value={newStart}
               onChange={(e) => setNewStart(e.target.value)}
-              className="block w-full sm:w-auto px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="block w-full sm:w-auto px-3 py-2 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
             />
           </div>
           <div className="w-full sm:w-auto">
-            <label className="block text-xs text-slate-600 mb-1">End</label>
+            <label className="block text-xs text-fg-600 mb-1">End</label>
             <input
               type="date"
               value={newEnd}
               onChange={(e) => setNewEnd(e.target.value)}
-              className="block w-full sm:w-auto px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="block w-full sm:w-auto px-3 py-2 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
             />
           </div>
           <Button onClick={addActivity} disabled={!newName.trim() || !newStart || !newEnd} size="sm">

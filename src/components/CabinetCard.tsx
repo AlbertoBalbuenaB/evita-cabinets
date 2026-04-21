@@ -80,17 +80,17 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
   }
 
   return (
-    <div className="border border-slate-200 rounded-lg overflow-hidden">
-      <div className="bg-slate-50 px-3 sm:px-4 py-3">
+    <div className="border border-border-soft rounded-lg overflow-hidden">
+      <div className="bg-surf-app px-3 sm:px-4 py-3">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <div className="flex items-center justify-between sm:flex-1">
             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 min-w-0 flex-1">
               <div className="flex items-center space-x-2">
-                <span className="font-medium text-slate-900 text-sm sm:text-base">{cabinet.product_sku}</span>
-                <span className="text-xs sm:text-sm text-slate-600 whitespace-nowrap">Qty: {cabinet.quantity}</span>
+                <span className="font-medium text-fg-900 text-sm sm:text-base">{cabinet.product_sku}</span>
+                <span className="text-xs sm:text-sm text-fg-600 whitespace-nowrap">Qty: {cabinet.quantity}</span>
               </div>
               {productDescription && (
-                <span className="text-xs sm:text-sm text-slate-500 truncate mt-0.5 sm:mt-0">
+                <span className="text-xs sm:text-sm text-fg-500 truncate mt-0.5 sm:mt-0">
                   {productDescription}
                 </span>
               )}
@@ -142,15 +142,15 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                         right: menuPos.right,
                         zIndex: 9999,
                       }}
-                      className="bg-white border border-slate-200 rounded-lg shadow-xl py-1 min-w-[200px] max-h-64 overflow-y-auto"
+                      className="bg-surf-card border border-border-soft rounded-lg shadow-xl py-1 min-w-[200px] max-h-64 overflow-y-auto"
                     >
-                      <div className="px-3 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 sticky top-0 bg-white">
+                      <div className="px-3 py-1.5 text-xs font-semibold text-fg-500 uppercase tracking-wide border-b border-border-soft sticky top-0 bg-surf-card">
                         Move to Area
                       </div>
                       {availableAreas.map((a) => (
                         <button
                           key={a.id}
-                          className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition-colors"
+                          className="w-full text-left px-3 py-2 text-sm text-fg-700 hover:bg-teal-50 hover:text-teal-800 transition-colors"
                           onClick={() => {
                             setShowMoveMenu(false);
                             onMove(a.id);
@@ -172,82 +172,82 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
       </div>
 
       {isExpanded && (
-        <div className="p-4 bg-white space-y-3 text-sm">
+        <div className="p-4 bg-surf-card space-y-3 text-sm">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
             <div>
-              <span className="text-slate-600">Box Material Cost:</span>
+              <span className="text-fg-600">Box Material Cost:</span>
               <span className="float-right font-medium">
                 {formatCurrency((cabinet.box_material_cost ?? 0))}
               </span>
             </div>
             <div>
-              <span className="text-slate-600">Box Edgeband Cost:</span>
+              <span className="text-fg-600">Box Edgeband Cost:</span>
               <span className="float-right font-medium">
                 {formatCurrency((cabinet.box_edgeband_cost ?? 0))}
               </span>
             </div>
             {(cabinet.box_interior_finish_cost ?? 0) > 0 && (
               <div>
-                <span className="text-slate-600">Box Interior Finish:</span>
+                <span className="text-fg-600">Box Interior Finish:</span>
                 <span className="float-right font-medium">
                   {formatCurrency((cabinet.box_interior_finish_cost ?? 0))}
                 </span>
               </div>
             )}
             <div>
-              <span className="text-slate-600">Doors Material Cost:</span>
+              <span className="text-fg-600">Doors Material Cost:</span>
               <span className="float-right font-medium">
                 {formatCurrency((cabinet.doors_material_cost ?? 0))}
               </span>
             </div>
             <div>
-              <span className="text-slate-600">Doors Edgeband Cost:</span>
+              <span className="text-fg-600">Doors Edgeband Cost:</span>
               <span className="float-right font-medium">
                 {formatCurrency((cabinet.doors_edgeband_cost ?? 0))}
               </span>
             </div>
             {(cabinet.doors_interior_finish_cost ?? 0) > 0 && (
               <div>
-                <span className="text-slate-600">Doors Interior Finish:</span>
+                <span className="text-fg-600">Doors Interior Finish:</span>
                 <span className="float-right font-medium">
                   {formatCurrency((cabinet.doors_interior_finish_cost ?? 0))}
                 </span>
               </div>
             )}
             <div>
-              <span className="text-slate-600">Hardware Cost:</span>
+              <span className="text-fg-600">Hardware Cost:</span>
               <span className="float-right font-medium">
                 {formatCurrency((cabinet.hardware_cost ?? 0))}
               </span>
             </div>
             <div>
-              <span className="text-slate-600">Accessories Cost:</span>
+              <span className="text-fg-600">Accessories Cost:</span>
               <span className="float-right font-medium">
                 {formatCurrency(cabinet.accessories_cost || 0)}
               </span>
             </div>
             <div>
-              <span className="text-slate-600">Labor Cost:</span>
+              <span className="text-fg-600">Labor Cost:</span>
               <span className="float-right font-medium">
                 {formatCurrency((cabinet.labor_cost ?? 0))}
               </span>
             </div>
           </div>
 
-          <div className="border-t border-slate-200 pt-3 mt-3">
+          <div className="border-t border-border-soft pt-3 mt-3">
             <div className="flex justify-between items-center font-semibold">
-              <span className="text-slate-900">Cabinet Subtotal:</span>
-              <span className="text-lg text-slate-900">
+              <span className="text-fg-900">Cabinet Subtotal:</span>
+              <span className="text-lg text-fg-900">
                 {formatCurrency(cabinet.subtotal ?? 0)}
               </span>
             </div>
           </div>
 
           {product && priceList && (
-            <div className="border-t border-slate-200 pt-3 mt-3">
+            <div className="border-t border-border-soft pt-3 mt-3">
               <button
                 onClick={() => setShowMaterialSummary(!showMaterialSummary)}
-                className="flex items-center justify-between w-full text-left text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors"
+                className="flex items-center justify-between w-full text-left text-sm font-semibold text-fg-700 hover:text-fg-900 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <Package className="h-4 w-4" />
@@ -263,7 +263,7 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
               {showMaterialSummary && (
                 <div className="mt-3 space-y-2">
                   {loadingSummary ? (
-                    <div className="text-center py-4 text-sm text-slate-500">
+                    <div className="text-center py-4 text-sm text-fg-500">
                       Loading material details...
                     </div>
                   ) : materialSummary ? (
@@ -274,8 +274,8 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                             <Package className="h-3 w-3 text-blue-700" />
                             <span className="text-xs font-semibold text-blue-900">Box Material</span>
                           </div>
-                          <div className="text-xs text-slate-700 mb-1">{materialSummary.boxMaterial.name}</div>
-                          <div className="flex items-center text-xs text-slate-600">
+                          <div className="text-xs text-fg-700 mb-1">{materialSummary.boxMaterial.name}</div>
+                          <div className="flex items-center text-xs text-fg-600">
                             <Ruler className="h-3 w-3 inline mr-1" />
                             <span>{materialSummary.boxMaterial.totalSF.toFixed(2)} SF</span>
                           </div>
@@ -288,8 +288,8 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                             <Layers className="h-3 w-3 text-blue-800" />
                             <span className="text-xs font-semibold text-blue-900">Box Interior Finish</span>
                           </div>
-                          <div className="text-xs text-slate-700 mb-1">{materialSummary.boxInteriorFinish.name}</div>
-                          <div className="flex items-center text-xs text-slate-600">
+                          <div className="text-xs text-fg-700 mb-1">{materialSummary.boxInteriorFinish.name}</div>
+                          <div className="flex items-center text-xs text-fg-600">
                             <Ruler className="h-3 w-3 inline mr-1" />
                             <span>{materialSummary.boxInteriorFinish.totalSF.toFixed(2)} SF</span>
                           </div>
@@ -302,8 +302,8 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                             <Ruler className="h-3 w-3 text-amber-700" />
                             <span className="text-xs font-semibold text-amber-900">Box Edgeband</span>
                           </div>
-                          <div className="text-xs text-slate-700 mb-1">{materialSummary.boxEdgeband.name}</div>
-                          <div className="flex items-center text-xs text-slate-600">
+                          <div className="text-xs text-fg-700 mb-1">{materialSummary.boxEdgeband.name}</div>
+                          <div className="flex items-center text-xs text-fg-600">
                             <span>{materialSummary.boxEdgeband.totalMeters.toFixed(1)} meters</span>
                           </div>
                         </div>
@@ -315,8 +315,8 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                             <Package className="h-3 w-3 text-green-700" />
                             <span className="text-xs font-semibold text-green-900">Doors Material</span>
                           </div>
-                          <div className="text-xs text-slate-700 mb-1">{materialSummary.doorsMaterial.name}</div>
-                          <div className="flex items-center text-xs text-slate-600">
+                          <div className="text-xs text-fg-700 mb-1">{materialSummary.doorsMaterial.name}</div>
+                          <div className="flex items-center text-xs text-fg-600">
                             <Ruler className="h-3 w-3 inline mr-1" />
                             <span>{materialSummary.doorsMaterial.totalSF.toFixed(2)} SF</span>
                           </div>
@@ -329,8 +329,8 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                             <Layers className="h-3 w-3 text-green-800" />
                             <span className="text-xs font-semibold text-green-900">Doors Interior Finish</span>
                           </div>
-                          <div className="text-xs text-slate-700 mb-1">{materialSummary.doorsInteriorFinish.name}</div>
-                          <div className="flex items-center text-xs text-slate-600">
+                          <div className="text-xs text-fg-700 mb-1">{materialSummary.doorsInteriorFinish.name}</div>
+                          <div className="flex items-center text-xs text-fg-600">
                             <Ruler className="h-3 w-3 inline mr-1" />
                             <span>{materialSummary.doorsInteriorFinish.totalSF.toFixed(2)} SF</span>
                           </div>
@@ -343,24 +343,24 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                             <Ruler className="h-3 w-3 text-amber-700" />
                             <span className="text-xs font-semibold text-amber-900">Doors Edgeband</span>
                           </div>
-                          <div className="text-xs text-slate-700 mb-1">{materialSummary.doorsEdgeband.name}</div>
-                          <div className="flex items-center text-xs text-slate-600">
+                          <div className="text-xs text-fg-700 mb-1">{materialSummary.doorsEdgeband.name}</div>
+                          <div className="flex items-center text-xs text-fg-600">
                             <span>{materialSummary.doorsEdgeband.totalMeters.toFixed(1)} meters</span>
                           </div>
                         </div>
                       )}
 
                       {materialSummary.hardware.length > 0 && (
-                        <div className="bg-slate-50 rounded-lg p-2 border border-slate-200">
+                        <div className="bg-surf-app rounded-lg p-2 border border-border-soft">
                           <div className="flex items-center gap-1 mb-2">
-                            <Wrench className="h-3 w-3 text-slate-700" />
-                            <span className="text-xs font-semibold text-slate-900">Hardware</span>
+                            <Wrench className="h-3 w-3 text-fg-700" />
+                            <span className="text-xs font-semibold text-fg-900">Hardware</span>
                           </div>
                           <div className="space-y-1">
                             {materialSummary.hardware.map((hw, idx) => (
-                              <div key={idx} className="bg-white rounded p-1.5 text-xs">
-                                <div className="text-slate-700 mb-0.5">{hw.name}</div>
-                                <div className="flex items-center text-slate-600">
+                              <div key={idx} className="bg-surf-card rounded p-1.5 text-xs">
+                                <div className="text-fg-700 mb-0.5">{hw.name}</div>
+                                <div className="flex items-center text-fg-600">
                                   <Hash className="h-3 w-3 inline mr-1" />
                                   <span>{hw.quantity} pcs</span>
                                 </div>
@@ -378,9 +378,9 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                           </div>
                           <div className="space-y-1">
                             {materialSummary.accessories.map((acc, idx) => (
-                              <div key={idx} className="bg-white rounded p-1.5 text-xs">
-                                <div className="text-slate-700 mb-0.5">{acc.name}</div>
-                                <div className="flex items-center text-slate-600">
+                              <div key={idx} className="bg-surf-card rounded p-1.5 text-xs">
+                                <div className="text-fg-700 mb-0.5">{acc.name}</div>
+                                <div className="flex items-center text-fg-600">
                                   <Hash className="h-3 w-3 inline mr-1" />
                                   <span>{acc.quantity} pcs</span>
                                 </div>
@@ -392,7 +392,7 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
 
                     </div>
                   ) : (
-                    <div className="text-center py-4 text-sm text-slate-500">
+                    <div className="text-center py-4 text-sm text-fg-500">
                       Unable to load material details
                     </div>
                   )}

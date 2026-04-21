@@ -41,11 +41,11 @@ function getUrlMeta(url: string): UrlMeta {
   if (u.includes('drive.google.com/drive/folders/'))
     return { Icon: Folder, iconTileClass: 'bg-yellow-50 text-yellow-700', typeLabel: 'Drive Folder' };
   if (u.includes('drive.google.com/file/') || u.includes('drive.google.com/open'))
-    return { Icon: File, iconTileClass: 'bg-slate-100 text-slate-600', typeLabel: 'Drive File' };
+    return { Icon: File, iconTileClass: 'bg-surf-muted text-fg-600', typeLabel: 'Drive File' };
   if (u.endsWith('.pdf'))
     return { Icon: FileText, iconTileClass: 'bg-red-50 text-red-600', typeLabel: 'PDF' };
 
-  return { Icon: Link2, iconTileClass: 'bg-slate-100 text-slate-500', typeLabel: 'Link' };
+  return { Icon: Link2, iconTileClass: 'bg-surf-muted text-fg-500', typeLabel: 'Link' };
 }
 
 function getUrlHost(url: string): string {
@@ -349,7 +349,7 @@ export function DocumentationSection({ projectId }: Props) {
   if (loading) {
     return (
       <div className="glass-white p-5">
-        <div className="animate-pulse h-6 bg-slate-100/60 rounded w-36" />
+        <div className="animate-pulse h-6 bg-surf-muted rounded w-36" />
       </div>
     );
   }
@@ -358,11 +358,11 @@ export function DocumentationSection({ projectId }: Props) {
     <div className="glass-white p-5">
       <div className="flex items-center mb-5">
         <Link2 className="h-5 w-5 text-sky-600 mr-2" />
-        <h3 className="text-lg font-semibold text-slate-900">Documentation</h3>
+        <h3 className="text-lg font-semibold text-fg-900">Documentation</h3>
       </div>
 
       {documents.length === 0 ? (
-        <div className="py-8 text-center text-slate-400">
+        <div className="py-8 text-center text-fg-400">
           <Link2 className="h-8 w-8 mx-auto mb-2 opacity-40" />
           <p className="text-sm">No documents linked yet</p>
         </div>
@@ -378,11 +378,11 @@ export function DocumentationSection({ projectId }: Props) {
 
             const cardClasses = [
               'group flex items-center gap-2 px-3 py-2.5',
-              'bg-white/70 backdrop-blur-sm',
+              'bg-surf-card backdrop-blur-sm',
               'border border-white/90',
               'rounded-xl',
               'shadow-[0_1px_4px_rgba(99,102,241,0.05)]',
-              'hover:bg-white/90 hover:border-white hover:shadow-[0_4px_14px_rgba(99,102,241,0.1)]',
+              'hover:bg-surf-card hover:border-white hover:shadow-[0_4px_14px_rgba(99,102,241,0.1)]',
               'transition-all duration-200',
               isDragging ? 'opacity-50' : '',
               isDropTarget ? 'ring-2 ring-blue-400/60 border-blue-300' : '',
@@ -414,10 +414,10 @@ export function DocumentationSection({ projectId }: Props) {
                       setDragId(null);
                       setDragOverId(null);
                     }}
-                    className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-slate-100/80 transition-colors flex-shrink-0 opacity-30 group-hover:opacity-100"
+                    className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-surf-muted transition-colors flex-shrink-0 opacity-30 group-hover:opacity-100"
                     title="Drag to reorder"
                   >
-                    <GripVertical className="h-4 w-4 text-slate-400" />
+                    <GripVertical className="h-4 w-4 text-fg-400" />
                   </div>
                 )}
 
@@ -426,7 +426,7 @@ export function DocumentationSection({ projectId }: Props) {
                   <div className="flex-1 flex items-center gap-3 min-w-0">
                     <div
                       className={`flex-shrink-0 h-9 w-9 rounded-md flex items-center justify-center ${
-                        meta ? meta.iconTileClass : 'bg-slate-100 text-slate-400'
+                        meta ? meta.iconTileClass : 'bg-surf-muted text-fg-400'
                       }`}
                     >
                       {meta ? <meta.Icon className="h-5 w-5" /> : <Link2 className="h-5 w-5" />}
@@ -442,7 +442,7 @@ export function DocumentationSection({ projectId }: Props) {
                         }}
                         placeholder="Name"
                         autoFocus
-                        className="w-full px-2 py-1 text-sm font-semibold text-slate-900 bg-white/90 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-2 py-1 text-sm font-semibold text-fg-900 bg-surf-card border border-border-solid rounded-md focus:outline-none focus:ring-2 focus-visible:ring-focus"
                       />
                       <input
                         type="url"
@@ -453,7 +453,7 @@ export function DocumentationSection({ projectId }: Props) {
                           if (e.key === 'Escape') setEditDraft(null);
                         }}
                         placeholder="https://..."
-                        className="w-full px-2 py-1 text-xs text-slate-600 bg-white/90 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-2 py-1 text-xs text-fg-600 bg-surf-card border border-border-solid rounded-md focus:outline-none focus:ring-2 focus-visible:ring-focus"
                       />
                     </div>
                   </div>
@@ -470,8 +470,8 @@ export function DocumentationSection({ projectId }: Props) {
                       <meta.Icon className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-slate-900 truncate">{doc.label}</div>
-                      <div className="text-xs text-slate-500 truncate">
+                      <div className="text-sm font-semibold text-fg-900 truncate">{doc.label}</div>
+                      <div className="text-xs text-fg-500 truncate">
                         {meta.typeLabel}
                         {host && ` · ${host}`}
                       </div>
@@ -483,12 +483,12 @@ export function DocumentationSection({ projectId }: Props) {
                     onClick={() => startEdit(doc)}
                     className="flex-1 flex items-center gap-3 min-w-0 text-left"
                   >
-                    <div className="flex-shrink-0 h-9 w-9 rounded-md flex items-center justify-center bg-slate-100/80 text-slate-400">
+                    <div className="flex-shrink-0 h-9 w-9 rounded-md flex items-center justify-center bg-surf-muted text-fg-400">
                       <Link2 className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-slate-900 truncate">{doc.label}</div>
-                      <div className="text-xs text-slate-400 truncate italic">
+                      <div className="text-sm font-semibold text-fg-900 truncate">{doc.label}</div>
+                      <div className="text-xs text-fg-400 truncate italic">
                         No link yet — click to add
                       </div>
                     </div>
@@ -508,7 +508,7 @@ export function DocumentationSection({ projectId }: Props) {
                     </button>
                     <button
                       onClick={() => setEditDraft(null)}
-                      className="p-1.5 rounded-md text-slate-400 hover:bg-slate-100 transition-colors"
+                      className="p-1.5 rounded-md text-fg-400 hover:bg-surf-muted transition-colors"
                       title="Cancel"
                     >
                       <X className="h-4 w-4" />
@@ -518,21 +518,21 @@ export function DocumentationSection({ projectId }: Props) {
                   <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => startEdit(doc)}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      className="p-1.5 rounded-md text-fg-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                       title="Edit name & URL"
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => pickForExistingRow(doc)}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                      className="p-1.5 rounded-md text-fg-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
                       title="Pick from Google Drive"
                     >
                       <HardDrive className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => deleteDocument(doc.id)}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="p-1.5 rounded-md text-fg-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                       title="Delete"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -548,23 +548,23 @@ export function DocumentationSection({ projectId }: Props) {
       <div className="pt-4 border-t border-white/60">
         <div className="flex flex-col sm:flex-row sm:items-end gap-2">
           <div className="w-full sm:w-44">
-            <label className="block text-xs text-slate-600 mb-1">Name</label>
+            <label className="block text-xs text-fg-600 mb-1">Name</label>
             <input
               type="text"
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
               placeholder="Document name"
-              className="block w-full px-3 py-2 text-sm bg-white/80 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="block w-full px-3 py-2 text-sm bg-surf-card border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
             />
           </div>
           <div className="flex-1">
-            <label className="block text-xs text-slate-600 mb-1">URL</label>
+            <label className="block text-xs text-fg-600 mb-1">URL</label>
             <input
               type="url"
               value={newUrl}
               onChange={(e) => setNewUrl(e.target.value)}
               placeholder="https://..."
-              className="block w-full px-3 py-2 text-sm bg-white/80 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="block w-full px-3 py-2 text-sm bg-surf-card border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') addDocument();
               }}

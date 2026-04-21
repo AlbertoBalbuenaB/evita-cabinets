@@ -199,23 +199,23 @@ export function MaterialPriceUpdateModal({
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <RefreshCw className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-4" />
-            <p className="text-slate-600">Loading project data...</p>
+            <p className="text-fg-600">Loading project data...</p>
           </div>
         </div>
       ) : updating ? (
         <div className="text-center py-12">
           <RefreshCw className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">Recalculating Prices...</h3>
-          <p className="text-slate-600 mb-4">{updateProgress.message}</p>
+          <h3 className="text-lg font-semibold text-fg-900 mb-2">Recalculating Prices...</h3>
+          <p className="text-fg-600 mb-4">{updateProgress.message}</p>
           {updateProgress.total > 0 && (
             <div className="max-w-md mx-auto">
-              <div className="bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div className="bg-surf-muted rounded-full h-2 overflow-hidden">
                 <div
                   className="bg-blue-600 h-full transition-all duration-300"
                   style={{ width: `${(updateProgress.current / updateProgress.total) * 100}%` }}
                 />
               </div>
-              <p className="text-sm text-slate-600 mt-2">
+              <p className="text-sm text-fg-600 mt-2">
                 {updateProgress.current} of {updateProgress.total} cabinets
               </p>
             </div>
@@ -227,16 +227,16 @@ export function MaterialPriceUpdateModal({
             {updateResult.updated > 0 && updateResult.errors.length === 0 ? (
               <>
                 <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">Prices Recalculated Successfully</h3>
-                <p className="text-slate-600">
+                <h3 className="text-lg font-semibold text-fg-900 mb-2">Prices Recalculated Successfully</h3>
+                <p className="text-fg-600">
                   Updated {updateResult.updated} cabinet{updateResult.updated !== 1 ? 's' : ''} with current price list values.
                 </p>
               </>
             ) : (
               <>
                 <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">Recalculation Completed with Errors</h3>
-                <p className="text-slate-600 mb-4">
+                <h3 className="text-lg font-semibold text-fg-900 mb-2">Recalculation Completed with Errors</h3>
+                <p className="text-fg-600 mb-4">
                   Successfully updated: {updateResult.updated} cabinet{updateResult.updated !== 1 ? 's' : ''}
                 </p>
                 {updateResult.errors.length > 0 && (
@@ -257,15 +257,15 @@ export function MaterialPriceUpdateModal({
           </div>
 
           {updateResult.areaChanges.length > 0 && (
-            <div className="border-t border-slate-200 pt-6">
-              <h4 className="font-semibold text-slate-900 mb-4">Changes by Area</h4>
+            <div className="border-t border-border-soft pt-6">
+              <h4 className="font-semibold text-fg-900 mb-4">Changes by Area</h4>
               <div className="space-y-3">
                 {updateResult.areaChanges.map((change, idx) => (
-                  <div key={idx} className="bg-slate-50 rounded-lg p-4">
+                  <div key={idx} className="bg-surf-app rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="font-medium text-slate-900">{change.areaName}</div>
-                        <div className="text-sm text-slate-600 mt-1">
+                        <div className="font-medium text-fg-900">{change.areaName}</div>
+                        <div className="text-sm text-fg-600 mt-1">
                           {formatCurrency(change.previous)} → {formatCurrency(change.new)}
                         </div>
                       </div>
@@ -275,7 +275,7 @@ export function MaterialPriceUpdateModal({
                         }`}>
                           {change.difference >= 0 ? '+' : ''}{formatCurrency(change.difference)}
                         </div>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-fg-500">
                           {change.previous !== 0
                             ? `${((change.difference / change.previous) * 100).toFixed(1)}%`
                             : 'N/A'}
@@ -286,9 +286,9 @@ export function MaterialPriceUpdateModal({
                 ))}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-slate-200">
+              <div className="mt-4 pt-4 border-t border-border-soft">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-slate-900">Total Project Change:</span>
+                  <span className="text-lg font-semibold text-fg-900">Total Project Change:</span>
                   <span className={`text-2xl font-bold ${
                     updateResult.totalDifference >= 0 ? 'text-red-600' : 'text-green-600'
                   }`}>
@@ -299,7 +299,7 @@ export function MaterialPriceUpdateModal({
             </div>
           )}
 
-          <div className="flex justify-end pt-4 border-t border-slate-200">
+          <div className="flex justify-end pt-4 border-t border-border-soft">
             <Button onClick={handleClose}>Close</Button>
           </div>
         </div>
@@ -318,40 +318,40 @@ export function MaterialPriceUpdateModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-3">Recalculation Scope</label>
+            <label className="block text-sm font-medium text-fg-700 mb-3">Recalculation Scope</label>
             <div className="space-y-2">
-              <label className="flex items-start p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer">
+              <label className="flex items-start p-3 border border-border-soft rounded-lg hover:bg-surf-app cursor-pointer">
                 <input
                   type="radio"
                   name="scope"
                   checked={scope === 'all'}
                   onChange={() => setScope('all')}
-                  className="h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-500 mt-0.5"
+                  className="h-4 w-4 text-blue-600 border-border-solid focus-visible:ring-focus mt-0.5"
                 />
                 <div className="ml-3 flex-1">
-                  <div className="font-medium text-slate-900">All Areas in Project</div>
-                  <div className="text-sm text-slate-600">
+                  <div className="font-medium text-fg-900">All Areas in Project</div>
+                  <div className="text-sm text-fg-600">
                     {areas.reduce((sum, a) => sum + a.cabinetCount, 0)} cabinet{areas.reduce((sum, a) => sum + a.cabinetCount, 0) !== 1 ? 's' : ''} across {areas.length} area{areas.length !== 1 ? 's' : ''}
                   </div>
                 </div>
               </label>
 
-              <label className="flex items-start p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer">
+              <label className="flex items-start p-3 border border-border-soft rounded-lg hover:bg-surf-app cursor-pointer">
                 <input
                   type="radio"
                   name="scope"
                   checked={scope === 'area'}
                   onChange={() => setScope('area')}
-                  className="h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-500 mt-0.5"
+                  className="h-4 w-4 text-blue-600 border-border-solid focus-visible:ring-focus mt-0.5"
                 />
                 <div className="ml-3 flex-1">
-                  <div className="font-medium text-slate-900">Specific Area</div>
-                  <div className="text-sm text-slate-600 mb-2">Recalculate only one area</div>
+                  <div className="font-medium text-fg-900">Specific Area</div>
+                  <div className="text-sm text-fg-600 mb-2">Recalculate only one area</div>
                   {scope === 'area' && (
                     <select
                       value={selectedAreaId}
                       onChange={(e) => setSelectedAreaId(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {areas.map((area) => (
@@ -366,34 +366,34 @@ export function MaterialPriceUpdateModal({
             </div>
           </div>
 
-          <div className="bg-slate-50 rounded-lg p-4">
-            <div className="text-sm text-slate-700">
+          <div className="bg-surf-app rounded-lg p-4">
+            <div className="text-sm text-fg-700">
               <strong>{totalCabinets}</strong> cabinet{totalCabinets !== 1 ? 's' : ''} will be recalculated
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Version Name <span className="text-slate-500 font-normal">(Optional)</span>
+            <label className="block text-sm font-medium text-fg-700 mb-1">
+              Version Name <span className="text-fg-500 font-normal">(Optional)</span>
             </label>
             <input
               type="text"
               value={versionName}
               onChange={(e) => setVersionName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
               placeholder="e.g., Q1 2024 Price Update"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Notes <span className="text-slate-500 font-normal">(Optional)</span>
+            <label className="block text-sm font-medium text-fg-700 mb-1">
+              Notes <span className="text-fg-500 font-normal">(Optional)</span>
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
               placeholder="Add any notes about this price update..."
             />
           </div>
@@ -404,15 +404,15 @@ export function MaterialPriceUpdateModal({
               id="confirm"
               checked={confirmed}
               onChange={(e) => setConfirmed(e.target.checked)}
-              className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-1"
+              className="h-4 w-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus mt-1"
             />
-            <label htmlFor="confirm" className="ml-2 text-sm text-slate-700">
+            <label htmlFor="confirm" className="ml-2 text-sm text-fg-700">
               I understand this will recalculate all costs using current price list values.
               A version will be saved before making changes.
             </label>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-border-soft">
             <Button variant="secondary" onClick={handleClose}>
               Cancel
             </Button>

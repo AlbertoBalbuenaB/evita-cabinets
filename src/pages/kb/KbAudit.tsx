@@ -11,8 +11,8 @@ const ACTION_STYLES: Record<string, { bg: string; text: string }> = {
   default_approved:         { bg: 'bg-emerald-100/70',  text: 'text-emerald-800' },
   default_rejected:         { bg: 'bg-rose-100/70',     text: 'text-rose-800' },
   default_changes:          { bg: 'bg-amber-100/70',    text: 'text-amber-800' },
-  default_withdrawn:        { bg: 'bg-slate-100/70',    text: 'text-slate-700' },
-  default_open:             { bg: 'bg-indigo-100/70',   text: 'text-indigo-800' },
+  default_withdrawn:        { bg: 'bg-surf-muted',    text: 'text-fg-700' },
+  default_open:             { bg: 'bg-accent-tint-strong',   text: 'text-indigo-800' },
 };
 
 function styleForAction(action: string) {
@@ -24,7 +24,7 @@ function styleForAction(action: string) {
     if (action.includes('_to_withdrawn')) return ACTION_STYLES.default_withdrawn;
     if (action.includes('_to_open'))      return ACTION_STYLES.default_open;
   }
-  return { bg: 'bg-slate-100/70', text: 'text-slate-700' };
+  return { bg: 'bg-surf-muted', text: 'text-fg-700' };
 }
 
 export function KbAudit() {
@@ -51,16 +51,16 @@ export function KbAudit() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
-      <Link to="/kb" className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800">
+      <Link to="/kb" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-indigo-800">
         <ArrowLeft className="w-4 h-4" /> Knowledge Base
       </Link>
 
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
         <div className="flex items-start gap-3">
-          <Shield className="w-6 h-6 text-indigo-600 mt-1" />
+          <Shield className="w-6 h-6 text-accent-text mt-1" />
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Audit log</h1>
-            <p className="text-sm text-slate-700 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-fg-900">Audit log</h1>
+            <p className="text-sm text-fg-700 mt-1">
               Registro inmutable de mutaciones del KB: merges, cambios de estado de propuestas, rechazos, withdraws.
             </p>
           </div>
@@ -80,18 +80,18 @@ export function KbAudit() {
           ))}
         </div>
       ) : rows.length === 0 ? (
-        <div className="glass-white rounded-2xl p-8 text-center text-slate-500">
+        <div className="glass-white rounded-2xl p-8 text-center text-fg-500">
           Sin eventos registrados todavía.
         </div>
       ) : (
         <div className="glass-white rounded-2xl overflow-hidden">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50/60">
-              <tr className="border-b border-slate-200/60">
-                <th className="text-left px-3 py-2 font-semibold text-slate-800">When</th>
-                <th className="text-left px-3 py-2 font-semibold text-slate-800">Actor</th>
-                <th className="text-left px-3 py-2 font-semibold text-slate-800">Action</th>
-                <th className="text-left px-3 py-2 font-semibold text-slate-800">Entry / Proposal</th>
+            <thead className="bg-surf-app">
+              <tr className="border-b border-border-soft">
+                <th className="text-left px-3 py-2 font-semibold text-fg-800">When</th>
+                <th className="text-left px-3 py-2 font-semibold text-fg-800">Actor</th>
+                <th className="text-left px-3 py-2 font-semibold text-fg-800">Action</th>
+                <th className="text-left px-3 py-2 font-semibold text-fg-800">Entry / Proposal</th>
               </tr>
             </thead>
             <tbody>
@@ -99,11 +99,11 @@ export function KbAudit() {
                 const style = styleForAction(row.action);
                 const actor = row.actor_id ? members[row.actor_id] ?? 'Unknown' : 'System';
                 return (
-                  <tr key={row.id} className="border-b border-slate-200/60 row-enter">
-                    <td className="px-3 py-2 text-slate-600 whitespace-nowrap">
+                  <tr key={row.id} className="border-b border-border-soft row-enter">
+                    <td className="px-3 py-2 text-fg-600 whitespace-nowrap">
                       {new Date(row.created_at).toLocaleString()}
                     </td>
-                    <td className="px-3 py-2 text-slate-800">{actor}</td>
+                    <td className="px-3 py-2 text-fg-800">{actor}</td>
                     <td className="px-3 py-2">
                       <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${style.bg} ${style.text}`}>
                         {row.action}
@@ -114,13 +114,13 @@ export function KbAudit() {
                         {row.proposal_id && (
                           <Link
                             to={`/kb/proposals/${row.proposal_id}`}
-                            className="text-indigo-600 hover:text-indigo-800 font-mono block"
+                            className="text-accent-text hover:text-indigo-800 font-mono block"
                           >
                             prop {row.proposal_id.slice(0, 8)}
                           </Link>
                         )}
                         {row.entry_id && (
-                          <span className="text-slate-500 font-mono block">
+                          <span className="text-fg-500 font-mono block">
                             entry {row.entry_id.slice(0, 8)}
                           </span>
                         )}

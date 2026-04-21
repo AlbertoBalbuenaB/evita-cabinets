@@ -15,7 +15,7 @@ export function KbDiffViewer({ before, after, mode = 'line', label }: KbDiffView
 
   if (before === after) {
     return (
-      <div className="glass-white rounded-xl p-4 text-sm text-slate-500 italic">
+      <div className="glass-white rounded-xl p-4 text-sm text-fg-500 italic">
         Sin cambios en el contenido.
       </div>
     );
@@ -24,7 +24,7 @@ export function KbDiffViewer({ before, after, mode = 'line', label }: KbDiffView
   return (
     <div className="glass-white rounded-xl overflow-hidden">
       {label && (
-        <div className="grid grid-cols-2 border-b border-slate-200/60 text-xs font-medium text-slate-600">
+        <div className="grid grid-cols-2 border-b border-border-soft text-xs font-medium text-fg-600">
           <div className="px-3 py-1.5 bg-rose-50/60">− {label.before}</div>
           <div className="px-3 py-1.5 bg-emerald-50/60">+ {label.after}</div>
         </div>
@@ -46,7 +46,7 @@ export function KbDiffViewer({ before, after, mode = 'line', label }: KbDiffView
             );
           }
           return (
-            <span key={i} className="text-slate-700">
+            <span key={i} className="text-fg-700">
               {part.value}
             </span>
           );

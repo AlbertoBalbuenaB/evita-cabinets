@@ -124,7 +124,7 @@ export function WikiProposalPage() {
   if (error || !proposal) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="glass-white rounded-2xl p-6 text-center text-slate-700">
+        <div className="glass-white rounded-2xl p-6 text-center text-fg-700">
           {error ?? 'Propuesta no disponible.'}
           <div className="mt-3">
             <Link to="/wiki/proposals" className="text-violet-600 hover:text-violet-800 text-sm">
@@ -151,16 +151,16 @@ export function WikiProposalPage() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <KbProposalStateBadge state={proposal.state} />
-              <span className="text-xs font-mono text-slate-600 bg-white/60 px-1.5 py-0.5 rounded">{proposal.kind}</span>
+              <span className="text-xs font-mono text-fg-600 bg-surf-card px-1.5 py-0.5 rounded">{proposal.kind}</span>
               {category && (
-                <span className="text-xs text-slate-600">{category.name}</span>
+                <span className="text-xs text-fg-600">{category.name}</span>
               )}
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">{proposal.summary}</h1>
-            <p className="text-xs text-slate-600 mt-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-fg-900">{proposal.summary}</h1>
+            <p className="text-xs text-fg-600 mt-2">
               {members[proposal.author_id] ?? 'Unknown'} · {new Date(proposal.created_at).toLocaleString()}
               {proposal.base_version != null && (
-                <span className="ml-2 text-slate-500">base v{proposal.base_version}</span>
+                <span className="ml-2 text-fg-500">base v{proposal.base_version}</span>
               )}
             </p>
           </div>
@@ -173,10 +173,10 @@ export function WikiProposalPage() {
         )}
 
         {proposal.review_note && (
-          <div className="mt-3 text-xs text-slate-700 glass-white rounded-lg p-2 border border-slate-200/60">
+          <div className="mt-3 text-xs text-fg-700 glass-white rounded-lg p-2 border border-border-soft">
             <strong>Review note:</strong> {proposal.review_note}
             {proposal.reviewer_id && (
-              <span className="text-slate-500 ml-2">— {members[proposal.reviewer_id] ?? 'reviewer'}</span>
+              <span className="text-fg-500 ml-2">— {members[proposal.reviewer_id] ?? 'reviewer'}</span>
             )}
           </div>
         )}
@@ -186,7 +186,7 @@ export function WikiProposalPage() {
         <div className="glass-white rounded-2xl p-4 sm:p-5 space-y-3">
           {(canAdminReview || canMerge) && (
             <>
-              <label className="block text-sm font-medium text-slate-700">Review note (optional)</label>
+              <label className="block text-sm font-medium text-fg-700">Review note (optional)</label>
               <textarea
                 value={reviewNote}
                 onChange={(e) => setReviewNote(e.target.value)}
@@ -237,19 +237,19 @@ export function WikiProposalPage() {
       {(proposal.proposed_body_md !== null || target) && (
         <div className="glass-white rounded-2xl p-4 sm:p-5">
           <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">Diff — body</h3>
-            <div className="inline-flex rounded-lg border border-slate-200/70 overflow-hidden text-xs font-medium">
+            <h3 className="text-sm font-semibold text-fg-900 uppercase tracking-wide">Diff — body</h3>
+            <div className="inline-flex rounded-lg border border-border-soft overflow-hidden text-xs font-medium">
               <button
                 type="button"
                 onClick={() => setDiffMode('line')}
-                className={`px-2.5 py-1 ${diffMode === 'line' ? 'bg-violet-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+                className={`px-2.5 py-1 ${diffMode === 'line' ? 'bg-violet-600 text-white' : 'text-fg-700 hover:bg-surf-muted'}`}
               >
                 Line
               </button>
               <button
                 type="button"
                 onClick={() => setDiffMode('word')}
-                className={`px-2.5 py-1 ${diffMode === 'word' ? 'bg-violet-600 text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+                className={`px-2.5 py-1 ${diffMode === 'word' ? 'bg-violet-600 text-white' : 'text-fg-700 hover:bg-surf-muted'}`}
               >
                 Word
               </button>

@@ -254,31 +254,31 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
       <div className="flex flex-wrap gap-2 items-center">
         {/* Status dropdown */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-slate-400">Status:</span>
+          <span className="text-xs font-medium text-fg-400">Status:</span>
           <div className="relative">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none pl-3 pr-7 py-2 text-xs font-medium border border-slate-200 bg-white rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
+              className="appearance-none pl-3 pr-7 py-2 text-xs font-medium border border-border-soft bg-surf-card rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
             >
               {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-fg-400" />
           </div>
         </div>
 
         {/* Priority dropdown */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-slate-400">Priority:</span>
+          <span className="text-xs font-medium text-fg-400">Priority:</span>
           <div className="relative">
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="appearance-none pl-3 pr-7 py-2 text-xs font-medium border border-slate-200 bg-white rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
+              className="appearance-none pl-3 pr-7 py-2 text-xs font-medium border border-border-soft bg-surf-card rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
             >
               {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-fg-400" />
           </div>
         </div>
 
@@ -289,21 +289,21 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
             className={`flex items-center gap-1.5 pl-3 pr-2.5 py-2 text-xs font-medium border rounded-lg transition-colors cursor-pointer ${
               groupBy !== 'none'
                 ? 'border-blue-400 bg-blue-50 text-blue-700'
-                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                : 'border-border-soft bg-surf-card text-fg-600 hover:bg-surf-app'
             }`}
           >
             <Layers className="h-3.5 w-3.5" />
             {GROUP_LABELS[groupBy]}
-            <ChevronDown className="h-3 w-3 text-slate-400" />
+            <ChevronDown className="h-3 w-3 text-fg-400" />
           </button>
           {showGroupMenu && (
-            <div className="absolute left-0 top-full mt-1 w-40 bg-white border border-slate-200 rounded-xl shadow-lg z-30 overflow-hidden">
+            <div className="absolute left-0 top-full mt-1 w-40 bg-surf-card border border-border-soft rounded-xl shadow-lg z-30 overflow-hidden">
               {(['none', 'provider', 'status', 'priority'] as GroupBy[]).map((g) => (
                 <button
                   key={g}
                   onClick={() => { setGroupBy(g); setShowGroupMenu(false); }}
                   className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                    groupBy === g ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-700 hover:bg-slate-50'
+                    groupBy === g ? 'bg-blue-50 text-blue-700 font-medium' : 'text-fg-700 hover:bg-surf-app'
                   }`}
                 >
                   {g === 'none' ? 'No grouping' : GROUP_LABELS[g]}
@@ -317,20 +317,20 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-fg-400 pointer-events-none" />
           <input
             type="text"
             placeholder="Search items..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition w-44"
+            className="pl-8 pr-3 py-2 text-sm rounded-lg border border-border-soft bg-surf-card focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition w-44"
           />
         </div>
 
         {/* Print */}
         <button
           onClick={() => printPurchaseList(filtered, projectName, statusFilter, priorityFilter, teamMembers)}
-          className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-600 border border-slate-200 bg-white rounded-lg hover:bg-slate-50 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-fg-600 border border-border-soft bg-surf-card rounded-lg hover:bg-surf-app transition-colors"
           title="Print purchase list"
         >
           <Printer className="h-3.5 w-3.5" />
@@ -348,25 +348,25 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200/60 bg-slate-50/60">
+              <tr className="border-b border-border-soft bg-surf-app">
                 <th className="w-8 px-1 py-2.5"></th>
-                <th className="text-left px-2 py-2.5 font-semibold text-slate-600 min-w-[240px]">Concept</th>
-                <th className="text-right px-2 py-2.5 font-semibold text-slate-600 w-[72px]">Qty</th>
-                <th className="text-center px-2 py-2.5 font-semibold text-slate-600 w-[72px]">In Stock</th>
-                <th className="text-center px-2 py-2.5 font-semibold text-slate-600 w-[72px]">To Buy</th>
-                <th className="text-left px-2 py-2.5 font-semibold text-slate-600 w-[64px]">Unit</th>
-                <th className="text-right px-2 py-2.5 font-semibold text-slate-600 w-[108px]">Price</th>
-                <th className="text-right px-2 py-2.5 font-semibold text-slate-600 w-[96px]">Subtotal</th>
-                <th className="text-center px-2 py-2.5 font-semibold text-slate-600 w-[108px]">Priority</th>
-                <th className="text-center px-2 py-2.5 font-semibold text-slate-600 w-[124px]">Status</th>
-                <th className="text-left px-2 py-2.5 font-semibold text-slate-600 w-[110px]">Deadline</th>
+                <th className="text-left px-2 py-2.5 font-semibold text-fg-600 min-w-[240px]">Concept</th>
+                <th className="text-right px-2 py-2.5 font-semibold text-fg-600 w-[72px]">Qty</th>
+                <th className="text-center px-2 py-2.5 font-semibold text-fg-600 w-[72px]">In Stock</th>
+                <th className="text-center px-2 py-2.5 font-semibold text-fg-600 w-[72px]">To Buy</th>
+                <th className="text-left px-2 py-2.5 font-semibold text-fg-600 w-[64px]">Unit</th>
+                <th className="text-right px-2 py-2.5 font-semibold text-fg-600 w-[108px]">Price</th>
+                <th className="text-right px-2 py-2.5 font-semibold text-fg-600 w-[96px]">Subtotal</th>
+                <th className="text-center px-2 py-2.5 font-semibold text-fg-600 w-[108px]">Priority</th>
+                <th className="text-center px-2 py-2.5 font-semibold text-fg-600 w-[124px]">Status</th>
+                <th className="text-left px-2 py-2.5 font-semibold text-fg-600 w-[110px]">Deadline</th>
                 <th className="w-[72px] px-2 py-2.5"></th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={TOTAL_COLS} className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={TOTAL_COLS} className="px-4 py-12 text-center text-fg-400">
                     <p className="text-sm">No purchase items yet.</p>
                     <button
                       onClick={handleAddItem}
@@ -381,14 +381,14 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
                 groups.map(({ key, items: groupItems }) => (
                   <Fragment key={key || '__all__'}>
                     {groupBy !== 'none' && (
-                      <tr className="bg-slate-50/80 border-b border-slate-200/60">
+                      <tr className="bg-surf-app border-b border-border-soft">
                         <td colSpan={TOTAL_COLS} className="px-4 py-2">
                           <div className="flex items-center gap-2">
                             {getGroupDot(key) && (
                               <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${getGroupDot(key)}`} />
                             )}
-                            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">{key}</span>
-                            <span className="text-xs text-slate-400 font-normal">({groupItems.length})</span>
+                            <span className="text-xs font-semibold text-fg-600 uppercase tracking-wider">{key}</span>
+                            <span className="text-xs text-fg-400 font-normal">({groupItems.length})</span>
                           </div>
                         </td>
                       </tr>
@@ -417,11 +417,11 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
             </tbody>
             {filtered.length > 0 && (
               <tfoot>
-                <tr className="border-t-2 border-slate-200 bg-slate-50/40">
-                  <td colSpan={7} className="px-4 py-3 text-sm font-semibold text-slate-700 text-right">
+                <tr className="border-t-2 border-border-soft bg-surf-app">
+                  <td colSpan={7} className="px-4 py-3 text-sm font-semibold text-fg-700 text-right">
                     Total
                   </td>
-                  <td className="px-2 py-3 text-sm font-bold text-slate-900 text-right tabular-nums">
+                  <td className="px-2 py-3 text-sm font-bold text-fg-900 text-right tabular-nums">
                     {formatCurrency(filteredTotal)}
                   </td>
                   <td colSpan={4} />

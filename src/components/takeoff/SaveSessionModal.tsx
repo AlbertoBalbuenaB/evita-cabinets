@@ -98,12 +98,12 @@ export function SaveSessionModal({ isOpen, onClose, file, defaultProjectId, lock
           onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
         />
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Project (optional)</label>
+          <label className="block text-xs font-medium text-fg-600 mb-1">Project (optional)</label>
           <select
             value={projectId ?? ''}
             onChange={(e) => setProjectId(e.target.value || null)}
             disabled={!!lockProject || projectsLoading}
-            className="w-full text-sm border border-slate-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
+            className="w-full text-sm border border-border-soft rounded-md px-2 py-1.5 bg-surf-card focus:outline-none focus:ring-1 focus-visible:ring-focus disabled:bg-surf-app disabled:text-fg-400"
           >
             <option value="">— None (standalone) —</option>
             {projects.map((p) => (
@@ -111,7 +111,7 @@ export function SaveSessionModal({ isOpen, onClose, file, defaultProjectId, lock
             ))}
           </select>
           {lockProject && (
-            <p className="text-[10px] text-slate-400 mt-1">Locked to the project you opened from.</p>
+            <p className="text-[10px] text-fg-400 mt-1">Locked to the project you opened from.</p>
           )}
         </div>
         {error && <p className="text-xs text-red-600">{error}</p>}

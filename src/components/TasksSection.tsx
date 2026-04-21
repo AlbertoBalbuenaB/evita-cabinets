@@ -19,7 +19,7 @@ const STATUS_CYCLE: Record<string, TaskStatus> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-slate-200 text-slate-600',
+  pending: 'bg-surf-muted text-fg-600',
   in_progress: 'bg-amber-100 text-amber-700',
   done: 'bg-green-100 text-green-700',
 };
@@ -234,18 +234,18 @@ export function TasksSection({ projectId, teamMembers }: Props) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <div className="animate-pulse h-6 bg-slate-100 rounded w-24" />
+      <div className="bg-surf-card rounded-lg border border-border-soft p-4">
+        <div className="animate-pulse h-6 bg-surf-muted rounded w-24" />
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4">
+    <div className="bg-surf-card rounded-lg border border-border-soft p-4">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <CheckSquare className="h-5 w-5 text-green-600 mr-2" />
-          <h3 className="text-lg font-semibold text-slate-900">Tasks</h3>
+          <h3 className="text-lg font-semibold text-fg-900">Tasks</h3>
         </div>
         {!showAddForm && (
           <Button size="sm" variant="ghost" onClick={() => setShowAddForm(true)}>
@@ -256,7 +256,7 @@ export function TasksSection({ projectId, teamMembers }: Props) {
       </div>
 
       {tasks.length === 0 && !showAddForm ? (
-        <div className="py-8 text-center text-slate-400">
+        <div className="py-8 text-center text-fg-400">
           <CheckSquare className="h-8 w-8 mx-auto mb-2 opacity-40" />
           <p className="text-sm">No tasks yet</p>
         </div>
@@ -264,41 +264,41 @@ export function TasksSection({ projectId, teamMembers }: Props) {
         <div className="space-y-2 mb-4">
           {tasks.map((task) =>
             editingId === task.id && editState ? (
-              <div key={task.id} className="p-3 bg-slate-50 rounded-lg border border-blue-200 space-y-3">
+              <div key={task.id} className="p-3 bg-surf-app rounded-lg border border-blue-200 space-y-3">
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1">Title *</label>
+                  <label className="block text-xs text-fg-600 mb-1">Title *</label>
                   <input
                     type="text"
                     value={editState.title}
                     onChange={(e) => setEditState({ ...editState, title: e.target.value })}
-                    className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="block w-full px-3 py-2 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-600 mb-1">Details</label>
+                  <label className="block text-xs text-fg-600 mb-1">Details</label>
                   <textarea
                     value={editState.details}
                     onChange={(e) => setEditState({ ...editState, details: e.target.value })}
                     rows={2}
-                    className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="block w-full px-3 py-2 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus resize-none"
                   />
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-end gap-3">
                   <div className="w-full sm:w-auto">
-                    <label className="block text-xs text-slate-600 mb-1">Due Date</label>
+                    <label className="block text-xs text-fg-600 mb-1">Due Date</label>
                     <input
                       type="date"
                       value={editState.dueDate}
                       onChange={(e) => setEditState({ ...editState, dueDate: e.target.value })}
-                      className="block w-full sm:w-auto px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="block w-full sm:w-auto px-3 py-2 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs text-slate-600 mb-1">Assignee</label>
+                    <label className="block text-xs text-fg-600 mb-1">Assignee</label>
                     <select
                       value={editState.assigneeId}
                       onChange={(e) => setEditState({ ...editState, assigneeId: e.target.value })}
-                      className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="block w-full px-3 py-2 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card"
                     >
                       <option value="">Unassigned</option>
                       {teamMembers.map((m) => (
@@ -307,11 +307,11 @@ export function TasksSection({ projectId, teamMembers }: Props) {
                     </select>
                   </div>
                   <div className="w-full sm:w-auto">
-                    <label className="block text-xs text-slate-600 mb-1">Status</label>
+                    <label className="block text-xs text-fg-600 mb-1">Status</label>
                     <select
                       value={editState.status}
                       onChange={(e) => setEditState({ ...editState, status: e.target.value as TaskStatus })}
-                      className="block w-full sm:w-auto px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="block w-full sm:w-auto px-3 py-2 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card"
                     >
                       <option value="pending">Pending</option>
                       <option value="in_progress">In Progress</option>
@@ -333,7 +333,7 @@ export function TasksSection({ projectId, teamMembers }: Props) {
             ) : (
               <div
                 key={task.id}
-                className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg group"
+                className="flex items-start gap-3 p-3 bg-surf-app rounded-lg group"
               >
                 <button
                   onClick={() => toggleStatus(task)}
@@ -343,11 +343,11 @@ export function TasksSection({ projectId, teamMembers }: Props) {
                   <span className={`block w-3.5 h-3.5 rounded-full ${STATUS_DOT[task.status]} transition-colors`} />
                 </button>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-semibold ${task.status === 'done' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
+                  <p className={`text-sm font-semibold ${task.status === 'done' ? 'text-fg-400 line-through' : 'text-fg-800'}`}>
                     {task.title}
                   </p>
                   {task.details && (
-                    <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">{task.details}</p>
+                    <p className="text-sm text-fg-500 mt-0.5 line-clamp-2">{task.details}</p>
                   )}
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                     <span
@@ -358,24 +358,24 @@ export function TasksSection({ projectId, teamMembers }: Props) {
                       {STATUS_LABELS[task.status]}
                     </span>
                     {task.due_date && (
-                      <span className="text-xs text-slate-400">{formatDueDate(task.due_date)}</span>
+                      <span className="text-xs text-fg-400">{formatDueDate(task.due_date)}</span>
                     )}
                     {task.assignee_name && (
-                      <span className="text-xs text-slate-500 font-medium">{task.assignee_name}</span>
+                      <span className="text-xs text-fg-500 font-medium">{task.assignee_name}</span>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                   <button
                     onClick={() => startEdit(task)}
-                    className="text-slate-400 hover:text-blue-600 p-0.5"
+                    className="text-fg-400 hover:text-blue-600 p-0.5"
                     title="Edit task"
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => deleteTask(task.id)}
-                    className="text-slate-400 hover:text-red-500 p-0.5"
+                    className="text-fg-400 hover:text-red-500 p-0.5"
                     title="Delete task"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -388,44 +388,44 @@ export function TasksSection({ projectId, teamMembers }: Props) {
       )}
 
       {showAddForm && (
-        <div className="pt-3 border-t border-slate-200 space-y-3">
+        <div className="pt-3 border-t border-border-soft space-y-3">
           <div>
-            <label className="block text-xs text-slate-600 mb-1">Title *</label>
+            <label className="block text-xs text-fg-600 mb-1">Title *</label>
             <input
               type="text"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder="Task title"
-              className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="block w-full px-3 py-2 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
               onKeyDown={(e) => { if (e.key === 'Enter' && newTitle.trim()) addTask(); }}
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-600 mb-1">Details</label>
+            <label className="block text-xs text-fg-600 mb-1">Details</label>
             <textarea
               value={newDetails}
               onChange={(e) => setNewDetails(e.target.value)}
               placeholder="Additional details (optional)"
               rows={2}
-              className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="block w-full px-3 py-2 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus resize-none"
             />
           </div>
           <div className="flex flex-col sm:flex-row sm:items-end gap-3">
             <div className="w-full sm:w-auto">
-              <label className="block text-xs text-slate-600 mb-1">Due Date</label>
+              <label className="block text-xs text-fg-600 mb-1">Due Date</label>
               <input
                 type="date"
                 value={newDueDate}
                 onChange={(e) => setNewDueDate(e.target.value)}
-                className="block w-full sm:w-auto px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full sm:w-auto px-3 py-2 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
               />
             </div>
             <div className="flex-1">
-              <label className="block text-xs text-slate-600 mb-1">Assignee</label>
+              <label className="block text-xs text-fg-600 mb-1">Assignee</label>
               <select
                 value={newAssigneeId}
                 onChange={(e) => setNewAssigneeId(e.target.value)}
-                className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="block w-full px-3 py-2 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card"
               >
                 <option value="">Unassigned</option>
                 {teamMembers.map((m) => (

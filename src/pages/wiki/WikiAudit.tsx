@@ -11,10 +11,10 @@ function styleForAction(action: string) {
     if (action.includes('_to_approved'))  return { bg: 'bg-emerald-100/70', text: 'text-emerald-800' };
     if (action.includes('_to_rejected'))  return { bg: 'bg-rose-100/70',    text: 'text-rose-800' };
     if (action.includes('_to_changes_requested')) return { bg: 'bg-amber-100/70', text: 'text-amber-800' };
-    if (action.includes('_to_withdrawn')) return { bg: 'bg-slate-100/70',   text: 'text-slate-700' };
-    if (action.includes('_to_open'))      return { bg: 'bg-indigo-100/70',  text: 'text-indigo-800' };
+    if (action.includes('_to_withdrawn')) return { bg: 'bg-surf-muted',   text: 'text-fg-700' };
+    if (action.includes('_to_open'))      return { bg: 'bg-accent-tint-strong',  text: 'text-indigo-800' };
   }
-  return { bg: 'bg-slate-100/70', text: 'text-slate-700' };
+  return { bg: 'bg-surf-muted', text: 'text-fg-700' };
 }
 
 export function WikiAudit() {
@@ -49,8 +49,8 @@ export function WikiAudit() {
         <div className="flex items-start gap-3">
           <Shield className="w-6 h-6 text-violet-600 mt-1" />
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Wiki audit log</h1>
-            <p className="text-sm text-slate-700 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-fg-900">Wiki audit log</h1>
+            <p className="text-sm text-fg-700 mt-1">
               Registro inmutable de mutaciones del Wiki: merges, cambios de estado de propuestas.
             </p>
           </div>
@@ -70,18 +70,18 @@ export function WikiAudit() {
           ))}
         </div>
       ) : rows.length === 0 ? (
-        <div className="glass-white rounded-2xl p-8 text-center text-slate-500">
+        <div className="glass-white rounded-2xl p-8 text-center text-fg-500">
           Sin eventos registrados todavía.
         </div>
       ) : (
         <div className="glass-white rounded-2xl overflow-hidden">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50/60">
-              <tr className="border-b border-slate-200/60">
-                <th className="text-left px-3 py-2 font-semibold text-slate-800">When</th>
-                <th className="text-left px-3 py-2 font-semibold text-slate-800">Actor</th>
-                <th className="text-left px-3 py-2 font-semibold text-slate-800">Action</th>
-                <th className="text-left px-3 py-2 font-semibold text-slate-800">Article / Proposal</th>
+            <thead className="bg-surf-app">
+              <tr className="border-b border-border-soft">
+                <th className="text-left px-3 py-2 font-semibold text-fg-800">When</th>
+                <th className="text-left px-3 py-2 font-semibold text-fg-800">Actor</th>
+                <th className="text-left px-3 py-2 font-semibold text-fg-800">Action</th>
+                <th className="text-left px-3 py-2 font-semibold text-fg-800">Article / Proposal</th>
               </tr>
             </thead>
             <tbody>
@@ -89,11 +89,11 @@ export function WikiAudit() {
                 const style = styleForAction(row.action);
                 const actor = row.actor_id ? members[row.actor_id] ?? 'Unknown' : 'System';
                 return (
-                  <tr key={row.id} className="border-b border-slate-200/60 row-enter">
-                    <td className="px-3 py-2 text-slate-600 whitespace-nowrap">
+                  <tr key={row.id} className="border-b border-border-soft row-enter">
+                    <td className="px-3 py-2 text-fg-600 whitespace-nowrap">
                       {new Date(row.created_at).toLocaleString()}
                     </td>
-                    <td className="px-3 py-2 text-slate-800">{actor}</td>
+                    <td className="px-3 py-2 text-fg-800">{actor}</td>
                     <td className="px-3 py-2">
                       <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${style.bg} ${style.text}`}>
                         {row.action}
@@ -110,7 +110,7 @@ export function WikiAudit() {
                           </Link>
                         )}
                         {row.article_id && (
-                          <span className="text-slate-500 font-mono block">
+                          <span className="text-fg-500 font-mono block">
                             art {row.article_id.slice(0, 8)}
                           </span>
                         )}

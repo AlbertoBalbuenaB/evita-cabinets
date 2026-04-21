@@ -47,7 +47,7 @@ const STATUS_STYLES: Record<QuoteStatus, StatusStyle> = {
     dot: 'bg-rose-500',
   },
   Discarded: {
-    pill: 'bg-slate-500/10 text-slate-600 border-slate-500/25',
+    pill: 'bg-slate-500/10 text-fg-600 border-slate-500/25',
     dot: 'bg-slate-400',
   },
   Cancelled: {
@@ -98,7 +98,7 @@ export function StatusChip({ status, onChange, disabled }: StatusChipProps) {
         aria-expanded={canOpen ? open : undefined}
         className={`inline-flex items-center gap-1 px-[10px] py-[2px] rounded-full text-[11px] font-semibold border transition-opacity ${
           style.pill
-        } ${canOpen ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-1`}
+        } ${canOpen ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} focus:outline-none focus:ring-2 focus-visible:ring-focus/40 focus:ring-offset-1`}
       >
         <span className="uppercase tracking-[0.02em]">{status ?? 'No status'}</span>
         {canOpen && <ChevronDown className="h-[11px] w-[11px] opacity-70" strokeWidth={1.5} />}
@@ -123,8 +123,8 @@ export function StatusChip({ status, onChange, disabled }: StatusChipProps) {
                 }}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors ${
                   isActive
-                    ? 'bg-slate-100/70 text-slate-900 font-semibold'
-                    : 'text-slate-700 hover:bg-slate-100/70'
+                    ? 'bg-surf-muted text-fg-900 font-semibold'
+                    : 'text-fg-700 hover:bg-surf-muted'
                 }`}
               >
                 <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${sStyle.dot}`} />

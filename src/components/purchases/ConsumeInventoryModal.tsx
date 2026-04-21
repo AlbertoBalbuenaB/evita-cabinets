@@ -67,21 +67,21 @@ export function ConsumeInventoryModal({ item, projectName, onConfirm, onCancel }
 
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-slate-400">Item</span>
-            <span className="text-slate-800 font-medium">{item.concept}</span>
+            <span className="text-fg-400">Item</span>
+            <span className="text-fg-800 font-medium">{item.concept}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">Quantity to consume</span>
-            <span className="text-slate-800 font-medium">{item.quantity} {unit}</span>
+            <span className="text-fg-400">Quantity to consume</span>
+            <span className="text-fg-800 font-medium">{item.quantity} {unit}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">Current stock</span>
-            <span className="text-slate-800 font-medium">{stockQty} {unit}</span>
+            <span className="text-fg-400">Current stock</span>
+            <span className="text-fg-800 font-medium">{stockQty} {unit}</span>
           </div>
           {avgCost > 0 && (
             <div className="flex justify-between">
-              <span className="text-slate-400">WAC</span>
-              <span className="text-slate-800 font-medium">{formatCurrency(avgCost)}</span>
+              <span className="text-fg-400">WAC</span>
+              <span className="text-fg-800 font-medium">{formatCurrency(avgCost)}</span>
             </div>
           )}
         </div>

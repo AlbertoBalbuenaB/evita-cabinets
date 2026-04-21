@@ -70,10 +70,10 @@ export function OptimizerWarningsPanel({
               <div className={`text-xs font-semibold uppercase tracking-wide mb-1 ${toneClasses.text}`}>
                 Cabinets falling back to ft² ({cabinetsSkipped.length})
               </div>
-              <ul className="text-xs space-y-0.5 list-disc list-inside text-slate-700">
+              <ul className="text-xs space-y-0.5 list-disc list-inside text-fg-700">
                 {cabinetsSkipped.map((s) => (
                   <li key={s.id}>
-                    <span className="font-mono text-slate-500">{s.id.slice(0, 8)}…</span>
+                    <span className="font-mono text-fg-500">{s.id.slice(0, 8)}…</span>
                     {' — '}{s.reason}
                   </li>
                 ))}
@@ -86,7 +86,7 @@ export function OptimizerWarningsPanel({
               <div className={`text-xs font-semibold uppercase tracking-wide mb-1 ${toneClasses.text}`}>
                 Warnings ({warnings.length})
               </div>
-              <ul className="text-xs space-y-0.5 text-slate-700">
+              <ul className="text-xs space-y-0.5 text-fg-700">
                 {warnings.map((w, i) => (
                   <li key={i} className="flex items-start gap-1.5">
                     <AlertCircle className="h-3 w-3 text-amber-500 shrink-0 mt-0.5" />

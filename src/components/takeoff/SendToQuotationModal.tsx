@@ -100,7 +100,7 @@ export function SendToQuotationModal({ isOpen, onClose, projectId, displayUnit }
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Send to quotation" size="md">
       <div className="space-y-3">
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-fg-500">
           {linkedCount === 0
             ? 'Link measurements to price list items (via the link icon on a row) to send them here.'
             : `${linkedCount} linked measurement${linkedCount === 1 ? '' : 's'} will be inserted as line items in the destination area.`}
@@ -108,12 +108,12 @@ export function SendToQuotationModal({ isOpen, onClose, projectId, displayUnit }
 
         {/* Quotation */}
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Quotation</label>
+          <label className="block text-xs font-medium text-fg-600 mb-1">Quotation</label>
           <select
             value={quotationId}
             onChange={(e) => setQuotationId(e.target.value)}
             disabled={quotationsLoading || sending}
-            className="w-full text-sm border border-slate-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50"
+            className="w-full text-sm border border-border-soft rounded-md px-2 py-1.5 bg-surf-card focus:outline-none focus:ring-1 focus-visible:ring-focus disabled:bg-surf-app"
           >
             {quotations.length === 0 && <option value="">No quotations in this project</option>}
             {quotations.map((q) => (
@@ -126,12 +126,12 @@ export function SendToQuotationModal({ isOpen, onClose, projectId, displayUnit }
 
         {/* Area */}
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Destination area</label>
+          <label className="block text-xs font-medium text-fg-600 mb-1">Destination area</label>
           <select
             value={areaId}
             onChange={(e) => setAreaId(e.target.value)}
             disabled={!quotationId || areasLoading || sending}
-            className="w-full text-sm border border-slate-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50"
+            className="w-full text-sm border border-border-soft rounded-md px-2 py-1.5 bg-surf-card focus:outline-none focus:ring-1 focus-visible:ring-focus disabled:bg-surf-app"
           >
             {areas.length === 0 && <option value="">No areas — create one in the quotation first</option>}
             {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}

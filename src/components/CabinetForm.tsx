@@ -486,7 +486,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
     return (
       <Modal isOpen={true} onClose={onClose} title="Loading..." size="xl">
         <div className="flex items-center justify-center h-64">
-          <div className="text-slate-600">Loading form data...</div>
+          <div className="text-fg-600">Loading form data...</div>
         </div>
       </Modal>
     );
@@ -519,7 +519,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-fg-700 mb-1">
               Select Product
             </label>
             <AutocompleteSelect
@@ -554,9 +554,9 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
               id="is_rta"
               checked={isRta}
               onChange={(e) => setIsRta(e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+              className="h-4 w-4 text-blue-600 focus-visible:ring-focus border-border-solid rounded"
             />
-            <label htmlFor="is_rta" className="ml-2 block text-sm text-slate-700">
+            <label htmlFor="is_rta" className="ml-2 block text-sm text-fg-700">
               Ready To Assemble (RTA) - Affects pallet calculations
             </label>
           </div>
@@ -564,19 +564,19 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
 
         {selectedProduct && (
           <>
-            <div className="border border-slate-200 rounded-lg">
+            <div className="border border-border-soft rounded-lg">
               <button
                 type="button"
                 onClick={() => setBoxSectionExpanded(!boxSectionExpanded)}
-                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-surf-app transition-colors"
               >
                 <div className="flex items-center gap-2">
                   {boxSectionExpanded ? (
-                    <ChevronDown className="h-5 w-5 text-slate-600" />
+                    <ChevronDown className="h-5 w-5 text-fg-600" />
                   ) : (
-                    <ChevronRight className="h-5 w-5 text-slate-600" />
+                    <ChevronRight className="h-5 w-5 text-fg-600" />
                   )}
-                  <h3 className="text-lg font-semibold text-slate-900">Box Construction</h3>
+                  <h3 className="text-lg font-semibold text-fg-900">Box Construction</h3>
                   {costs && costs.boxMaterialCost > 0 && (
                     <span className="ml-2 text-sm font-medium text-blue-600">
                       {formatCurrency(costs.boxMaterialCost + costs.boxEdgebandCost + costs.boxInteriorFinishCost)}
@@ -620,17 +620,17 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                       type="checkbox"
                       checked={useBoxInteriorFinish}
                       onChange={(e) => setUseBoxInteriorFinish(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-0.5"
+                      className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus mt-0.5"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <Layers className="h-4 w-4 text-amber-600" />
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-medium text-fg-700">
                           Add Surface Layer Material
                         </span>
                         <Info className="h-3.5 w-3.5 text-amber-500" />
                       </div>
-                      <p className="text-xs text-slate-600 mt-1">
+                      <p className="text-xs text-fg-600 mt-1">
                         For laminate, veneer, or other materials applied over the base material.
                         Both materials will use the same square footage.
                       </p>
@@ -671,17 +671,17 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                       type="checkbox"
                       checked={useBackPanelMaterial}
                       onChange={(e) => setUseBackPanelMaterial(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-0.5"
+                      className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus mt-0.5"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <Package className="h-4 w-4 text-orange-600" />
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-medium text-fg-700">
                           Use Different Material for Back Panel
                         </span>
                         <Info className="h-3.5 w-3.5 text-orange-500" />
                       </div>
-                      <p className="text-xs text-slate-600 mt-1">
+                      <p className="text-xs text-fg-600 mt-1">
                         Specify a different material for the cabinet back panel (inset, no edgeband required).
                         Square footage will be subtracted from box material calculations.
                       </p>
@@ -757,14 +757,14 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                       type="checkbox"
                       checked={useDrawerBoxMaterial}
                       onChange={(e) => setUseDrawerBoxMaterial(e.target.checked)}
-                      className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500 mt-0.5"
+                      className="w-4 h-4 text-teal-600 border-border-solid rounded focus:ring-teal-500 mt-0.5"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <Package className="h-4 w-4 text-teal-600" />
-                        <span className="text-sm font-medium text-slate-700">Use Different Material for Drawer Box</span>
+                        <span className="text-sm font-medium text-fg-700">Use Different Material for Drawer Box</span>
                       </div>
-                      <p className="text-xs text-slate-600 mt-1">
+                      <p className="text-xs text-fg-600 mt-1">
                         Specify a different material for drawer box components (sides, ends, bottom). Default uses Box Construction material.
                       </p>
                     </div>
@@ -805,14 +805,14 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     type="checkbox"
                     checked={useShelfMaterial}
                     onChange={(e) => setUseShelfMaterial(e.target.checked)}
-                    className="w-4 h-4 text-violet-600 border-slate-300 rounded focus:ring-violet-500 mt-0.5"
+                    className="w-4 h-4 text-violet-600 border-border-solid rounded focus:ring-violet-500 mt-0.5"
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <Package className="h-4 w-4 text-violet-600" />
-                      <span className="text-sm font-medium text-slate-700">Use Different Material for Shelves</span>
+                      <span className="text-sm font-medium text-fg-700">Use Different Material for Shelves</span>
                     </div>
-                    <p className="text-xs text-slate-600 mt-1">
+                    <p className="text-xs text-fg-600 mt-1">
                       Specify a different material for shelves. Default uses Box Construction material.
                     </p>
                   </div>
@@ -852,23 +852,23 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   value={extraShelves || ''}
                   onChange={(e) => setExtraShelves(parseInt(e.target.value) || 0)}
                 />
-                <p className="text-xs text-slate-500 mt-1">Additional shelves beyond the product default.</p>
+                <p className="text-xs text-fg-500 mt-1">Additional shelves beyond the product default.</p>
               </div>
             </div>
 
-            <div className="border border-slate-200 rounded-lg">
+            <div className="border border-border-soft rounded-lg">
               <button
                 type="button"
                 onClick={() => setDoorsSectionExpanded(!doorsSectionExpanded)}
-                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-surf-app transition-colors"
               >
                 <div className="flex items-center gap-2">
                   {doorsSectionExpanded ? (
-                    <ChevronDown className="h-5 w-5 text-slate-600" />
+                    <ChevronDown className="h-5 w-5 text-fg-600" />
                   ) : (
-                    <ChevronRight className="h-5 w-5 text-slate-600" />
+                    <ChevronRight className="h-5 w-5 text-fg-600" />
                   )}
-                  <h3 className="text-lg font-semibold text-slate-900">Doors & Drawer Fronts</h3>
+                  <h3 className="text-lg font-semibold text-fg-900">Doors & Drawer Fronts</h3>
                   {costs && costs.doorsMaterialCost > 0 && (
                     <span className="ml-2 text-sm font-medium text-blue-600">
                       {formatCurrency(costs.doorsMaterialCost + costs.doorsEdgebandCost + costs.doorsInteriorFinishCost + costs.doorProfileCost)}
@@ -912,17 +912,17 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                       type="checkbox"
                       checked={useDoorsInteriorFinish}
                       onChange={(e) => setUseDoorsInteriorFinish(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 mt-0.5"
+                      className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus mt-0.5"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <Layers className="h-4 w-4 text-amber-600" />
-                        <span className="text-sm font-medium text-slate-700">
+                        <span className="text-sm font-medium text-fg-700">
                           Add Surface Layer Material
                         </span>
                         <Info className="h-3.5 w-3.5 text-amber-500" />
                       </div>
-                      <p className="text-xs text-slate-600 mt-1">
+                      <p className="text-xs text-fg-600 mt-1">
                         For laminate, veneer, or other materials applied over the base material.
                         Both materials will use the same square footage.
                       </p>
@@ -958,11 +958,11 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Door Profile <span className="text-slate-400 font-normal">(optional)</span>
+                  <label className="block text-sm font-medium text-fg-700 mb-1">
+                    Door Profile <span className="text-fg-400 font-normal">(optional)</span>
                   </label>
                   {doorProfileMaterials.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic">
+                    <p className="text-xs text-fg-400 italic">
                       No door profiles in price list. Add items with Type = "Door Profile" to enable this.
                     </p>
                   ) : (
@@ -980,7 +980,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                         ]}
                       />
                       {doorProfileId && selectedProduct && (selectedProduct.doors_fronts_edgeband || 0) > 0 && costs && costs.doorProfileCost > 0 && (
-                        <p className="text-xs text-slate-500 mt-1">
+                        <p className="text-xs text-fg-500 mt-1">
                           {((selectedProduct.doors_fronts_edgeband || 0) * quantity).toFixed(2)} ML × {formatCurrency((() => { const p = priceList.find(x => x.id === doorProfileId); return p ? (p.price_with_tax || p.price) : 0; })())}/ML = {formatCurrency(costs.doorProfileCost)}
                         </p>
                       )}
@@ -991,25 +991,25 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
               )}
             </div>
 
-            <div className="border border-slate-200 rounded-lg">
+            <div className="border border-border-soft rounded-lg">
               <button
                 type="button"
                 onClick={() => setHardwareSectionExpanded(!hardwareSectionExpanded)}
-                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-surf-app transition-colors"
               >
                 <div className="flex items-center gap-2">
                   {hardwareSectionExpanded ? (
-                    <ChevronDown className="h-5 w-5 text-slate-600" />
+                    <ChevronDown className="h-5 w-5 text-fg-600" />
                   ) : (
-                    <ChevronRight className="h-5 w-5 text-slate-600" />
+                    <ChevronRight className="h-5 w-5 text-fg-600" />
                   )}
-                  <h3 className="text-lg font-semibold text-slate-900">Hardware</h3>
+                  <h3 className="text-lg font-semibold text-fg-900">Hardware</h3>
                   {costs && costs.hardwareCost > 0 && (
                     <span className="ml-2 text-sm font-medium text-blue-600">
                       {formatCurrency(costs.hardwareCost)}
                     </span>
                   )}
-                  <span className="ml-2 text-xs text-slate-500">({hardware.length} items)</span>
+                  <span className="ml-2 text-xs text-fg-500">({hardware.length} items)</span>
                 </div>
                 <Button
                   type="button"
@@ -1056,7 +1056,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                           parseInt(e.target.value) || 1;
                         setHardware(newHardware);
                       }}
-                      className="w-24 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-24 px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
                       placeholder="Qty"
                     />
 
@@ -1075,7 +1075,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                 ))}
 
                   {hardware.length === 0 && (
-                    <p className="text-sm text-slate-500 text-center py-4">
+                    <p className="text-sm text-fg-500 text-center py-4">
                       No hardware added yet
                     </p>
                   )}
@@ -1083,26 +1083,26 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
               )}
             </div>
 
-            <div className="border border-slate-200 rounded-lg">
+            <div className="border border-border-soft rounded-lg">
               <button
                 type="button"
                 onClick={() => setAccessoriesSectionExpanded(!accessoriesSectionExpanded)}
-                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-surf-app transition-colors"
               >
                 <div className="flex items-center gap-2">
                   {accessoriesSectionExpanded ? (
-                    <ChevronDown className="h-5 w-5 text-slate-600" />
+                    <ChevronDown className="h-5 w-5 text-fg-600" />
                   ) : (
-                    <ChevronRight className="h-5 w-5 text-slate-600" />
+                    <ChevronRight className="h-5 w-5 text-fg-600" />
                   )}
                   <Package className="h-5 w-5 text-purple-600" />
-                  <h3 className="text-lg font-semibold text-slate-900">Accessories</h3>
+                  <h3 className="text-lg font-semibold text-fg-900">Accessories</h3>
                   {costs && costs.accessoriesCost > 0 && (
                     <span className="ml-2 text-sm font-medium text-purple-600">
                       {formatCurrency(costs.accessoriesCost)}
                     </span>
                   )}
-                  <span className="ml-2 text-xs text-slate-500">({accessories.length} items)</span>
+                  <span className="ml-2 text-xs text-fg-500">({accessories.length} items)</span>
                 </div>
                 <Button
                   type="button"
@@ -1160,7 +1160,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                             parseFloat(e.target.value) || 1;
                           setAccessories(newAccessories);
                         }}
-                        className="w-24 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-24 px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                         placeholder="Qty"
                       />
 
@@ -1179,7 +1179,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   ))}
 
                   {accessories.length === 0 && (
-                    <p className="text-sm text-slate-500 text-center py-4">
+                    <p className="text-sm text-fg-500 text-center py-4">
                       No accessories added yet
                     </p>
                   )}
@@ -1188,20 +1188,20 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
             </div>
 
             {costs && (
-              <div className="border-t border-slate-200 pt-6 bg-slate-50 -mx-6 px-6 -mb-6 pb-6">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Cost Summary</h3>
+              <div className="border-t border-border-soft pt-6 bg-surf-app -mx-6 px-6 -mb-6 pb-6">
+                <h3 className="text-lg font-semibold text-fg-900 mb-4">Cost Summary</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Box Material:</span>
+                    <span className="text-fg-600">Box Material:</span>
                     <span className="font-medium">{formatCurrency(costs.boxMaterialCost)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Box Edgeband:</span>
+                    <span className="text-fg-600">Box Edgeband:</span>
                     <span className="font-medium">{formatCurrency(costs.boxEdgebandCost)}</span>
                   </div>
                   {costs.boxInteriorFinishCost > 0 && (
                     <div className="flex justify-between bg-blue-50 -mx-2 px-2 py-1 rounded">
-                      <span className="text-slate-600 flex items-center gap-1">
+                      <span className="text-fg-600 flex items-center gap-1">
                         <Layers className="h-3.5 w-3.5 text-blue-600" />
                         Box Surface Layer:
                       </span>
@@ -1212,7 +1212,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   )}
                   {costs.backPanelMaterialCost > 0 && (
                     <div className="flex justify-between bg-orange-50 -mx-2 px-2 py-1 rounded">
-                      <span className="text-slate-600 flex items-center gap-1">
+                      <span className="text-fg-600 flex items-center gap-1">
                         <Package className="h-3.5 w-3.5 text-orange-600" />
                         Back Panel Material:
                       </span>
@@ -1222,16 +1222,16 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Doors Material:</span>
+                    <span className="text-fg-600">Doors Material:</span>
                     <span className="font-medium">{formatCurrency(costs.doorsMaterialCost)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Doors Edgeband:</span>
+                    <span className="text-fg-600">Doors Edgeband:</span>
                     <span className="font-medium">{formatCurrency(costs.doorsEdgebandCost)}</span>
                   </div>
                   {costs.doorsInteriorFinishCost > 0 && (
                     <div className="flex justify-between bg-green-50 -mx-2 px-2 py-1 rounded">
-                      <span className="text-slate-600 flex items-center gap-1">
+                      <span className="text-fg-600 flex items-center gap-1">
                         <Layers className="h-3.5 w-3.5 text-green-600" />
                         Doors Surface Layer:
                       </span>
@@ -1241,21 +1241,21 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     </div>
                   )}
                   {costs.doorProfileCost > 0 && (
-                    <div className="flex justify-between bg-slate-50 -mx-2 px-2 py-1 rounded">
-                      <span className="text-slate-600">Door Profile:</span>
+                    <div className="flex justify-between bg-surf-app -mx-2 px-2 py-1 rounded">
+                      <span className="text-fg-600">Door Profile:</span>
                       <span className="font-medium">{formatCurrency(costs.doorProfileCost)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Hardware:</span>
+                    <span className="text-fg-600">Hardware:</span>
                     <span className="font-medium">{formatCurrency(costs.hardwareCost)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Accessories:</span>
+                    <span className="text-fg-600">Accessories:</span>
                     <span className="font-medium">{formatCurrency(costs.accessoriesCost)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600">
+                    <span className="text-fg-600">
                       Labor ({selectedProduct.custom_labor_cost !== null && selectedProduct.custom_labor_cost !== undefined
                         ? `$${selectedProduct.custom_labor_cost} custom`
                         : `$${selectedProduct.has_drawers ? settings.laborCostWithDrawers : settings.laborCostNoDrawers} per cabinet`}):
@@ -1263,9 +1263,9 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     <span className="font-medium">{formatCurrency(costs.laborCost)}</span>
                   </div>
 
-                  <div className="border-t border-slate-300 pt-2 mt-2">
+                  <div className="border-t border-border-solid pt-2 mt-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-lg font-semibold text-slate-900">Total:</span>
+                      <span className="text-lg font-semibold text-fg-900">Total:</span>
                       <span className="text-2xl font-bold text-blue-600">
                         {formatCurrency(costs.subtotal)}
                       </span>
@@ -1277,7 +1277,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
           </>
         )}
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-border-soft">
             <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
               Cancel
             </Button>

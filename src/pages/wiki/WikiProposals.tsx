@@ -56,8 +56,8 @@ export function WikiProposals() {
             <Link to="/wiki" className="text-sm text-violet-600 hover:text-violet-800 inline-flex items-center gap-1 mb-2">
               <Library className="w-4 h-4" /> Wiki
             </Link>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Wiki proposals</h1>
-            <p className="text-sm text-slate-700 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-fg-900">Wiki proposals</h1>
+            <p className="text-sm text-fg-700 mt-1">
               Cambios propuestos al manual. Los admins revisan, aprueban y mergean.
             </p>
           </div>
@@ -72,7 +72,7 @@ export function WikiProposals() {
 
       <div className="glass-white rounded-2xl p-3 sm:p-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <Filter className="w-4 h-4 text-slate-500" />
+          <Filter className="w-4 h-4 text-fg-500" />
           {STATE_FILTERS.map((f) => {
             const active = f.value === stateFilter;
             const count = f.value ? counts[f.value] : proposals.length;
@@ -84,12 +84,12 @@ export function WikiProposals() {
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition ${
                   active
                     ? 'bg-violet-600 text-white border-violet-600'
-                    : 'glass-white text-slate-700 border-slate-200/70 hover:bg-violet-50'
+                    : 'glass-white text-fg-700 border-border-soft hover:bg-violet-50'
                 }`}
               >
                 {f.label}
                 {count !== undefined && (
-                  <span className={`text-[10px] ${active ? 'text-white/90' : 'text-slate-500'}`}>{count}</span>
+                  <span className={`text-[10px] ${active ? 'text-white/90' : 'text-fg-500'}`}>{count}</span>
                 )}
               </button>
             );
@@ -110,7 +110,7 @@ export function WikiProposals() {
           ))}
         </div>
       ) : proposals.length === 0 ? (
-        <div className="glass-white rounded-2xl p-8 text-center text-slate-500">
+        <div className="glass-white rounded-2xl p-8 text-center text-fg-500">
           No hay propuestas en este filtro.
         </div>
       ) : (
@@ -125,10 +125,10 @@ export function WikiProposals() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <KbProposalStateBadge state={p.state} compact />
-                      <span className="text-xs font-mono text-slate-500">{p.kind}</span>
+                      <span className="text-xs font-mono text-fg-500">{p.kind}</span>
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-900 truncate">{p.summary}</h3>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <h3 className="text-sm font-semibold text-fg-900 truncate">{p.summary}</h3>
+                    <p className="text-xs text-fg-500 mt-1">
                       {members[p.author_id] ?? 'Unknown'} · {new Date(p.created_at).toLocaleDateString()}
                       {p.target_article_id && <span className="ml-1">· targets existing article</span>}
                     </p>

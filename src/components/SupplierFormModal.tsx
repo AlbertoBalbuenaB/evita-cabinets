@@ -62,8 +62,8 @@ function getDefaultForm(supplier?: Supplier | null): FormState {
 function FormSection({ title }: { title: string }) {
   return (
     <div className="flex items-center gap-3 pt-2">
-      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">{title}</span>
-      <div className="flex-1 h-px bg-slate-200" />
+      <span className="text-xs font-semibold text-fg-400 uppercase tracking-wider whitespace-nowrap">{title}</span>
+      <div className="flex-1 h-px bg-surf-muted" />
     </div>
   );
 }
@@ -86,14 +86,14 @@ function StarSelector({ value, onChange }: { value: number | null; onChange: (v:
               className={`h-5 w-5 transition-colors ${
                 value != null && i <= value
                   ? 'text-amber-400 fill-amber-400'
-                  : 'text-slate-200 fill-slate-200 hover:text-amber-300 hover:fill-amber-300'
+                  : 'text-fg-400 fill-slate-200 hover:text-amber-300 hover:fill-amber-300'
               }`}
             />
           </button>
         ))}
       </div>
       {value != null && (
-        <span className="text-sm text-slate-500">{value}/5</span>
+        <span className="text-sm text-fg-500">{value}/5</span>
       )}
     </div>
   );
@@ -132,7 +132,7 @@ function CategoryPicker({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">Categories</label>
+      <label className="block text-sm font-medium text-fg-700 mb-1">Categories</label>
 
       {/* Selected chips */}
       {selected.length > 0 && (
@@ -161,45 +161,45 @@ function CategoryPicker({
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-3 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-500 bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          className="w-full flex items-center justify-between px-3 py-2.5 border border-border-solid rounded-lg text-sm text-fg-500 bg-surf-card hover:border-slate-400 focus:outline-none focus:ring-2 focus-visible:ring-focus transition-colors"
         >
           <span>{selected.length > 0 ? `${selected.length} selected` : 'Add categories…'}</span>
           <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
 
         {open && (
-          <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-            <div className="p-2 border-b border-slate-100">
+          <div className="absolute z-50 mt-1 w-full bg-surf-card border border-border-soft rounded-xl shadow-lg overflow-hidden">
+            <div className="p-2 border-b border-border-soft">
               <input
                 type="text"
                 placeholder="Search types…"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2.5 py-1.5 text-sm border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 autoFocus
               />
             </div>
             <div className="max-h-48 overflow-y-auto p-1">
               {filtered.length === 0 ? (
-                <p className="text-xs text-slate-400 px-3 py-2">No types found.</p>
+                <p className="text-xs text-fg-400 px-3 py-2">No types found.</p>
               ) : (
                 filtered.map((opt) => (
                   <button
                     key={opt}
                     type="button"
                     onClick={() => { toggle(opt); setInputValue(''); }}
-                    className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm text-fg-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors"
                   >
                     {opt}
                   </button>
                 ))
               )}
             </div>
-            <div className="p-2 border-t border-slate-100">
+            <div className="p-2 border-t border-border-soft">
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="w-full text-center text-xs text-slate-400 hover:text-slate-600 py-1"
+                className="w-full text-center text-xs text-fg-400 hover:text-fg-600 py-1"
               >
                 Done
               </button>
@@ -207,7 +207,7 @@ function CategoryPicker({
           </div>
         )}
       </div>
-      <p className="mt-1 text-xs text-slate-400">Types are managed in Inventory settings.</p>
+      <p className="mt-1 text-xs text-fg-400">Types are managed in Inventory settings.</p>
     </div>
   );
 }
@@ -321,7 +321,7 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
             />
             {form.logo_url.trim() && (
               <div className="mt-2 flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center overflow-hidden">
+                <div className="h-8 w-8 rounded-lg border border-border-soft bg-surf-card flex items-center justify-center overflow-hidden">
                   <img
                     src={form.logo_url.trim()}
                     alt="Logo preview"
@@ -329,7 +329,7 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
                     onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                   />
                 </div>
-                <span className="text-xs text-slate-400">Preview</span>
+                <span className="text-xs text-fg-400">Preview</span>
               </div>
             )}
           </div>
@@ -342,9 +342,9 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
               checked={form.is_active}
               onChange={(e) => set('is_active', e.target.checked)}
               disabled={saving}
-              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-border-solid text-blue-600 focus-visible:ring-focus"
             />
-            <span className="text-sm font-medium text-slate-700">Active</span>
+            <span className="text-sm font-medium text-fg-700">Active</span>
           </label>
         )}
 
@@ -392,14 +392,14 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
         <FormSection title="Location" />
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Address</label>
           <textarea
             value={form.address}
             onChange={(e) => set('address', e.target.value)}
             placeholder="Full address, city, state. You can list multiple branches separated by lines."
             rows={2}
             disabled={saving}
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500 resize-none text-sm"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg shadow-sm focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-blue-500 disabled:bg-surf-app disabled:text-fg-500 resize-none text-sm"
           />
         </div>
 
@@ -416,21 +416,21 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Quality Score</label>
+            <label className="block text-sm font-medium text-fg-700 mb-2">Quality Score</label>
             <StarSelector
               value={form.quality_score}
               onChange={(v) => set('quality_score', v)}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Punctuality</label>
+            <label className="block text-sm font-medium text-fg-700 mb-2">Punctuality</label>
             <div className="flex gap-2">
               {(['Alta', 'Media', 'Baja'] as const).map((p) => {
                 const active = form.punctuality === p;
                 const colors: Record<string, string> = {
-                  Alta:  active ? 'bg-green-100 text-green-700 border-green-300' : 'bg-white text-slate-500 border-slate-300 hover:border-green-300',
-                  Media: active ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-white text-slate-500 border-slate-300 hover:border-amber-300',
-                  Baja:  active ? 'bg-red-100 text-red-700 border-red-300' : 'bg-white text-slate-500 border-slate-300 hover:border-red-300',
+                  Alta:  active ? 'bg-green-100 text-green-700 border-green-300' : 'bg-surf-card text-fg-500 border-border-solid hover:border-green-300',
+                  Media: active ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-surf-card text-fg-500 border-border-solid hover:border-amber-300',
+                  Baja:  active ? 'bg-red-100 text-red-700 border-red-300' : 'bg-surf-card text-fg-500 border-border-solid hover:border-red-300',
                 };
                 return (
                   <button
@@ -498,14 +498,14 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Special Discounts</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Special Discounts</label>
           <textarea
             value={form.special_discounts}
             onChange={(e) => set('special_discounts', e.target.value)}
             placeholder="Describe any volume discounts, promotional rates, or special agreements..."
             rows={2}
             disabled={saving}
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500 resize-none text-sm"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg shadow-sm focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-blue-500 disabled:bg-surf-app disabled:text-fg-500 resize-none text-sm"
           />
         </div>
 
@@ -519,7 +519,7 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
             placeholder="Additional notes about this supplier..."
             rows={3}
             disabled={saving}
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500 resize-none text-sm"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg shadow-sm focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-blue-500 disabled:bg-surf-app disabled:text-fg-500 resize-none text-sm"
           />
         </div>
 

@@ -110,45 +110,45 @@ export function CADViewer({ board, unit }: Props) {
     icon: Icon, active, onClick, title, activeColor = 'text-blue-600 bg-blue-50',
   }: { icon: React.ComponentType<{ className?: string }>; active?: boolean; onClick: () => void; title: string; activeColor?: string }) => (
     <button onClick={onClick} title={title}
-      className={`p-1.5 rounded transition-colors ${active ? activeColor : 'text-slate-500 hover:bg-slate-100'}`}>
+      className={`p-1.5 rounded transition-colors ${active ? activeColor : 'text-fg-500 hover:bg-surf-muted'}`}>
       <Icon className="h-4 w-4" />
     </button>
   );
 
   if (!board) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-slate-100">
+      <div className="flex-1 flex items-center justify-center bg-surf-muted">
         <div className="text-center select-none">
           <div className="text-5xl mb-3">⬜</div>
-          <p className="text-slate-400 text-sm">Run optimization and select a sheet</p>
+          <p className="text-fg-400 text-sm">Run optimization and select a sheet</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-slate-100 min-w-0">
-      <div className="bg-white border-b border-slate-200 px-2 py-1 flex items-center gap-0.5 shrink-0">
+    <div className="flex-1 flex flex-col overflow-hidden bg-surf-muted min-w-0">
+      <div className="bg-surf-card border-b border-border-soft px-2 py-1 flex items-center gap-0.5 shrink-0">
         <ToolBtn icon={ZoomIn}    onClick={() => setZoom(z => Math.min(MAX_ZOOM, z * 1.25))} title="Zoom in" />
         <ToolBtn icon={ZoomOut}   onClick={() => setZoom(z => Math.max(MIN_ZOOM, z / 1.25))} title="Zoom out" />
         <ToolBtn icon={Maximize2} onClick={fitToView} title="Fit to screen" />
-        <span className="text-xs text-slate-400 px-1.5 tabular-nums w-10 text-center select-none">
+        <span className="text-xs text-fg-400 px-1.5 tabular-nums w-10 text-center select-none">
           {Math.round(zoom * 100)}%
         </span>
-        <div className="w-px h-4 bg-slate-200 mx-1" />
+        <div className="w-px h-4 bg-surf-muted mx-1" />
         <ToolBtn icon={Ruler}    active={showDimensions} onClick={() => setShowDimensions(v => !v)} title="Show dimensions" />
         <ToolBtn icon={Tag}      active={showLabels}     onClick={() => setShowLabels(v => !v)}     title="Show labels" />
         <ToolBtn icon={TreePine}  active={showGrain}      onClick={() => setShowGrain(v => !v)}      title="Show grain"
           activeColor="text-amber-600 bg-amber-50" />
         <ToolBtn icon={Square}   active={showEdgeBand}  onClick={() => setShowEdgeBand(v => !v)}  title="Show edge band"
-          activeColor="text-slate-800 bg-slate-100" />
+          activeColor="text-fg-800 bg-surf-muted" />
         <ToolBtn icon={BoxSelect} active={showOffcuts}   onClick={() => setShowOffcuts(v => !v)}    title="Show offcuts"
           activeColor="text-green-600 bg-green-50" />
         <ToolBtn icon={Disc}     active={showKerf}       onClick={() => setShowKerf(v => !v)}       title="Show kerf"
           activeColor="text-red-500 bg-red-50" />
-        <div className="w-px h-4 bg-slate-200 mx-1" />
+        <div className="w-px h-4 bg-surf-muted mx-1" />
         <ToolBtn icon={Minus} onClick={() => setLabelScale(Math.round((labelScale - 0.1) * 10) / 10)} title="Decrease text size" />
-        <span className="text-xs text-slate-400 px-0.5 tabular-nums select-none w-8 text-center">{labelScale.toFixed(1)}x</span>
+        <span className="text-xs text-fg-400 px-0.5 tabular-nums select-none w-8 text-center">{labelScale.toFixed(1)}x</span>
         <ToolBtn icon={Plus}  onClick={() => setLabelScale(Math.round((labelScale + 0.1) * 10) / 10)} title="Increase text size" />
       </div>
 

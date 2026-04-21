@@ -83,7 +83,7 @@ export function InventoryMovementsTable() {
                   ? type === 'All'
                     ? 'bg-slate-800 text-white border-slate-800'
                     : (TYPE_STYLES[type] || '') + ' border-current'
-                  : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                  : 'bg-surf-card text-fg-500 border-border-soft hover:bg-surf-app'
               }`}
             >
               {type}
@@ -94,33 +94,33 @@ export function InventoryMovementsTable() {
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Date range */}
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-slate-400 flex-shrink-0" />
+            <Calendar className="h-4 w-4 text-fg-400 flex-shrink-0" />
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="px-3 py-2 text-sm rounded-xl border border-slate-200/60 bg-white/80 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
+              className="px-3 py-2 text-sm rounded-xl border border-border-soft bg-surf-card focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
               placeholder="From"
             />
-            <span className="text-slate-400 text-sm">to</span>
+            <span className="text-fg-400 text-sm">to</span>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="px-3 py-2 text-sm rounded-xl border border-slate-200/60 bg-white/80 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
+              className="px-3 py-2 text-sm rounded-xl border border-border-soft bg-surf-card focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
               placeholder="To"
             />
           </div>
 
           {/* Item search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Search by item name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200/60 bg-white/80 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
+              className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-border-soft bg-surf-card placeholder:text-fg-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
             />
           </div>
         </div>
@@ -131,30 +131,30 @@ export function InventoryMovementsTable() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200/60 bg-slate-50/60">
-                <th className="text-left px-5 py-3 font-semibold text-slate-600">Date/Time</th>
-                <th className="text-left px-5 py-3 font-semibold text-slate-600">Item</th>
-                <th className="text-center px-5 py-3 font-semibold text-slate-600">Type</th>
-                <th className="text-right px-5 py-3 font-semibold text-slate-600">Qty</th>
-                <th className="text-right px-5 py-3 font-semibold text-slate-600 hidden sm:table-cell">Unit Cost</th>
-                <th className="text-right px-5 py-3 font-semibold text-slate-600 hidden md:table-cell">WAC</th>
-                <th className="text-left px-5 py-3 font-semibold text-slate-600 hidden lg:table-cell">Reference</th>
-                <th className="text-left px-5 py-3 font-semibold text-slate-600 hidden lg:table-cell">Done by</th>
-                <th className="text-left px-5 py-3 font-semibold text-slate-600 hidden xl:table-cell">Notes</th>
+              <tr className="border-b border-border-soft bg-surf-app">
+                <th className="text-left px-5 py-3 font-semibold text-fg-600">Date/Time</th>
+                <th className="text-left px-5 py-3 font-semibold text-fg-600">Item</th>
+                <th className="text-center px-5 py-3 font-semibold text-fg-600">Type</th>
+                <th className="text-right px-5 py-3 font-semibold text-fg-600">Qty</th>
+                <th className="text-right px-5 py-3 font-semibold text-fg-600 hidden sm:table-cell">Unit Cost</th>
+                <th className="text-right px-5 py-3 font-semibold text-fg-600 hidden md:table-cell">WAC</th>
+                <th className="text-left px-5 py-3 font-semibold text-fg-600 hidden lg:table-cell">Reference</th>
+                <th className="text-left px-5 py-3 font-semibold text-fg-600 hidden lg:table-cell">Done by</th>
+                <th className="text-left px-5 py-3 font-semibold text-fg-600 hidden xl:table-cell">Notes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-5 py-12 text-center text-slate-400">
-                    <ArrowUpDown className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                  <td colSpan={9} className="px-5 py-12 text-center text-fg-400">
+                    <ArrowUpDown className="h-8 w-8 mx-auto mb-2 text-fg-300" />
                     <p>No movements found</p>
                   </td>
                 </tr>
               ) : (
                 filtered.map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-5 py-3.5 text-slate-500 whitespace-nowrap">
+                  <tr key={m.id} className="hover:bg-surf-app transition-colors">
+                    <td className="px-5 py-3.5 text-fg-500 whitespace-nowrap">
                       {format(new Date(m.created_at), 'MMM dd, yyyy HH:mm')}
                     </td>
                     <td className="px-5 py-3.5 max-w-[200px]">
@@ -168,25 +168,25 @@ export function InventoryMovementsTable() {
                     <td className="px-5 py-3.5 text-center">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          TYPE_STYLES[m.movement_type] ?? 'bg-slate-100 text-slate-600'
+                          TYPE_STYLES[m.movement_type] ?? 'bg-surf-muted text-fg-600'
                         }`}
                       >
                         {m.movement_type}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-right tabular-nums font-medium text-slate-700">
+                    <td className="px-5 py-3.5 text-right tabular-nums font-medium text-fg-700">
                       {qtyPrefix(m.movement_type)}{m.quantity}
                     </td>
-                    <td className="px-5 py-3.5 text-right tabular-nums text-slate-600 hidden sm:table-cell">
+                    <td className="px-5 py-3.5 text-right tabular-nums text-fg-600 hidden sm:table-cell">
                       {m.unit_cost != null ? formatCurrency(m.unit_cost) : '—'}
                     </td>
-                    <td className="px-5 py-3.5 text-right tabular-nums text-slate-600 hidden md:table-cell">
+                    <td className="px-5 py-3.5 text-right tabular-nums text-fg-600 hidden md:table-cell">
                       {m.running_average_cost != null ? formatCurrency(m.running_average_cost) : '—'}
                     </td>
                     <td className="px-5 py-3.5 hidden lg:table-cell">
                       {m.reference_type ? (
                         <span className="inline-flex items-center gap-1">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surf-muted text-fg-600">
                             {m.reference_type}
                           </span>
                           {m.reference_type === 'PROJECT' && m.reference_id && (
@@ -202,10 +202,10 @@ export function InventoryMovementsTable() {
                         '—'
                       )}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-500 hidden lg:table-cell">
+                    <td className="px-5 py-3.5 text-fg-500 hidden lg:table-cell">
                       {m.created_by_member?.name ?? 'System'}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-400 hidden xl:table-cell max-w-[150px] truncate">
+                    <td className="px-5 py-3.5 text-fg-400 hidden xl:table-cell max-w-[150px] truncate">
                       {m.notes ?? '—'}
                     </td>
                   </tr>

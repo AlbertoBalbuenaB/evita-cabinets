@@ -280,14 +280,14 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
     <div className="panel-enter w-[400px] flex-shrink-0 glass-white flex flex-col max-h-[calc(100vh-200px)] sticky top-4 overflow-hidden">
       {/* Panel header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/60 bg-gradient-to-r from-slate-50/60 to-transparent">
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Task Detail</span>
+        <span className="text-xs font-semibold text-fg-500 uppercase tracking-wide">Task Detail</span>
         <div className="flex items-center gap-1">
           {dirty && (
             <Button size="sm" onClick={save} disabled={saving}>
               {saving ? 'Saving…' : 'Save'}
             </Button>
           )}
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 rounded">
+          <button onClick={onClose} className="text-fg-400 hover:text-fg-600 p-1 rounded">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -302,7 +302,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
             <textarea
               value={title}
               onChange={(e) => { setTitle(e.target.value); markDirty(); }}
-              className="w-full text-base font-semibold text-slate-900 bg-white/60 backdrop-blur-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-2 py-1 -mx-2 -my-1"
+              className="w-full text-base font-semibold text-fg-900 bg-surf-card backdrop-blur-sm resize-none focus:outline-none focus:ring-2 focus-visible:ring-focus rounded-lg px-2 py-1 -mx-2 -my-1"
               rows={2}
               placeholder="Task title…"
             />
@@ -311,13 +311,13 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
           {/* Status + Priority row */}
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-semibold text-fg-400 uppercase tracking-wide mb-1">
                 <Flag className="h-3 w-3 inline mr-1" />Status
               </label>
               <select
                 value={status}
                 onChange={(e) => { setStatus(e.target.value as TaskStatus); markDirty(); }}
-                className={`w-full text-xs font-medium px-2 py-1.5 rounded-lg border border-white/60 bg-white/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${statusCfg.color}`}
+                className={`w-full text-xs font-medium px-2 py-1.5 rounded-lg border border-white/60 bg-surf-card backdrop-blur-sm focus:outline-none focus:ring-2 focus-visible:ring-focus ${statusCfg.color}`}
               >
                 {STATUS_OPTIONS.map(([val, cfg]) => (
                   <option key={val} value={val}>{cfg.label}</option>
@@ -325,13 +325,13 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
               </select>
             </div>
             <div className="flex-1">
-              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">
+              <label className="block text-[10px] font-semibold text-fg-400 uppercase tracking-wide mb-1">
                 <Flag className="h-3 w-3 inline mr-1" />Priority
               </label>
               <select
                 value={priority}
                 onChange={(e) => { setPriority(e.target.value as TaskPriority); markDirty(); }}
-                className={`w-full text-xs font-medium px-2 py-1.5 rounded-lg border border-white/60 bg-white/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${priorityCfg.color}`}
+                className={`w-full text-xs font-medium px-2 py-1.5 rounded-lg border border-white/60 bg-surf-card backdrop-blur-sm focus:outline-none focus:ring-2 focus-visible:ring-focus ${priorityCfg.color}`}
               >
                 {PRIORITY_OPTIONS.map(([val, cfg]) => (
                   <option key={val} value={val}>{cfg.label}</option>
@@ -342,20 +342,20 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
 
           {/* Due date */}
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">
+            <label className="block text-[10px] font-semibold text-fg-400 uppercase tracking-wide mb-1">
               <Clock className="h-3 w-3 inline mr-1" />Due Date & Time
             </label>
             <input
               type="datetime-local"
               value={dueDate}
               onChange={(e) => { setDueDate(e.target.value); markDirty(); }}
-              className="w-full text-xs border border-slate-200/70 rounded-lg px-2 py-1.5 bg-white/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full text-xs border border-border-soft rounded-lg px-2 py-1.5 bg-surf-card backdrop-blur-sm focus:outline-none focus:ring-2 focus-visible:ring-focus"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">
+            <label className="block text-[10px] font-semibold text-fg-400 uppercase tracking-wide mb-1">
               Description
             </label>
             <textarea
@@ -363,13 +363,13 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
               onChange={(e) => { setDescription(e.target.value); markDirty(); }}
               rows={3}
               placeholder="Add description or links…"
-              className="w-full text-sm border border-slate-200/70 rounded-lg px-3 py-2 resize-none bg-white/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700"
+              className="w-full text-sm border border-border-soft rounded-lg px-3 py-2 resize-none bg-surf-card backdrop-blur-sm focus:outline-none focus:ring-2 focus-visible:ring-focus text-fg-700"
             />
           </div>
 
           {/* Assignees */}
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">
+            <label className="block text-[10px] font-semibold text-fg-400 uppercase tracking-wide mb-2">
               <Users className="h-3 w-3 inline mr-1" />Assignees
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -381,8 +381,8 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
                     onClick={() => toggleAssignee(m.id)}
                     className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-150 ${
                       active
-                        ? 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-sm'
-                        : 'bg-white/60 backdrop-blur-sm border border-slate-200/60 text-slate-600 hover:border-blue-200 hover:bg-white/80'
+                        ? 'bg-accent-primary text-accent-on shadow-sm'
+                        : 'bg-surf-card backdrop-blur-sm border border-border-soft text-fg-600 hover:border-blue-200 hover:bg-surf-card'
                     }`}
                   >
                     {m.name}
@@ -394,7 +394,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
 
           {/* Tags */}
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">
+            <label className="block text-[10px] font-semibold text-fg-400 uppercase tracking-wide mb-2">
               <Tag className="h-3 w-3 inline mr-1" />Tags
             </label>
             <div className="flex flex-wrap gap-1.5 mb-2">
@@ -405,7 +405,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
                     key={tag.id}
                     onClick={() => toggleTag(tag.id)}
                     className={`px-2 py-0.5 rounded text-xs font-medium transition-all border ${
-                      active ? 'text-white border-transparent' : 'bg-white border-slate-200 text-slate-600'
+                      active ? 'text-white border-transparent' : 'bg-surf-card border-border-soft text-fg-600'
                     }`}
                     style={active ? { backgroundColor: tag.color, borderColor: tag.color } : undefined}
                   >
@@ -415,19 +415,19 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
               })}
               <button
                 onClick={() => setShowNewTag((v) => !v)}
-                className="px-2 py-0.5 rounded text-xs font-medium text-slate-400 border border-dashed border-slate-300 hover:border-slate-400 hover:text-slate-600 transition-colors"
+                className="px-2 py-0.5 rounded text-xs font-medium text-fg-400 border border-dashed border-border-solid hover:border-slate-400 hover:text-fg-600 transition-colors"
               >
                 <Plus className="h-3 w-3 inline" /> New tag
               </button>
             </div>
             {showNewTag && (
-              <div className="flex items-center gap-2 p-2 bg-white/60 backdrop-blur-sm rounded-lg border border-slate-200/60">
+              <div className="flex items-center gap-2 p-2 bg-surf-card backdrop-blur-sm rounded-lg border border-border-soft">
                 <input
                   type="text"
                   value={newTagLabel}
                   onChange={(e) => setNewTagLabel(e.target.value)}
                   placeholder="Tag name"
-                  className="flex-1 text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="flex-1 text-xs border border-border-soft rounded px-2 py-1 focus:outline-none focus:ring-1 focus-visible:ring-focus"
                   onKeyDown={(e) => { if (e.key === 'Enter') createTag(); }}
                 />
                 <div className="flex gap-1 flex-wrap max-w-[120px]">
@@ -447,26 +447,26 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
 
           {/* Subtasks */}
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">
+            <label className="block text-[10px] font-semibold text-fg-400 uppercase tracking-wide mb-2">
               <CheckSquare className="h-3 w-3 inline mr-1" />Subtasks
               {subtasks.length > 0 && (
-                <span className="ml-1 text-slate-400">{doneSubtasks}/{subtasks.length}</span>
+                <span className="ml-1 text-fg-400">{doneSubtasks}/{subtasks.length}</span>
               )}
             </label>
             <div className="space-y-1 mb-2">
               {subtasks.map((sub) => (
-                <div key={sub.id} className="flex items-center gap-2 py-1 px-2 rounded hover:bg-white/60 group">
+                <div key={sub.id} className="flex items-center gap-2 py-1 px-2 rounded hover:bg-surf-card group">
                   <button onClick={() => toggleSubtaskStatus(sub)}>
                     <span className={`block w-3.5 h-3.5 rounded-full border-2 transition-colors ${
-                      sub.status === 'done' ? 'bg-green-500 border-green-500' : 'border-slate-300'
+                      sub.status === 'done' ? 'bg-green-500 border-green-500' : 'border-border-solid'
                     }`} />
                   </button>
-                  <span className={`flex-1 text-xs ${sub.status === 'done' ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+                  <span className={`flex-1 text-xs ${sub.status === 'done' ? 'line-through text-fg-400' : 'text-fg-700'}`}>
                     {sub.title}
                   </span>
                   <button
                     onClick={() => deleteSubtask(sub.id)}
-                    className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all"
+                    className="opacity-0 group-hover:opacity-100 text-fg-300 hover:text-red-500 transition-all"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -480,12 +480,12 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
                 onChange={(e) => setNewSubtaskTitle(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') addSubtask(); }}
                 placeholder="Add subtask…"
-                className="flex-1 text-xs border border-slate-200/70 rounded-lg px-2 py-1.5 bg-white/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 text-xs border border-border-soft rounded-lg px-2 py-1.5 bg-surf-card backdrop-blur-sm focus:outline-none focus:ring-2 focus-visible:ring-focus"
               />
               <button
                 onClick={addSubtask}
                 disabled={!newSubtaskTitle.trim()}
-                className="text-blue-600 hover:text-blue-700 disabled:text-slate-300 transition-colors"
+                className="text-blue-600 hover:text-blue-700 disabled:text-fg-300 transition-colors"
               >
                 <Plus className="h-4 w-4" />
               </button>
@@ -494,7 +494,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
 
           {/* Deliverables */}
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">
+            <label className="block text-[10px] font-semibold text-fg-400 uppercase tracking-wide mb-2">
               <Paperclip className="h-3 w-3 inline mr-1" />Deliverables
             </label>
             <TaskDeliverables
@@ -506,9 +506,9 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
 
           {/* Comments */}
           <div>
-            <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">
+            <label className="block text-[10px] font-semibold text-fg-400 uppercase tracking-wide mb-2">
               <MessageSquare className="h-3 w-3 inline mr-1" />Comments
-              {comments.length > 0 && <span className="ml-1 text-slate-400">{comments.length}</span>}
+              {comments.length > 0 && <span className="ml-1 text-fg-400">{comments.length}</span>}
             </label>
             <TaskComments
               taskId={task.id}
@@ -523,7 +523,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
           <div className="pt-2 border-t border-white/60">
             {showDeleteConfirm ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-600">Delete this task?</span>
+                <span className="text-xs text-fg-600">Delete this task?</span>
                 <button
                   onClick={() => onDelete(task.id)}
                   className="text-xs font-semibold text-red-600 hover:text-red-700"
@@ -532,7 +532,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="text-xs text-slate-400 hover:text-slate-600"
+                  className="text-xs text-fg-400 hover:text-fg-600"
                 >
                   Cancel
                 </button>
@@ -540,7 +540,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
             ) : (
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-500 transition-colors"
+                className="flex items-center gap-1.5 text-xs text-fg-400 hover:text-red-500 transition-colors"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Delete task

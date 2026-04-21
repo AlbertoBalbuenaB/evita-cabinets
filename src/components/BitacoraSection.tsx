@@ -44,7 +44,7 @@ interface LogTypeConfig {
 }
 
 const LOG_TYPES: Record<LogType, LogTypeConfig> = {
-  note:      { label: 'Note',      Icon: FileText,       color: 'text-slate-600',  bg: 'bg-slate-50',   border: 'border-slate-300',  badgeBg: 'bg-slate-100'  },
+  note:      { label: 'Note',      Icon: FileText,       color: 'text-fg-600',  bg: 'bg-surf-app',   border: 'border-border-solid',  badgeBg: 'bg-surf-muted'  },
   change:    { label: 'Change',    Icon: RefreshCw,      color: 'text-amber-600',  bg: 'bg-amber-50',   border: 'border-amber-400',  badgeBg: 'bg-amber-100'  },
   decision:  { label: 'Decision',  Icon: CheckCircle,    color: 'text-blue-600',   bg: 'bg-blue-50',    border: 'border-blue-400',   badgeBg: 'bg-blue-100'   },
   risk:      { label: 'Risk',      Icon: AlertTriangle,  color: 'text-orange-600', bg: 'bg-orange-50',  border: 'border-orange-400', badgeBg: 'bg-orange-100' },
@@ -143,9 +143,9 @@ const SuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>(
 
     if (!items.length) {
       return (
-        <div className="bg-white border border-slate-200 rounded-xl shadow-xl p-4 w-72 text-center">
-          <p className="text-xs text-slate-500 font-medium">No results</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Keep typing to search…</p>
+        <div className="bg-surf-card border border-border-soft rounded-xl shadow-xl p-4 w-72 text-center">
+          <p className="text-xs text-fg-500 font-medium">No results</p>
+          <p className="text-[10px] text-fg-400 mt-0.5">Keep typing to search…</p>
         </div>
       );
     }
@@ -160,14 +160,14 @@ const SuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>(
     let flatIdx = 0;
 
     return (
-      <div className="bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden w-80 max-h-80 overflow-y-auto">
+      <div className="bg-surf-card border border-border-soft rounded-xl shadow-xl overflow-hidden w-80 max-h-80 overflow-y-auto">
         {(Object.keys(groups) as MentionItem['type'][]).map((type) => {
           const cfg = MENTION_TYPE_CONFIG[type];
           const { Icon } = cfg;
           return (
             <div key={type}>
-              <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-100 sticky top-0">
-                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+              <div className="px-3 py-1.5 bg-surf-app border-b border-border-soft sticky top-0">
+                <span className="text-[10px] font-semibold text-fg-500 uppercase tracking-wider">
                   {cfg.groupLabel}
                 </span>
               </div>
@@ -180,21 +180,21 @@ const SuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>(
                     type="button"
                     onClick={() => command(item)}
                     className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors ${
-                      isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'
+                      isSelected ? 'bg-blue-50' : 'hover:bg-surf-app'
                     }`}
                   >
                     <div className={`w-7 h-7 rounded-lg ${cfg.iconBg} flex items-center justify-center flex-shrink-0`}>
                       <Icon className={`h-3.5 w-3.5 ${cfg.iconColor}`} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className={`text-sm font-medium truncate ${isSelected ? 'text-blue-900' : 'text-slate-800'}`}>
+                      <p className={`text-sm font-medium truncate ${isSelected ? 'text-blue-900' : 'text-fg-800'}`}>
                         {item.label}
                       </p>
                       {item.subtitle && (
-                        <p className="text-xs text-slate-400 truncate">{item.subtitle}</p>
+                        <p className="text-xs text-fg-400 truncate">{item.subtitle}</p>
                       )}
                     </div>
-                    {isSelected && <span className="text-slate-400 text-xs flex-shrink-0">↵</span>}
+                    {isSelected && <span className="text-fg-400 text-xs flex-shrink-0">↵</span>}
                   </button>
                 );
               })}
@@ -374,7 +374,7 @@ function Toolbar({ editor }: ToolbarProps) {
         title={title}
         onMouseDown={(e) => { e.preventDefault(); onMouseDown(); }}
         className={`p-1.5 rounded transition-colors ${
-          active ? 'bg-slate-200 text-slate-900' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+          active ? 'bg-surf-muted text-fg-900' : 'text-fg-500 hover:bg-surf-muted hover:text-fg-800'
         }`}
       >
         <Icon className="h-3.5 w-3.5" />
@@ -407,10 +407,10 @@ function Toolbar({ editor }: ToolbarProps) {
     setLinkUrl('');
   }
 
-  const sep = <div className="w-px h-4 bg-slate-200 mx-0.5 flex-shrink-0" />;
+  const sep = <div className="w-px h-4 bg-surf-muted mx-0.5 flex-shrink-0" />;
 
   return (
-    <div className="flex items-center flex-wrap gap-0.5 px-2 py-1.5 border-b border-slate-200 bg-slate-50 rounded-t-lg relative">
+    <div className="flex items-center flex-wrap gap-0.5 px-2 py-1.5 border-b border-border-soft bg-surf-app rounded-t-lg relative">
 
       {/* Headings */}
       {tbBtn(editor.isActive('heading', { level: 1 }), () => editor.chain().focus().toggleHeading({ level: 1 }).run(), Heading1, 'Heading 1')}
@@ -436,7 +436,7 @@ function Toolbar({ editor }: ToolbarProps) {
           title="Text color"
           onMouseDown={(e) => { e.preventDefault(); setColorOpen((o) => !o); setLinkOpen(false); }}
           className={`p-1.5 rounded transition-colors flex flex-col items-center gap-0 ${
-            currentColor ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+            currentColor ? 'bg-surf-muted text-fg-900' : 'text-fg-500 hover:bg-surf-muted hover:text-fg-800'
           }`}
         >
           <Type className="h-3 w-3" />
@@ -449,8 +449,8 @@ function Toolbar({ editor }: ToolbarProps) {
           <>
             {/* Click-away backdrop */}
             <div className="fixed inset-0 z-40" onMouseDown={() => setColorOpen(false)} />
-            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-3 min-w-[140px]">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Text color</p>
+            <div className="absolute top-full left-0 mt-1 z-50 bg-surf-card border border-border-soft rounded-xl shadow-xl p-3 min-w-[140px]">
+              <p className="text-[10px] font-semibold text-fg-400 uppercase tracking-wide mb-2">Text color</p>
               <div className="grid grid-cols-5 gap-1.5">
                 {TEXT_COLORS.map((c) => (
                   <button
@@ -461,7 +461,7 @@ function Toolbar({ editor }: ToolbarProps) {
                     className={`w-6 h-6 rounded-full border-2 transition-transform hover:scale-110 ${
                       (c.value === null && !currentColor) || currentColor === c.value
                         ? 'border-slate-500 scale-110'
-                        : 'border-transparent hover:border-slate-300'
+                        : 'border-transparent hover:border-border-solid'
                     }`}
                     style={{ backgroundColor: c.display }}
                   />
@@ -478,8 +478,8 @@ function Toolbar({ editor }: ToolbarProps) {
         {linkOpen && (
           <>
             <div className="fixed inset-0 z-40" onMouseDown={() => setLinkOpen(false)} />
-            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-3 w-72">
-              <p className="text-xs font-semibold text-slate-700 mb-2">Insert link</p>
+            <div className="absolute top-full left-0 mt-1 z-50 bg-surf-card border border-border-soft rounded-xl shadow-xl p-3 w-72">
+              <p className="text-xs font-semibold text-fg-700 mb-2">Insert link</p>
               <input
                 type="url"
                 value={linkUrl}
@@ -490,7 +490,7 @@ function Toolbar({ editor }: ToolbarProps) {
                 }}
                 placeholder="https://..."
                 autoFocus
-                className="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                className="w-full px-2.5 py-1.5 text-sm border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus mb-2"
               />
               <div className="flex gap-1.5">
                 <Button size="sm" onClick={applyLink}>Apply</Button>
@@ -539,7 +539,7 @@ function ReplyEditor({ getMentionItems, onSubmit, onCancel, disabled }: ReplyEdi
     ],
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[48px] px-2.5 py-2 text-xs text-slate-700',
+        class: 'prose prose-sm max-w-none focus:outline-none min-h-[48px] px-2.5 py-2 text-xs text-fg-700',
       },
     },
     onCreate: ({ editor: e }) => setIsEmpty(e.getText().trim() === ''),
@@ -557,7 +557,7 @@ function ReplyEditor({ getMentionItems, onSubmit, onCancel, disabled }: ReplyEdi
   return (
     <div className="space-y-1.5">
       <div
-        className="border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-indigo-400 focus-within:border-indigo-400 bg-white"
+        className="border border-border-solid rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-indigo-400 focus-within:border-indigo-400 bg-surf-card"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSubmit(); }
           if (e.key === 'Escape') onCancel();
@@ -572,7 +572,7 @@ function ReplyEditor({ getMentionItems, onSubmit, onCancel, disabled }: ReplyEdi
         <Button size="sm" variant="ghost" onClick={onCancel}>
           <X className="h-3.5 w-3.5" />
         </Button>
-        <span className="text-[10px] text-slate-400">Ctrl+Enter to post · @ to mention</span>
+        <span className="text-[10px] text-fg-400">Ctrl+Enter to post · @ to mention</span>
       </div>
     </div>
   );
@@ -598,8 +598,8 @@ interface LogEntryProps {
 function AuthorAvatar({ name, className = '' }: { name: string; className?: string }) {
   const initials = name.split(' ').map((n) => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
   return (
-    <div className={`rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 ${className}`}>
-      <span className="text-[9px] font-bold text-indigo-600 uppercase leading-none">{initials}</span>
+    <div className={`rounded-full bg-accent-tint-strong flex items-center justify-center flex-shrink-0 ${className}`}>
+      <span className="text-[9px] font-bold text-accent-text uppercase leading-none">{initials}</span>
     </div>
   );
 }
@@ -707,7 +707,7 @@ function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, 
   }
 
   return (
-    <div className={`group relative rounded-lg border-l-4 ${cfg.border} ${cfg.bg} border border-slate-200/60 p-4 transition-shadow hover:shadow-sm`}>
+    <div className={`group relative rounded-lg border-l-4 ${cfg.border} ${cfg.bg} border border-border-soft p-4 transition-shadow hover:shadow-sm`}>
       {/* Header row */}
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${cfg.badgeBg} ${cfg.color}`}>
@@ -716,32 +716,32 @@ function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, 
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <div className="text-right">
-            <p className="text-xs text-slate-400 flex items-center gap-1">
+            <p className="text-xs text-fg-400 flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {formatTimestamp(log.created_at)}
             </p>
             {log.updated_at && (
-              <p className="text-[10px] text-slate-400 italic">edited</p>
+              <p className="text-[10px] text-fg-400 italic">edited</p>
             )}
           </div>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => setShowReplyForm((v) => !v)}
-              className="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-white/80"
+              className="text-fg-400 hover:text-accent-text p-1 rounded hover:bg-surf-card"
               title="Reply"
             >
               <CornerDownRight className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={onEdit}
-              className="text-slate-400 hover:text-blue-600 p-1 rounded hover:bg-white/80"
+              className="text-fg-400 hover:text-blue-600 p-1 rounded hover:bg-surf-card"
               title="Edit entry"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={onDelete}
-              className="text-slate-400 hover:text-red-500 p-1 rounded hover:bg-white/80"
+              className="text-fg-400 hover:text-red-500 p-1 rounded hover:bg-surf-card"
               title="Delete entry"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -752,7 +752,7 @@ function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, 
 
       {/* Rich content rendered via generateHTML */}
       <div
-        className="bitacora-content text-sm text-slate-700"
+        className="bitacora-content text-sm text-fg-700"
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: htmlContent }}
         onClick={handleClick}
@@ -760,19 +760,19 @@ function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, 
 
       {/* Author footer */}
       {log.author_name && (
-        <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center gap-1.5">
+        <div className="mt-2 pt-2 border-t border-border-soft flex items-center gap-1.5">
           <AuthorAvatar name={log.author_name} className="w-5 h-5" />
-          <span className="text-xs text-slate-500">{log.author_name}</span>
+          <span className="text-xs text-fg-500">{log.author_name}</span>
         </div>
       )}
 
       {/* Thread replies */}
       {(replies.length > 0 || showReplyForm) && (
-        <div className="mt-3 pt-3 border-t border-slate-200/60 space-y-2.5">
+        <div className="mt-3 pt-3 border-t border-border-soft space-y-2.5">
           {replies.length > 0 && (
             <div className="flex items-center gap-1.5 mb-1">
-              <MessageSquare className="h-3 w-3 text-slate-400" />
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <MessageSquare className="h-3 w-3 text-fg-400" />
+              <span className="text-[10px] font-semibold text-fg-400 uppercase tracking-wider">
                 {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
               </span>
             </div>
@@ -785,7 +785,7 @@ function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, 
             if (isEditing) {
               return (
                 <div key={reply.id} className="pl-1 pt-1">
-                  <p className="text-[10px] text-slate-400 mb-1">Editing reply</p>
+                  <p className="text-[10px] text-fg-400 mb-1">Editing reply</p>
                   <ReplyEditor
                     getMentionItems={getMentionItems}
                     onSubmit={(content) => handleEditReply(reply.id, content)}
@@ -800,25 +800,25 @@ function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, 
                 <div className="flex-shrink-0 mt-0.5">
                   {reply.author_name
                     ? <AuthorAvatar name={reply.author_name} className="w-5 h-5" />
-                    : <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center"><User className="h-2.5 w-2.5 text-slate-400" /></div>
+                    : <div className="w-5 h-5 rounded-full bg-surf-muted flex items-center justify-center"><User className="h-2.5 w-2.5 text-fg-400" /></div>
                   }
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-slate-700">{reply.author_name ?? 'Anonymous'}</span>
-                    <span className="text-[10px] text-slate-400">{formatShortTimestamp(reply.created_at)}</span>
+                    <span className="text-xs font-medium text-fg-700">{reply.author_name ?? 'Anonymous'}</span>
+                    <span className="text-[10px] text-fg-400">{formatShortTimestamp(reply.created_at)}</span>
                     {isOwnReply && (
                       <span className="flex items-center gap-1 opacity-0 group-hover/reply:opacity-100 transition-opacity">
                         <button
                           onClick={() => setEditingReplyId(reply.id)}
-                          className="text-slate-400 hover:text-blue-600 p-0.5 rounded"
+                          className="text-fg-400 hover:text-blue-600 p-0.5 rounded"
                           title="Edit reply"
                         >
                           <Pencil className="h-2.5 w-2.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteReply(reply.id)}
-                          className="text-slate-400 hover:text-red-500 p-0.5 rounded"
+                          className="text-fg-400 hover:text-red-500 p-0.5 rounded"
                           title="Delete reply"
                         >
                           <Trash2 className="h-2.5 w-2.5" />
@@ -827,9 +827,9 @@ function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, 
                     )}
                   </div>
                   {isRichContent(reply.comment) ? (
-                    <div className="text-xs text-slate-600 mt-0.5 prose prose-sm max-w-none [&_.mention-link]:text-purple-600 [&_.mention-link]:no-underline" dangerouslySetInnerHTML={{ __html: renderContent(reply.comment) }} />
+                    <div className="text-xs text-fg-600 mt-0.5 prose prose-sm max-w-none [&_.mention-link]:text-purple-600 [&_.mention-link]:no-underline" dangerouslySetInnerHTML={{ __html: renderContent(reply.comment) }} />
                   ) : (
-                    <p className="text-xs text-slate-600 mt-0.5 whitespace-pre-wrap">{reply.comment}</p>
+                    <p className="text-xs text-fg-600 mt-0.5 whitespace-pre-wrap">{reply.comment}</p>
                   )}
                 </div>
               </div>
@@ -841,7 +841,7 @@ function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, 
               <div className="flex-shrink-0 mt-0.5">
                 {currentMember?.name
                   ? <AuthorAvatar name={currentMember.name} className="w-5 h-5" />
-                  : <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center"><User className="h-2.5 w-2.5 text-slate-400" /></div>
+                  : <div className="w-5 h-5 rounded-full bg-surf-muted flex items-center justify-center"><User className="h-2.5 w-2.5 text-fg-400" /></div>
                 }
               </div>
               <div className="flex-1">
@@ -861,7 +861,7 @@ function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, 
       {replies.length === 0 && !showReplyForm && (
         <button
           onClick={() => setShowReplyForm(true)}
-          className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-slate-400 hover:text-indigo-600 flex items-center gap-1"
+          className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-fg-400 hover:text-accent-text flex items-center gap-1"
         >
           <CornerDownRight className="h-3 w-3" />
           Reply
@@ -951,7 +951,7 @@ function EntryForm({ getMentionItems, initialContent, initialType = 'note', init
               className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors ${
                 isActive
                   ? `${cfg.badgeBg} ${cfg.color} ${cfg.border} font-semibold`
-                  : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'
+                  : 'bg-surf-card text-fg-500 border-border-soft hover:border-border-solid hover:text-fg-700'
               }`}
             >
               <Icon className="h-3 w-3" />
@@ -962,7 +962,7 @@ function EntryForm({ getMentionItems, initialContent, initialType = 'note', init
       </div>
 
       {/* Editor */}
-      <div className="border border-slate-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+      <div className="border border-border-solid rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
         <Toolbar editor={editor} />
         <div
           className="px-3 py-2 min-h-[80px] text-sm"
@@ -981,18 +981,18 @@ function EntryForm({ getMentionItems, initialContent, initialType = 'note', init
           {authorName ? (
             <>
               <AuthorAvatar name={authorName} className="w-5 h-5" />
-              <span className="text-xs text-slate-600">{authorName}</span>
+              <span className="text-xs text-fg-600">{authorName}</span>
             </>
           ) : (
             <>
-              <User className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-              <span className="text-xs text-slate-400 italic">No user session</span>
+              <User className="h-3.5 w-3.5 text-fg-400 flex-shrink-0" />
+              <span className="text-xs text-fg-400 italic">No user session</span>
             </>
           )}
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          <p className="text-xs text-slate-400 hidden sm:block">Ctrl+Enter to save · @ to mention</p>
+          <p className="text-xs text-fg-400 hidden sm:block">Ctrl+Enter to save · @ to mention</p>
           {onCancel && (
             <Button size="sm" variant="ghost" onClick={onCancel}>
               <X className="h-3.5 w-3.5 mr-1" />
@@ -1234,29 +1234,29 @@ export function BitacoraSection({ projectId }: Props) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
-        <div className="animate-pulse h-6 bg-slate-100 rounded w-40" />
-        <div className="animate-pulse h-24 bg-slate-100 rounded" />
-        <div className="animate-pulse h-20 bg-slate-100 rounded" />
+      <div className="bg-surf-card rounded-lg border border-border-soft p-4 space-y-3">
+        <div className="animate-pulse h-6 bg-surf-muted rounded w-40" />
+        <div className="animate-pulse h-24 bg-surf-muted rounded" />
+        <div className="animate-pulse h-20 bg-surf-muted rounded" />
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-5">
+    <div className="bg-surf-card rounded-lg border border-border-soft p-5 space-y-5">
       {/* Header */}
       <div className="flex items-center gap-2">
         <ScrollText className="h-5 w-5 text-amber-600" />
-        <h3 className="text-lg font-semibold text-slate-900">Project Log</h3>
+        <h3 className="text-lg font-semibold text-fg-900">Project Log</h3>
         {logs.length > 0 && (
-          <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+          <span className="text-xs text-fg-500 bg-surf-muted px-2 py-0.5 rounded-full">
             {logs.length} {logs.length === 1 ? 'entry' : 'entries'}
           </span>
         )}
       </div>
 
       {/* New entry form */}
-      <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50">
+      <div className="border border-border-soft rounded-lg p-4 bg-surf-app">
         <EntryForm
           getMentionItems={getMentionItems}
           saving={saving}
@@ -1267,13 +1267,13 @@ export function BitacoraSection({ projectId }: Props) {
       {/* Filter bar */}
       {logs.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
-          <Filter className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+          <Filter className="h-3.5 w-3.5 text-fg-400 flex-shrink-0" />
           <button
             onClick={() => setFilterType('all')}
             className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
               filterType === 'all'
                 ? 'bg-slate-800 text-white border-slate-800'
-                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                : 'bg-surf-card text-fg-500 border-border-soft hover:border-border-solid'
             }`}
           >
             All ({logs.length})
@@ -1289,7 +1289,7 @@ export function BitacoraSection({ projectId }: Props) {
                 className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                   filterType === type
                     ? `${cfg.badgeBg} ${cfg.color} ${cfg.border} font-semibold`
-                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                    : 'bg-surf-card text-fg-500 border-border-soft hover:border-border-solid'
                 }`}
               >
                 {cfg.label} ({count})
@@ -1301,7 +1301,7 @@ export function BitacoraSection({ projectId }: Props) {
 
       {/* Log entries */}
       {filteredLogs.length === 0 ? (
-        <div className="py-10 text-center text-slate-400">
+        <div className="py-10 text-center text-fg-400">
           <ScrollText className="h-8 w-8 mx-auto mb-2 opacity-30" />
           <p className="text-sm">{filterType === 'all' ? 'No entries yet' : 'No entries of this type'}</p>
         </div>
@@ -1310,7 +1310,7 @@ export function BitacoraSection({ projectId }: Props) {
           {filteredLogs.map((log) =>
             editingId === log.id ? (
               <div key={log.id} className="border border-blue-200 rounded-lg p-4 bg-blue-50/30">
-                <p className="text-xs text-slate-400 mb-3">Editing entry</p>
+                <p className="text-xs text-fg-400 mb-3">Editing entry</p>
                 <EntryForm
                   getMentionItems={getMentionItems}
                   initialContent={log.comment}

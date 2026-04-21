@@ -52,10 +52,10 @@ const PUNCTUALITY_STYLES: Record<string, string> = {
 
 function SectionCard({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
+    <div className="bg-surf-app border border-border-soft rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-slate-400">{icon}</span>
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{title}</h3>
+        <span className="text-fg-400">{icon}</span>
+        <h3 className="text-xs font-semibold text-fg-500 uppercase tracking-wide">{title}</h3>
       </div>
       {children}
     </div>
@@ -64,27 +64,27 @@ function SectionCard({ icon, title, children }: { icon: React.ReactNode; title: 
 
 function DetailRow({ icon, label, value }: { icon?: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-3 py-2.5 border-b border-slate-200/40 last:border-0">
-      {icon && <div className="flex-shrink-0 mt-0.5 text-slate-400">{icon}</div>}
+    <div className="flex items-start gap-3 py-2.5 border-b border-border-soft last:border-0">
+      {icon && <div className="flex-shrink-0 mt-0.5 text-fg-400">{icon}</div>}
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
-        <div className="text-sm text-slate-800">{value}</div>
+        <p className="text-xs font-semibold text-fg-400 uppercase tracking-wide mb-0.5">{label}</p>
+        <div className="text-sm text-fg-800">{value}</div>
       </div>
     </div>
   );
 }
 
 function StarRating({ score }: { score: number | null }) {
-  if (score == null) return <span className="text-sm text-slate-400">—</span>;
+  if (score == null) return <span className="text-sm text-fg-400">—</span>;
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={`h-4 w-4 ${i <= score ? 'text-amber-400 fill-amber-400' : 'text-slate-200 fill-slate-200'}`}
+          className={`h-4 w-4 ${i <= score ? 'text-amber-400 fill-amber-400' : 'text-fg-400 fill-slate-200'}`}
         />
       ))}
-      <span className="ml-1.5 text-sm text-slate-600">{score}/5</span>
+      <span className="ml-1.5 text-sm text-fg-600">{score}/5</span>
     </div>
   );
 }
@@ -198,18 +198,18 @@ export function SupplierPage() {
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate(backTo)}
-            className="flex-shrink-0 p-2 rounded-xl bg-white/60 hover:bg-white/80 border border-slate-200/50 text-slate-600 hover:text-slate-800 transition-colors"
+            className="flex-shrink-0 p-2 rounded-xl bg-surf-card hover:bg-surf-card border border-border-soft text-fg-600 hover:text-fg-800 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-sm text-slate-400">
+            <div className="flex items-center gap-1.5 text-sm text-fg-400">
               <button onClick={() => navigate(backTo)} className="hover:text-blue-600 transition-colors">
                 {backTo.startsWith('/prices') ? 'Inventory / Suppliers' : 'Suppliers'}
               </button>
               <span>/</span>
             </div>
-            <h1 className="text-lg font-semibold text-slate-900 truncate">{supplier.name}</h1>
+            <h1 className="text-lg font-semibold text-fg-900 truncate">{supplier.name}</h1>
           </div>
         </div>
         {isAdmin && (
@@ -218,8 +218,8 @@ export function SupplierPage() {
               onClick={handleToggleActive}
               className={`p-2 rounded-xl border transition-colors ${
                 supplier.is_active
-                  ? 'bg-white/60 hover:bg-amber-50 border-slate-200/50 text-slate-400 hover:text-amber-600 hover:border-amber-200'
-                  : 'bg-white/60 hover:bg-green-50 border-slate-200/50 text-slate-400 hover:text-green-600 hover:border-green-200'
+                  ? 'bg-surf-card hover:bg-amber-50 border-border-soft text-fg-400 hover:text-amber-600 hover:border-amber-200'
+                  : 'bg-surf-card hover:bg-green-50 border-border-soft text-fg-400 hover:text-green-600 hover:border-green-200'
               }`}
               title={supplier.is_active ? 'Deactivate supplier' : 'Activate supplier'}
             >
@@ -266,8 +266,8 @@ export function SupplierPage() {
           </div>
 
           {/* Item count */}
-          <div className="flex items-center gap-1.5 text-sm text-slate-500">
-            <Package className="h-4 w-4 text-slate-400" />
+          <div className="flex items-center gap-1.5 text-sm text-fg-500">
+            <Package className="h-4 w-4 text-fg-400" />
             <span>{itemCount} linked item{itemCount !== 1 ? 's' : ''}</span>
           </div>
         </div>
@@ -275,7 +275,7 @@ export function SupplierPage() {
         {/* Supplier name + logo */}
         <div className="flex items-center gap-4">
           {supplier.logo_url && (
-            <div className="h-14 w-14 rounded-xl border border-slate-200/70 bg-white flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+            <div className="h-14 w-14 rounded-xl border border-border-soft bg-surf-card flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
               <img
                 src={supplier.logo_url}
                 alt={`${supplier.name} logo`}
@@ -284,7 +284,7 @@ export function SupplierPage() {
               />
             </div>
           )}
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">{supplier.name}</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-fg-900">{supplier.name}</h2>
         </div>
 
         {/* Categories */}
@@ -303,7 +303,7 @@ export function SupplierPage() {
         )}
 
         {/* Meta */}
-        <div className="mt-4 flex items-center gap-4 text-xs text-slate-400">
+        <div className="mt-4 flex items-center gap-4 text-xs text-fg-400">
           <span className="flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
             Added {formatDate(supplier.created_at)}
@@ -321,9 +321,9 @@ export function SupplierPage() {
           {/* 1. Contact Information */}
           <SectionCard icon={<User className="h-4 w-4" />} title="Contact Information">
             {!supplier.contact_name && !supplier.phone && !supplier.email && !supplier.website && !supplier.address ? (
-              <p className="text-sm text-slate-400 py-1">No contact information added yet.</p>
+              <p className="text-sm text-fg-400 py-1">No contact information added yet.</p>
             ) : (
-              <div className="divide-y divide-slate-200/40">
+              <div className="divide-y divide-border-soft">
                 {supplier.contact_name && (
                   <DetailRow icon={<User className="h-4 w-4" />} label="Contact" value={supplier.contact_name} />
                 )}
@@ -395,7 +395,7 @@ export function SupplierPage() {
           <SectionCard icon={<ShieldCheck className="h-4 w-4" />} title="Supplier Evaluation">
             {supplier.quality_score == null && supplier.punctuality == null && !supplier.last_evaluation_date ? (
               <div className="text-center py-4">
-                <p className="text-sm text-slate-400">No evaluation data yet.</p>
+                <p className="text-sm text-fg-400">No evaluation data yet.</p>
                 {isAdmin && (
                   <button
                     onClick={() => setIsModalOpen(true)}
@@ -406,7 +406,7 @@ export function SupplierPage() {
                 )}
               </div>
             ) : (
-              <div className="divide-y divide-slate-200/40">
+              <div className="divide-y divide-border-soft">
                 <DetailRow
                   icon={<Star className="h-4 w-4" />}
                   label="Quality Score"
@@ -417,11 +417,11 @@ export function SupplierPage() {
                   label="Punctuality"
                   value={
                     supplier.punctuality ? (
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${PUNCTUALITY_STYLES[supplier.punctuality] ?? 'bg-slate-100 text-slate-600'}`}>
+                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${PUNCTUALITY_STYLES[supplier.punctuality] ?? 'bg-surf-muted text-fg-600'}`}>
                         {supplier.punctuality}
                       </span>
                     ) : (
-                      <span className="text-slate-400">—</span>
+                      <span className="text-fg-400">—</span>
                     )
                   }
                 />
@@ -437,9 +437,9 @@ export function SupplierPage() {
           {/* 3. Commercial Terms */}
           <SectionCard icon={<DollarSign className="h-4 w-4" />} title="Commercial Terms">
             {!supplier.payment_terms && supplier.lead_time_days == null && !supplier.delivery_terms && !supplier.special_discounts && supplier.min_purchase_amount == null ? (
-              <p className="text-sm text-slate-400 py-1">No commercial terms added yet.</p>
+              <p className="text-sm text-fg-400 py-1">No commercial terms added yet.</p>
             ) : (
-              <div className="divide-y divide-slate-200/40">
+              <div className="divide-y divide-border-soft">
                 {supplier.payment_terms && (
                   <DetailRow icon={<FileText className="h-4 w-4" />} label="Terms of Payment" value={supplier.payment_terms} />
                 )}
@@ -469,37 +469,37 @@ export function SupplierPage() {
           {/* Notes */}
           {supplier.notes && (
             <SectionCard icon={<FileText className="h-4 w-4" />} title="Notes">
-              <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{supplier.notes}</p>
+              <p className="text-sm text-fg-700 whitespace-pre-wrap leading-relaxed">{supplier.notes}</p>
             </SectionCard>
           )}
 
           {/* 4. Products */}
           <SectionCard icon={<Link2 className="h-4 w-4" />} title="Catalog Products">
             {products.length === 0 ? (
-              <p className="text-sm text-slate-400 py-2">No catalog items linked to this supplier yet.</p>
+              <p className="text-sm text-fg-400 py-2">No catalog items linked to this supplier yet.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-slate-200/40">
-                      <th className="text-left py-2 pr-2 font-semibold text-slate-400">Item</th>
-                      <th className="text-left py-2 px-2 font-semibold text-slate-400">SKU</th>
-                      <th className="text-right py-2 px-2 font-semibold text-slate-400">Price</th>
-                      <th className="text-center py-2 pl-2 font-semibold text-slate-400">Primary</th>
+                    <tr className="border-b border-border-soft">
+                      <th className="text-left py-2 pr-2 font-semibold text-fg-400">Item</th>
+                      <th className="text-left py-2 px-2 font-semibold text-fg-400">SKU</th>
+                      <th className="text-right py-2 px-2 font-semibold text-fg-400">Price</th>
+                      <th className="text-center py-2 pl-2 font-semibold text-fg-400">Primary</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {products.map((p) => (
                       <tr
                         key={p.id}
-                        className="hover:bg-slate-100/50 cursor-pointer transition-colors"
+                        className="hover:bg-surf-muted cursor-pointer transition-colors"
                         onClick={() => p.price_list_item && navigate(`/prices/${p.price_list_item.id}`)}
                       >
-                        <td className="py-2 pr-2 text-slate-700 font-medium">
+                        <td className="py-2 pr-2 text-fg-700 font-medium">
                           {p.price_list_item?.concept_description ?? '—'}
                         </td>
-                        <td className="py-2 px-2 text-slate-500 font-mono">{p.supplier_sku ?? '—'}</td>
-                        <td className="py-2 px-2 text-right tabular-nums text-slate-700">
+                        <td className="py-2 px-2 text-fg-500 font-mono">{p.supplier_sku ?? '—'}</td>
+                        <td className="py-2 px-2 text-right tabular-nums text-fg-700">
                           {p.supplier_price != null ? formatCurrency(p.supplier_price) : '—'}
                         </td>
                         <td className="py-2 pl-2 text-center">
@@ -520,17 +520,17 @@ export function SupplierPage() {
 
           {/* Metadata */}
           <SectionCard icon={<Clock className="h-4 w-4" />} title="Metadata">
-            <div className="space-y-2 text-sm text-slate-600">
+            <div className="space-y-2 text-sm text-fg-600">
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Added</span>
+                <span className="text-fg-400">Added</span>
                 <span>{formatDate(supplier.created_at)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Last Updated</span>
+                <span className="text-fg-400">Last Updated</span>
                 <span>{formatDate(supplier.updated_at)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Status</span>
+                <span className="text-fg-400">Status</span>
                 <span className={supplier.is_active ? 'text-green-600' : 'text-red-500'}>
                   {supplier.is_active ? 'Active' : 'Inactive'}
                 </span>
@@ -543,8 +543,8 @@ export function SupplierPage() {
       {/* 5. Activity Log — full width */}
       <div className="section-enter" style={{ animationDelay: '0.2s' }}>
         <div className="flex items-center gap-2 mb-4">
-          <FileText className="h-4 w-4 text-slate-400" />
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Activity Log</h3>
+          <FileText className="h-4 w-4 text-fg-400" />
+          <h3 className="text-xs font-semibold text-fg-500 uppercase tracking-wide">Activity Log</h3>
         </div>
         <SupplierLogSection supplierId={supplier.id} />
       </div>

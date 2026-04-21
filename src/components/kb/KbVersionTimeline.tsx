@@ -12,8 +12,8 @@ export function KbVersionTimeline({ versions, currentVersion, memberNames }: KbV
 
   return (
     <div className="glass-white rounded-2xl p-4 sm:p-5">
-      <h3 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wide flex items-center gap-2">
-        <History className="w-4 h-4 text-indigo-500" />
+      <h3 className="text-sm font-semibold text-fg-900 mb-3 uppercase tracking-wide flex items-center gap-2">
+        <History className="w-4 h-4 text-accent-text" />
         Version history
       </h3>
       <ul className="space-y-2">
@@ -24,15 +24,15 @@ export function KbVersionTimeline({ versions, currentVersion, memberNames }: KbV
             <li
               key={v.id}
               className={`flex items-start gap-3 p-2 rounded-lg ${
-                isCurrent ? 'bg-indigo-50/60 border border-indigo-200/60' : ''
+                isCurrent ? 'bg-accent-tint-soft border border-accent-tint-border' : ''
               }`}
             >
-              <span className="font-mono text-xs text-indigo-700 font-semibold w-10">v{v.version_num}</span>
+              <span className="font-mono text-xs text-accent-text font-semibold w-10">v{v.version_num}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-slate-800 truncate">{v.edit_summary ?? 'No summary'}</p>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-sm text-fg-800 truncate">{v.edit_summary ?? 'No summary'}</p>
+                <p className="text-xs text-fg-500 mt-0.5">
                   {editor} · {new Date(v.created_at).toLocaleString()}
-                  {isCurrent && <span className="ml-2 text-indigo-700 font-medium">current</span>}
+                  {isCurrent && <span className="ml-2 text-accent-text font-medium">current</span>}
                 </p>
               </div>
             </li>

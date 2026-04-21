@@ -88,16 +88,16 @@ export function OptimizerVersionsList({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded border border-border-soft bg-surf-card text-fg-700 hover:bg-surf-app"
       >
         <History className="h-3.5 w-3.5" />
         Versions ({runs.length})
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-96 bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
-            <span className="text-xs font-semibold text-slate-800 uppercase tracking-wide">Saved Runs</span>
+        <div className="absolute right-0 top-full mt-1 z-50 w-96 bg-surf-card rounded-lg shadow-lg border border-border-soft overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border-soft">
+            <span className="text-xs font-semibold text-fg-800 uppercase tracking-wide">Saved Runs</span>
             {runs.length >= 2 && (
               <button
                 type="button"
@@ -111,7 +111,7 @@ export function OptimizerVersionsList({
           </div>
 
           {displayRuns.length === 0 ? (
-            <div className="p-4 text-center text-xs text-slate-400">
+            <div className="p-4 text-center text-xs text-fg-400">
               No saved runs yet. Build, run, and save to create the first one.
             </div>
           ) : (
@@ -123,7 +123,7 @@ export function OptimizerVersionsList({
                 return (
                   <li
                     key={run.id}
-                    className={`border-b border-slate-100 last:border-b-0 px-3 py-2 ${isActive ? 'bg-blue-50/50' : ''}`}
+                    className={`border-b border-border-soft last:border-b-0 px-3 py-2 ${isActive ? 'bg-blue-50/50' : ''}`}
                   >
                     <div className="flex items-center gap-2">
                       {isEditing ? (
@@ -137,13 +137,13 @@ export function OptimizerVersionsList({
                           }}
                           onBlur={() => handleRenameSubmit(run.id)}
                           autoFocus
-                          className="flex-1 px-1.5 py-0.5 text-xs border border-blue-300 rounded focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                          className="flex-1 px-1.5 py-0.5 text-xs border border-blue-300 rounded focus:ring-1 focus-visible:ring-focus focus:outline-none"
                         />
                       ) : (
                         <button
                           type="button"
                           onClick={() => handleLoad(run.id)}
-                          className="flex-1 text-left text-xs font-medium text-slate-800 hover:text-blue-600 truncate"
+                          className="flex-1 text-left text-xs font-medium text-fg-800 hover:text-blue-600 truncate"
                         >
                           {run.name}
                         </button>
@@ -176,7 +176,7 @@ export function OptimizerVersionsList({
                             type="button"
                             onClick={() => { setEditingId(run.id); setEditName(run.name); }}
                             disabled={isPending}
-                            className="p-0.5 text-slate-400 hover:text-slate-700 disabled:opacity-40"
+                            className="p-0.5 text-fg-400 hover:text-fg-700 disabled:opacity-40"
                             title="Rename"
                           >
                             <Pencil className="h-3 w-3" />
@@ -185,7 +185,7 @@ export function OptimizerVersionsList({
                             type="button"
                             onClick={() => handleDelete(run.id, run.name)}
                             disabled={isPending}
-                            className="p-0.5 text-slate-400 hover:text-red-600 disabled:opacity-40"
+                            className="p-0.5 text-fg-400 hover:text-red-600 disabled:opacity-40"
                             title="Delete"
                           >
                             <Trash2 className="h-3 w-3" />
@@ -193,28 +193,28 @@ export function OptimizerVersionsList({
                         </>
                       )}
 
-                      {isPending && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
+                      {isPending && <Loader2 className="h-3 w-3 animate-spin text-fg-400" />}
                     </div>
 
-                    <div className="mt-1 grid grid-cols-4 gap-2 text-[10px] text-slate-500 font-mono tabular-nums">
+                    <div className="mt-1 grid grid-cols-4 gap-2 text-[10px] text-fg-500 font-mono tabular-nums">
                       <div>
-                        <div className="text-slate-400">Cost</div>
-                        <div className="text-slate-700 font-semibold">{formatCurrency(run.total_cost)}</div>
+                        <div className="text-fg-400">Cost</div>
+                        <div className="text-fg-700 font-semibold">{formatCurrency(run.total_cost)}</div>
                       </div>
                       <div>
-                        <div className="text-slate-400">Waste</div>
-                        <div className="text-slate-700 font-semibold">{run.waste_pct.toFixed(1)}%</div>
+                        <div className="text-fg-400">Waste</div>
+                        <div className="text-fg-700 font-semibold">{run.waste_pct.toFixed(1)}%</div>
                       </div>
                       <div>
-                        <div className="text-slate-400">Boards</div>
-                        <div className="text-slate-700 font-semibold">{run.board_count}</div>
+                        <div className="text-fg-400">Boards</div>
+                        <div className="text-fg-700 font-semibold">{run.board_count}</div>
                       </div>
                       <div>
-                        <div className="text-slate-400">$/m²</div>
-                        <div className="text-slate-700 font-semibold">{formatCurrency(run.cost_per_m2)}</div>
+                        <div className="text-fg-400">$/m²</div>
+                        <div className="text-fg-700 font-semibold">{formatCurrency(run.cost_per_m2)}</div>
                       </div>
                     </div>
-                    <div className="mt-0.5 text-[10px] text-slate-400">
+                    <div className="mt-0.5 text-[10px] text-fg-400">
                       {new Date(run.created_at).toLocaleString()}
                     </div>
                   </li>
@@ -224,7 +224,7 @@ export function OptimizerVersionsList({
           )}
 
           {runs.length > 15 && (
-            <div className="px-3 py-1.5 border-t border-slate-100 text-[10px] text-slate-400 bg-slate-50">
+            <div className="px-3 py-1.5 border-t border-border-soft text-[10px] text-fg-400 bg-surf-app">
               Showing 15 of {runs.length} runs. Delete old ones to see more.
             </div>
           )}

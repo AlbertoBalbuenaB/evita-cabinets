@@ -279,9 +279,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6">
         <div className="flex items-center justify-center py-8">
-          <div className="text-slate-600">Loading material breakdown...</div>
+          <div className="text-fg-600">Loading material breakdown...</div>
         </div>
       </div>
     );
@@ -289,13 +289,13 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
 
   if (breakdownData.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center">
+      <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6">
+        <h2 className="text-xl font-bold text-fg-900 mb-4 flex items-center">
           <Layers className="h-5 w-5 mr-2 text-blue-600" />
           Material Breakdown by Area
         </h2>
-        <div className="text-center py-8 text-slate-500">
-          <Package className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+        <div className="text-center py-8 text-fg-500">
+          <Package className="h-12 w-12 mx-auto mb-3 text-fg-300" />
           <p>No cabinet data available yet</p>
         </div>
       </div>
@@ -303,8 +303,8 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center">
+    <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6">
+      <h2 className="text-xl font-bold text-fg-900 mb-4 flex items-center">
         <Layers className="h-5 w-5 mr-2 text-blue-600" />
         Material Breakdown by Area
       </h2>
@@ -313,14 +313,14 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
         {breakdownData.map((area) => (
           <div
             key={area.areaId}
-            className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+            className="border border-border-soft rounded-lg p-4 hover:shadow-md transition-shadow"
           >
-            <div className="flex items-start justify-between mb-4 pb-3 border-b border-slate-200">
+            <div className="flex items-start justify-between mb-4 pb-3 border-b border-border-soft">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-slate-900">{area.areaName}</h3>
-                {area.projectName && <p className="text-sm text-slate-600">{area.projectName}</p>}
+                <h3 className="text-lg font-semibold text-fg-900">{area.areaName}</h3>
+                {area.projectName && <p className="text-sm text-fg-600">{area.projectName}</p>}
                 <div className="flex items-center gap-4 mt-2">
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-fg-500">
                     {area.cabinetCount} cabinet{area.cabinetCount !== 1 ? 's' : ''}
                     {area.countertopCount > 0 && ` • ${area.countertopCount} countertop${area.countertopCount !== 1 ? 's' : ''}`}
                   </span>
@@ -340,9 +340,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                   </div>
                   <div className="space-y-2">
                     {Array.from(area.boxMaterialSheets.entries()).map(([name, data]) => (
-                      <div key={name} className="bg-white rounded p-2 text-xs">
-                        <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                        <div className="flex justify-between text-slate-600">
+                      <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                        <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                        <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.sheetsNeeded} sheets</span>
                           <span><Ruler className="h-3 w-3 inline mr-1" />{data.totalSF.toFixed(1)} SF</span>
                           <span className="font-semibold text-blue-700">{formatCurrency(data.cost)}</span>
@@ -361,9 +361,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                   </div>
                   <div className="space-y-2">
                     {Array.from(area.doorsMaterialSheets.entries()).map(([name, data]) => (
-                      <div key={name} className="bg-white rounded p-2 text-xs">
-                        <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                        <div className="flex justify-between text-slate-600">
+                      <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                        <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                        <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.sheetsNeeded} sheets</span>
                           <span><Ruler className="h-3 w-3 inline mr-1" />{data.totalSF.toFixed(1)} SF</span>
                           <span className="font-semibold text-green-700">{formatCurrency(data.cost)}</span>
@@ -382,9 +382,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                   </div>
                   <div className="space-y-2">
                     {Array.from(area.boxEdgebandRolls.entries()).map(([name, data]) => (
-                      <div key={name} className="bg-white rounded p-2 text-xs">
-                        <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                        <div className="flex justify-between text-slate-600">
+                      <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                        <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                        <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.rollsNeeded} rolls</span>
                           <span><Ruler className="h-3 w-3 inline mr-1" />{data.totalMeters.toFixed(1)} m</span>
                           <span className="font-semibold text-amber-700">{formatCurrency(data.cost)}</span>
@@ -403,9 +403,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                   </div>
                   <div className="space-y-2">
                     {Array.from(area.doorsEdgebandRolls.entries()).map(([name, data]) => (
-                      <div key={name} className="bg-white rounded p-2 text-xs">
-                        <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                        <div className="flex justify-between text-slate-600">
+                      <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                        <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                        <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.rollsNeeded} rolls</span>
                           <span><Ruler className="h-3 w-3 inline mr-1" />{data.totalMeters.toFixed(1)} m</span>
                           <span className="font-semibold text-purple-700">{formatCurrency(data.cost)}</span>
@@ -417,18 +417,18 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
               )}
 
               {area.hardware.size > 0 && (
-                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 lg:col-span-2">
+                <div className="bg-surf-app rounded-lg p-4 border border-border-soft lg:col-span-2">
                   <div className="flex items-center mb-3">
-                    <Package className="h-4 w-4 text-slate-700 mr-2" />
-                    <h4 className="text-sm font-semibold text-slate-900">Hardware</h4>
+                    <Package className="h-4 w-4 text-fg-700 mr-2" />
+                    <h4 className="text-sm font-semibold text-fg-900">Hardware</h4>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {Array.from(area.hardware.entries()).map(([name, data]) => (
-                      <div key={name} className="bg-white rounded p-2 text-xs">
-                        <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                        <div className="flex justify-between text-slate-600">
+                      <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                        <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                        <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.quantity} pcs</span>
-                          <span className="font-semibold text-slate-700">{formatCurrency(data.cost)}</span>
+                          <span className="font-semibold text-fg-700">{formatCurrency(data.cost)}</span>
                         </div>
                       </div>
                     ))}
@@ -444,9 +444,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {Array.from(area.accessories.entries()).map(([name, data]) => (
-                      <div key={name} className="bg-white rounded p-2 text-xs">
-                        <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                        <div className="flex justify-between text-slate-600">
+                      <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                        <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                        <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.quantity} pcs</span>
                           <span className="font-semibold text-purple-700">{formatCurrency(data.cost)}</span>
                         </div>
@@ -464,9 +464,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {Array.from(area.countertops.entries()).map(([name, data]) => (
-                      <div key={name} className="bg-white rounded p-2 text-xs">
-                        <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                        <div className="flex justify-between text-slate-600">
+                      <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                        <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                        <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.quantity.toFixed(2)} units</span>
                           <span className="font-semibold text-orange-700">{formatCurrency(data.cost)}</span>
                         </div>

@@ -298,14 +298,14 @@ export function TakeoffPage() {
   return (
     <div className="h-[calc(100vh-3.5rem)] flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 px-3 py-1.5 border-b border-slate-200 bg-white/80 backdrop-blur-sm flex-shrink-0">
-        <Link to="/tools" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors">
+      <div className="flex items-center gap-3 px-3 py-1.5 border-b border-border-soft bg-surf-card backdrop-blur-sm flex-shrink-0">
+        <Link to="/tools" className="inline-flex items-center gap-1 text-xs text-fg-500 hover:text-fg-700 transition-colors">
           <ArrowLeft className="h-3.5 w-3.5" /> Tools
         </Link>
-        <span className="text-sm font-semibold text-slate-800">Evita Takeoff</span>
+        <span className="text-sm font-semibold text-fg-800">Evita Takeoff</span>
         {file && (
           <>
-            <span className="text-xs text-slate-600 font-medium truncate max-w-xs">
+            <span className="text-xs text-fg-600 font-medium truncate max-w-xs">
               {sessionName ?? file.name}
             </span>
             {currentSessionId && (
@@ -319,7 +319,7 @@ export function TakeoffPage() {
           {loadError && <span className="text-xs text-red-600 truncate max-w-xs">{loadError}</span>}
           <button
             onClick={() => setShowSessionsList(true)}
-            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
+            className="inline-flex items-center gap-1 text-xs text-fg-500 hover:text-fg-700"
             title="Open a saved session"
           >
             <FolderOpen className="h-3.5 w-3.5" /> Open
@@ -327,7 +327,7 @@ export function TakeoffPage() {
           {file && isPdf(file) && (
             <button
               onClick={() => setShowTrimModal(true)}
-              className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
+              className="inline-flex items-center gap-1 text-xs text-fg-500 hover:text-fg-700"
               title="Remove pages you don't need to shrink the PDF"
             >
               <FileMinus2 className="h-3.5 w-3.5" /> Trim pages
@@ -411,7 +411,7 @@ export function TakeoffPage() {
               onKeyDown={(e) => { if (e.key === 'Enter') handleUrlImport(); }}
               placeholder="https://example.com/plan.pdf"
             />
-            <p className="text-xs text-slate-400">Paste a direct link to a PDF or image file</p>
+            <p className="text-xs text-fg-400">Paste a direct link to a PDF or image file</p>
             <div className="flex justify-end gap-2">
               <Button variant="ghost" size="sm" onClick={() => setShowUrlModal(false)}>Cancel</Button>
               <Button variant="primary" size="sm" onClick={handleUrlImport} disabled={!urlInput.trim()}>Import</Button>

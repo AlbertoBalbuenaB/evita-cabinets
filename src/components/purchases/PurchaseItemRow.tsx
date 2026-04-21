@@ -30,7 +30,7 @@ interface PurchaseItemRowProps {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  Ordered: 'bg-slate-100 text-slate-600',
+  Ordered: 'bg-surf-muted text-fg-600',
   Paid: 'bg-blue-100 text-blue-700',
   'In Transit': 'bg-amber-100 text-amber-700',
   'In Warehouse': 'bg-green-100 text-green-700',
@@ -199,7 +199,7 @@ export function PurchaseItemRow({
   const dropdownPortal =
     showDropdown && filteredPLI.length > 0
       ? createPortal(
-          <div ref={dropdownPortalRef} style={dropdownStyle} className="max-h-52 overflow-y-auto bg-white rounded-lg border border-slate-200 shadow-xl">
+          <div ref={dropdownPortalRef} style={dropdownStyle} className="max-h-52 overflow-y-auto bg-surf-card rounded-lg border border-border-soft shadow-xl">
             {filteredPLI.map((pli) => (
               <button
                 key={pli.id}
@@ -211,7 +211,7 @@ export function PurchaseItemRow({
                 className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors flex items-center justify-between"
               >
                 <span className="flex-1 truncate pr-2">{pli.concept_description}</span>
-                <span className="text-xs text-slate-400 flex-shrink-0">{pli.unit}</span>
+                <span className="text-xs text-fg-400 flex-shrink-0">{pli.unit}</span>
               </button>
             ))}
           </div>,
@@ -225,11 +225,11 @@ export function PurchaseItemRow({
       onDragStart={(e) => onDragStart(e, item.id)}
       onDragOver={onDragOver}
       onDrop={(e) => onDrop(e, item.id)}
-      className="hover:bg-slate-50/50 transition-colors group border-b border-slate-100"
+      className="hover:bg-surf-app transition-colors group border-b border-border-soft"
     >
       {/* Drag handle */}
       <td className="w-8 px-1 py-2">
-        <div className="cursor-grab text-slate-300 hover:text-slate-500 active:cursor-grabbing">
+        <div className="cursor-grab text-fg-300 hover:text-fg-500 active:cursor-grabbing">
           <GripVertical className="h-4 w-4" />
         </div>
       </td>
@@ -243,7 +243,7 @@ export function PurchaseItemRow({
           onChange={(e) => handleConceptChange(e.target.value)}
           onFocus={() => conceptSearch && setShowDropdown(true)}
           onKeyDown={(e) => { if (e.key === 'Escape') setShowDropdown(false); }}
-          className="w-full px-2 py-1.5 text-sm border border-transparent hover:border-slate-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
+          className="w-full px-2 py-1.5 text-sm border border-transparent hover:border-border-soft focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
           placeholder="Type to search items..."
         />
         {dropdownPortal}
@@ -258,7 +258,7 @@ export function PurchaseItemRow({
           value={localQty}
           onChange={(e) => setLocalQty(parseFloat(e.target.value) || 1)}
           onBlur={() => handleFieldChange('quantity', localQty)}
-          className="w-full px-1.5 py-1.5 text-sm text-right tabular-nums border border-transparent hover:border-slate-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
+          className="w-full px-1.5 py-1.5 text-sm text-right tabular-nums border border-transparent hover:border-border-soft focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
         />
       </td>
 
@@ -274,7 +274,7 @@ export function PurchaseItemRow({
             {stockQty}
           </span>
         ) : (
-          <span className="text-slate-300">—</span>
+          <span className="text-fg-300">—</span>
         )}
       </td>
 
@@ -287,7 +287,7 @@ export function PurchaseItemRow({
             <span className="text-sm text-green-600 font-medium">&#10003;</span>
           )
         ) : (
-          <span className="text-slate-300">—</span>
+          <span className="text-fg-300">—</span>
         )}
       </td>
 
@@ -299,7 +299,7 @@ export function PurchaseItemRow({
           onChange={(e) => setLocalUnit(e.target.value)}
           onBlur={() => handleFieldChange('unit', localUnit)}
           title={localUnit}
-          className="w-full px-1.5 py-1.5 text-sm border border-transparent hover:border-slate-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
+          className="w-full px-1.5 py-1.5 text-sm border border-transparent hover:border-border-soft focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
         />
       </td>
 
@@ -313,7 +313,7 @@ export function PurchaseItemRow({
             value={localPrice}
             onChange={(e) => setLocalPrice(parseFloat(e.target.value) || 0)}
             onBlur={() => handleFieldChange('price', localPrice)}
-            className="w-full px-1.5 py-1.5 text-sm text-right tabular-nums border border-transparent hover:border-slate-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
+            className="w-full px-1.5 py-1.5 text-sm text-right tabular-nums border border-transparent hover:border-border-soft focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
           />
           {isPriceOverridden && (
             <span title={`Manually overridden (list price: ${formatCurrency(listPrice!)})`}>
@@ -324,7 +324,7 @@ export function PurchaseItemRow({
       </td>
 
       {/* Subtotal */}
-      <td className="px-2 py-2 w-[88px] text-right text-sm tabular-nums text-slate-700 font-medium">
+      <td className="px-2 py-2 w-[88px] text-right text-sm tabular-nums text-fg-700 font-medium">
         {formatCurrency(item.subtotal ?? item.quantity * (item.price ?? 0))}
       </td>
 
@@ -334,7 +334,7 @@ export function PurchaseItemRow({
           <select
             value={item.priority ?? 'Medium'}
             onChange={(e) => handleImmediateUpdate({ priority: e.target.value })}
-            className="w-full appearance-none pl-5 pr-2 py-1.5 text-xs font-medium border border-transparent hover:border-slate-200 focus:border-blue-300 rounded-md outline-none transition bg-transparent cursor-pointer"
+            className="w-full appearance-none pl-5 pr-2 py-1.5 text-xs font-medium border border-transparent hover:border-border-soft focus:border-blue-300 rounded-md outline-none transition bg-transparent cursor-pointer"
           >
             <option value="Urgent">Urgent</option>
             <option value="High">High</option>
@@ -368,7 +368,7 @@ export function PurchaseItemRow({
           type="date"
           defaultValue={item.deadline ?? ''}
           onChange={(e) => handleImmediateUpdate({ deadline: e.target.value || null })}
-          className="w-full px-1 py-1.5 text-xs border border-transparent hover:border-slate-200 focus:border-blue-300 rounded-md outline-none transition bg-transparent"
+          className="w-full px-1 py-1.5 text-xs border border-transparent hover:border-border-soft focus:border-blue-300 rounded-md outline-none transition bg-transparent"
         />
       </td>
 
@@ -377,7 +377,7 @@ export function PurchaseItemRow({
         <div className="flex items-center gap-0.5">
           <button
             onClick={() => onOpenDetail(item)}
-            className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
+            className="p-1.5 text-fg-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
             title="More info (assigned, provider, comments)"
           >
             <Info className="h-3.5 w-3.5" />
@@ -401,7 +401,7 @@ export function PurchaseItemRow({
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="px-1.5 py-0.5 text-xs font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded transition-colors"
+                className="px-1.5 py-0.5 text-xs font-medium text-fg-500 bg-surf-app hover:bg-surf-muted rounded transition-colors"
               >
                 No
               </button>
@@ -409,7 +409,7 @@ export function PurchaseItemRow({
           ) : (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+              className="p-1.5 text-fg-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100"
               title="Delete"
             >
               <Trash2 className="h-3.5 w-3.5" />

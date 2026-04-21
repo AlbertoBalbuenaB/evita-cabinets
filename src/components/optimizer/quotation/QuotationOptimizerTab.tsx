@@ -508,9 +508,9 @@ export function QuotationOptimizerTab({
     <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 104px)' }}>
 
       {/* ── Header bar ────────────────────────────────────── */}
-      <div className="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center gap-2 flex-wrap">
+      <div className="bg-surf-card border-b border-border-soft px-4 py-2.5 flex items-center gap-2 flex-wrap">
         <Layers className="h-5 w-5 text-blue-600 shrink-0" />
-        <span className="font-semibold text-slate-800 text-sm">Optimizer</span>
+        <span className="font-semibold text-fg-800 text-sm">Optimizer</span>
 
         <PricingMethodToggle
           value={header.pricingMethod}
@@ -563,7 +563,7 @@ export function QuotationOptimizerTab({
               value={saveName}
               onChange={(e) => setSaveName(e.target.value)}
               placeholder={defaultName}
-              className="px-2 py-1 text-xs border border-slate-200 rounded w-32 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="px-2 py-1 text-xs border border-border-soft rounded w-32 focus:ring-1 focus-visible:ring-focus focus:outline-none"
             />
             <Button
               variant="secondary"
@@ -607,7 +607,7 @@ export function QuotationOptimizerTab({
       )}
 
       {/* ── Comparison strip (ft² vs optimizer total) ─────── */}
-      <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+      <div className="px-4 py-3 border-b border-border-soft bg-surf-app">
         <FtVsOptimizerComparisonCard
           sqftTotal={header.sqftTotal}
           optimizerTotal={header.optimizerTotal}
@@ -617,7 +617,7 @@ export function QuotationOptimizerTab({
 
       {/* ── Warnings strip ────────────────────────────────── */}
       {(pendingWarnings.length > 0 || pendingCabSkipped.length > 0 || pendingPieces.length > 0) && (
-        <div className="px-4 py-2 border-b border-slate-200 bg-slate-50">
+        <div className="px-4 py-2 border-b border-border-soft bg-surf-app">
           <OptimizerWarningsPanel
             warnings={pendingWarnings}
             cabinetsSkipped={pendingCabSkipped}
@@ -629,11 +629,11 @@ export function QuotationOptimizerTab({
 
       {/* ── Row 1 — Post-Build: Sidebar (Build Summary / Stocks /     */}
       {/*         Edgebanding / Settings) + Cut-List Detail          */}
-      <div className="flex min-h-[400px] border-b border-slate-200">
-        <div className="w-64 shrink-0 border-r border-slate-200 bg-white overflow-y-auto">
+      <div className="flex min-h-[400px] border-b border-border-soft">
+        <div className="w-64 shrink-0 border-r border-border-soft bg-surf-card overflow-y-auto">
           <QuotationOptimizerSidebar useStore={useStore} />
         </div>
-        <div className="flex-1 bg-slate-50 overflow-y-auto px-4 py-4">
+        <div className="flex-1 bg-surf-app overflow-y-auto px-4 py-4">
           {cutListSource && cutListSource.pieces.length > 0 ? (
             <CutListDetailPanel
               pieces={cutListSource.pieces}
@@ -641,7 +641,7 @@ export function QuotationOptimizerTab({
               onOverrideChanged={() => build()}
             />
           ) : (
-            <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+            <div className="h-full flex items-center justify-center text-fg-400 text-sm">
               Click "Build from Quotation" to generate the cut list.
             </div>
           )}
@@ -650,11 +650,11 @@ export function QuotationOptimizerTab({
 
       {/* ── Row 2 — Post-Run: CAD Viewer + Global Statistics ── */}
       {displayResult && (
-        <div className="flex min-h-[600px] border-b border-slate-200">
-          <div className="flex-1 flex flex-col bg-white">
+        <div className="flex min-h-[600px] border-b border-border-soft">
+          <div className="flex-1 flex flex-col bg-surf-card">
             <CADViewer board={selectedBoard} unit="mm" />
           </div>
-          <div className="w-80 shrink-0 border-l border-slate-200 bg-white overflow-y-auto">
+          <div className="w-80 shrink-0 border-l border-border-soft bg-surf-card overflow-y-auto">
             <RightStatsPanel
               result={displayResult}
               selectedIdx={selectedBoardIdx}
@@ -665,14 +665,14 @@ export function QuotationOptimizerTab({
       )}
 
       {loadedRun && perAreaRows.length > 0 && (
-        <div className="px-4 py-4 border-t border-slate-200 bg-slate-50">
+        <div className="px-4 py-4 border-t border-border-soft bg-surf-app">
           <PerAreaBoardsBreakdown rows={perAreaRows} />
         </div>
       )}
 
       {/* ── BOM + Project Cost Summary ────────────────────── */}
       {loadedRun && (
-        <div className="px-4 py-4 border-t border-slate-200 bg-white">
+        <div className="px-4 py-4 border-t border-border-soft bg-surf-card">
           <BreakdownBOM
             loadedRun={loadedRun}
             areas={areas}

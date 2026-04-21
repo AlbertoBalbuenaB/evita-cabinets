@@ -133,12 +133,12 @@ export function QuotationFormModal({
         />
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Status</label>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as QuotationStatus)}
             disabled={saving}
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus disabled:bg-surf-app"
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>{s}</option>
@@ -147,13 +147,13 @@ export function QuotationFormModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Date</label>
           <input
             type="date"
             value={quoteDate}
             onChange={(e) => setQuoteDate(e.target.value)}
             disabled={saving}
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus disabled:bg-surf-app"
           />
         </div>
 

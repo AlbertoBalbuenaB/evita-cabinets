@@ -16,9 +16,9 @@ export function ComingSoon({ icon: Icon, title, subtitle }: ComingSoonProps) {
         >
           <Icon className="h-7 w-7 text-white" strokeWidth={1.75} />
         </div>
-        <h1 className="text-xl font-semibold text-slate-900 mb-2">{title}</h1>
+        <h1 className="text-xl font-semibold text-fg-900 mb-2">{title}</h1>
         {subtitle && (
-          <p className="text-sm text-slate-500 leading-relaxed">{subtitle}</p>
+          <p className="text-sm text-fg-500 leading-relaxed">{subtitle}</p>
         )}
       </div>
     </div>

@@ -10,7 +10,7 @@ import { AutocompleteSelect } from './AutocompleteSelect';
 type LogType = 'note' | 'change' | 'decision' | 'risk' | 'issue' | 'milestone' | 'update';
 
 const LOG_TYPE_OPTIONS: Array<{ value: LogType; label: string; Icon: typeof FileText; color: string; activeBg: string; activeBorder: string }> = [
-  { value: 'note',      label: 'Note',      Icon: FileText,       color: 'text-slate-600',  activeBg: 'bg-slate-100',  activeBorder: 'border-slate-400' },
+  { value: 'note',      label: 'Note',      Icon: FileText,       color: 'text-fg-600',  activeBg: 'bg-surf-muted',  activeBorder: 'border-slate-400' },
   { value: 'change',    label: 'Change',    Icon: RefreshCw,      color: 'text-amber-600',  activeBg: 'bg-amber-100',  activeBorder: 'border-amber-400' },
   { value: 'decision',  label: 'Decision',  Icon: CheckCircle,    color: 'text-blue-600',   activeBg: 'bg-blue-100',   activeBorder: 'border-blue-400' },
   { value: 'risk',      label: 'Risk',      Icon: AlertTriangle,  color: 'text-orange-600', activeBg: 'bg-orange-100', activeBorder: 'border-orange-400' },
@@ -103,11 +103,11 @@ export function HomeLogCreateModal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
-      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/70 w-full max-w-lg max-h-[92vh] overflow-y-auto">
+      <div className="bg-surf-card backdrop-blur-xl rounded-2xl shadow-2xl border border-white/70 w-full max-w-lg max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/60 bg-gradient-to-r from-violet-50/40 to-indigo-50/20 sticky top-0 z-10 backdrop-blur-xl">
-          <h3 className="text-base font-semibold text-slate-900">New Log Entry</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+          <h3 className="text-base font-semibold text-fg-900">New Log Entry</h3>
+          <button onClick={onClose} className="text-fg-400 hover:text-fg-600 transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -115,7 +115,7 @@ export function HomeLogCreateModal({
         <div className="p-5 space-y-4">
           {/* Project selector */}
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1">
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-fg-500 mb-1">
               <FolderKanban className="h-3 w-3" />
               Project <span className="text-red-500">*</span>
             </label>
@@ -130,7 +130,7 @@ export function HomeLogCreateModal({
 
           {/* Log type buttons */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Type</label>
+            <label className="block text-xs font-semibold text-fg-500 mb-1.5">Type</label>
             <div className="flex flex-wrap gap-1.5">
               {LOG_TYPE_OPTIONS.map(({ value, label, Icon, color, activeBg, activeBorder }) => {
                 const isActive = logType === value;
@@ -142,7 +142,7 @@ export function HomeLogCreateModal({
                     className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
                       isActive
                         ? `${activeBg} ${color} ${activeBorder} shadow-sm`
-                        : 'bg-white/60 border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-white/80'
+                        : 'bg-surf-card border-border-soft text-fg-500 hover:border-border-solid hover:bg-surf-card'
                     }`}
                   >
                     <Icon className="h-3 w-3" />
@@ -155,7 +155,7 @@ export function HomeLogCreateModal({
 
           {/* Comment */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
+            <label className="block text-xs font-semibold text-fg-500 mb-1">
               Comment <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -164,22 +164,22 @@ export function HomeLogCreateModal({
               placeholder="Write your log entry…"
               rows={5}
               autoFocus
-              className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="w-full text-sm border border-border-soft rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500"
               onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) create(); }}
             />
-            <p className="text-[10px] text-slate-400 mt-1">Tip: Cmd+Enter to save quickly</p>
+            <p className="text-[10px] text-fg-400 mt-1">Tip: Cmd+Enter to save quickly</p>
           </div>
 
           {/* Author preview */}
           {currentMemberName && (
-            <div className="text-[11px] text-slate-400">
-              Author: <span className="font-medium text-slate-600">{currentMemberName}</span>
+            <div className="text-[11px] text-fg-400">
+              Author: <span className="font-medium text-fg-600">{currentMemberName}</span>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-white/60 bg-white/30 backdrop-blur-sm sticky bottom-0">
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-white/60 bg-surf-card backdrop-blur-sm sticky bottom-0">
           <Button variant="ghost" size="sm" onClick={onClose} disabled={saving}>Cancel</Button>
           <Button size="sm" onClick={create} disabled={!canSave || saving}>
             {saving ? 'Creating…' : 'Add Entry'}

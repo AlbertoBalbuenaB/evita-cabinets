@@ -239,7 +239,7 @@ export function ProductsCatalog() {
           <div className="h-8 w-56 skeleton-shimmer" />
           <div className="h-4 w-80 skeleton-shimmer" />
         </div>
-        <div className="flex border-b border-slate-200 mb-6 gap-1">
+        <div className="flex border-b border-border-soft mb-6 gap-1">
           {[1,2,3].map(i => <div key={i} className="h-10 w-32 skeleton-shimmer" style={{ borderRadius: '8px' }} />)}
         </div>
         <div className="glass-white h-14 animate-pulse" />
@@ -254,8 +254,8 @@ export function ProductsCatalog() {
     <>
     <div className="page-enter">
       <div className="mb-6 hero-enter">
-        <h1 className="text-3xl font-bold text-slate-900">Cabinets Catalog</h1>
-        <p className="mt-2 text-slate-600">
+        <h1 className="text-3xl font-bold text-fg-900">Cabinets Catalog</h1>
+        <p className="mt-2 text-fg-600">
           Manage cabinet products, closet library and reusable templates
         </p>
       </div>
@@ -272,36 +272,36 @@ export function ProductsCatalog() {
       <div className="glass-white p-4 mb-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <div className="flex-1 relative w-full sm:w-auto">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-fg-400" />
             <input
               type="text"
               placeholder="Search by SKU or description..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 w-full px-4 py-2 text-sm border border-slate-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80"
+              className="pl-9 w-full px-4 py-2 text-sm border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card"
             />
           </div>
           <div className="relative">
-            <Library className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <Library className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-fg-400 pointer-events-none" />
             <select
               value={selectedCollection}
               onChange={(e) => setSelectedCollection(e.target.value)}
-              className="pl-9 pr-8 py-2 text-sm border border-slate-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80 appearance-none"
+              className="pl-9 pr-8 py-2 text-sm border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card appearance-none"
             >
               <option value="all">All Collections</option>
               {collections.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-          <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border border-slate-200/60 rounded-lg hover:bg-slate-50 text-sm">
-            <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="w-3.5 h-3.5 text-blue-600 border-slate-300 rounded" />
-            <Archive className="h-3.5 w-3.5 text-slate-500" />
-            <span className="text-slate-600">Archived</span>
+          <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border border-border-soft rounded-lg hover:bg-surf-app text-sm">
+            <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="w-3.5 h-3.5 text-blue-600 border-border-solid rounded" />
+            <Archive className="h-3.5 w-3.5 text-fg-500" />
+            <span className="text-fg-600">Archived</span>
           </label>
           <div className="flex items-center gap-2 ml-auto">
-            <span className="text-xs text-slate-400 hidden sm:inline">{filteredProducts.length} items</span>
-            <div className="flex p-1 bg-slate-100 rounded-lg">
-              <button onClick={() => setViewMode('card')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'card' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid className="h-4 w-4" /></button>
-              <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><LayoutList className="h-4 w-4" /></button>
+            <span className="text-xs text-fg-400 hidden sm:inline">{filteredProducts.length} items</span>
+            <div className="flex p-1 bg-surf-muted rounded-lg">
+              <button onClick={() => setViewMode('card')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'card' ? 'bg-surf-card text-blue-600 shadow-sm' : 'text-fg-400 hover:text-fg-600'}`}><LayoutGrid className="h-4 w-4" /></button>
+              <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-surf-card text-blue-600 shadow-sm' : 'text-fg-400 hover:text-fg-600'}`}><LayoutList className="h-4 w-4" /></button>
             </div>
           </div>
         </div>
@@ -310,8 +310,8 @@ export function ProductsCatalog() {
       {/* Products display */}
       {filteredProducts.length === 0 ? (
         <div className="glass-white p-12 text-center">
-          <Package className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">{searchTerm ? 'No products found. Try a different search.' : 'Add your first product to get started.'}</p>
+          <Package className="h-12 w-12 text-fg-300 mx-auto mb-3" />
+          <p className="text-fg-500">{searchTerm ? 'No products found. Try a different search.' : 'Add your first product to get started.'}</p>
         </div>
       ) : viewMode === 'card' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -325,42 +325,42 @@ export function ProductsCatalog() {
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <span className="text-xs font-mono font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{product.sku}</span>
                   {product.status === 'archived' ? (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Archived</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-surf-muted text-fg-500">Archived</span>
                   ) : (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span>
                   )}
                 </div>
-                <p className="text-sm font-medium text-slate-800 line-clamp-2 mb-2 min-h-[2.5rem]">{product.description}</p>
-                <span className="text-xs text-slate-400">{product.collection_name || 'Standard Catalog'}</span>
+                <p className="text-sm font-medium text-fg-800 line-clamp-2 mb-2 min-h-[2.5rem]">{product.description}</p>
+                <span className="text-xs text-fg-400">{product.collection_name || 'Standard Catalog'}</span>
               </div>
-              <div className="px-4 py-3 bg-slate-50/60 border-t border-slate-200/40">
+              <div className="px-4 py-3 bg-surf-app border-t border-border-soft">
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div>
-                    <div className="text-sm font-semibold text-slate-800 tabular-nums">{product.box_sf.toFixed(1)}</div>
-                    <div className="text-[10px] text-slate-400 uppercase">Box SF</div>
+                    <div className="text-sm font-semibold text-fg-800 tabular-nums">{product.box_sf.toFixed(1)}</div>
+                    <div className="text-[10px] text-fg-400 uppercase">Box SF</div>
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-800 tabular-nums">{product.doors_fronts_sf.toFixed(1)}</div>
-                    <div className="text-[10px] text-slate-400 uppercase">Doors SF</div>
+                    <div className="text-sm font-semibold text-fg-800 tabular-nums">{product.doors_fronts_sf.toFixed(1)}</div>
+                    <div className="text-[10px] text-fg-400 uppercase">Doors SF</div>
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-800 tabular-nums">{product.total_edgeband.toFixed(1)}</div>
-                    <div className="text-[10px] text-slate-400 uppercase">EB (m)</div>
+                    <div className="text-sm font-semibold text-fg-800 tabular-nums">{product.total_edgeband.toFixed(1)}</div>
+                    <div className="text-[10px] text-fg-400 uppercase">EB (m)</div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/40">
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-border-soft">
+                  <div className="flex items-center gap-2 text-xs text-fg-500">
                     {product.has_drawers && <span className="flex items-center gap-0.5"><Layers className="h-3 w-3 text-amber-500" /> Drawers</span>}
                     <span className="flex items-center gap-0.5"><Box className="h-3 w-3" /> {product.boxes_per_unit ?? 1} box</span>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={(e) => { e.stopPropagation(); handleEdit(product); }} className="p-1 rounded hover:bg-white text-slate-400 hover:text-blue-600"><Edit2 className="h-3.5 w-3.5" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleEdit(product); }} className="p-1 rounded hover:bg-surf-card text-fg-400 hover:text-blue-600"><Edit2 className="h-3.5 w-3.5" /></button>
                     {product.status === 'active' ? (
-                      <button onClick={(e) => { e.stopPropagation(); handleArchive(product); }} className="p-1 rounded hover:bg-white text-slate-400 hover:text-amber-600"><Archive className="h-3.5 w-3.5" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); handleArchive(product); }} className="p-1 rounded hover:bg-surf-card text-fg-400 hover:text-amber-600"><Archive className="h-3.5 w-3.5" /></button>
                     ) : (
-                      <button onClick={(e) => { e.stopPropagation(); handleRestore(product); }} className="p-1 rounded hover:bg-white text-slate-400 hover:text-green-600"><ArchiveRestore className="h-3.5 w-3.5" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); handleRestore(product); }} className="p-1 rounded hover:bg-surf-card text-fg-400 hover:text-green-600"><ArchiveRestore className="h-3.5 w-3.5" /></button>
                     )}
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(product); }} className="p-1 rounded hover:bg-white text-slate-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(product); }} className="p-1 rounded hover:bg-surf-card text-fg-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
               </div>
@@ -370,40 +370,40 @@ export function ProductsCatalog() {
       ) : (
         <div className="glass-white overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200/60">
+            <table className="min-w-full divide-y divide-border-soft">
               <thead>
-                <tr className="bg-slate-50/60">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">SKU</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">Collection</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Box SF</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Doors SF</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Drawers</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Boxes</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                <tr className="bg-surf-app">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-fg-500 uppercase tracking-wider">SKU</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-fg-500 uppercase tracking-wider">Description</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-fg-500 uppercase tracking-wider hidden md:table-cell">Collection</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-fg-500 uppercase tracking-wider">Box SF</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-fg-500 uppercase tracking-wider">Doors SF</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-fg-500 uppercase tracking-wider hidden lg:table-cell">Drawers</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-fg-500 uppercase tracking-wider hidden lg:table-cell">Boxes</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-fg-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-fg-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredProducts.map((product) => (
                   <tr key={product.id} onClick={() => navigate(`/products/${product.id}`)} className="hover:bg-blue-50/40 cursor-pointer transition-colors group">
                     <td className="px-4 py-3 text-sm font-mono font-medium text-blue-700">{product.sku}</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 max-w-xs truncate">{product.description}</td>
+                    <td className="px-4 py-3 text-sm text-fg-700 max-w-xs truncate">{product.description}</td>
                     <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{product.collection_name || 'Standard'}</span></td>
-                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-800">{product.box_sf.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-800">{product.doors_fronts_sf.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-center hidden lg:table-cell">{product.has_drawers ? <Check className="h-4 w-4 text-green-600 mx-auto" /> : <X className="h-4 w-4 text-slate-300 mx-auto" />}</td>
-                    <td className="px-4 py-3 text-center hidden lg:table-cell text-sm text-slate-700">{product.boxes_per_unit ?? 1}</td>
-                    <td className="px-4 py-3 text-center">{product.status === 'archived' ? <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Archived</span> : <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span>}</td>
+                    <td className="px-4 py-3 text-sm text-right tabular-nums text-fg-800">{product.box_sf.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-sm text-right tabular-nums text-fg-800">{product.doors_fronts_sf.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-center hidden lg:table-cell">{product.has_drawers ? <Check className="h-4 w-4 text-green-600 mx-auto" /> : <X className="h-4 w-4 text-fg-300 mx-auto" />}</td>
+                    <td className="px-4 py-3 text-center hidden lg:table-cell text-sm text-fg-700">{product.boxes_per_unit ?? 1}</td>
+                    <td className="px-4 py-3 text-center">{product.status === 'archived' ? <span className="text-xs px-2 py-0.5 rounded-full bg-surf-muted text-fg-500">Archived</span> : <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span>}</td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); handleEdit(product); }} className="p-1.5 rounded-md hover:bg-white text-slate-400 hover:text-blue-600"><Edit2 className="h-3.5 w-3.5" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); handleEdit(product); }} className="p-1.5 rounded-md hover:bg-surf-card text-fg-400 hover:text-blue-600"><Edit2 className="h-3.5 w-3.5" /></button>
                         {product.status === 'active' ? (
-                          <button onClick={(e) => { e.stopPropagation(); handleArchive(product); }} className="p-1.5 rounded-md hover:bg-white text-slate-400 hover:text-amber-600"><Archive className="h-3.5 w-3.5" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleArchive(product); }} className="p-1.5 rounded-md hover:bg-surf-card text-fg-400 hover:text-amber-600"><Archive className="h-3.5 w-3.5" /></button>
                         ) : (
-                          <button onClick={(e) => { e.stopPropagation(); handleRestore(product); }} className="p-1.5 rounded-md hover:bg-white text-slate-400 hover:text-green-600"><ArchiveRestore className="h-3.5 w-3.5" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleRestore(product); }} className="p-1.5 rounded-md hover:bg-surf-card text-fg-400 hover:text-green-600"><ArchiveRestore className="h-3.5 w-3.5" /></button>
                         )}
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete(product); }} className="p-1.5 rounded-md hover:bg-white text-slate-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(product); }} className="p-1.5 rounded-md hover:bg-surf-card text-fg-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
                     </td>
                   </tr>
@@ -521,7 +521,7 @@ function ClosetLibraryTab() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="text-xs text-slate-500">{filtered.length} items</div>
+        <div className="text-xs text-fg-500">{filtered.length} items</div>
         <Button onClick={openAdd} size="sm">
           <Plus className="h-4 w-4 mr-1" />
           Add Cabinet
@@ -530,31 +530,31 @@ function ClosetLibraryTab() {
 
       <div className="mb-4 flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             placeholder="Search by description or code..."
-            className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full pl-9 pr-4 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
         <select
           value={filterLine}
           onChange={e => setFilterLine(e.target.value as any)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+          className="px-3 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-surf-card"
         >
           <option value="all">All Lines</option>
           <option value="Evita Plus">Evita Plus</option>
           <option value="Evita Premium">Evita Premium</option>
         </select>
-        <label className="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 text-sm">
-          <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} className="w-4 h-4 text-teal-600 border-slate-300 rounded" />
-          <span className="text-slate-700">Show Inactive</span>
+        <label className="flex items-center gap-2 px-3 py-2 border border-border-solid rounded-lg cursor-pointer hover:bg-surf-app text-sm">
+          <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} className="w-4 h-4 text-teal-600 border-border-solid rounded" />
+          <span className="text-fg-700">Show Inactive</span>
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <div className="overflow-x-auto rounded-lg border border-border-soft">
         <table className="w-full text-sm">
           <thead className="bg-teal-50 border-b border-teal-200">
             <tr>
@@ -574,35 +574,35 @@ function ClosetLibraryTab() {
           <tbody className="divide-y divide-slate-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={11} className="text-center py-10 text-slate-400">No items found</td>
+                <td colSpan={11} className="text-center py-10 text-fg-400">No items found</td>
               </tr>
             ) : (
               filtered.map(item => (
-                <tr key={item.id} className={`hover:bg-slate-50 transition-colors ${!item.is_active ? 'opacity-50' : ''}`}>
-                  <td className="px-4 py-2 font-mono text-xs text-slate-600">{item.cabinet_code}</td>
+                <tr key={item.id} className={`hover:bg-surf-app transition-colors ${!item.is_active ? 'opacity-50' : ''}`}>
+                  <td className="px-4 py-2 font-mono text-xs text-fg-600">{item.cabinet_code}</td>
                   <td className="px-4 py-2">
                     <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${item.evita_line === 'Evita Premium' ? 'bg-amber-100 text-amber-800' : 'bg-teal-100 text-teal-800'}`}>
                       {item.evita_line}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-slate-900">{item.description}</td>
-                  <td className="px-4 py-2 text-right text-slate-700">{item.width_in}"</td>
-                  <td className="px-4 py-2 text-right text-slate-700">{item.height_in}"</td>
-                  <td className="px-4 py-2 text-right text-slate-700">{item.depth_in}"</td>
-                  <td className="px-4 py-2 text-right font-medium text-slate-900">
+                  <td className="px-4 py-2 text-fg-900">{item.description}</td>
+                  <td className="px-4 py-2 text-right text-fg-700">{item.width_in}"</td>
+                  <td className="px-4 py-2 text-right text-fg-700">{item.height_in}"</td>
+                  <td className="px-4 py-2 text-right text-fg-700">{item.depth_in}"</td>
+                  <td className="px-4 py-2 text-right font-medium text-fg-900">
                     {item.price_with_backs_usd != null ? `$${item.price_with_backs_usd.toFixed(2)}` : '—'}
                   </td>
-                  <td className="px-4 py-2 text-right font-medium text-slate-900">
+                  <td className="px-4 py-2 text-right font-medium text-fg-900">
                     {item.price_without_backs_usd != null ? `$${item.price_without_backs_usd.toFixed(2)}` : '—'}
                   </td>
-                  <td className="px-4 py-2 text-right text-slate-700">{item.boxes_count}</td>
+                  <td className="px-4 py-2 text-right text-fg-700">{item.boxes_count}</td>
                   <td className="px-4 py-2 text-center">
-                    <button onClick={() => toggleActive(item)} className="text-slate-400 hover:text-teal-600 transition-colors" title={item.is_active ? 'Deactivate' : 'Activate'}>
+                    <button onClick={() => toggleActive(item)} className="text-fg-400 hover:text-teal-600 transition-colors" title={item.is_active ? 'Deactivate' : 'Activate'}>
                       {item.is_active ? <ToggleRight className="h-5 w-5 text-teal-600" /> : <ToggleLeft className="h-5 w-5" />}
                     </button>
                   </td>
                   <td className="px-4 py-2 text-center">
-                    <button onClick={() => openEdit(item)} className="text-slate-400 hover:text-teal-700 transition-colors" title="Edit">
+                    <button onClick={() => openEdit(item)} className="text-fg-400 hover:text-teal-700 transition-colors" title="Edit">
                       <Edit2 className="h-4 w-4" />
                     </button>
                   </td>
@@ -788,13 +788,13 @@ function PrefabLibraryTab() {
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
               selectedBrandId === b.id
                 ? 'bg-indigo-600 border-indigo-600 text-white'
-                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                : 'bg-surf-card border-border-solid text-fg-700 hover:bg-surf-app'
             }`}
           >
             {b.name}
           </button>
         ))}
-        <div className="ml-auto text-xs text-slate-500">{filtered.length} items</div>
+        <div className="ml-auto text-xs text-fg-500">{filtered.length} items</div>
       </div>
 
       {/* Action row */}
@@ -821,7 +821,7 @@ function PrefabLibraryTab() {
             className="hidden"
           />
         </div>
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-fg-500">
           FX: ${exchangeRate.toFixed(2)} MXN/USD
         </div>
       </div>
@@ -829,19 +829,19 @@ function PrefabLibraryTab() {
       {/* Filters */}
       <div className="mb-4 flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             placeholder="Search by code or description..."
-            className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-9 pr-4 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus"
           />
         </div>
         <select
           value={categoryFilter}
           onChange={e => setCategoryFilter(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          className="px-3 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card"
         >
           <option value="all">All Categories</option>
           {categories.map(c => <option key={c} value={c}>{c}</option>)}
@@ -849,26 +849,26 @@ function PrefabLibraryTab() {
         <select
           value={finishFilter}
           onChange={e => setFinishFilter(e.target.value)}
-          className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          className="px-3 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card"
         >
           <option value="all">All Finishes</option>
           {finishes.map(f => <option key={f} value={f}>{f}</option>)}
         </select>
-        <label className="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 text-sm">
+        <label className="flex items-center gap-2 px-3 py-2 border border-border-solid rounded-lg cursor-pointer hover:bg-surf-app text-sm">
           <input
             type="checkbox"
             checked={showInactive}
             onChange={e => setShowInactive(e.target.checked)}
-            className="w-4 h-4 text-indigo-600 border-slate-300 rounded"
+            className="w-4 h-4 text-accent-text border-border-solid rounded"
           />
-          <span className="text-slate-700">Show Inactive</span>
+          <span className="text-fg-700">Show Inactive</span>
         </label>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <div className="overflow-x-auto rounded-lg border border-border-soft">
         <table className="w-full text-sm">
-          <thead className="bg-indigo-50 border-b border-indigo-200">
+          <thead className="bg-accent-tint-soft border-b border-accent-tint-border">
             <tr>
               <th className="text-left px-4 py-3 font-semibold text-indigo-900">Code</th>
               <th className="text-left px-4 py-3 font-semibold text-indigo-900">Category</th>
@@ -889,7 +889,7 @@ function PrefabLibraryTab() {
           <tbody className="divide-y divide-slate-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={12} className="text-center py-10 text-slate-400">
+                <td colSpan={12} className="text-center py-10 text-fg-400">
                   {rows.length === 0 && loading
                     ? 'Loading…'
                     : rows.length === 0
@@ -914,30 +914,30 @@ function PrefabLibraryTab() {
                 return (
                   <tr
                     key={item.id}
-                    className={`hover:bg-slate-50 transition-colors ${!item.is_active ? 'opacity-50' : ''}`}
+                    className={`hover:bg-surf-app transition-colors ${!item.is_active ? 'opacity-50' : ''}`}
                   >
-                    <td className="px-4 py-2 font-mono text-xs text-slate-700">
+                    <td className="px-4 py-2 font-mono text-xs text-fg-700">
                       {item.cabinet_code}
                       {item.description && (
-                        <div className="text-[11px] text-slate-400 font-sans">
+                        <div className="text-[11px] text-fg-400 font-sans">
                           {item.description}
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-xs text-slate-600">{item.category}</td>
+                    <td className="px-4 py-2 text-xs text-fg-600">{item.category}</td>
                     <td className="px-4 py-2">
-                      <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">
+                      <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-surf-muted text-fg-700">
                         {item.item_type}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-right text-slate-700">{item.width_in ?? '—'}</td>
-                    <td className="px-4 py-2 text-right text-slate-700">{item.height_in ?? '—'}</td>
-                    <td className="px-4 py-2 text-right text-slate-700">{item.depth_in ?? '—'}</td>
-                    <td className="px-4 py-2 text-slate-600 text-xs">{finishLabel}</td>
-                    <td className="px-4 py-2 text-right font-medium text-slate-900">
+                    <td className="px-4 py-2 text-right text-fg-700">{item.width_in ?? '—'}</td>
+                    <td className="px-4 py-2 text-right text-fg-700">{item.height_in ?? '—'}</td>
+                    <td className="px-4 py-2 text-right text-fg-700">{item.depth_in ?? '—'}</td>
+                    <td className="px-4 py-2 text-fg-600 text-xs">{finishLabel}</td>
+                    <td className="px-4 py-2 text-right font-medium text-fg-900">
                       {usd != null ? `$${usd.toFixed(2)}` : '—'}
                     </td>
-                    <td className="px-4 py-2 text-right text-slate-700">
+                    <td className="px-4 py-2 text-right text-fg-700">
                       {mxn != null ? `$${mxn.toFixed(0)}` : '—'}
                     </td>
                     <td className="px-4 py-2 text-center space-x-1">
@@ -961,18 +961,18 @@ function PrefabLibraryTab() {
                     <td className="px-4 py-2 text-center">
                       <button
                         onClick={() => toggleActive(item)}
-                        className="text-slate-400 hover:text-indigo-600 transition-colors"
+                        className="text-fg-400 hover:text-accent-text transition-colors"
                         title={item.is_active ? 'Deactivate' : 'Activate'}
                       >
                         {item.is_active
-                          ? <ToggleRight className="h-5 w-5 text-indigo-600" />
+                          ? <ToggleRight className="h-5 w-5 text-accent-text" />
                           : <ToggleLeft className="h-5 w-5" />}
                       </button>
                     </td>
                     <td className="px-4 py-2 text-center">
                       <button
                         onClick={() => openEdit(item)}
-                        className="text-slate-400 hover:text-indigo-700 transition-colors"
+                        className="text-fg-400 hover:text-accent-text transition-colors"
                         title="Edit"
                       >
                         <Edit2 className="h-4 w-4" />
@@ -1016,12 +1016,12 @@ function PrefabLibraryTab() {
             </div>
             {importReport.priceChanges.length > 0 && (
               <div>
-                <h4 className="font-semibold text-slate-700 mt-3 mb-1">
+                <h4 className="font-semibold text-fg-700 mt-3 mb-1">
                   Price changes ({importReport.priceChanges.length})
                 </h4>
-                <div className="max-h-60 overflow-y-auto border border-slate-200 rounded">
+                <div className="max-h-60 overflow-y-auto border border-border-soft rounded">
                   <table className="w-full text-xs">
-                    <thead className="bg-slate-50 sticky top-0">
+                    <thead className="bg-surf-app sticky top-0">
                       <tr>
                         <th className="px-2 py-1 text-left">Code</th>
                         <th className="px-2 py-1 text-left">Finish</th>
@@ -1031,10 +1031,10 @@ function PrefabLibraryTab() {
                     </thead>
                     <tbody>
                       {importReport.priceChanges.slice(0, 200).map((c, i) => (
-                        <tr key={i} className="border-t border-slate-100">
+                        <tr key={i} className="border-t border-border-soft">
                           <td className="px-2 py-0.5 font-mono">{c.code}</td>
                           <td className="px-2 py-0.5">{c.finish}</td>
-                          <td className="px-2 py-0.5 text-right text-slate-500">
+                          <td className="px-2 py-0.5 text-right text-fg-500">
                             {c.oldUsd != null ? `$${c.oldUsd.toFixed(2)}` : 'new'}
                           </td>
                           <td className="px-2 py-0.5 text-right">${c.newUsd.toFixed(2)}</td>
@@ -1055,7 +1055,7 @@ function PrefabLibraryTab() {
                 </ul>
               </div>
             )}
-            <div className="flex justify-end pt-3 border-t border-slate-200">
+            <div className="flex justify-end pt-3 border-t border-border-soft">
               <Button onClick={() => setImportReport(null)}>Close</Button>
             </div>
           </div>

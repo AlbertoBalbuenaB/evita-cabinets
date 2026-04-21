@@ -49,8 +49,8 @@ export function TakeoffsSection({ projectId }: { projectId: string }) {
     <div className="glass-white rounded-2xl p-5 section-enter">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-800">Takeoffs</h2>
-          <p className="text-xs text-slate-500 mt-0.5">PDF measurements + threaded comments linked to this project.</p>
+          <h2 className="text-base font-semibold text-fg-800">Takeoffs</h2>
+          <p className="text-xs text-fg-500 mt-0.5">PDF measurements + threaded comments linked to this project.</p>
         </div>
         <Button
           variant="primary"
@@ -65,23 +65,23 @@ export function TakeoffsSection({ projectId }: { projectId: string }) {
       {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
 
       {loading ? (
-        <div className="py-8 flex items-center justify-center text-slate-400">
+        <div className="py-8 flex items-center justify-center text-fg-400">
           <Loader2 className="h-5 w-5 animate-spin" />
         </div>
       ) : sessions.length === 0 ? (
         <div className="py-10 text-center">
-          <FileText className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm text-slate-500">No takeoffs for this project yet.</p>
-          <p className="text-xs text-slate-400 mt-1">Start one to measure plans and collaborate with the team.</p>
+          <FileText className="h-10 w-10 text-fg-300 mx-auto mb-3" />
+          <p className="text-sm text-fg-500">No takeoffs for this project yet.</p>
+          <p className="text-xs text-fg-400 mt-1">Start one to measure plans and collaborate with the team.</p>
         </div>
       ) : (
-        <div className="divide-y divide-slate-200/70">
+        <div className="divide-y divide-border-soft">
           {sessions.map((s) => (
             <div key={s.id} className="py-3 flex items-start gap-3">
               <div className="flex-1 min-w-0">
-                <span className="font-medium text-slate-800 truncate block">{s.name}</span>
-                <p className="text-xs text-slate-500 truncate mt-0.5">{s.pdfFilename}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">
+                <span className="font-medium text-fg-800 truncate block">{s.name}</span>
+                <p className="text-xs text-fg-500 truncate mt-0.5">{s.pdfFilename}</p>
+                <p className="text-[10px] text-fg-400 mt-0.5">
                   Updated {formatRelativeDate(s.updatedAt)}
                   {s.createdByName && ` · by ${s.createdByName}`}
                 </p>
@@ -98,7 +98,7 @@ export function TakeoffsSection({ projectId }: { projectId: string }) {
                 <button
                   onClick={() => handleDelete(s.id)}
                   disabled={pendingDelete === s.id}
-                  className="p-1.5 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40"
+                  className="p-1.5 rounded text-fg-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40"
                   title="Delete session"
                 >
                   {pendingDelete === s.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}

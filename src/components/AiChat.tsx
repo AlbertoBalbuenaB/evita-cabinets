@@ -60,14 +60,14 @@ function formatBoldCode(text: string, keyPrefix: string): React.ReactNode[] {
       const part = codeParts[ci];
       if (part.length === 0) continue;
       if (ci % 2 === 1) {
-        children.push(<code key={`${keyPrefix}${si}c${ci}`} className="font-mono text-xs bg-slate-100 text-slate-700 px-1 py-0.5 rounded">{part}</code>);
+        children.push(<code key={`${keyPrefix}${si}c${ci}`} className="font-mono text-xs bg-surf-muted text-fg-700 px-1 py-0.5 rounded">{part}</code>);
       } else {
         children.push(part);
       }
     }
     if (children.length === 0) continue;
     if (isBold) {
-      parts.push(<strong key={`${keyPrefix}b${si}`} className="font-semibold text-slate-900">{children}</strong>);
+      parts.push(<strong key={`${keyPrefix}b${si}`} className="font-semibold text-fg-900">{children}</strong>);
     } else {
       parts.push(...children);
     }
@@ -119,7 +119,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/products?tab=prefab&prefabId=${id}`)}
-          className="text-indigo-600 hover:text-indigo-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-accent-text hover:text-indigo-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -212,7 +212,7 @@ function renderTable(tableLines: string[], keyBase: number, onNavigate?: (path: 
           <thead>
             <tr>
               {headerCells.map((cell, ci) => (
-                <th key={ci} className={`py-1 px-2 text-left font-semibold text-slate-700 border-b border-slate-200 ${isAmountCell(cell) ? 'text-right' : ''}`}>
+                <th key={ci} className={`py-1 px-2 text-left font-semibold text-fg-700 border-b border-border-soft ${isAmountCell(cell) ? 'text-right' : ''}`}>
                   {cell}
                 </th>
               ))}
@@ -223,9 +223,9 @@ function renderTable(tableLines: string[], keyBase: number, onNavigate?: (path: 
           {(hasSeparator ? dataRows : rows).map((row, ri) => {
             const cells = parseRow(row);
             return (
-              <tr key={ri} className="border-b border-slate-100 last:border-0">
+              <tr key={ri} className="border-b border-border-soft last:border-0">
                 {cells.map((cell, ci) => (
-                  <td key={ci} className={`py-1 px-2 text-slate-600 ${isAmountCell(cell) ? 'text-right tabular-nums' : ''}`}>
+                  <td key={ci} className={`py-1 px-2 text-fg-600 ${isAmountCell(cell) ? 'text-right tabular-nums' : ''}`}>
                     {formatInline(cell, `t${keyBase}-${ri}-${ci}-`, onNavigate)}
                   </td>
                 ))}
@@ -259,11 +259,11 @@ function formatMessage(text: string, onNavigate?: (path: string) => void): React
 
     // Headers
     if (line.startsWith('### ')) {
-      result.push(<p key={i} className="font-semibold text-slate-900 my-1 text-sm">{formatInline(line.slice(4), `h${i}-`, onNavigate)}</p>);
+      result.push(<p key={i} className="font-semibold text-fg-900 my-1 text-sm">{formatInline(line.slice(4), `h${i}-`, onNavigate)}</p>);
       i++; continue;
     }
     if (line.startsWith('## ')) {
-      result.push(<p key={i} className="font-semibold text-slate-900 my-1">{formatInline(line.slice(3), `h${i}-`, onNavigate)}</p>);
+      result.push(<p key={i} className="font-semibold text-fg-900 my-1">{formatInline(line.slice(3), `h${i}-`, onNavigate)}</p>);
       i++; continue;
     }
 
@@ -668,7 +668,7 @@ export function AiChat() {
               {view === 'history' ? (
                 <button
                   onClick={() => setView('chat')}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 transition-colors"
+                  className="p-1.5 rounded-lg text-fg-400 hover:text-fg-700 transition-colors"
                 >
                   <ArrowLeft size={16} />
                 </button>
@@ -684,10 +684,10 @@ export function AiChat() {
                 </div>
               )}
               <div>
-                <p className="font-semibold text-slate-900 text-sm leading-tight tracking-wide">
+                <p className="font-semibold text-fg-900 text-sm leading-tight tracking-wide">
                   {view === 'history' ? 'Conversation History' : 'Evita AI'}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-fg-500">
                   {view === 'history' ? 'Past conversations' : 'Quotation Assistant'}
                 </p>
               </div>
@@ -697,14 +697,14 @@ export function AiChat() {
                 <>
                   <button
                     onClick={handleShowHistory}
-                    className="p-2 rounded-lg text-slate-400 hover:text-slate-700 transition-colors"
+                    className="p-2 rounded-lg text-fg-400 hover:text-fg-700 transition-colors"
                     title="View conversation history"
                   >
                     <History size={14} />
                   </button>
                   <button
                     onClick={handleReset}
-                    className="p-2 rounded-lg text-slate-400 hover:text-slate-700 transition-colors"
+                    className="p-2 rounded-lg text-fg-400 hover:text-fg-700 transition-colors"
                     title="New conversation"
                   >
                     <RotateCcw size={14} />
@@ -713,7 +713,7 @@ export function AiChat() {
               )}
               <button
                 onClick={handleClose}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 transition-colors"
+                className="p-2 rounded-lg text-fg-400 hover:text-fg-700 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -741,16 +741,16 @@ export function AiChat() {
                     className="flex items-center gap-2 rounded-xl px-3 py-2"
                     style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(0,0,0,0.07)' }}
                   >
-                    <Search size={13} className="text-slate-400 flex-shrink-0" />
+                    <Search size={13} className="text-fg-400 flex-shrink-0" />
                     <input
                       type="text"
                       value={historySearch}
                       onChange={e => setHistorySearch(e.target.value)}
                       placeholder="Search conversations..."
-                      className="flex-1 bg-transparent text-sm focus:outline-none text-slate-700 placeholder-slate-400"
+                      className="flex-1 bg-transparent text-sm focus:outline-none text-fg-700 placeholder:text-fg-400"
                     />
                     {historySearch && (
-                      <button onClick={() => setHistorySearch('')} className="text-slate-400 hover:text-slate-600">
+                      <button onClick={() => setHistorySearch('')} className="text-fg-400 hover:text-fg-600">
                         <X size={12} />
                       </button>
                     )}
@@ -766,16 +766,16 @@ export function AiChat() {
                   </div>
                 ) : history.length === 0 ? (
                   <div className="text-center py-12">
-                    <MessageSquare size={32} className="mx-auto mb-3 text-slate-300" />
-                    <p className="text-sm font-medium text-slate-500">No conversations yet</p>
-                    <p className="text-xs mt-1 text-slate-400">
+                    <MessageSquare size={32} className="mx-auto mb-3 text-fg-300" />
+                    <p className="text-sm font-medium text-fg-500">No conversations yet</p>
+                    <p className="text-xs mt-1 text-fg-400">
                       Your conversations will appear here
                     </p>
                   </div>
                 ) : filteredHistory.length === 0 ? (
                   <div className="text-center py-12">
-                    <Search size={24} className="mx-auto mb-3 text-slate-300" />
-                    <p className="text-sm text-slate-500">No results for "{historySearch}"</p>
+                    <Search size={24} className="mx-auto mb-3 text-fg-300" />
+                    <p className="text-sm text-fg-500">No results for "{historySearch}"</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -795,7 +795,7 @@ export function AiChat() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setDeletingId(null)}
-                                className="flex-1 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-white/80 transition-colors"
+                                className="flex-1 py-1.5 rounded-lg text-xs font-medium text-fg-600 hover:bg-surf-card transition-colors"
                                 style={{ border: '1px solid rgba(0,0,0,0.1)' }}
                               >
                                 Cancel
@@ -839,16 +839,16 @@ export function AiChat() {
                                 }}
                                 onBlur={() => handleRenameSession(session.id, editingTitle)}
                                 onClick={e => e.stopPropagation()}
-                                className="w-full text-sm font-medium text-slate-800 bg-white rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                className="w-full text-sm font-medium text-fg-800 bg-surf-card rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus-visible:ring-focus"
                                 style={{ border: '1px solid rgba(59,130,246,0.3)' }}
                               />
                             ) : (
-                              <p className="text-sm font-medium truncate text-slate-800">
+                              <p className="text-sm font-medium truncate text-fg-800">
                                 {session.title}
                               </p>
                             )}
                             <div className="flex items-center gap-2 mt-1">
-                              <span className="text-xs text-slate-400">
+                              <span className="text-xs text-fg-400">
                                 {formatRelativeDate(session.created_at)}
                               </span>
                               <span
@@ -873,7 +873,7 @@ export function AiChat() {
                             ) : (
                               <button
                                 onClick={e => { e.stopPropagation(); setEditingId(session.id); setEditingTitle(session.title); }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                className="p-1.5 rounded-lg text-fg-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                                 title="Rename"
                               >
                                 <Pencil size={13} />
@@ -881,7 +881,7 @@ export function AiChat() {
                             )}
                             <button
                               onClick={e => { e.stopPropagation(); setDeletingId(session.id); }}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                              className="p-1.5 rounded-lg text-fg-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                               title="Delete"
                             >
                               <Trash2 size={13} />
@@ -915,17 +915,17 @@ export function AiChat() {
                       >
                         <Sparkles size={24} style={{ color: '#6366f1' }} />
                       </div>
-                      <p className="text-slate-900 font-semibold text-base mb-1">
+                      <p className="text-fg-900 font-semibold text-base mb-1">
                         {firstName ? `Hi ${firstName}, I'm Evita AI` : "Hi, I'm Evita AI"}
                       </p>
-                      <p className="text-xs leading-relaxed text-slate-500">
+                      <p className="text-xs leading-relaxed text-fg-500">
                         Your quotation assistant. Ask me for estimates,<br />
                         project data, or how the system works.
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <p className="text-xs px-1 text-slate-400 uppercase tracking-wide">
+                      <p className="text-xs px-1 text-fg-400 uppercase tracking-wide">
                         TRY ASKING
                       </p>
                       {SUGGESTIONS.map((s, i) => (
@@ -939,10 +939,10 @@ export function AiChat() {
                           }}
                         >
                           <span className="text-base">{s.icon}</span>
-                          <span className="flex-1 text-sm text-slate-600">
+                          <span className="flex-1 text-sm text-fg-600">
                             {s.text}
                           </span>
-                          <ChevronRight size={14} className="text-slate-300" />
+                          <ChevronRight size={14} className="text-fg-300" />
                         </button>
                       ))}
                     </div>
@@ -1014,7 +1014,7 @@ export function AiChat() {
                         ))}
                       </div>
                       {slowLoad && (
-                        <p className="text-xs mt-2 text-slate-400">
+                        <p className="text-xs mt-2 text-fg-400">
                           Working on it... complex requests may take 15–20s
                         </p>
                       )}
@@ -1031,7 +1031,7 @@ export function AiChat() {
                 style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
               >
                 <div
-                  className="flex items-end gap-2 rounded-2xl px-4 py-3 bg-white"
+                  className="flex items-end gap-2 rounded-2xl px-4 py-3 bg-surf-card"
                   style={{
                     border: '1px solid rgba(0,0,0,0.1)',
                   }}
@@ -1047,7 +1047,7 @@ export function AiChat() {
                     onKeyDown={handleKeyDown}
                     placeholder="Ask Evita AI..."
                     rows={1}
-                    className="flex-1 bg-transparent text-sm resize-none focus:outline-none leading-relaxed text-slate-800 placeholder-slate-400"
+                    className="flex-1 bg-transparent text-sm resize-none focus:outline-none leading-relaxed text-fg-800 placeholder:text-fg-400"
                     style={{
                       maxHeight: '120px',
                       overflowY: 'auto',
@@ -1076,7 +1076,7 @@ export function AiChat() {
                     )}
                   </button>
                 </div>
-                <p className="text-center text-xs mt-2 text-slate-400">
+                <p className="text-center text-xs mt-2 text-fg-400">
                   Evita Cabinets · Powered by Claude AI
                 </p>
               </div>

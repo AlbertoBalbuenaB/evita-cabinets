@@ -41,16 +41,16 @@ export function TaskCalendarView({ tasks, onSelect }: Props) {
       <div className="flex items-center justify-between">
         <button
           onClick={() => setCurrentMonth((m) => subMonths(m, 1))}
-          className="p-1.5 rounded-lg hover:bg-white/70 text-slate-500 transition-all duration-200 backdrop-blur-sm"
+          className="p-1.5 rounded-lg hover:bg-surf-card text-fg-500 transition-all duration-200 backdrop-blur-sm"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <h4 className="text-sm font-semibold text-slate-800">
+        <h4 className="text-sm font-semibold text-fg-800">
           {format(currentMonth, 'MMMM yyyy')}
         </h4>
         <button
           onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
-          className="p-1.5 rounded-lg hover:bg-white/70 text-slate-500 transition-all duration-200 backdrop-blur-sm"
+          className="p-1.5 rounded-lg hover:bg-surf-card text-fg-500 transition-all duration-200 backdrop-blur-sm"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -59,9 +59,9 @@ export function TaskCalendarView({ tasks, onSelect }: Props) {
       {/* Grid */}
       <div className="glass-white overflow-hidden">
         {/* Day headers */}
-        <div className="grid grid-cols-7 bg-white/40 backdrop-blur-sm border-b border-white/60">
+        <div className="grid grid-cols-7 bg-surf-card backdrop-blur-sm border-b border-white/60">
           {WEEKDAY_LABELS.map((d) => (
-            <div key={d} className="py-2 text-center text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+            <div key={d} className="py-2 text-center text-[10px] font-semibold text-fg-400 uppercase tracking-wide">
               {d}
             </div>
           ))}
@@ -79,14 +79,14 @@ export function TaskCalendarView({ tasks, onSelect }: Props) {
               <div
                 key={key}
                 className={`min-h-[80px] p-1.5 border-b border-r border-white/50 transition-colors ${
-                  today ? 'bg-blue-50/70' : !inMonth ? 'bg-white/20' : 'bg-white/40'
+                  today ? 'bg-blue-50/70' : !inMonth ? 'bg-surf-card' : 'bg-surf-card'
                 } ${i % 7 === 6 ? 'border-r-0' : ''}`}
               >
                 {/* Date number */}
                 <div className="mb-1">
                   <span className={`
                     inline-flex w-6 h-6 items-center justify-center rounded-full text-xs font-medium
-                    ${today ? 'bg-blue-600 text-white' : inMonth ? 'text-slate-700' : 'text-slate-300'}
+                    ${today ? 'bg-blue-600 text-white' : inMonth ? 'text-fg-700' : 'text-fg-300'}
                   `}>
                     {format(day, 'd')}
                   </span>
@@ -112,7 +112,7 @@ export function TaskCalendarView({ tasks, onSelect }: Props) {
                     );
                   })}
                   {dayTasks.length > 3 && (
-                    <p className="text-[9px] text-slate-400 px-1">+{dayTasks.length - 3} more</p>
+                    <p className="text-[9px] text-fg-400 px-1">+{dayTasks.length - 3} more</p>
                   )}
                 </div>
               </div>
@@ -124,7 +124,7 @@ export function TaskCalendarView({ tasks, onSelect }: Props) {
       {/* Unscheduled tasks */}
       {unscheduled.length > 0 && (
         <div className="mt-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
+          <p className="text-xs font-semibold text-fg-400 uppercase tracking-wide mb-2">
             No due date ({unscheduled.length})
           </p>
           <div className="flex flex-wrap gap-2">

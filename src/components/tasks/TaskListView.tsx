@@ -39,7 +39,7 @@ export function TaskListView({ tasks, selectedTaskId, onSelect, onStatusChange }
 
   if (!hasAny) {
     return (
-      <p className="glass-white py-4 text-center text-sm text-slate-400 rounded-xl">No tasks match the current filters.</p>
+      <p className="glass-white py-4 text-center text-sm text-fg-400 rounded-xl">No tasks match the current filters.</p>
     );
   }
 
@@ -59,13 +59,13 @@ export function TaskListView({ tasks, selectedTaskId, onSelect, onStatusChange }
               className="glass-white flex items-center gap-2 w-full text-left px-3 py-2 rounded-xl mb-2 hover:shadow-md transition-all duration-200 group"
             >
               <ChevronRight
-                className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${isCollapsed ? '' : 'rotate-90'}`}
+                className={`h-3.5 w-3.5 text-fg-400 transition-transform duration-200 ${isCollapsed ? '' : 'rotate-90'}`}
               />
               <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-              <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide flex-1 text-left">
+              <span className="text-xs font-semibold text-fg-600 uppercase tracking-wide flex-1 text-left">
                 {cfg.label}
               </span>
-              <span className="text-xs text-slate-400 font-medium bg-white/60 px-1.5 py-0.5 rounded-full">{group.length}</span>
+              <span className="text-xs text-fg-400 font-medium bg-surf-card px-1.5 py-0.5 rounded-full">{group.length}</span>
             </button>
 
             {/* Tasks */}

@@ -302,9 +302,9 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 type="checkbox"
                 checked={formData.has_drawers ?? false}
                 onChange={(e) => syncFormHasDrawers(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus"
               />
-              <span className="text-sm font-medium text-slate-700">Has Drawers</span>
+              <span className="text-sm font-medium text-fg-700">Has Drawers</span>
             </label>
           </div>
         </div>
@@ -322,11 +322,11 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
           onChange={(collection) => setFormData({ ...formData, collection_name: collection })}
         />
 
-        <div className="border-t border-slate-200 pt-4">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3">Shipping & Labor</h3>
+        <div className="border-t border-border-soft pt-4">
+          <h3 className="text-sm font-semibold text-fg-900 mb-3">Shipping & Labor</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 Labor Cost (MXN)
               </label>
               <input
@@ -336,15 +336,15 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 value={customLaborCostInput}
                 onChange={(e) => setCustomLaborCostInput(e.target.value)}
                 placeholder="Leave empty to use global setting"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 Leave empty to use the global settings. Set a value to override for this product only.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-fg-700 mb-1">
                 Boxes per Unit
               </label>
               <input
@@ -355,9 +355,9 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 onChange={(e) =>
                   setFormData({ ...formData, boxes_per_unit: parseInt(e.target.value) || 1 })
                 }
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-fg-500">
                 How many shipping boxes this product occupies
               </p>
             </div>
@@ -369,17 +369,17 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 onChange={(e) =>
                   setFormData({ ...formData, default_is_rta: e.target.checked })
                 }
-                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus"
               />
               <div>
-                <span className="text-sm font-medium text-slate-700">Default RTA</span>
-                <p className="text-xs text-slate-500">New cabinets using this product will default to RTA</p>
+                <span className="text-sm font-medium text-fg-700">Default RTA</span>
+                <p className="text-xs text-fg-500">New cabinets using this product will default to RTA</p>
               </div>
             </label>
           </div>
         </div>
 
-        <div className="border-t border-slate-200 pt-4">
+        <div className="border-t border-border-soft pt-4">
           <button
             type="button"
             onClick={() => setCalcOpen((o) => !o)}
@@ -395,35 +395,35 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
           </button>
 
           {calcOpen && (
-            <div className="mt-4 space-y-4 bg-slate-50 border border-slate-200 rounded-lg p-4">
+            <div className="mt-4 space-y-4 bg-surf-app border border-border-soft rounded-lg p-4">
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Height (in)</label>
+                  <label className="block text-xs font-medium text-fg-700 mb-1">Height (in)</label>
                   <input
                     type="number" min="0" step="0.25"
                     value={calcH}
                     onChange={(e) => setCalcH(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Width (in)</label>
+                  <label className="block text-xs font-medium text-fg-700 mb-1">Width (in)</label>
                   <input
                     type="number" min="0" step="0.25"
                     value={calcW}
                     onChange={(e) => setCalcW(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Depth (in)</label>
+                  <label className="block text-xs font-medium text-fg-700 mb-1">Depth (in)</label>
                   <input
                     type="number" min="0" step="0.25"
                     value={calcD}
                     onChange={(e) => setCalcD(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                     placeholder="0"
                   />
                 </div>
@@ -431,29 +431,29 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Costados (Side Panels)</label>
+                  <label className="block text-xs font-medium text-fg-700 mb-1">Costados (Side Panels)</label>
                   <input
                     type="number" min="0"
                     value={calcCostados}
                     onChange={(e) => setCalcCostados(parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                   />
-                  <p className="mt-1 text-xs text-slate-500">Standard box = 2. Add interior dividers if needed.</p>
+                  <p className="mt-1 text-xs text-fg-500">Standard box = 2. Add interior dividers if needed.</p>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Shelves</label>
+                  <label className="block text-xs font-medium text-fg-700 mb-1">Shelves</label>
                   <input
                     type="number" min="0"
                     value={calcShelves}
                     onChange={(e) => setCalcShelves(parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Cabinet Type</label>
+                  <label className="block text-xs font-medium text-fg-700 mb-1">Cabinet Type</label>
                   <select
                     value={calcCabinetType}
                     onChange={(e) => {
@@ -462,7 +462,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                       setCalcShelfType(newType === 'base' ? 'fixed' : 'adjustable');
                       if (newType !== 'base') setCalcIsSink(false);
                     }}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                   >
                     <option value="base">Base Cabinet</option>
                     <option value="wall">Wall / Upper Cabinet</option>
@@ -470,56 +470,56 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Body Thickness (mm)</label>
+                  <label className="block text-xs font-medium text-fg-700 mb-1">Body Thickness (mm)</label>
                   <input
                     type="number" min="1" step="1"
                     value={calcBodyThickness}
                     onChange={(e) => setCalcBodyThickness(parseInt(e.target.value) || 18)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                   />
-                  <p className="mt-1 text-xs text-slate-500">Panel thickness (typically 18mm)</p>
+                  <p className="mt-1 text-xs text-fg-500">Panel thickness (typically 18mm)</p>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Drawer Box (mm)</label>
+                  <label className="block text-xs font-medium text-fg-700 mb-1">Drawer Box (mm)</label>
                   <input
                     type="number" min="1" step="1"
                     value={calcDrawerBoxThickness}
                     onChange={(e) => setCalcDrawerBoxThickness(parseInt(e.target.value) || 15)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                   />
-                  <p className="mt-1 text-xs text-slate-500">Drawer box thickness (typically 15mm)</p>
+                  <p className="mt-1 text-xs text-fg-500">Drawer box thickness (typically 15mm)</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Shelf Type</label>
-                  <div className="flex rounded-lg overflow-hidden border border-slate-300">
+                  <label className="block text-xs font-medium text-fg-700 mb-1">Shelf Type</label>
+                  <div className="flex rounded-lg overflow-hidden border border-border-solid">
                     <button type="button"
-                      className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${calcShelfType === 'fixed' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                      className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${calcShelfType === 'fixed' ? 'bg-blue-600 text-white' : 'bg-surf-card text-fg-600 hover:bg-surf-app'}`}
                       onClick={() => setCalcShelfType('fixed')}>Fixed</button>
                     <button type="button"
-                      className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${calcShelfType === 'adjustable' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                      className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${calcShelfType === 'adjustable' ? 'bg-blue-600 text-white' : 'bg-surf-card text-fg-600 hover:bg-surf-app'}`}
                       onClick={() => setCalcShelfType('adjustable')}>Adjustable</button>
                   </div>
                 </div>
                 <div className="flex items-end pb-1">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs text-fg-700">
                     <input type="checkbox" checked={calcOptimizeDepth}
                       onChange={(e) => setCalcOptimizeDepth(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500" />
+                      className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus" />
                     Optimize depth (300/400/450/600mm)
                   </label>
                 </div>
                 {calcCabinetType === 'base' && (
                   <div className="flex items-end pb-1">
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-fg-700">
                       <input type="checkbox" checked={calcIsSink}
                         onChange={(e) => {
                           setCalcIsSink(e.target.checked);
                           if (e.target.checked) setCalcShelves(0);
                         }}
-                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500" />
+                        className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus" />
                       Sink base (no top, no shelves)
                     </label>
                   </div>
@@ -527,21 +527,21 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
               </div>
 
               <div className="flex items-center gap-6">
-                <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-fg-700">
                   <input
                     type="checkbox"
                     checked={calcHasDoors}
                     onChange={(e) => setCalcHasDoors(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus"
                   />
                   Has Doors (Puertas)
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700">
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-fg-700">
                   <input
                     type="checkbox"
                     checked={calcHasDrawers}
                     onChange={(e) => syncCalcHasDrawers(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus"
                   />
                   Has Drawers (Cajones)
                 </label>
@@ -550,24 +550,24 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
               {calcHasDoors && (
                 <div className="grid grid-cols-2 gap-3 pl-4 border-l-2 border-blue-200">
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Number of Doors</label>
+                    <label className="block text-xs font-medium text-fg-700 mb-1">Number of Doors</label>
                     <input
                       type="number" min="1"
                       value={calcDoors}
                       onChange={(e) => setCalcDoors(parseInt(e.target.value) || 1)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                     />
-                    <p className="mt-1 text-xs text-slate-500">Door panels spanning the full door section height.</p>
+                    <p className="mt-1 text-xs text-fg-500">Door panels spanning the full door section height.</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Door Section Height (in)</label>
+                    <label className="block text-xs font-medium text-fg-700 mb-1">Door Section Height (in)</label>
                     <input
                       type="number" min="0" step="0.25"
                       value={calcDoorSectionH}
                       onChange={(e) => setCalcDoorSectionH(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                     />
-                    <p className="mt-1 text-xs text-slate-500">Height of the door area. Leave 0 to use full cabinet height.</p>
+                    <p className="mt-1 text-xs text-fg-500">Height of the door area. Leave 0 to use full cabinet height.</p>
                   </div>
                 </div>
               )}
@@ -575,25 +575,25 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
               {calcHasDrawers && (
                 <div className="grid grid-cols-2 gap-3 pl-4 border-l-2 border-amber-200">
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Number of Drawers</label>
+                    <label className="block text-xs font-medium text-fg-700 mb-1">Number of Drawers</label>
                     <input
                       type="number" min="1"
                       value={calcDrawers}
                       onChange={(e) => setCalcDrawers(parseInt(e.target.value) || 1)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                     />
-                    <p className="mt-1 text-xs text-slate-500">Each drawer gets 1 front panel automatically.</p>
+                    <p className="mt-1 text-xs text-fg-500">Each drawer gets 1 front panel automatically.</p>
                     <p className="mt-1 text-xs text-amber-700">ℹ️ Drawer box height is fixed at 7" (Blum standard). Front height = Drawer section height ÷ number of drawers.</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1">Drawer Section Height (in)</label>
+                    <label className="block text-xs font-medium text-fg-700 mb-1">Drawer Section Height (in)</label>
                     <input
                       type="number" min="0" step="0.25"
                       value={calcDrawerSectionH}
                       onChange={(e) => setCalcDrawerSectionH(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                     />
-                    <p className="mt-1 text-xs text-slate-500">Height of the drawer stack. Leave 0 to use full cabinet height.</p>
+                    <p className="mt-1 text-xs text-fg-500">Height of the drawer stack. Leave 0 to use full cabinet height.</p>
                   </div>
                 </div>
               )}
@@ -622,8 +622,8 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
           )}
         </div>
 
-        <div className="border-t border-slate-200 pt-4">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3">Box Construction</h3>
+        <div className="border-t border-border-soft pt-4">
+          <h3 className="text-sm font-semibold text-fg-900 mb-3">Box Construction</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('box_sf') ? 'bg-green-50 ring-1 ring-green-300' : ''}`}>
               <Input
@@ -668,8 +668,8 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
           </div>
         </div>
 
-        <div className="border-t border-slate-200 pt-4">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3">
+        <div className="border-t border-border-soft pt-4">
+          <h3 className="text-sm font-semibold text-fg-900 mb-3">
             Doors & Drawer Fronts
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -705,7 +705,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
           </div>
         </div>
 
-        <div className="border-t border-slate-200 pt-4">
+        <div className="border-t border-border-soft pt-4">
           <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('total_edgeband') ? 'bg-green-50 ring-1 ring-green-300' : ''}`}>
             <Input
               label="Total Edgeband (m)"
@@ -721,13 +721,13 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
               required
             />
           </div>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-fg-500">
             This is the total edgeband used for cost calculations
           </p>
         </div>
 
         {/* ── Cut List ────────────────────────────────────────────────── */}
-        <div className="border-t border-slate-200 pt-4">
+        <div className="border-t border-border-soft pt-4">
           <button
             type="button"
             onClick={() => setDespieceOpen((o) => !o)}
@@ -750,30 +750,30 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
           {despieceOpen && (
             <div className="mt-3 space-y-2">
               {cutPieces.length === 0 ? (
-                <p className="text-xs text-slate-500 text-center py-4 bg-slate-50 rounded-lg border border-slate-200">
+                <p className="text-xs text-fg-500 text-center py-4 bg-surf-app rounded-lg border border-border-soft">
                   No pieces yet. Use "🪚 Generate Cut List" in the dimensions calculator above, or add pieces manually.
                 </p>
               ) : (
-                <div className="overflow-x-auto rounded-lg border border-slate-200">
+                <div className="overflow-x-auto rounded-lg border border-border-soft">
                   <table className="w-full text-xs">
-                    <thead className="bg-slate-100 text-slate-600">
+                    <thead className="bg-surf-muted text-fg-600">
                       <tr>
                         <th className="text-left px-2 py-1.5 font-medium">Part</th>
                         <th className="text-center px-2 py-1.5 font-medium">Width (mm)</th>
                         <th className="text-center px-2 py-1.5 font-medium">Height (mm)</th>
                         <th className="text-center px-2 py-1.5 font-medium">Qty</th>
                         <th className="text-center px-2 py-1.5 font-medium">Material</th>
-                        <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Grain">Grain</th>
-                        <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Top">T</th>
-                        <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Bottom">B</th>
-                        <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Left">L</th>
-                        <th className="text-center px-1 py-1.5 font-medium text-slate-400" title="Right">R</th>
+                        <th className="text-center px-1 py-1.5 font-medium text-fg-400" title="Grain">Grain</th>
+                        <th className="text-center px-1 py-1.5 font-medium text-fg-400" title="Top">T</th>
+                        <th className="text-center px-1 py-1.5 font-medium text-fg-400" title="Bottom">B</th>
+                        <th className="text-center px-1 py-1.5 font-medium text-fg-400" title="Left">L</th>
+                        <th className="text-center px-1 py-1.5 font-medium text-fg-400" title="Right">R</th>
                         <th className="px-1 py-1.5"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {cutPieces.map((piece) => (
-                        <tr key={piece.id} className="hover:bg-slate-50">
+                        <tr key={piece.id} className="hover:bg-surf-app">
                           <td className="px-1 py-1">
                             <input
                               type="text"
@@ -781,7 +781,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                               onChange={(e) => setCutPieces((prev) =>
                                 prev.map((p) => p.id === piece.id ? { ...p, nombre: e.target.value } : p)
                               )}
-                              className="w-full px-2 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 text-xs"
+                              className="w-full px-2 py-1 border border-border-soft rounded focus:outline-none focus:ring-1 focus-visible:ring-focus text-xs"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -791,7 +791,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                               onChange={(e) => setCutPieces((prev) =>
                                 prev.map((p) => p.id === piece.id ? { ...p, ancho: parseInt(e.target.value) || 0 } : p)
                               )}
-                              className="w-20 px-2 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 text-xs text-center"
+                              className="w-20 px-2 py-1 border border-border-soft rounded focus:outline-none focus:ring-1 focus-visible:ring-focus text-xs text-center"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -801,7 +801,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                               onChange={(e) => setCutPieces((prev) =>
                                 prev.map((p) => p.id === piece.id ? { ...p, alto: parseInt(e.target.value) || 0 } : p)
                               )}
-                              className="w-20 px-2 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 text-xs text-center"
+                              className="w-20 px-2 py-1 border border-border-soft rounded focus:outline-none focus:ring-1 focus-visible:ring-focus text-xs text-center"
                             />
                           </td>
                           <td className="px-1 py-1">
@@ -811,7 +811,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                               onChange={(e) => setCutPieces((prev) =>
                                 prev.map((p) => p.id === piece.id ? { ...p, cantidad: parseInt(e.target.value) || 1 } : p)
                               )}
-                              className="w-12 px-2 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 text-xs text-center"
+                              className="w-12 px-2 py-1 border border-border-soft rounded focus:outline-none focus:ring-1 focus-visible:ring-focus text-xs text-center"
                             />
                           </td>
                           <td className="px-1 py-1 text-center">
@@ -820,13 +820,13 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                               onChange={(e) => setCutPieces((prev) =>
                                 prev.map((p) => p.id === piece.id ? { ...p, material: e.target.value as CutPiece['material'] } : p)
                               )}
-                              className={`px-1.5 py-0.5 rounded text-xs font-medium border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 ${
+                              className={`px-1.5 py-0.5 rounded text-xs font-medium border-0 focus:outline-none focus:ring-1 focus-visible:ring-focus ${
                                 piece.material === 'cuerpo'      ? 'bg-blue-100 text-blue-800' :
                                 piece.material === 'frente'      ? 'bg-amber-100 text-amber-800' :
                                 piece.material === 'back'        ? 'bg-emerald-100 text-emerald-800' :
                                 piece.material === 'drawer_box'  ? 'bg-teal-100 text-teal-800' :
                                 piece.material === 'shelf'       ? 'bg-violet-100 text-violet-800' :
-                                                                   'bg-slate-100 text-slate-700'
+                                                                   'bg-surf-muted text-fg-700'
                               }`}
                             >
                               <option value="cuerpo">Box Construction</option>
@@ -843,10 +843,10 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                               onChange={(e) => setCutPieces((prev) =>
                                 prev.map((p) => p.id === piece.id ? { ...p, veta: e.target.value as CutPiece['veta'] } : p)
                               )}
-                              className={`px-1 py-0.5 rounded text-xs font-medium border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 ${
+                              className={`px-1 py-0.5 rounded text-xs font-medium border-0 focus:outline-none focus:ring-1 focus-visible:ring-focus ${
                                 piece.veta === 'vertical'   ? 'bg-purple-100 text-purple-800' :
                                 piece.veta === 'horizontal' ? 'bg-teal-100 text-teal-800' :
-                                                              'bg-slate-100 text-slate-600'
+                                                              'bg-surf-muted text-fg-600'
                               }`}
                             >
                               <option value="none">— None</option>
@@ -890,7 +890,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                     { id: crypto.randomUUID(), nombre: '', ancho: 0, alto: 0, cantidad: 1, material: 'custom', cubrecanto: { sup: 0, inf: 0, izq: 0, der: 0 }, veta: 'none' },
                   ])
                 }
-                className="w-full py-1.5 px-3 border border-dashed border-slate-300 hover:border-slate-400 text-slate-500 hover:text-slate-700 text-xs rounded-lg transition-colors"
+                className="w-full py-1.5 px-3 border border-dashed border-border-solid hover:border-slate-400 text-fg-500 hover:text-fg-700 text-xs rounded-lg transition-colors"
               >
                 + Add Piece
               </button>

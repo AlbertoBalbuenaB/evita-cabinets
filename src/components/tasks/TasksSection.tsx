@@ -183,9 +183,9 @@ export function TasksSection({ projectId, teamMembers, initialTaskId }: Props) {
     return (
       <div className="glass-white p-6">
         <div className="animate-pulse space-y-3">
-          <div className="h-6 bg-white/60 rounded w-24" />
-          <div className="h-4 bg-white/60 rounded w-full" />
-          <div className="h-4 bg-white/60 rounded w-3/4" />
+          <div className="h-6 bg-surf-card rounded w-24" />
+          <div className="h-4 bg-surf-card rounded w-full" />
+          <div className="h-4 bg-surf-card rounded w-3/4" />
         </div>
       </div>
     );
@@ -198,35 +198,35 @@ export function TasksSection({ projectId, teamMembers, initialTaskId }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/60 bg-gradient-to-r from-indigo-50/40 to-blue-50/20">
           <div className="flex items-center gap-2">
-            <CheckSquare className="h-5 w-5 text-indigo-500" />
-            <h3 className="text-lg font-semibold text-slate-900">Tasks</h3>
+            <CheckSquare className="h-5 w-5 text-accent-text" />
+            <h3 className="text-lg font-semibold text-fg-900">Tasks</h3>
             {tasks.length > 0 && (
-              <span className="text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-100/60 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-medium bg-accent-tint-soft text-accent-text border border-accent-tint-border px-2 py-0.5 rounded-full">
                 {tasks.length}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2">
             {/* View switcher */}
-            <div className="flex items-center bg-white/50 backdrop-blur-sm border border-slate-200/50 rounded-lg p-0.5 gap-0.5">
+            <div className="flex items-center bg-surf-card backdrop-blur-sm border border-border-soft rounded-lg p-0.5 gap-0.5">
               <button
                 onClick={() => setView('list')}
                 title="List view"
-                className={`p-1.5 rounded-md transition-all ${view === 'list' ? 'bg-white shadow-md text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-md transition-all ${view === 'list' ? 'bg-surf-card shadow-md text-blue-600' : 'text-fg-400 hover:text-fg-600'}`}
               >
                 <List className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setView('kanban')}
                 title="Board view"
-                className={`p-1.5 rounded-md transition-all ${view === 'kanban' ? 'bg-white shadow-md text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-md transition-all ${view === 'kanban' ? 'bg-surf-card shadow-md text-blue-600' : 'text-fg-400 hover:text-fg-600'}`}
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setView('calendar')}
                 title="Calendar view"
-                className={`p-1.5 rounded-md transition-all ${view === 'calendar' ? 'bg-white shadow-md text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-md transition-all ${view === 'calendar' ? 'bg-surf-card shadow-md text-blue-600' : 'text-fg-400 hover:text-fg-600'}`}
               >
                 <Calendar className="h-4 w-4" />
               </button>
@@ -242,7 +242,7 @@ export function TasksSection({ projectId, teamMembers, initialTaskId }: Props) {
         </div>
 
         {/* Filters */}
-        <div className="px-5 py-3 border-b border-white/60 bg-white/20">
+        <div className="px-5 py-3 border-b border-white/60 bg-surf-card">
           <TaskFilters
             filters={filters}
             onFiltersChange={setFilters}
@@ -254,7 +254,7 @@ export function TasksSection({ projectId, teamMembers, initialTaskId }: Props) {
         {/* View content */}
         <div className="p-5">
           {tasks.length === 0 ? (
-            <div className="py-12 text-center text-slate-400">
+            <div className="py-12 text-center text-fg-400">
               <CheckSquare className="h-10 w-10 mx-auto mb-3 opacity-30" />
               <p className="text-sm font-medium">No tasks yet</p>
               <p className="text-xs mt-1">Click "Add Task" to get started</p>

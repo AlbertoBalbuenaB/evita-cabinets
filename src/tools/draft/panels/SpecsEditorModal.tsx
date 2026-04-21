@@ -81,7 +81,7 @@ export function SpecsEditorModal({ isOpen, onClose }: SpecsEditorModalProps) {
         {/* Finishes */}
         <section>
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-slate-800">Finishes</h3>
+            <h3 className="text-sm font-semibold text-fg-800">Finishes</h3>
             <Button
               variant="ghost"
               size="sm"
@@ -104,7 +104,7 @@ export function SpecsEditorModal({ isOpen, onClose }: SpecsEditorModalProps) {
                     next[idx] = { ...next[idx], label: e.target.value };
                     setFinishes(next);
                   }}
-                  className="flex-1 px-3 py-2 rounded-lg border border-slate-300/80 bg-white/70 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="flex-1 px-3 py-2 rounded-lg border border-border-solid bg-surf-card text-sm text-fg-700 focus:outline-none focus:ring-2 focus-visible:ring-focus"
                 />
                 <select
                   value={f.role}
@@ -116,7 +116,7 @@ export function SpecsEditorModal({ isOpen, onClose }: SpecsEditorModalProps) {
                     };
                     setFinishes(next);
                   }}
-                  className="px-3 py-2 rounded-lg border border-slate-300/80 bg-white/70 text-sm text-slate-700"
+                  className="px-3 py-2 rounded-lg border border-border-solid bg-surf-card text-sm text-fg-700"
                 >
                   {ROLES.map((r) => (
                     <option key={r} value={r}>
@@ -130,7 +130,7 @@ export function SpecsEditorModal({ isOpen, onClose }: SpecsEditorModalProps) {
                   onClick={() => setFinishes(finishes.filter((_, i) => i !== idx))}
                   aria-label="Remove finish"
                 >
-                  <Trash2 className="h-4 w-4 text-slate-500" />
+                  <Trash2 className="h-4 w-4 text-fg-500" />
                 </Button>
               </div>
             ))}
@@ -155,7 +155,7 @@ export function SpecsEditorModal({ isOpen, onClose }: SpecsEditorModalProps) {
           multiline
         />
 
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-200/60">
+        <div className="flex justify-end gap-2 pt-2 border-t border-border-soft">
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
@@ -183,14 +183,14 @@ function SpecField({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-600 mb-1">{label}</label>
+      <label className="block text-xs font-medium text-fg-600 mb-1">{label}</label>
       {multiline ? (
         <textarea
           value={value}
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
           rows={3}
-          className="w-full px-3 py-2 rounded-lg border border-slate-300/80 bg-white/70 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="w-full px-3 py-2 rounded-lg border border-border-solid bg-surf-card text-sm text-fg-700 focus:outline-none focus:ring-2 focus-visible:ring-focus"
         />
       ) : (
         <input
@@ -198,7 +198,7 @@ function SpecField({
           value={value}
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-slate-300/80 bg-white/70 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="w-full px-3 py-2 rounded-lg border border-border-solid bg-surf-card text-sm text-fg-700 focus:outline-none focus:ring-2 focus-visible:ring-focus"
         />
       )}
     </div>

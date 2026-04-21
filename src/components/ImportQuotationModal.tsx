@@ -130,17 +130,17 @@ export function ImportQuotationModal({ isOpen, onClose, projectId, onSuccess }: 
         {/* Project selection (only when projectId not provided) */}
         {!projectId && (
           <div className="space-y-3">
-            <label className="text-sm font-medium text-slate-700">Import into:</label>
+            <label className="text-sm font-medium text-fg-700">Import into:</label>
             <div className="flex gap-2">
               <button
                 onClick={() => setCreateNew(false)}
-                className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${!createNew ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${!createNew ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-border-soft text-fg-600 hover:bg-surf-app'}`}
               >
                 Existing Project
               </button>
               <button
                 onClick={() => setCreateNew(true)}
-                className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${createNew ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${createNew ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-border-soft text-fg-600 hover:bg-surf-app'}`}
               >
                 New Project
               </button>
@@ -157,7 +157,7 @@ export function ImportQuotationModal({ isOpen, onClose, projectId, onSuccess }: 
               <select
                 value={selectedProjectId}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg"
+                className="w-full px-3 py-2 text-sm border border-border-soft rounded-lg"
               >
                 <option value="">Select a project...</option>
                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -176,7 +176,7 @@ export function ImportQuotationModal({ isOpen, onClose, projectId, onSuccess }: 
 
         {/* File upload */}
         <div
-          className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${isDragging ? 'border-blue-400 bg-blue-50' : 'border-slate-300 hover:border-blue-300'}`}
+          className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${isDragging ? 'border-blue-400 bg-blue-50' : 'border-border-solid hover:border-blue-300'}`}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
@@ -193,17 +193,17 @@ export function ImportQuotationModal({ isOpen, onClose, projectId, onSuccess }: 
             <div className="flex items-center justify-center gap-3">
               <FileJson className="h-8 w-8 text-blue-500" />
               <div className="text-left">
-                <p className="text-sm font-medium text-slate-900">{selectedFile.name}</p>
-                <p className="text-xs text-slate-500">{formatFileSize(selectedFile.size)}</p>
+                <p className="text-sm font-medium text-fg-900">{selectedFile.name}</p>
+                <p className="text-xs text-fg-500">{formatFileSize(selectedFile.size)}</p>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setValidationResult(null); }} className="p-1 rounded hover:bg-slate-100">
-                <X className="h-4 w-4 text-slate-400" />
+              <button onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setValidationResult(null); }} className="p-1 rounded hover:bg-surf-muted">
+                <X className="h-4 w-4 text-fg-400" />
               </button>
             </div>
           ) : (
             <div>
-              <Upload className="h-10 w-10 text-slate-400 mx-auto mb-2" />
-              <p className="text-sm text-slate-600">Drop .evita.json file here or click to browse</p>
+              <Upload className="h-10 w-10 text-fg-400 mx-auto mb-2" />
+              <p className="text-sm text-fg-600">Drop .evita.json file here or click to browse</p>
             </div>
           )}
         </div>
@@ -229,7 +229,7 @@ export function ImportQuotationModal({ isOpen, onClose, projectId, onSuccess }: 
               </span>
             </div>
             {validationResult.isValid && validationResult.projectData && (
-              <div className="text-xs text-slate-600 mt-2 space-y-0.5">
+              <div className="text-xs text-fg-600 mt-2 space-y-0.5">
                 <p>{validationResult.projectData.metadata.totalAreas} areas, {validationResult.projectData.metadata.totalCabinets} cabinets</p>
                 <p>Original: {validationResult.projectData.project.name}</p>
               </div>

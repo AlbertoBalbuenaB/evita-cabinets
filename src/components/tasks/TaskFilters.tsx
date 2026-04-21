@@ -32,8 +32,8 @@ export function TaskFilters({ filters, onFiltersChange, teamMembers, tags }: Pro
           onClick={() => set({ assigneeId: '' })}
           className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-150 ${
             !filters.assigneeId
-              ? 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-sm'
-              : 'bg-white/60 backdrop-blur-sm border border-slate-200/60 text-slate-600 hover:border-blue-200 hover:bg-white/80'
+              ? 'bg-accent-primary text-accent-on shadow-sm'
+              : 'bg-surf-card backdrop-blur-sm border border-border-soft text-fg-600 hover:border-blue-200 hover:bg-surf-card'
           }`}
         >
           All
@@ -44,8 +44,8 @@ export function TaskFilters({ filters, onFiltersChange, teamMembers, tags }: Pro
             onClick={() => set({ assigneeId: m.id === filters.assigneeId ? '' : m.id })}
             className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-150 ${
               filters.assigneeId === m.id
-                ? 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-sm'
-                : 'bg-white/60 backdrop-blur-sm border border-slate-200/60 text-slate-600 hover:border-blue-200 hover:bg-white/80'
+                ? 'bg-accent-primary text-accent-on shadow-sm'
+                : 'bg-surf-card backdrop-blur-sm border border-border-soft text-fg-600 hover:border-blue-200 hover:bg-surf-card'
             }`}
           >
             {m.name.split(' ')[0]}
@@ -54,13 +54,13 @@ export function TaskFilters({ filters, onFiltersChange, teamMembers, tags }: Pro
       </div>
 
       {/* Divider */}
-      {(activeMembers.length > 0) && <div className="w-px h-5 bg-slate-200" />}
+      {(activeMembers.length > 0) && <div className="w-px h-5 bg-surf-muted" />}
 
       {/* Status filter */}
       <select
         value={filters.status}
         onChange={(e) => set({ status: e.target.value as TaskStatus | '' })}
-        className="text-xs border border-slate-200/60 rounded-lg px-2 py-1 bg-white/70 backdrop-blur-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="text-xs border border-border-soft rounded-lg px-2 py-1 bg-surf-card backdrop-blur-sm text-fg-600 focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-transparent"
       >
         <option value="">All statuses</option>
         {STATUS_OPTIONS.map(([val, cfg]) => (
@@ -72,7 +72,7 @@ export function TaskFilters({ filters, onFiltersChange, teamMembers, tags }: Pro
       <select
         value={filters.priority}
         onChange={(e) => set({ priority: e.target.value as TaskPriority | '' })}
-        className="text-xs border border-slate-200/60 rounded-lg px-2 py-1 bg-white/70 backdrop-blur-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="text-xs border border-border-soft rounded-lg px-2 py-1 bg-surf-card backdrop-blur-sm text-fg-600 focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-transparent"
       >
         <option value="">All priorities</option>
         {PRIORITY_OPTIONS.map(([val, cfg]) => (
@@ -85,7 +85,7 @@ export function TaskFilters({ filters, onFiltersChange, teamMembers, tags }: Pro
         <select
           value={filters.tagId}
           onChange={(e) => set({ tagId: e.target.value })}
-          className="text-xs border border-slate-200/60 rounded-lg px-2 py-1 bg-white/70 backdrop-blur-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="text-xs border border-border-soft rounded-lg px-2 py-1 bg-surf-card backdrop-blur-sm text-fg-600 focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-transparent"
         >
           <option value="">All tags</option>
           {tags.map((tag) => (
@@ -98,7 +98,7 @@ export function TaskFilters({ filters, onFiltersChange, teamMembers, tags }: Pro
       {hasActiveFilters(filters) && (
         <button
           onClick={() => onFiltersChange({ assigneeId: '', status: '', priority: '', tagId: '' })}
-          className="flex items-center gap-1 px-2 py-1 text-xs text-slate-400 hover:text-slate-700 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 text-xs text-fg-400 hover:text-fg-700 transition-colors"
         >
           <X className="h-3 w-3" />
           Clear

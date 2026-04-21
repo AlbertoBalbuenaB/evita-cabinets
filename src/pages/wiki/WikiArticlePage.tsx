@@ -62,7 +62,7 @@ export function WikiArticlePage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="glass-white rounded-2xl p-6 text-center">
           <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
-          <p className="text-slate-700">{error ?? 'Artículo no disponible.'}</p>
+          <p className="text-fg-700">{error ?? 'Artículo no disponible.'}</p>
           <Link to="/wiki" className="inline-flex items-center gap-1 text-violet-600 hover:text-violet-800 mt-3 text-sm">
             <ArrowLeft className="w-4 h-4" /> Volver al Wiki
           </Link>
@@ -85,8 +85,8 @@ export function WikiArticlePage() {
         </Link>
         {category && (
           <>
-            <span className="text-slate-400">/</span>
-            <span className="text-slate-600">{categoryName}</span>
+            <span className="text-fg-400">/</span>
+            <span className="text-fg-600">{categoryName}</span>
           </>
         )}
       </div>
@@ -96,9 +96,9 @@ export function WikiArticlePage() {
           <div className="min-w-0 flex-1">
             <div className="inline-flex items-center gap-2 mb-2">
               <Library className="w-5 h-5 text-violet-600" />
-              <span className="text-xs uppercase tracking-wide text-slate-600 font-semibold">Wiki article</span>
+              <span className="text-xs uppercase tracking-wide text-fg-600 font-semibold">Wiki article</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-fg-900">{title}</h1>
           </div>
           <Link to={`/wiki/new?edit=${encodeURIComponent(article.slug)}`}>
             <Button variant="secondary" size="sm">
@@ -108,9 +108,9 @@ export function WikiArticlePage() {
           </Link>
         </div>
         {summary && (
-          <p className="text-sm text-slate-700 mt-2">{summary}</p>
+          <p className="text-sm text-fg-700 mt-2">{summary}</p>
         )}
-        <div className="mt-3 flex items-center gap-2 flex-wrap text-xs text-slate-600">
+        <div className="mt-3 flex items-center gap-2 flex-wrap text-xs text-fg-600">
           <span className="font-mono">v{article.current_version}</span>
           <span>·</span>
           <span>Actualizado {new Date(article.updated_at).toLocaleDateString()}</span>
@@ -127,7 +127,7 @@ export function WikiArticlePage() {
         {article.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {article.tags.map((t) => (
-              <span key={t} className="px-1.5 py-0.5 rounded bg-white/60 text-[11px] text-slate-700 font-mono">
+              <span key={t} className="px-1.5 py-0.5 rounded bg-surf-card text-[11px] text-fg-700 font-mono">
                 {t}
               </span>
             ))}
@@ -141,7 +141,7 @@ export function WikiArticlePage() {
 
       {versions.length > 0 && (
         <div className="glass-white rounded-2xl p-4 sm:p-5">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wide flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-fg-900 mb-3 uppercase tracking-wide flex items-center gap-2">
             <History className="w-4 h-4 text-violet-500" />
             Version history
           </h3>
@@ -158,8 +158,8 @@ export function WikiArticlePage() {
                 >
                   <span className="font-mono text-xs text-violet-700 font-semibold w-10">v{v.version_num}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-800 truncate">{v.edit_summary ?? 'No summary'}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-sm text-fg-800 truncate">{v.edit_summary ?? 'No summary'}</p>
+                    <p className="text-xs text-fg-500 mt-0.5">
                       {editor} · {new Date(v.created_at).toLocaleString()}
                       {isCurrent && <span className="ml-2 text-violet-700 font-medium">current</span>}
                     </p>

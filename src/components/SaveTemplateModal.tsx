@@ -84,8 +84,8 @@ export function SaveTemplateModal({
         />
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Description <span className="text-slate-500">(Optional)</span>
+          <label className="block text-sm font-medium text-fg-700 mb-1">
+            Description <span className="text-fg-500">(Optional)</span>
           </label>
           <textarea
             value={description}
@@ -93,19 +93,19 @@ export function SaveTemplateModal({
             placeholder="Add notes about this template..."
             rows={3}
             disabled={saving}
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus disabled:bg-surf-app"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="block text-sm font-medium text-fg-700 mb-1">
             Category
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             disabled={saving}
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus disabled:bg-surf-app"
           >
             {TEMPLATE_CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>

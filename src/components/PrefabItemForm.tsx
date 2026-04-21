@@ -189,7 +189,7 @@ export function PrefabItemForm({ areaId, prefabItem, onClose }: PrefabItemFormPr
   if (loading) {
     return (
       <Modal isOpen onClose={onClose} title={prefabItem ? 'Edit Prefab Item' : 'Add Prefab Item'} size="lg">
-        <div className="flex items-center justify-center h-40 text-slate-400">Loading catalog…</div>
+        <div className="flex items-center justify-center h-40 text-fg-400">Loading catalog…</div>
       </Modal>
     );
   }
@@ -204,7 +204,7 @@ export function PrefabItemForm({ areaId, prefabItem, onClose }: PrefabItemFormPr
       <div className="space-y-4">
         {/* Brand pills */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Brand</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Brand</label>
           <div className="flex items-center gap-2">
             {brands.map((b) => (
               <button
@@ -219,7 +219,7 @@ export function PrefabItemForm({ areaId, prefabItem, onClose }: PrefabItemFormPr
                 className={`px-3 py-1 rounded-full text-sm font-medium transition-colors border ${
                   selectedBrandId === b.id
                     ? 'bg-indigo-600 border-indigo-600 text-white'
-                    : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                    : 'bg-surf-card border-border-solid text-fg-700 hover:bg-surf-app'
                 }`}
               >
                 {b.name}
@@ -230,36 +230,36 @@ export function PrefabItemForm({ areaId, prefabItem, onClose }: PrefabItemFormPr
 
         {/* SKU search */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="block text-sm font-medium text-fg-700 mb-1">
             SKU <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setShowSuggestions(true); }}
               onFocus={() => setShowSuggestions(true)}
               placeholder="Search by code, description, or category"
-              className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-9 pr-4 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus"
             />
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-72 overflow-y-auto">
+              <div className="absolute z-10 left-0 right-0 mt-1 bg-surf-card border border-border-soft rounded-lg shadow-lg max-h-72 overflow-y-auto">
                 {suggestions.map((s) => (
                   <button
                     key={s.id}
                     type="button"
                     onClick={() => pickCatalogItem(s)}
-                    className="w-full text-left px-3 py-2 hover:bg-indigo-50 border-b border-slate-100 last:border-b-0"
+                    className="w-full text-left px-3 py-2 hover:bg-accent-tint-soft border-b border-border-soft last:border-b-0"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-xs text-slate-700">{s.cabinet_code}</span>
-                      <span className="text-[10px] text-slate-500">{s.category}</span>
+                      <span className="font-mono text-xs text-fg-700">{s.cabinet_code}</span>
+                      <span className="text-[10px] text-fg-500">{s.category}</span>
                     </div>
                     {s.description && (
-                      <div className="text-xs text-slate-500 mt-0.5">{s.description}</div>
+                      <div className="text-xs text-fg-500 mt-0.5">{s.description}</div>
                     )}
-                    <div className="text-[11px] text-slate-400 mt-0.5">
+                    <div className="text-[11px] text-fg-400 mt-0.5">
                       {s.width_in ?? '—'}" W × {s.height_in ?? '—'}" H × {s.depth_in ?? '—'}" D · {s.prices.length} finishes
                     </div>
                   </button>
@@ -271,19 +271,19 @@ export function PrefabItemForm({ areaId, prefabItem, onClose }: PrefabItemFormPr
 
         {/* Selected item summary */}
         {selectedItem && (
-          <div className="border border-indigo-200 bg-indigo-50/50 rounded-lg p-3 text-sm">
+          <div className="border border-accent-tint-border bg-accent-tint-soft rounded-lg p-3 text-sm">
             <div className="flex items-center justify-between">
               <div>
-                <span className="font-mono text-slate-700">{selectedItem.cabinet_code}</span>
+                <span className="font-mono text-fg-700">{selectedItem.cabinet_code}</span>
                 {selectedItem.description && (
-                  <span className="text-slate-500 ml-2">— {selectedItem.description}</span>
+                  <span className="text-fg-500 ml-2">— {selectedItem.description}</span>
                 )}
               </div>
-              <span className="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+              <span className="text-[11px] bg-surf-muted text-fg-700 px-2 py-0.5 rounded">
                 {selectedItem.item_type}
               </span>
             </div>
-            <div className="text-xs text-slate-500 mt-1">
+            <div className="text-xs text-fg-500 mt-1">
               {selectedItem.category} · {selectedItem.width_in ?? '—'}" W × {selectedItem.height_in ?? '—'}" H × {selectedItem.depth_in ?? '—'}" D
             </div>
           </div>
@@ -292,14 +292,14 @@ export function PrefabItemForm({ areaId, prefabItem, onClose }: PrefabItemFormPr
         {/* Finish + quantity */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-fg-700 mb-1">
               Finish <span className="text-red-500">*</span>
             </label>
             <select
               value={selectedFinish}
               onChange={(e) => setSelectedFinish(e.target.value)}
               disabled={!selectedItem}
-              className="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white disabled:bg-slate-50 disabled:text-slate-400"
+              className="block w-full px-3 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card disabled:bg-surf-app disabled:text-fg-400"
             >
               <option value="">Select finish…</option>
               {availableFinishes.map((p) => (
@@ -321,38 +321,38 @@ export function PrefabItemForm({ areaId, prefabItem, onClose }: PrefabItemFormPr
 
         {/* Live subtotal */}
         {selectedPrice && (
-          <div className="border border-slate-200 rounded-lg p-3 bg-slate-50 text-sm">
+          <div className="border border-border-soft rounded-lg p-3 bg-surf-app text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-600">Unit cost (USD):</span>
+              <span className="text-fg-600">Unit cost (USD):</span>
               <span className="font-medium">${selectedPrice.cost_usd.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">FX (settings):</span>
+              <span className="text-fg-600">FX (settings):</span>
               <span className="font-medium">{exchangeRate.toFixed(2)} MXN/USD</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">Quantity:</span>
+              <span className="text-fg-600">Quantity:</span>
               <span className="font-medium">{quantity}</span>
             </div>
-            <div className="flex justify-between pt-2 mt-1 border-t border-slate-200">
-              <span className="font-medium text-slate-700">Subtotal (MXN):</span>
-              <span className="font-semibold text-indigo-700">{formatCurrency(costMxn)}</span>
+            <div className="flex justify-between pt-2 mt-1 border-t border-border-soft">
+              <span className="font-medium text-fg-700">Subtotal (MXN):</span>
+              <span className="font-semibold text-accent-text">{formatCurrency(costMxn)}</span>
             </div>
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Notes</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus"
             placeholder="Optional"
           />
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+        <div className="flex justify-end gap-3 pt-4 border-t border-border-soft">
           <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
           <Button onClick={handleSave} disabled={saving || !selectedItem || !selectedFinish}>
             {saving ? 'Saving…' : prefabItem ? 'Update' : 'Add Prefab'}

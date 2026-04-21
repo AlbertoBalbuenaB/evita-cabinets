@@ -80,13 +80,13 @@ export function LinkProductPicker({ isOpen, onClose, measurementName, currentLin
     <Modal isOpen={isOpen} onClose={onClose} title={`Link product — ${measurementName}`} size="md">
       <div className="space-y-3">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-fg-400" />
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by description, SKU, or type…"
-            className="w-full text-sm border border-slate-200 rounded-md pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full text-sm border border-border-soft rounded-md pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 focus-visible:ring-focus"
           />
         </div>
 
@@ -109,26 +109,26 @@ export function LinkProductPicker({ isOpen, onClose, measurementName, currentLin
         {error && <p className="text-xs text-red-600">{error}</p>}
 
         {loading ? (
-          <div className="py-8 flex items-center justify-center text-slate-400">
+          <div className="py-8 flex items-center justify-center text-fg-400">
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <p className="py-8 text-sm text-slate-500 text-center">
+          <p className="py-8 text-sm text-fg-500 text-center">
             {query ? 'No matches.' : 'No active price list items.'}
           </p>
         ) : (
-          <div className="max-h-80 overflow-y-auto border border-slate-200 rounded-md divide-y divide-slate-100">
+          <div className="max-h-80 overflow-y-auto border border-border-soft rounded-md divide-y divide-slate-100">
             {filtered.map((r) => (
               <button
                 key={r.id}
                 onClick={() => handlePick(r)}
-                className="w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors"
+                className="w-full text-left px-3 py-2 hover:bg-surf-app transition-colors"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm text-slate-800 font-medium truncate">{r.concept_description}</span>
-                  {r.unit && <span className="text-[10px] bg-slate-100 text-slate-500 rounded px-1.5 py-0.5 flex-shrink-0">{r.unit}</span>}
+                  <span className="text-sm text-fg-800 font-medium truncate">{r.concept_description}</span>
+                  {r.unit && <span className="text-[10px] bg-surf-muted text-fg-500 rounded px-1.5 py-0.5 flex-shrink-0">{r.unit}</span>}
                 </div>
-                <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
+                <div className="flex items-center gap-2 mt-0.5 text-[11px] text-fg-500">
                   {r.sku_code && <span className="font-mono">{r.sku_code}</span>}
                   {r.type && <span>·  {r.type}</span>}
                   {r.price !== null && <span className="ml-auto">${r.price.toFixed(2)}</span>}

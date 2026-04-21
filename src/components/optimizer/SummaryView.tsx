@@ -3,7 +3,7 @@ import { OptimizationResult } from '../../lib/optimizer/types';
 interface Props { result: OptimizationResult | null; }
 
 export function SummaryView({ result }: Props) {
-  if (!result) return <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">Run an optimization to see the summary</div>;
+  if (!result) return <div className="flex-1 flex items-center justify-center text-fg-400 text-sm">Run an optimization to see the summary</div>;
 
   const totalArea = result.boards.reduce((s, b) => s + b.areaTotal, 0);
   const usedArea = result.boards.reduce((s, b) => s + b.areaUsed, 0);
@@ -17,9 +17,9 @@ export function SummaryView({ result }: Props) {
   });
 
   const Row = ({ label, value }: { label: string; value: string }) => (
-    <div className="flex justify-between py-1.5 border-b border-slate-100 last:border-0 text-sm">
-      <span className="text-slate-600">{label}</span>
-      <span className="font-semibold text-slate-800">{value}</span>
+    <div className="flex justify-between py-1.5 border-b border-border-soft last:border-0 text-sm">
+      <span className="text-fg-600">{label}</span>
+      <span className="font-semibold text-fg-800">{value}</span>
     </div>
   );
 
@@ -36,8 +36,8 @@ export function SummaryView({ result }: Props) {
         </div>
       )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">General Summary</h3>
+        <div className="bg-surf-card rounded-lg border border-border-soft p-4">
+          <h3 className="text-xs font-semibold text-fg-400 uppercase tracking-wide mb-3">General Summary</h3>
           <Row label="Total boards" value={`${result.boards.length}`} />
           <Row label="Total pieces" value={unplaced.length > 0 ? `${placedCount}/${result.totalPieces}` : `${result.totalPieces}`} />
           <Row label="Global efficiency" value={`${result.efficiency.toFixed(2)}%`} />
@@ -49,11 +49,11 @@ export function SummaryView({ result }: Props) {
           <Row label="Time" value={`${result.timeMs.toFixed(0)}ms`} />
           <Row label="Strategy" value={result.strategy} />
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">By Material</h3>
+        <div className="bg-surf-card rounded-lg border border-border-soft p-4">
+          <h3 className="text-xs font-semibold text-fg-400 uppercase tracking-wide mb-3">By Material</h3>
           {Object.entries(groups).map(([k, g]) => (
-            <div key={k} className="pb-3 mb-3 border-b border-slate-100 last:border-0 last:mb-0 last:pb-0">
-              <div className="font-medium text-sm text-slate-900 mb-2">{k}</div>
+            <div key={k} className="pb-3 mb-3 border-b border-border-soft last:border-0 last:mb-0 last:pb-0">
+              <div className="font-medium text-sm text-fg-900 mb-2">{k}</div>
               <Row label="Boards" value={`${g.count}`} />
               <Row label="Pieces" value={`${g.pieces}`} />
               <Row label="Avg. efficiency" value={`${(g.effSum / g.count).toFixed(1)}%`} />

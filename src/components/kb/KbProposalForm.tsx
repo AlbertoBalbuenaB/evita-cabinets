@@ -101,11 +101,11 @@ export function KbProposalForm({ mode, baseEntry, authorId, onSubmitted }: KbPro
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+            <label className="block text-sm font-medium text-fg-700 mb-1">Category</label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full rounded-lg glass-white border border-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
+              className="w-full rounded-lg glass-white border border-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus/60"
               required
             >
               {categories.map((c) => (
@@ -117,11 +117,11 @@ export function KbProposalForm({ mode, baseEntry, authorId, onSubmitted }: KbPro
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Entry type</label>
+            <label className="block text-sm font-medium text-fg-700 mb-1">Entry type</label>
             <select
               value={entryType}
               onChange={(e) => setEntryType(e.target.value as KbEntryType)}
-              className="w-full rounded-lg glass-white border border-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
+              className="w-full rounded-lg glass-white border border-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus/60"
               required
             >
               {ENTRY_TYPES.map((t) => (
@@ -140,15 +140,15 @@ export function KbProposalForm({ mode, baseEntry, authorId, onSubmitted }: KbPro
       </div>
 
       <div className="glass-white rounded-2xl p-4 sm:p-5">
-        <label className="block text-sm font-medium text-slate-700 mb-1">Body (Markdown)</label>
+        <label className="block text-sm font-medium text-fg-700 mb-1">Body (Markdown)</label>
         <textarea
           value={bodyMd}
           onChange={(e) => setBodyMd(e.target.value)}
           rows={14}
-          className="w-full rounded-lg glass-white border border-white/80 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
+          className="w-full rounded-lg glass-white border border-white/80 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus-visible:ring-focus/60"
           placeholder="Markdown content — supports tables, code blocks, blockquotes, and [[kb:slug|Name]] cross-links."
         />
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-fg-500 mt-1">
           Cross-links: <code className="font-mono">[[kb:slug|Name]]</code>, <code className="font-mono">[[supplier:slug|Name]]</code>, <code className="font-mono">[[material:uuid|Name]]</code>.
         </p>
       </div>
@@ -161,21 +161,21 @@ export function KbProposalForm({ mode, baseEntry, authorId, onSubmitted }: KbPro
           placeholder={isEdit ? `Edit: ${baseEntry?.title}` : `Create: ${title || 'new entry'}`}
         />
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Description (optional)</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Description (optional)</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className="w-full rounded-lg glass-white border border-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/60"
+            className="w-full rounded-lg glass-white border border-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus/60"
             placeholder="Context / rationale for reviewers."
           />
         </div>
-        <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+        <label className="inline-flex items-center gap-2 text-sm text-fg-700">
           <input
             type="checkbox"
             checked={submitAsDraft}
             onChange={(e) => setSubmitAsDraft(e.target.checked)}
-            className="rounded border-slate-300"
+            className="rounded border-border-solid"
           />
           Save as draft (not submitted for review)
         </label>

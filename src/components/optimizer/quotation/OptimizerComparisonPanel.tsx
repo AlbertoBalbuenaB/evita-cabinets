@@ -63,26 +63,26 @@ export function OptimizerComparisonPanel({ isOpen, onClose, runs, activeRunId }:
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <GitCompareArrows className="h-5 w-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-slate-900">Compare Breakdown Runs</h2>
+            <h2 className="text-lg font-semibold text-fg-900">Compare Breakdown Runs</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+            className="p-1 rounded text-fg-400 hover:text-fg-700 hover:bg-surf-muted"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {runs.length < 2 ? (
-          <div className="text-sm text-slate-500 py-8 text-center">
+          <div className="text-sm text-fg-500 py-8 text-center">
             You need at least 2 saved runs to compare. Save another run from the Breakdown tab.
           </div>
         ) : (
           <>
             {/* ── Run selector ───────────────────────────────────── */}
             <div className="mb-4">
-              <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
+              <div className="text-xs font-medium text-fg-500 uppercase tracking-wide mb-2">
                 Select 2-5 runs to compare ({selected.size} selected)
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -99,8 +99,8 @@ export function OptimizerComparisonPanel({ isOpen, onClose, runs, activeRunId }:
                         isSelected
                           ? 'bg-blue-600 text-white border-blue-600'
                           : atLimit
-                            ? 'bg-slate-50 text-slate-300 border-slate-200 cursor-not-allowed'
-                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            ? 'bg-surf-app text-fg-300 border-border-soft cursor-not-allowed'
+                            : 'bg-surf-card text-fg-700 border-border-soft hover:bg-surf-app'
                       }`}
                     >
                       {r.name}
@@ -125,8 +125,8 @@ export function OptimizerComparisonPanel({ isOpen, onClose, runs, activeRunId }:
                   return (
                     <div key={kpi.key}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-semibold text-slate-700">{kpi.label}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">lower is better</span>
+                        <span className="text-xs font-semibold text-fg-700">{kpi.label}</span>
+                        <span className="text-[10px] text-fg-400 font-mono">lower is better</span>
                       </div>
                       <div className="space-y-1">
                         {selectedRuns.map((r, i) => {
@@ -141,8 +141,8 @@ export function OptimizerComparisonPanel({ isOpen, onClose, runs, activeRunId }:
                             tone === 'red'   ? 'bg-red-400'   : 'bg-slate-400';
                           return (
                             <div key={r.id} className="flex items-center gap-2 text-xs">
-                              <span className="w-32 truncate text-slate-700 shrink-0" title={r.name}>{r.name}</span>
-                              <div className="flex-1 relative h-5 bg-slate-100 rounded overflow-hidden">
+                              <span className="w-32 truncate text-fg-700 shrink-0" title={r.name}>{r.name}</span>
+                              <div className="flex-1 relative h-5 bg-surf-muted rounded overflow-hidden">
                                 <div
                                   className={`absolute inset-y-0 left-0 ${barColor} transition-all`}
                                   style={{ width: `${Math.max(3, pct)}%` }}
@@ -150,7 +150,7 @@ export function OptimizerComparisonPanel({ isOpen, onClose, runs, activeRunId }:
                               </div>
                               <span className={`w-24 text-right font-mono tabular-nums shrink-0 ${
                                 tone === 'green' ? 'text-green-700 font-semibold' :
-                                tone === 'red'   ? 'text-red-600'   : 'text-slate-700'
+                                tone === 'red'   ? 'text-red-600'   : 'text-fg-700'
                               }`}>
                                 {kpi.fmt(v)}
                               </span>
@@ -165,7 +165,7 @@ export function OptimizerComparisonPanel({ isOpen, onClose, runs, activeRunId }:
             )}
 
             {selectedRuns.length < 2 && (
-              <div className="text-sm text-slate-500 py-4 text-center">
+              <div className="text-sm text-fg-500 py-4 text-center">
                 Select at least 2 runs to see the comparison.
               </div>
             )}

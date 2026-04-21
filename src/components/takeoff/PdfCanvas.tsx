@@ -486,7 +486,7 @@ export const PdfCanvas = forwardRef<PdfCanvasHandle, PdfCanvasProps>(function Pd
   return (
     <div
       ref={containerRef}
-      className="flex-1 relative overflow-hidden bg-slate-100"
+      className="flex-1 relative overflow-hidden bg-surf-muted"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

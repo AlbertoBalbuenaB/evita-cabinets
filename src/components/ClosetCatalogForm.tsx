@@ -108,22 +108,22 @@ export function ClosetCatalogForm({ item, onClose, onSaved }: ClosetCatalogFormP
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Cabinet Code <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-fg-700 mb-1">Cabinet Code <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={cabinetCode}
               onChange={e => setCabinetCode(e.target.value.toUpperCase())}
               placeholder="e.g. H183624"
-              className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono text-sm"
+              className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono text-sm"
             />
-            <p className="text-xs text-slate-400 mt-0.5">Must be unique across all catalog</p>
+            <p className="text-xs text-fg-400 mt-0.5">Must be unique across all catalog</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Evita Line <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-fg-700 mb-1">Evita Line <span className="text-red-500">*</span></label>
             <select
               value={evitaLine}
               onChange={e => setEvitaLine(e.target.value)}
-              className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+              className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-surf-card"
             >
               {EVITA_LINES.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
@@ -132,7 +132,7 @@ export function ClosetCatalogForm({ item, onClose, onSaved }: ClosetCatalogFormP
 
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-slate-700">Description / Type <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-fg-700">Description / Type <span className="text-red-500">*</span></label>
             <button
               type="button"
               onClick={() => { setCustomDescription(!customDescription); setDescription(''); }}
@@ -147,13 +147,13 @@ export function ClosetCatalogForm({ item, onClose, onSaved }: ClosetCatalogFormP
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Enter custom description"
-              className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           ) : (
             <select
               value={description}
               onChange={e => setDescription(e.target.value)}
-              className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+              className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-surf-card"
             >
               <option value="">Select type...</option>
               {DESCRIPTIONS.sort().map(d => <option key={d} value={d}>{d}</option>)}
@@ -191,16 +191,16 @@ export function ClosetCatalogForm({ item, onClose, onSaved }: ClosetCatalogFormP
           />
         </div>
 
-        <div className="border border-slate-200 rounded-lg p-4 space-y-3">
+        <div className="border border-border-soft rounded-lg p-4 space-y-3">
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={hasBacksOption}
                 onChange={e => setHasBacksOption(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                className="w-4 h-4 rounded border-border-solid text-teal-600 focus:ring-teal-500"
               />
-              <span className="text-sm font-medium text-slate-700">Has with/without backs pricing option</span>
+              <span className="text-sm font-medium text-fg-700">Has with/without backs pricing option</span>
             </label>
           </div>
 
@@ -237,7 +237,7 @@ export function ClosetCatalogForm({ item, onClose, onSaved }: ClosetCatalogFormP
           onChange={e => setBoxesCount(e.target.value)}
         />
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+        <div className="flex justify-end gap-3 pt-4 border-t border-border-soft">
           <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : item ? 'Update Cabinet' : 'Add Cabinet'}

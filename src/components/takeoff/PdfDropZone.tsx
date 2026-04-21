@@ -46,23 +46,23 @@ export function PdfDropZone({ onFile }: PdfDropZoneProps) {
         className={`flex flex-col items-center gap-4 p-12 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${
           dragging
             ? 'border-blue-400 bg-blue-50/80'
-            : 'border-slate-300 hover:border-blue-300 hover:bg-slate-50/60'
+            : 'border-border-solid hover:border-blue-300 hover:bg-surf-app'
         }`}
       >
         <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
-          dragging ? 'bg-blue-100' : 'bg-slate-100'
+          dragging ? 'bg-blue-100' : 'bg-surf-muted'
         }`}>
           {dragging ? (
             <FileText className="h-8 w-8 text-blue-500" />
           ) : (
-            <Upload className="h-8 w-8 text-slate-400" />
+            <Upload className="h-8 w-8 text-fg-400" />
           )}
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-slate-700">
+          <p className="text-sm font-medium text-fg-700">
             {dragging ? 'Drop your file here' : 'Drop a PDF or image here, or click to browse'}
           </p>
-          <p className="text-xs text-slate-400 mt-1">Supports PDF, PNG, JPG, WEBP, and other image formats</p>
+          <p className="text-xs text-fg-400 mt-1">Supports PDF, PNG, JPG, WEBP, and other image formats</p>
         </div>
       </button>
       <input

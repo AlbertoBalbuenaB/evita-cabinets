@@ -109,8 +109,8 @@ export function SafeEditModal({
           </div>
         </div>
 
-        <div className="border-t border-slate-200 pt-4">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3">New Version Details</h3>
+        <div className="border-t border-border-soft pt-4">
+          <h3 className="text-sm font-semibold text-fg-900 mb-3">New Version Details</h3>
 
           <div className="space-y-4">
             <Input
@@ -128,13 +128,13 @@ export function SafeEditModal({
                 type="checkbox"
                 checked={archiveOriginal}
                 onChange={(e) => setArchiveOriginal(e.target.checked)}
-                className="mt-1 w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                className="mt-1 w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus"
               />
               <div>
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-fg-700">
                   Archive original product
                 </span>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-fg-500 mt-0.5">
                   The original product will be hidden from new projects but preserved for
                   historical data
                 </p>
@@ -143,9 +143,9 @@ export function SafeEditModal({
           </div>
         </div>
 
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-          <h4 className="text-xs font-semibold text-slate-700 mb-2">What will happen:</h4>
-          <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
+        <div className="bg-surf-app border border-border-soft rounded-lg p-3">
+          <h4 className="text-xs font-semibold text-fg-700 mb-2">What will happen:</h4>
+          <ul className="text-xs text-fg-600 space-y-1 list-disc list-inside">
             <li>
               New product will be created with SKU: <strong>{newSku || '(pending)'}</strong>
             </li>

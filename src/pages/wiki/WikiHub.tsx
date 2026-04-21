@@ -83,7 +83,7 @@ export function WikiHub() {
           <Library className="w-6 h-6 text-violet-600 mt-1" />
           <div className="flex-1">
             <div className="flex items-start justify-between gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Wiki</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-fg-900">Wiki</h1>
               <div className="flex gap-2 flex-wrap">
                 <Link to="/kb">
                   <Button variant="ghost" size="sm">
@@ -107,11 +107,11 @@ export function WikiHub() {
                 </Link>
               </div>
             </div>
-            <p className="text-sm text-slate-700 mt-1">
+            <p className="text-sm text-fg-700 mt-1">
               Manual de armado, protocolos de seguridad, control de calidad y capacitación. Complemento narrativo de la{' '}
-              <Link to="/kb" className="text-indigo-600 hover:text-indigo-800 underline">Knowledge Base</Link>.
+              <Link to="/kb" className="text-accent-text hover:text-indigo-800 underline">Knowledge Base</Link>.
             </p>
-            <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-600">
+            <div className="mt-3 flex flex-wrap gap-3 text-xs text-fg-600">
               <span>{categories.length} categorías</span>
               <span>·</span>
               <span>{visibleArticles.length} artículos visibles</span>
@@ -130,7 +130,7 @@ export function WikiHub() {
             className={`px-2.5 py-1 rounded-lg border text-xs font-medium transition ${
               categoryFilter === null
                 ? 'bg-violet-600 text-white border-violet-600'
-                : 'glass-white text-slate-700 border-slate-200/70 hover:bg-violet-50'
+                : 'glass-white text-fg-700 border-border-soft hover:bg-violet-50'
             }`}
           >
             All
@@ -145,7 +145,7 @@ export function WikiHub() {
                 className={`px-2.5 py-1 rounded-lg border text-xs font-medium transition ${
                   active
                     ? 'bg-violet-600 text-white border-violet-600'
-                    : 'glass-white text-slate-700 border-slate-200/70 hover:bg-violet-50'
+                    : 'glass-white text-fg-700 border-border-soft hover:bg-violet-50'
                 }`}
               >
                 {pickText(cat, 'name', locale)}
@@ -158,7 +158,7 @@ export function WikiHub() {
       {!loading && tagCounts.length > 0 && (
         <div className="glass-white rounded-2xl p-3 sm:p-4 section-enter">
           <div className="flex items-center gap-2 flex-wrap">
-            <Tag className="w-4 h-4 text-slate-500" />
+            <Tag className="w-4 h-4 text-fg-500" />
             {tagFilter && (
               <button
                 type="button"
@@ -178,11 +178,11 @@ export function WikiHub() {
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono transition ${
                     active
                       ? 'bg-violet-600 text-white'
-                      : 'bg-slate-100/70 text-slate-700 hover:bg-violet-100/70'
+                      : 'bg-surf-muted text-fg-700 hover:bg-violet-100/70'
                   }`}
                 >
                   {t}
-                  <span className={`text-[10px] ${active ? 'text-white/80' : 'text-slate-400'}`}>{n}</span>
+                  <span className={`text-[10px] ${active ? 'text-white/80' : 'text-fg-400'}`}>{n}</span>
                 </button>
               );
             })}
@@ -190,7 +190,7 @@ export function WikiHub() {
               <button
                 type="button"
                 onClick={() => setShowAllTags(true)}
-                className="px-2 py-0.5 rounded-md text-[11px] text-slate-500 hover:text-slate-700"
+                className="px-2 py-0.5 rounded-md text-[11px] text-fg-500 hover:text-fg-700"
               >
                 +{tagCounts.length - 12} más
               </button>
@@ -212,7 +212,7 @@ export function WikiHub() {
           ))}
         </div>
       ) : visibleArticles.length === 0 ? (
-        <div className="glass-white rounded-2xl p-8 text-center text-slate-500">
+        <div className="glass-white rounded-2xl p-8 text-center text-fg-500">
           {query || tagFilter ? 'No hay resultados.' : 'No hay artículos todavía.'}
         </div>
       ) : (

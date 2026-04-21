@@ -216,9 +216,9 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
 
   if (loading) {
     return (
-      <div className="bg-slate-50 rounded-lg border border-slate-200 p-4">
+      <div className="bg-surf-app rounded-lg border border-border-soft p-4">
         <div className="flex items-center justify-center py-4">
-          <div className="text-sm text-slate-600">Loading materials...</div>
+          <div className="text-sm text-fg-600">Loading materials...</div>
         </div>
       </div>
     );
@@ -235,8 +235,8 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
     data.countertops.size === 0
   )) {
     return (
-      <div className="bg-slate-50 rounded-lg border border-slate-200 p-4">
-        <div className="text-center py-4 text-sm text-slate-500">
+      <div className="bg-surf-app rounded-lg border border-border-soft p-4">
+        <div className="text-center py-4 text-sm text-fg-500">
           No material data available
         </div>
       </div>
@@ -244,10 +244,10 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-slate-200 p-4">
+    <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-border-soft p-4">
       <div className="flex items-center mb-3">
-        <Layers className="h-4 w-4 text-slate-600 mr-2" />
-        <h4 className="text-sm font-semibold text-slate-900">Material Breakdown</h4>
+        <Layers className="h-4 w-4 text-fg-600 mr-2" />
+        <h4 className="text-sm font-semibold text-fg-900">Material Breakdown</h4>
         <span className="ml-auto text-xs font-semibold text-green-600">
           Total: {formatCurrency(data.totalCost)}
         </span>
@@ -262,9 +262,9 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
             </div>
             <div className="space-y-1.5">
               {Array.from(data.boxMaterialSheets.entries()).map(([name, matData]) => (
-                <div key={name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span><Hash className="h-3 w-3 inline mr-1" />{matData.sheetsNeeded} sheets</span>
                     <span><Ruler className="h-3 w-3 inline mr-1" />{matData.totalSF.toFixed(1)} SF</span>
                     <span className="font-semibold text-blue-700">{formatCurrency(matData.cost)}</span>
@@ -280,11 +280,11 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
                 </div>
                 {Array.from(data.boxInteriorFinishSheets.entries()).map(([name, matData]) => (
                   <div key={name} className="bg-blue-100 rounded p-2 text-xs mb-1.5">
-                    <div className="font-medium text-slate-900 truncate mb-1 flex items-center gap-1">
+                    <div className="font-medium text-fg-900 truncate mb-1 flex items-center gap-1">
                       <Layers className="h-3 w-3 text-blue-600" />
                       {name}
                     </div>
-                    <div className="flex justify-between text-slate-600 mb-1">
+                    <div className="flex justify-between text-fg-600 mb-1">
                       <span><Hash className="h-3 w-3 inline mr-1" />{matData.sheetsNeeded} sheets</span>
                       <span><Ruler className="h-3 w-3 inline mr-1" />{matData.totalSF.toFixed(1)} SF</span>
                       <span className="font-semibold text-blue-700">{formatCurrency(matData.cost)}</span>
@@ -308,9 +308,9 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
             </div>
             <div className="space-y-1.5">
               {Array.from(data.doorsMaterialSheets.entries()).map(([name, matData]) => (
-                <div key={name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span><Hash className="h-3 w-3 inline mr-1" />{matData.sheetsNeeded} sheets</span>
                     <span><Ruler className="h-3 w-3 inline mr-1" />{matData.totalSF.toFixed(1)} SF</span>
                     <span className="font-semibold text-green-700">{formatCurrency(matData.cost)}</span>
@@ -326,11 +326,11 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
                 </div>
                 {Array.from(data.doorsInteriorFinishSheets.entries()).map(([name, matData]) => (
                   <div key={name} className="bg-green-100 rounded p-2 text-xs mb-1.5">
-                    <div className="font-medium text-slate-900 truncate mb-1 flex items-center gap-1">
+                    <div className="font-medium text-fg-900 truncate mb-1 flex items-center gap-1">
                       <Layers className="h-3 w-3 text-green-600" />
                       {name}
                     </div>
-                    <div className="flex justify-between text-slate-600 mb-1">
+                    <div className="flex justify-between text-fg-600 mb-1">
                       <span><Hash className="h-3 w-3 inline mr-1" />{matData.sheetsNeeded} sheets</span>
                       <span><Ruler className="h-3 w-3 inline mr-1" />{matData.totalSF.toFixed(1)} SF</span>
                       <span className="font-semibold text-green-700">{formatCurrency(matData.cost)}</span>
@@ -354,9 +354,9 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
             </div>
             <div className="space-y-1.5">
               {Array.from(data.backPanelMaterialSheets.entries()).map(([name, matData]) => (
-                <div key={name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span><Hash className="h-3 w-3 inline mr-1" />{matData.sheetsNeeded} sheets</span>
                     <span><Ruler className="h-3 w-3 inline mr-1" />{matData.totalSF.toFixed(1)} SF</span>
                     <span className="font-semibold text-orange-700">{formatCurrency(matData.cost)}</span>
@@ -381,9 +381,9 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {Array.from(data.edgebandRolls.entries()).map(([name, rollData]) => (
-                <div key={name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span><Hash className="h-3 w-3 inline mr-1" />{rollData.rollsNeeded} rolls</span>
                     <span><Ruler className="h-3 w-3 inline mr-1" />{rollData.totalMeters.toFixed(1)}m / {rollData.totalMetersRounded}m</span>
                     <span className="font-semibold text-amber-700">{formatCurrency(rollData.cost)}</span>
@@ -395,18 +395,18 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
         )}
 
         {data.hardware.size > 0 && (
-          <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 lg:col-span-2">
+          <div className="bg-surf-app rounded-lg p-3 border border-border-soft lg:col-span-2">
             <div className="flex items-center mb-2">
-              <Package className="h-3 w-3 text-slate-700 mr-1.5" />
-              <h5 className="text-xs font-semibold text-slate-900">Hardware</h5>
+              <Package className="h-3 w-3 text-fg-700 mr-1.5" />
+              <h5 className="text-xs font-semibold text-fg-900">Hardware</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
               {Array.from(data.hardware.entries()).map(([name, hwData]) => (
-                <div key={name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span><Hash className="h-3 w-3 inline mr-1" />{hwData.quantity} pcs</span>
-                    <span className="font-semibold text-slate-700">{formatCurrency(hwData.cost)}</span>
+                    <span className="font-semibold text-fg-700">{formatCurrency(hwData.cost)}</span>
                   </div>
                 </div>
               ))}
@@ -422,9 +422,9 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
               {Array.from(data.accessories.entries()).map(([name, accData]) => (
-                <div key={name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span><Hash className="h-3 w-3 inline mr-1" />{accData.quantity} pcs</span>
                     <span className="font-semibold text-purple-700">{formatCurrency(accData.cost)}</span>
                   </div>
@@ -442,9 +442,9 @@ export function AreaMaterialBreakdown({ areaId }: AreaMaterialBreakdownProps) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
               {Array.from(data.countertops.entries()).map(([name, ctData]) => (
-                <div key={name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span><Hash className="h-3 w-3 inline mr-1" />{ctData.quantity.toFixed(2)} units</span>
                     <span className="font-semibold text-orange-700">{formatCurrency(ctData.cost)}</span>
                   </div>

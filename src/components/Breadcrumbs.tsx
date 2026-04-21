@@ -27,7 +27,7 @@ export function Breadcrumbs() {
               {idx > 0 && (
                 <span
                   aria-hidden
-                  className="text-slate-300 select-none shrink-0"
+                  className="text-fg-300 select-none shrink-0"
                 >
                   /
                 </span>
@@ -35,15 +35,15 @@ export function Breadcrumbs() {
               <li
                 className={`min-w-0 ${
                   isLast
-                    ? 'text-slate-900 font-semibold'
-                    : 'text-slate-500'
+                    ? 'text-fg-900 font-semibold'
+                    : 'text-fg-500'
                 }`}
                 aria-current={isLast ? 'page' : undefined}
               >
                 {crumb.to && !isLast ? (
                   <Link
                     to={crumb.to}
-                    className="inline-flex items-center gap-1 rounded hover:text-slate-800 hover:underline underline-offset-2 transition-colors"
+                    className="inline-flex items-center gap-1 rounded hover:text-fg-800 hover:underline underline-offset-2 transition-colors"
                   >
                     {labelNode}
                   </Link>

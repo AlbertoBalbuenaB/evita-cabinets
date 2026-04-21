@@ -162,7 +162,7 @@ export function CutListEditorModal({
     <Modal isOpen={isOpen} onClose={onClose} title={`Edit cut list — ${cabinetLabel}`} size="xl">
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-fg-500">
             Overrides are saved per cabinet and only affect the optimizer for this quotation.
             They do not change the catalog template.
           </p>
@@ -180,10 +180,10 @@ export function CutListEditorModal({
           )}
         </div>
 
-        <div className="overflow-x-auto rounded-lg border border-slate-200/60">
+        <div className="overflow-x-auto rounded-lg border border-border-soft">
           <table className="w-full text-xs">
-            <thead className="bg-slate-50/70">
-              <tr className="text-slate-600">
+            <thead className="bg-surf-app">
+              <tr className="text-fg-600">
                 <th className="text-left  px-2 py-2 font-medium">Name</th>
                 <th className="text-left  px-2 py-2 font-medium">Material</th>
                 <th className="text-right px-2 py-2 font-medium">W (mm)</th>
@@ -194,7 +194,7 @@ export function CutListEditorModal({
                 </th>
                 <th className="px-2 py-2"></th>
               </tr>
-              <tr className="text-slate-400 text-[10px]">
+              <tr className="text-fg-400 text-[10px]">
                 <th colSpan={5}></th>
                 <th className="text-center px-1 py-0.5 font-normal">Top</th>
                 <th className="text-center px-1 py-0.5 font-normal">Bot</th>
@@ -206,23 +206,23 @@ export function CutListEditorModal({
             <tbody>
               {pieces.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="px-3 py-6 text-center text-slate-400">
+                  <td colSpan={10} className="px-3 py-6 text-center text-fg-400">
                     No pieces. Click <span className="font-medium">Add piece</span> below to start.
                   </td>
                 </tr>
               )}
               {pieces.map((p, idx) => (
-                <tr key={p.id} className="border-t border-slate-100">
+                <tr key={p.id} className="border-t border-border-soft">
                   <td className="px-2 py-1">
                     <input
                       type="text"
                       value={p.nombre}
                       onChange={(e) => updatePiece(idx, { nombre: e.target.value })}
                       placeholder="Piece name"
-                      className="w-full px-1.5 py-1 rounded border border-slate-200 text-xs"
+                      className="w-full px-1.5 py-1 rounded border border-border-soft text-xs"
                     />
                   </td>
-                  <td className="px-2 py-1 text-slate-500 text-[11px] whitespace-nowrap">
+                  <td className="px-2 py-1 text-fg-500 text-[11px] whitespace-nowrap">
                     {MATERIAL_LABEL[p.material] ?? p.material}
                   </td>
                   <td className="px-2 py-1">
@@ -232,7 +232,7 @@ export function CutListEditorModal({
                       step={1}
                       value={p.ancho}
                       onChange={(e) => updatePiece(idx, { ancho: Number(e.target.value) })}
-                      className="w-20 px-1.5 py-1 rounded border border-slate-200 text-xs text-right tabular-nums"
+                      className="w-20 px-1.5 py-1 rounded border border-border-soft text-xs text-right tabular-nums"
                     />
                   </td>
                   <td className="px-2 py-1">
@@ -242,7 +242,7 @@ export function CutListEditorModal({
                       step={1}
                       value={p.alto}
                       onChange={(e) => updatePiece(idx, { alto: Number(e.target.value) })}
-                      className="w-20 px-1.5 py-1 rounded border border-slate-200 text-xs text-right tabular-nums"
+                      className="w-20 px-1.5 py-1 rounded border border-border-soft text-xs text-right tabular-nums"
                     />
                   </td>
                   <td className="px-2 py-1">
@@ -252,7 +252,7 @@ export function CutListEditorModal({
                       step={1}
                       value={p.cantidad}
                       onChange={(e) => updatePiece(idx, { cantidad: Number(e.target.value) })}
-                      className="w-16 px-1.5 py-1 rounded border border-slate-200 text-xs text-right tabular-nums"
+                      className="w-16 px-1.5 py-1 rounded border border-border-soft text-xs text-right tabular-nums"
                     />
                   </td>
                   {(['sup', 'inf', 'izq', 'der'] as const).map((side) => (
@@ -260,7 +260,7 @@ export function CutListEditorModal({
                       <select
                         value={p.cubrecanto?.[side] ?? 0}
                         onChange={(e) => updateCubrecanto(idx, side, Number(e.target.value))}
-                        className="w-full px-1 py-1 rounded border border-slate-200 text-[11px]"
+                        className="w-full px-1 py-1 rounded border border-border-soft text-[11px]"
                       >
                         {CUBRECANTO_OPTIONS.map((o) => (
                           <option key={o.value} value={o.value}>
@@ -292,7 +292,7 @@ export function CutListEditorModal({
             <Plus className="h-3.5 w-3.5 mr-1" />
             Add piece
           </Button>
-          <span className="text-[11px] text-slate-400 tabular-nums">
+          <span className="text-[11px] text-fg-400 tabular-nums">
             {pieces.length} piece{pieces.length !== 1 ? 's' : ''}
           </span>
         </div>
@@ -303,7 +303,7 @@ export function CutListEditorModal({
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/60">
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-soft">
           <Button variant="ghost" onClick={onClose} disabled={saving}>
             Cancel
           </Button>

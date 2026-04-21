@@ -51,7 +51,7 @@ function SectionHeader({
   total,
   open,
   onToggle,
-  color = 'text-slate-700',
+  color = 'text-fg-700',
 }: {
   icon: React.ReactNode;
   title: string;
@@ -63,18 +63,18 @@ function SectionHeader({
   return (
     <button
       onClick={onToggle}
-      className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
+      className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-surf-app hover:bg-surf-muted border border-border-soft transition-colors"
     >
       <div className={`flex items-center gap-2 font-semibold text-sm ${color}`}>
         {icon}
         {title}
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-sm font-bold text-slate-900">{formatCurrency(total)}</span>
+        <span className="text-sm font-bold text-fg-900">{formatCurrency(total)}</span>
         {open ? (
-          <ChevronDown className="h-4 w-4 text-slate-400" />
+          <ChevronDown className="h-4 w-4 text-fg-400" />
         ) : (
-          <ChevronRight className="h-4 w-4 text-slate-400" />
+          <ChevronRight className="h-4 w-4 text-fg-400" />
         )}
       </div>
     </button>
@@ -425,8 +425,8 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
 
   if (loading) {
     return (
-      <div className="no-print bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div className="text-center text-slate-600">Loading breakdown...</div>
+      <div className="no-print bg-surf-card rounded-xl shadow-sm border border-border-soft p-6">
+        <div className="text-center text-fg-600">Loading breakdown...</div>
       </div>
     );
   }
@@ -457,7 +457,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
           ) : (
             <>
               {breakdown.boxMaterials.map((mat, idx) => (
-                <div key={idx} className="bg-white rounded-lg p-3 border border-blue-100">
+                <div key={idx} className="bg-surf-card rounded-lg p-3 border border-blue-100">
                   <div className="flex justify-between text-sm font-medium text-blue-900 mb-1">
                     <span>{mat.materialName}</span>
                     <span>{formatCurrency(mat.cost)}</span>
@@ -513,7 +513,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
           ) : (
             <>
               {breakdown.doorsMaterials.map((mat, idx) => (
-                <div key={idx} className="bg-white rounded-lg p-3 border border-green-100">
+                <div key={idx} className="bg-surf-card rounded-lg p-3 border border-green-100">
                   <div className="flex justify-between text-sm font-medium text-green-900 mb-1">
                     <span>{mat.materialName}</span>
                     <span>{formatCurrency(mat.cost)}</span>
@@ -567,7 +567,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
           {openBackPanel && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-3">
               {breakdown.backPanelMaterials.map((mat, idx) => (
-                <div key={idx} className="bg-white rounded-lg p-3 border border-orange-100">
+                <div key={idx} className="bg-surf-card rounded-lg p-3 border border-orange-100">
                   <div className="flex justify-between text-sm font-medium text-orange-900 mb-1">
                     <span>{mat.materialName}</span>
                     <span>{formatCurrency(mat.cost)}</span>
@@ -600,7 +600,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
           ) : (
             <>
               {breakdown.edgebands.map((eb, idx) => (
-                <div key={idx} className="bg-white rounded-lg p-3 border border-amber-100">
+                <div key={idx} className="bg-surf-card rounded-lg p-3 border border-amber-100">
                   <div className="flex justify-between text-sm font-medium text-amber-900 mb-1">
                     <span>{eb.edgebandName}</span>
                     <span>{formatCurrency(eb.cost)}</span>
@@ -622,26 +622,26 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
       )}
 
       <SectionHeader
-        icon={<Wrench className="h-4 w-4 text-slate-600" />}
+        icon={<Wrench className="h-4 w-4 text-fg-600" />}
         title="Hardware"
         total={totals.hardware}
         open={openHardware}
         onToggle={() => setOpenHardware((v) => !v)}
-        color="text-slate-700"
+        color="text-fg-700"
       />
       {openHardware && (
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+        <div className="bg-surf-app border border-border-soft rounded-lg p-4">
           {breakdown.hardware.length === 0 ? (
-            <p className="text-sm text-slate-600">No hardware</p>
+            <p className="text-sm text-fg-600">No hardware</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {breakdown.hardware.map((hw, idx) => (
-                <div key={idx} className="bg-white rounded-lg p-3 border border-slate-100">
-                  <div className="flex justify-between text-sm font-medium text-slate-900 mb-1">
+                <div key={idx} className="bg-surf-card rounded-lg p-3 border border-border-soft">
+                  <div className="flex justify-between text-sm font-medium text-fg-900 mb-1">
                     <span className="truncate pr-2">{hw.name}</span>
                     <span className="shrink-0">{formatCurrency(hw.cost)}</span>
                   </div>
-                  <div className="text-xs text-slate-500">{hw.quantity} units</div>
+                  <div className="text-xs text-fg-500">{hw.quantity} units</div>
                 </div>
               ))}
             </div>
@@ -663,7 +663,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
             <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {breakdown.accessories.map((acc, idx) => (
-                  <div key={idx} className="bg-white rounded-lg p-3 border border-teal-100">
+                  <div key={idx} className="bg-surf-card rounded-lg p-3 border border-teal-100">
                     <div className="flex justify-between text-sm font-medium text-teal-900 mb-1">
                       <span className="truncate pr-2">{acc.name}</span>
                       <span className="shrink-0">{formatCurrency(acc.cost)}</span>
@@ -690,7 +690,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
           {openCountertops && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 space-y-2">
               {breakdown.countertops.map((ct, idx) => (
-                <div key={idx} className="bg-white rounded-lg p-3 border border-orange-100">
+                <div key={idx} className="bg-surf-card rounded-lg p-3 border border-orange-100">
                   <div className="flex justify-between text-sm font-medium text-orange-900 mb-1">
                     <span>{ct.item_name}</span>
                     <span>{formatCurrency(ct.subtotal)}</span>
@@ -724,7 +724,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
           {openItems && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-2">
               {breakdown.items.map((item, idx) => (
-                <div key={idx} className="bg-white rounded-lg p-3 border border-amber-100">
+                <div key={idx} className="bg-surf-card rounded-lg p-3 border border-amber-100">
                   <div className="flex justify-between text-sm font-medium text-amber-900 mb-1">
                     <span>{item.item_name}</span>
                     <span>{formatCurrency(item.subtotal)}</span>
@@ -746,7 +746,7 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
       )}
 
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 text-white mt-2">
-        <h4 className="text-base font-semibold mb-4 text-slate-200">Cost Summary</h4>
+        <h4 className="text-base font-semibold mb-4 text-fg-400">Cost Summary</h4>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {[
             { label: 'Box Materials', value: totals.box },
@@ -763,15 +763,15 @@ export function MaterialBreakdown({ areas }: MaterialBreakdownProps) {
             ...(totals.prefabItems > 0 ? [{ label: 'Prefab Items', value: totals.prefabItems }] : []),
           ].map((row, idx) => (
             <div key={idx}>
-              <div className="text-xs text-slate-400 mb-0.5">{row.label}</div>
+              <div className="text-xs text-fg-400 mb-0.5">{row.label}</div>
               <div className="text-lg font-bold">{formatCurrency(row.value)}</div>
-              <div className="text-xs text-slate-500">{pct(row.value)}</div>
+              <div className="text-xs text-fg-500">{pct(row.value)}</div>
             </div>
           ))}
           <div className="col-span-2 md:col-span-1 border-t border-slate-600 pt-3 mt-1 md:border-t-0 md:border-l md:pl-4 md:pt-0 md:mt-0">
-            <div className="text-xs text-slate-400 mb-0.5">Grand Total</div>
+            <div className="text-xs text-fg-400 mb-0.5">Grand Total</div>
             <div className="text-2xl font-bold text-white">{formatCurrency(grandTotal)}</div>
-            <div className="text-xs text-slate-400">100%</div>
+            <div className="text-xs text-fg-400">100%</div>
           </div>
         </div>
       </div>

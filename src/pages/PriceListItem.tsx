@@ -48,10 +48,10 @@ function calcChangePercent(oldPrice: number, newPrice: number): string | null {
 function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3 py-2.5">
-      <div className="flex-shrink-0 mt-0.5 text-slate-400">{icon}</div>
+      <div className="flex-shrink-0 mt-0.5 text-fg-400">{icon}</div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
-        <div className="text-sm text-slate-800">{value}</div>
+        <p className="text-xs font-semibold text-fg-400 uppercase tracking-wide mb-0.5">{label}</p>
+        <div className="text-sm text-fg-800">{value}</div>
       </div>
     </div>
   );
@@ -59,10 +59,10 @@ function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: strin
 
 function SectionCard({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
+    <div className="bg-surf-app border border-border-soft rounded-xl p-5 hover:shadow-md transition-shadow duration-200">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-slate-400">{icon}</span>
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{title}</h3>
+        <span className="text-fg-400">{icon}</span>
+        <h3 className="text-xs font-semibold text-fg-500 uppercase tracking-wide">{title}</h3>
       </div>
       {children}
     </div>
@@ -170,18 +170,18 @@ export function PriceListItem() {
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate('/prices')}
-            className="flex-shrink-0 p-2 rounded-xl bg-white/60 hover:bg-white/80 border border-slate-200/50 text-slate-600 hover:text-slate-800 transition-colors"
+            className="flex-shrink-0 p-2 rounded-xl bg-surf-card hover:bg-surf-card border border-border-soft text-fg-600 hover:text-fg-800 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-sm text-slate-400">
+            <div className="flex items-center gap-1.5 text-sm text-fg-400">
               <button onClick={() => navigate('/prices')} className="hover:text-blue-600 transition-colors">
                 Inventory
               </button>
               <span>/</span>
             </div>
-            <h1 className="text-lg font-semibold text-slate-900 truncate">{item.concept_description}</h1>
+            <h1 className="text-lg font-semibold text-fg-900 truncate">{item.concept_description}</h1>
           </div>
         </div>
         <button
@@ -206,14 +206,14 @@ export function PriceListItem() {
             <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-200/50">Inactive</span>
           )}
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">{item.concept_description}</h2>
-        {item.sku_code && <p className="mt-1 text-sm text-slate-400 font-mono">{item.sku_code}</p>}
+        <h2 className="text-xl sm:text-2xl font-bold text-fg-900 leading-snug">{item.concept_description}</h2>
+        {item.sku_code && <p className="mt-1 text-sm text-fg-400 font-mono">{item.sku_code}</p>}
         <div className="mt-4 flex items-end justify-between flex-wrap gap-3">
           <div>
-            <div className="text-3xl sm:text-4xl font-bold text-slate-900 tabular-nums">{formatCurrency(item.price)}</div>
-            <span className="text-sm text-slate-500">per {item.unit}</span>
+            <div className="text-3xl sm:text-4xl font-bold text-fg-900 tabular-nums">{formatCurrency(item.price)}</div>
+            <span className="text-sm text-fg-500">per {item.unit}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-slate-400">
+          <div className="flex items-center gap-1.5 text-fg-400">
             <Calendar className="h-3.5 w-3.5" />
             <span className="text-xs">Updated {formatDate(item.price_last_updated_at)}</span>
           </div>
@@ -227,11 +227,11 @@ export function PriceListItem() {
           {/* Section 2: General Dimensions */}
           {hasSpecs && (
             <SectionCard icon={<Ruler className="h-4 w-4" />} title="General Dimensions">
-              <div className="divide-y divide-slate-200/40">
+              <div className="divide-y divide-border-soft">
                 {item.material && <DetailRow icon={<Layers className="h-4 w-4" />} label="Material" value={item.material} />}
                 {item.dimensions && <DetailRow icon={<Ruler className="h-4 w-4" />} label="Dimensions" value={item.dimensions} />}
                 {item.sf_per_sheet != null && <DetailRow icon={<Grid className="h-4 w-4" />} label="Sq Ft / Sheet" value={`${item.sf_per_sheet} sf`} />}
-                {item.sku_code && <DetailRow icon={<Hash className="h-4 w-4" />} label="SKU / Code" value={<span className="font-mono text-slate-700">{item.sku_code}</span>} />}
+                {item.sku_code && <DetailRow icon={<Hash className="h-4 w-4" />} label="SKU / Code" value={<span className="font-mono text-fg-700">{item.sku_code}</span>} />}
               </div>
             </SectionCard>
           )}
@@ -240,9 +240,9 @@ export function PriceListItem() {
           <SectionCard icon={<Wrench className="h-4 w-4" />} title="Technical Information">
             {!item.technical_width_mm && !item.technical_height_mm && !item.technical_depth_mm &&
              !item.technical_thickness_mm && !item.weight && !item.technical_material && !item.technical_finish ? (
-              <p className="text-sm text-slate-400 py-2">No technical specifications added yet.</p>
+              <p className="text-sm text-fg-400 py-2">No technical specifications added yet.</p>
             ) : (
-              <div className="divide-y divide-slate-200/40">
+              <div className="divide-y divide-border-soft">
                 {item.technical_width_mm != null && <DetailRow icon={<Ruler className="h-4 w-4" />} label="Width" value={`${item.technical_width_mm} mm`} />}
                 {item.technical_height_mm != null && <DetailRow icon={<Ruler className="h-4 w-4" />} label="Height" value={`${item.technical_height_mm} mm`} />}
                 {item.technical_depth_mm != null && <DetailRow icon={<Ruler className="h-4 w-4" />} label="Depth" value={`${item.technical_depth_mm} mm`} />}
@@ -260,14 +260,14 @@ export function PriceListItem() {
               href={item.product_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 bg-slate-50/80 border border-slate-200/50 rounded-xl p-5 hover:bg-slate-100/80 transition-colors group"
+              className="flex items-center gap-3 bg-surf-app border border-border-soft rounded-xl p-5 hover:bg-surf-muted transition-colors group"
             >
               <div className="p-2.5 rounded-lg bg-blue-50 text-blue-500 group-hover:bg-blue-100 transition-colors">
                 <ExternalLink className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-700">View Product Page</p>
-                <p className="text-xs text-slate-400 truncate">{item.product_url}</p>
+                <p className="text-sm font-medium text-fg-700">View Product Page</p>
+                <p className="text-xs text-fg-400 truncate">{item.product_url}</p>
               </div>
             </a>
           )}
@@ -277,13 +277,13 @@ export function PriceListItem() {
             {historyLoading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-white/60 rounded-xl animate-pulse" />
+                  <div key={i} className="h-12 bg-surf-card rounded-xl animate-pulse" />
                 ))}
               </div>
             ) : history.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 bg-white/60 rounded-xl border border-slate-200/40">
-                <TrendingUp className="h-7 w-7 text-slate-300 mb-2" />
-                <p className="text-sm text-slate-400">No price changes recorded yet</p>
+              <div className="flex flex-col items-center justify-center py-8 bg-surf-card rounded-xl border border-border-soft">
+                <TrendingUp className="h-7 w-7 text-fg-300 mb-2" />
+                <p className="text-sm text-fg-400">No price changes recorded yet</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
@@ -292,30 +292,30 @@ export function PriceListItem() {
                   const decreased = entry.new_price < entry.old_price;
                   const pct = calcChangePercent(entry.old_price, entry.new_price);
                   return (
-                    <div key={entry.id} className="flex items-center gap-3 px-3 py-2.5 bg-white/60 rounded-xl border border-slate-200/40 hover:border-slate-300/60 transition-colors">
+                    <div key={entry.id} className="flex items-center gap-3 px-3 py-2.5 bg-surf-card rounded-xl border border-border-soft hover:border-border-solid transition-colors">
                       <div className="flex-shrink-0">
                         {increased ? (
                           <div className="p-1.5 rounded-full bg-red-50"><TrendingUp className="h-3.5 w-3.5 text-red-500" /></div>
                         ) : decreased ? (
                           <div className="p-1.5 rounded-full bg-green-50"><TrendingDown className="h-3.5 w-3.5 text-green-500" /></div>
                         ) : (
-                          <div className="p-1.5 rounded-full bg-slate-100"><Minus className="h-3.5 w-3.5 text-slate-400" /></div>
+                          <div className="p-1.5 rounded-full bg-surf-muted"><Minus className="h-3.5 w-3.5 text-fg-400" /></div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 text-sm flex-wrap">
-                          <span className="text-slate-400 line-through text-xs">{formatCurrency(entry.old_price)}</span>
-                          <span className="text-slate-400 text-xs">→</span>
-                          <span className={`font-semibold ${increased ? 'text-red-600' : decreased ? 'text-green-600' : 'text-slate-700'}`}>
+                          <span className="text-fg-400 line-through text-xs">{formatCurrency(entry.old_price)}</span>
+                          <span className="text-fg-400 text-xs">→</span>
+                          <span className={`font-semibold ${increased ? 'text-red-600' : decreased ? 'text-green-600' : 'text-fg-700'}`}>
                             {formatCurrency(entry.new_price)}
                           </span>
                           {pct !== null && (
                             <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
-                              increased ? 'bg-red-50 text-red-600' : decreased ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'
+                              increased ? 'bg-red-50 text-red-600' : decreased ? 'bg-green-50 text-green-600' : 'bg-surf-muted text-fg-500'
                             }`}>{pct}</span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-400 mt-0.5">{formatDate(entry.changed_at)}</p>
+                        <p className="text-xs text-fg-400 mt-0.5">{formatDate(entry.changed_at)}</p>
                       </div>
                     </div>
                   );
@@ -329,7 +329,7 @@ export function PriceListItem() {
         <div className="space-y-4">
           {/* Reference Image */}
           {item.image_url && !imgError ? (
-            <div className="relative rounded-xl overflow-hidden bg-slate-100 border border-slate-200/50" style={{ minHeight: '240px' }}>
+            <div className="relative rounded-xl overflow-hidden bg-surf-muted border border-border-soft" style={{ minHeight: '240px' }}>
               <img src={item.image_url} alt={item.concept_description} className="w-full h-full object-cover" style={{ minHeight: '240px' }} onError={() => setImgError(true)} />
               <a href={item.image_url} target="_blank" rel="noopener noreferrer" className="absolute bottom-3 right-3 p-2.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors backdrop-blur-sm" title="Open full image">
                 <ExternalLink className="h-4 w-4" />
@@ -340,16 +340,16 @@ export function PriceListItem() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 bg-slate-50/80 border border-slate-200/50 rounded-xl">
-              <ImageOff className="h-10 w-10 text-slate-200 mb-2" />
-              <p className="text-sm text-slate-400">No image available</p>
+            <div className="flex flex-col items-center justify-center py-16 bg-surf-app border border-border-soft rounded-xl">
+              <ImageOff className="h-10 w-10 text-fg-400 mb-2" />
+              <p className="text-sm text-fg-400">No image available</p>
             </div>
           )}
 
           {/* Notes */}
           {item.notes && (
             <SectionCard icon={<FileText className="h-4 w-4" />} title="Notes">
-              <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{item.notes}</p>
+              <p className="text-sm text-fg-700 whitespace-pre-wrap leading-relaxed">{item.notes}</p>
             </SectionCard>
           )}
 
@@ -358,31 +358,31 @@ export function PriceListItem() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs font-medium text-slate-400 mb-1">Current Stock</p>
-                  <p className="text-sm font-semibold text-slate-800">{item.stock_quantity ?? 0}</p>
+                  <p className="text-xs font-medium text-fg-400 mb-1">Current Stock</p>
+                  <p className="text-sm font-semibold text-fg-800">{item.stock_quantity ?? 0}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-400 mb-1">Min Stock Level</p>
-                  <p className="text-sm text-slate-700">{item.min_stock_level ?? 0}</p>
+                  <p className="text-xs font-medium text-fg-400 mb-1">Min Stock Level</p>
+                  <p className="text-sm text-fg-700">{item.min_stock_level ?? 0}</p>
                 </div>
               </div>
               {item.stock_location && (
                 <div>
-                  <p className="text-xs font-medium text-slate-400 mb-1">Location</p>
-                  <p className="text-sm text-slate-700 flex items-center gap-1.5">
-                    <MapPin className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                  <p className="text-xs font-medium text-fg-400 mb-1">Location</p>
+                  <p className="text-sm text-fg-700 flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-fg-400 flex-shrink-0" />
                     {item.stock_location}
                   </p>
                 </div>
               )}
               <div className="flex items-center gap-4 text-sm">
                 <div>
-                  <span className="text-xs text-slate-400">Weighted Avg. Cost</span>
-                  <p className="font-medium text-slate-700">{item.average_cost ? formatCurrency(item.average_cost) : '—'}</p>
+                  <span className="text-xs text-fg-400">Weighted Avg. Cost</span>
+                  <p className="font-medium text-fg-700">{item.average_cost ? formatCurrency(item.average_cost) : '—'}</p>
                 </div>
                 <div>
-                  <span className="text-xs text-slate-400">Last Purchase Cost</span>
-                  <p className="font-medium text-slate-700">{item.last_purchase_cost ? formatCurrency(item.last_purchase_cost) : '—'}</p>
+                  <span className="text-xs text-fg-400">Last Purchase Cost</span>
+                  <p className="font-medium text-fg-700">{item.last_purchase_cost ? formatCurrency(item.last_purchase_cost) : '—'}</p>
                 </div>
                 <div className="ml-auto">
                   <StockBadge stock_quantity={item.stock_quantity} min_stock_level={item.min_stock_level} />
@@ -400,32 +400,32 @@ export function PriceListItem() {
               {/* Recent movements mini table */}
               {recentMovements.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-xs font-medium text-slate-400 mb-2">Recent Movements</p>
+                  <p className="text-xs font-medium text-fg-400 mb-2">Recent Movements</p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="border-b border-slate-200/40">
-                          <th className="text-left py-1.5 pr-3 font-medium text-slate-400">Date</th>
-                          <th className="text-center py-1.5 px-2 font-medium text-slate-400">Type</th>
-                          <th className="text-right py-1.5 px-2 font-medium text-slate-400">Qty</th>
-                          <th className="text-left py-1.5 pl-2 font-medium text-slate-400">Done by</th>
+                        <tr className="border-b border-border-soft">
+                          <th className="text-left py-1.5 pr-3 font-medium text-fg-400">Date</th>
+                          <th className="text-center py-1.5 px-2 font-medium text-fg-400">Type</th>
+                          <th className="text-right py-1.5 px-2 font-medium text-fg-400">Qty</th>
+                          <th className="text-left py-1.5 pl-2 font-medium text-fg-400">Done by</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {recentMovements.map((m) => (
                           <tr key={m.id}>
-                            <td className="py-1.5 pr-3 text-slate-500 whitespace-nowrap">
+                            <td className="py-1.5 pr-3 text-fg-500 whitespace-nowrap">
                               {format(new Date(m.created_at), 'MMM dd, HH:mm')}
                             </td>
                             <td className="py-1.5 px-2 text-center">
-                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${MOVEMENT_TYPE_STYLES[m.movement_type] ?? 'bg-slate-100 text-slate-600'}`}>
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${MOVEMENT_TYPE_STYLES[m.movement_type] ?? 'bg-surf-muted text-fg-600'}`}>
                                 {m.movement_type}
                               </span>
                             </td>
-                            <td className="py-1.5 px-2 text-right tabular-nums text-slate-700">
+                            <td className="py-1.5 px-2 text-right tabular-nums text-fg-700">
                               {m.movement_type === 'IN' ? '+' : m.movement_type === 'ADJUSTMENT' ? '~' : '-'}{m.quantity}
                             </td>
-                            <td className="py-1.5 pl-2 text-slate-500">{m.created_by_member?.name ?? 'System'}</td>
+                            <td className="py-1.5 pl-2 text-fg-500">{m.created_by_member?.name ?? 'System'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -439,24 +439,24 @@ export function PriceListItem() {
           {/* Section 6: Suppliers */}
           <SectionCard icon={<Link2 className="h-4 w-4" />} title="Suppliers">
             {suppliers.length === 0 ? (
-              <p className="text-sm text-slate-400 py-2">No suppliers linked.</p>
+              <p className="text-sm text-fg-400 py-2">No suppliers linked.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-slate-200/40">
-                      <th className="text-left py-1.5 pr-2 font-medium text-slate-400">Supplier</th>
-                      <th className="text-left py-1.5 px-2 font-medium text-slate-400">SKU</th>
-                      <th className="text-right py-1.5 px-2 font-medium text-slate-400">Price</th>
-                      <th className="text-center py-1.5 pl-2 font-medium text-slate-400">Primary</th>
+                    <tr className="border-b border-border-soft">
+                      <th className="text-left py-1.5 pr-2 font-medium text-fg-400">Supplier</th>
+                      <th className="text-left py-1.5 px-2 font-medium text-fg-400">SKU</th>
+                      <th className="text-right py-1.5 px-2 font-medium text-fg-400">Price</th>
+                      <th className="text-center py-1.5 pl-2 font-medium text-fg-400">Primary</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {suppliers.map((s) => (
                       <tr key={s.id}>
-                        <td className="py-1.5 pr-2 text-slate-700 font-medium">{s.supplier?.name ?? '—'}</td>
-                        <td className="py-1.5 px-2 text-slate-500 font-mono">{s.supplier_sku ?? '—'}</td>
-                        <td className="py-1.5 px-2 text-right tabular-nums text-slate-700">
+                        <td className="py-1.5 pr-2 text-fg-700 font-medium">{s.supplier?.name ?? '—'}</td>
+                        <td className="py-1.5 px-2 text-fg-500 font-mono">{s.supplier_sku ?? '—'}</td>
+                        <td className="py-1.5 px-2 text-right tabular-nums text-fg-700">
                           {s.supplier_price != null ? formatCurrency(s.supplier_price) : '—'}
                         </td>
                         <td className="py-1.5 pl-2 text-center">
@@ -477,21 +477,21 @@ export function PriceListItem() {
 
           {/* Metadata */}
           <SectionCard icon={<Clock className="h-4 w-4" />} title="Metadata">
-            <div className="space-y-2 text-sm text-slate-600">
+            <div className="space-y-2 text-sm text-fg-600">
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Added</span>
+                <span className="text-fg-400">Added</span>
                 <span>{formatDate(item.created_at)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Last Updated</span>
+                <span className="text-fg-400">Last Updated</span>
                 <span>{formatDate(item.updated_at)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Price Updated</span>
+                <span className="text-fg-400">Price Updated</span>
                 <span>{formatDate(item.price_last_updated_at)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Status</span>
+                <span className="text-fg-400">Status</span>
                 <span className={item.is_active ? 'text-green-600' : 'text-red-500'}>{item.is_active ? 'Active' : 'Inactive'}</span>
               </div>
             </div>

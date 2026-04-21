@@ -217,7 +217,7 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
     return (
       <Modal isOpen={true} onClose={onClose} title={closetItem ? 'Edit Closet Item' : 'Add Closet Item'} size="lg">
         <div className="flex items-center justify-center h-64">
-          <div className="text-slate-600">Loading closet catalog...</div>
+          <div className="text-fg-600">Loading closet catalog...</div>
         </div>
       </Modal>
     );
@@ -228,8 +228,8 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
       <Modal isOpen={true} onClose={onClose} title={closetItem ? 'Edit Closet Item' : 'Add Closet Item'} size="lg">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="text-slate-600 mb-2">No closet items available in catalog</div>
-            <div className="text-sm text-slate-500">Please add items to the closet catalog first.</div>
+            <div className="text-fg-600 mb-2">No closet items available in catalog</div>
+            <div className="text-sm text-fg-500">Please add items to the closet catalog first.</div>
           </div>
         </div>
       </Modal>
@@ -241,9 +241,9 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
       <div className="space-y-5">
 
         <div ref={codeSearchRef} className="relative">
-          <label className="block text-sm font-medium text-slate-700 mb-1">Quick Search by Code or Description</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Quick Search by Code or Description</label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-400 pointer-events-none" />
             <input
               type="text"
               value={codeSearch}
@@ -251,20 +251,20 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
               onFocus={() => setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
               placeholder="Type a code (e.g. H183624) or keyword (e.g. Hanging)..."
-              className="w-full pl-9 pr-9 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm font-mono"
+              className="w-full pl-9 pr-9 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm font-mono"
             />
             {codeSearch && (
               <button
                 type="button"
                 onClick={clearCodeSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-400 hover:text-fg-600"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
           {showSuggestions && codeSuggestions.length > 0 && (
-            <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
+            <div className="absolute z-50 mt-1 w-full bg-surf-card border border-border-soft rounded-lg shadow-lg overflow-hidden">
               {codeSuggestions.map(item => (
                 <button
                   key={item.id}
@@ -273,46 +273,46 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
                   className="w-full text-left px-4 py-2.5 hover:bg-teal-50 flex items-center justify-between gap-4 border-b border-slate-50 last:border-0"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="font-mono text-sm font-semibold text-slate-800 shrink-0">
+                    <span className="font-mono text-sm font-semibold text-fg-800 shrink-0">
                       {highlightMatch(item.cabinet_code, codeSearch)}
                     </span>
-                    <span className="text-xs text-slate-500 truncate">
+                    <span className="text-xs text-fg-500 truncate">
                       {highlightMatch(item.description, codeSearch)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0 text-xs text-slate-400">
+                  <div className="flex items-center gap-3 shrink-0 text-xs text-fg-400">
                     <span>{item.width_in}" W × {item.height_in}" H × {item.depth_in}" D</span>
                     <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
                       item.evita_line === 'Evita Premium' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'
                     }`}>
                       {item.evita_line === 'Evita Premium' ? 'Premium' : 'Plus'}
                     </span>
-                    <span className="font-medium text-slate-600">${Number(item.price_with_backs_usd).toFixed(2)}</span>
+                    <span className="font-medium text-fg-600">${Number(item.price_with_backs_usd).toFixed(2)}</span>
                   </div>
                 </button>
               ))}
             </div>
           )}
           {showSuggestions && codeSearch.trim() && codeSuggestions.length === 0 && (
-            <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg px-4 py-3 text-sm text-slate-400">
+            <div className="absolute z-50 mt-1 w-full bg-surf-card border border-border-soft rounded-lg shadow-lg px-4 py-3 text-sm text-fg-400">
               No results found for "{codeSearch}"
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex-1 border-t border-slate-200" />
-          <span className="text-xs text-slate-400 shrink-0">or select manually below</span>
-          <div className="flex-1 border-t border-slate-200" />
+          <div className="flex-1 border-t border-border-soft" />
+          <span className="text-xs text-fg-400 shrink-0">or select manually below</span>
+          <div className="flex-1 border-t border-border-soft" />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Evita Line</label>
+            <label className="block text-sm font-medium text-fg-700 mb-1">Evita Line</label>
             <select
               value={selectedLine}
               onChange={e => handleLineChange(e.target.value)}
-              className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+              className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-surf-card"
             >
               {EVITA_LINES.map(line => (
                 <option key={line} value={line}>{line}</option>
@@ -320,11 +320,11 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Cabinet Type</label>
+            <label className="block text-sm font-medium text-fg-700 mb-1">Cabinet Type</label>
             <select
               value={selectedDescription}
               onChange={e => handleDescriptionChange(e.target.value)}
-              className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+              className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-surf-card"
             >
               <option value="">Select type...</option>
               {availableDescriptions.map(desc => (
@@ -336,11 +336,11 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
 
         {selectedDescription && (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Size (W x H x D inches)</label>
+            <label className="block text-sm font-medium text-fg-700 mb-1">Size (W x H x D inches)</label>
             <select
               value={selectedCatalogId}
               onChange={e => setSelectedCatalogId(e.target.value)}
-              className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+              className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-surf-card"
             >
               <option value="">Select size...</option>
               {availableSizes.map(item => (
@@ -355,36 +355,36 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
         {selectedItem && (
           <div className="bg-teal-50 border border-teal-200 p-4 rounded-lg space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Line:</span>
+              <span className="text-fg-600">Line:</span>
               <span className="font-medium text-teal-700">{selectedItem.evita_line}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Code:</span>
+              <span className="text-fg-600">Code:</span>
               <span className="font-medium font-mono">{selectedItem.cabinet_code}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Dimensions:</span>
+              <span className="text-fg-600">Dimensions:</span>
               <span className="font-medium">{selectedItem.width_in}" W × {selectedItem.height_in}" H × {selectedItem.depth_in}" D</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Boxes/unit:</span>
+              <span className="text-fg-600">Boxes/unit:</span>
               <span className="font-medium">{selectedItem.boxes_count}</span>
             </div>
             {selectedItem.has_backs_option && (
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Price w/backs:</span>
+                <span className="text-fg-600">Price w/backs:</span>
                 <span className="font-medium">${selectedItem.price_with_backs_usd?.toFixed(2)} USD</span>
               </div>
             )}
             {selectedItem.has_backs_option && selectedItem.price_without_backs_usd != null && (
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Price w/o backs:</span>
+                <span className="text-fg-600">Price w/o backs:</span>
                 <span className="font-medium">${selectedItem.price_without_backs_usd.toFixed(2)} USD</span>
               </div>
             )}
             {!selectedItem.has_backs_option && (
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Price:</span>
+                <span className="text-fg-600">Price:</span>
                 <span className="font-medium">${selectedItem.price_with_backs_usd?.toFixed(2)} USD</span>
               </div>
             )}
@@ -398,11 +398,11 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
                 type="checkbox"
                 checked={withBacks}
                 onChange={e => setWithBacks(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                className="w-4 h-4 rounded border-border-solid text-teal-600 focus:ring-teal-500"
               />
-              <span className="text-sm font-medium text-slate-700">Include backs</span>
+              <span className="text-sm font-medium text-fg-700">Include backs</span>
             </label>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-fg-500">
               {withBacks ? `$${selectedItem.price_with_backs_usd?.toFixed(2)} USD` : `$${selectedItem.price_without_backs_usd?.toFixed(2)} USD`}
             </span>
           </div>
@@ -420,7 +420,7 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
 
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="block text-sm font-medium text-slate-700">Hardware (optional)</label>
+            <label className="block text-sm font-medium text-fg-700">Hardware (optional)</label>
             <button
               type="button"
               onClick={addHardwareRow}
@@ -434,7 +434,7 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
               <select
                 value={hw.hardware_id}
                 onChange={e => updateHardware(index, 'hardware_id', e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white text-sm"
+                className="flex-1 px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-surf-card text-sm"
               >
                 <option value="">Select hardware...</option>
                 {priceList.map(p => (
@@ -446,7 +446,7 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
                 min="1"
                 value={hw.quantity_per_cabinet}
                 onChange={e => updateHardware(index, 'quantity_per_cabinet', parseInt(e.target.value) || 1)}
-                className="w-20 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                className="w-20 px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                 placeholder="Qty"
               />
               <button
@@ -461,12 +461,12 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+          <label className="block text-sm font-medium text-fg-700 mb-1">Notes</label>
           <textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="Optional notes..."
-            className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="block w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
             rows={2}
           />
         </div>
@@ -491,7 +491,7 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
           </div>
         )}
 
-        <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-border-soft">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button onClick={handleSave} disabled={!selectedItem || !selectedCatalogId}>
             {closetItem ? 'Update Closet Item' : 'Add Closet Item'}

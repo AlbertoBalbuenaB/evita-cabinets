@@ -58,8 +58,8 @@ export function SectionDivider({
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-green-500 z-10" style={{ marginBottom: '-1px' }} />
       )}
       {draggable && (
-        <div className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-slate-100 transition-colors" title="Drag to reorder">
-          <GripVertical className="h-4 w-4 text-slate-300" />
+        <div className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-surf-muted transition-colors" title="Drag to reorder">
+          <GripVertical className="h-4 w-4 text-fg-300" />
         </div>
       )}
 
@@ -73,30 +73,30 @@ export function SectionDivider({
             if (e.key === 'Enter') commitRename();
             if (e.key === 'Escape') { setName(section.name); setEditing(false); }
           }}
-          className="text-sm font-semibold text-slate-600 bg-transparent border-b border-slate-400 outline-none min-w-[8rem]"
+          className="text-sm font-semibold text-fg-600 bg-transparent border-b border-slate-400 outline-none min-w-[8rem]"
         />
       ) : (
-        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+        <span className="text-xs font-bold text-fg-400 uppercase tracking-widest whitespace-nowrap">
           {section.name}
         </span>
       )}
 
-      <div className="flex-1 h-px bg-slate-200" />
+      <div className="flex-1 h-px bg-surf-muted" />
 
       <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={() => { setName(section.name); setEditing(true); }}
-          className="p-1 rounded hover:bg-slate-100 transition-colors"
+          className="p-1 rounded hover:bg-surf-muted transition-colors"
           title="Rename section"
         >
-          <Pencil className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600" />
+          <Pencil className="h-3.5 w-3.5 text-fg-400 hover:text-fg-600" />
         </button>
         <button
           onClick={onDelete}
           className="p-1 rounded hover:bg-red-50 transition-colors"
           title="Delete section"
         >
-          <Trash2 className="h-3.5 w-3.5 text-slate-400 hover:text-red-500" />
+          <Trash2 className="h-3.5 w-3.5 text-fg-400 hover:text-red-500" />
         </button>
       </div>
     </div>

@@ -32,8 +32,8 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
   // ── Empty state ───────────────────────────────────────────
   if (!result) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-white">
-        <p className="text-xs text-slate-400 text-center px-4 leading-relaxed">
+      <div className="flex-1 flex items-center justify-center bg-surf-card">
+        <p className="text-xs text-fg-400 text-center px-4 leading-relaxed">
           Run optimization<br />to view statistics
         </p>
       </div>
@@ -94,15 +94,15 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
   const Section = ({
     title, open, onToggle, children,
   }: { title: string; open: boolean; onToggle: () => void; children: React.ReactNode }) => (
-    <div className="border-b border-slate-100">
+    <div className="border-b border-border-soft">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-2.5 bg-slate-50 hover:bg-slate-100 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2.5 bg-surf-app hover:bg-surf-muted transition-colors"
       >
-        <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{title}</span>
+        <span className="text-xs font-semibold text-fg-600 uppercase tracking-wide">{title}</span>
         {open
-          ? <ChevronUp   className="h-3.5 w-3.5 text-slate-400" />
-          : <ChevronDown className="h-3.5 w-3.5 text-slate-400" />}
+          ? <ChevronUp   className="h-3.5 w-3.5 text-fg-400" />
+          : <ChevronDown className="h-3.5 w-3.5 text-fg-400" />}
       </button>
       {open && <div className="px-4 py-2 space-y-0.5">{children}</div>}
     </div>
@@ -110,10 +110,10 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
 
   const StatRow = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
     <div className="flex items-baseline justify-between py-1 text-xs border-b border-slate-50 last:border-0">
-      <span className="text-slate-500 shrink-0">{label}</span>
+      <span className="text-fg-500 shrink-0">{label}</span>
       <span className="text-right ml-2 min-w-0">
-        <span className="font-medium text-slate-800">{value}</span>
-        {sub && <span className="text-slate-400 ml-1.5">{sub}</span>}
+        <span className="font-medium text-fg-800">{value}</span>
+        {sub && <span className="text-fg-400 ml-1.5">{sub}</span>}
       </span>
     </div>
   );
@@ -136,14 +136,14 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
       aria-current={active ? 'true' : undefined}
       className={`w-full flex items-baseline gap-2 py-1 px-1.5 -mx-1.5 text-xs rounded border-b border-slate-50 last:border-0 transition-colors ${
         active
-          ? 'bg-indigo-50 text-indigo-700'
-          : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+          ? 'bg-accent-tint-soft text-accent-text'
+          : 'text-fg-500 hover:bg-surf-muted hover:text-fg-700'
       }`}
     >
       <span className="flex-1 min-w-0 truncate text-left">{name}</span>
       <span
         className={`shrink-0 font-medium tabular-nums ${
-          active ? 'text-indigo-700' : 'text-slate-800'
+          active ? 'text-accent-text' : 'text-fg-800'
         }`}
       >
         {count} board{count !== 1 ? 's' : ''}
@@ -153,7 +153,7 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
 
   // ── Render ────────────────────────────────────────────────
   return (
-    <div className="flex-1 bg-white flex flex-col overflow-y-auto overflow-x-hidden text-sm">
+    <div className="flex-1 bg-surf-card flex flex-col overflow-y-auto overflow-x-hidden text-sm">
 
       <Section title="Global statistics" open={globalOpen} onToggle={() => setGlobalOpen((v) => !v)}>
         {Object.entries(materialGroups).map(([name, count]) => (
@@ -202,19 +202,19 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
           <button
             onClick={() => onSelectBoard(Math.max(0, safeIdx - 1))}
             disabled={safeIdx === 0}
-            className="p-1 rounded hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="p-1 rounded hover:bg-surf-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
-            <ChevronLeft className="h-4 w-4 text-slate-500" />
+            <ChevronLeft className="h-4 w-4 text-fg-500" />
           </button>
-          <span className="text-xs font-semibold text-slate-700 select-none">
+          <span className="text-xs font-semibold text-fg-700 select-none">
             {safeIdx + 1} / {boardCount}
           </span>
           <button
             onClick={() => onSelectBoard(Math.min(boardCount - 1, safeIdx + 1))}
             disabled={safeIdx === boardCount - 1}
-            className="p-1 rounded hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="p-1 rounded hover:bg-surf-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
-            <ChevronRight className="h-4 w-4 text-slate-500" />
+            <ChevronRight className="h-4 w-4 text-fg-500" />
           </button>
         </div>
         <StatRow label="Stock sheet" value={`${fmtNum(board.ancho, unit)}×${fmtNum(board.alto, unit)}`} />
@@ -244,18 +244,18 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
         <div className="-mx-4">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-slate-100">
-                <th className="text-left py-1 px-4 font-medium text-slate-400 w-7">#</th>
-                <th className="text-left py-1 font-medium text-slate-400">Part</th>
-                <th className="text-center py-1 font-medium text-slate-400 w-8">Tipo</th>
-                <th className="text-right py-1 px-4 font-medium text-slate-400">Pos.</th>
+              <tr className="border-b border-border-soft">
+                <th className="text-left py-1 px-4 font-medium text-fg-400 w-7">#</th>
+                <th className="text-left py-1 font-medium text-fg-400">Part</th>
+                <th className="text-center py-1 font-medium text-fg-400 w-8">Tipo</th>
+                <th className="text-right py-1 px-4 font-medium text-fg-400">Pos.</th>
               </tr>
             </thead>
             <tbody>
               {cuts.map((cut) => (
-                <tr key={cut.n} className={`border-t border-slate-50 ${cut.isTrim ? 'bg-amber-50' : 'hover:bg-slate-50'}`}>
-                  <td className="py-1 px-4 font-mono text-slate-400">{cut.n}</td>
-                  <td className="py-1 text-slate-600 text-xs">
+                <tr key={cut.n} className={`border-t border-slate-50 ${cut.isTrim ? 'bg-amber-50' : 'hover:bg-surf-app'}`}>
+                  <td className="py-1 px-4 font-mono text-fg-400">{cut.n}</td>
+                  <td className="py-1 text-fg-600 text-xs">
                     {cut.isTrim ? '— trim —' : `${fmtNum(board.ancho, unit)}×${fmtNum(board.alto, unit)}`}
                   </td>
                   <td className="py-1 text-center">
@@ -269,14 +269,14 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
                       {cut.type}
                     </span>
                   </td>
-                  <td className="py-1 px-4 text-right font-mono text-slate-600">
+                  <td className="py-1 px-4 text-right font-mono text-fg-600">
                     {fmtNum(cut.pos, unit)}
                   </td>
                 </tr>
               ))}
               {cuts.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-4 text-center text-slate-400 px-4">
+                  <td colSpan={4} className="py-4 text-center text-fg-400 px-4">
                     No cuts recorded
                   </td>
                 </tr>

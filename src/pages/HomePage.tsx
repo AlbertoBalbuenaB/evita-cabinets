@@ -99,7 +99,7 @@ type LogType = 'note' | 'change' | 'decision' | 'risk' | 'issue' | 'milestone' |
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const LOG_TYPES: Record<LogType, { label: string; Icon: any; color: string; bg: string; border: string; badgeBg: string }> = {
-  note:      { label: 'Note',      Icon: ScrollText,       color: 'text-slate-500',   bg: 'bg-slate-50/70',    border: 'border-l-slate-300',   badgeBg: 'bg-slate-100'   },
+  note:      { label: 'Note',      Icon: ScrollText,       color: 'text-fg-500',   bg: 'bg-surf-app',    border: 'border-l-slate-300',   badgeBg: 'bg-surf-muted'   },
   change:    { label: 'Change',    Icon: ArrowRightCircle, color: 'text-amber-600',   bg: 'bg-amber-50/70',    border: 'border-l-amber-400',   badgeBg: 'bg-amber-100'   },
   decision:  { label: 'Decision',  Icon: CheckCircle2,     color: 'text-blue-600',    bg: 'bg-blue-50/70',     border: 'border-l-blue-400',    badgeBg: 'bg-blue-100'    },
   risk:      { label: 'Risk',      Icon: AlertTriangle,    color: 'text-orange-600',  bg: 'bg-orange-50/70',   border: 'border-l-orange-400',  badgeBg: 'bg-orange-100'  },
@@ -177,18 +177,18 @@ function TaskSubsection({
       {/* Subsection header */}
       <button
         onClick={() => (collapsible || tasks.length > 0) && setCollapsed(p => !p)}
-        className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/30 transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-surf-card transition-colors"
         disabled={!collapsible && tasks.length === 0}
       >
         {collapsible ? (
           collapsed
-            ? <ChevronRight className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-            : <ChevronDown className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+            ? <ChevronRight className="h-3.5 w-3.5 text-fg-400 flex-shrink-0" />
+            : <ChevronDown className="h-3.5 w-3.5 text-fg-400 flex-shrink-0" />
         ) : (
           tasks.length > 0
             ? (collapsed
-              ? <ChevronRight className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-              : <ChevronDown className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />)
+              ? <ChevronRight className="h-3.5 w-3.5 text-fg-400 flex-shrink-0" />
+              : <ChevronDown className="h-3.5 w-3.5 text-fg-400 flex-shrink-0" />)
             : <span className="w-3.5 h-3.5 flex-shrink-0" />
         )}
         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${v.dot}`} />
@@ -217,7 +217,7 @@ function TaskSubsection({
                 <Link
                   to={`/projects/${task.project_id}`}
                   onClick={e => e.stopPropagation()}
-                  className="block text-[10px] text-slate-400 hover:text-blue-500 transition-colors pl-3 mt-0.5 truncate"
+                  className="block text-[10px] text-fg-400 hover:text-blue-500 transition-colors pl-3 mt-0.5 truncate"
                 >
                   {task.project_name}
                 </Link>
@@ -253,11 +253,11 @@ function PersonalBucketSection({
     <div className={`rounded-xl border ${v.bg} ${v.border} overflow-hidden`}>
       <button
         onClick={() => setCollapsed(p => !p)}
-        className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/30 transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-surf-card transition-colors"
       >
         {collapsed
-          ? <ChevronRight className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-          : <ChevronDown className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />}
+          ? <ChevronRight className="h-3.5 w-3.5 text-fg-400 flex-shrink-0" />
+          : <ChevronDown className="h-3.5 w-3.5 text-fg-400 flex-shrink-0" />}
         <Icon className={`h-3.5 w-3.5 ${v.label} flex-shrink-0`} />
         <span className={`text-xs font-semibold uppercase tracking-wide flex-1 ${v.label}`}>{label}</span>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${v.badge}`}>
@@ -285,7 +285,7 @@ function PersonalBucketSection({
                   {(task.recurrence && task.recurrence !== 'none') || isOverdue ? (
                     <div className="flex items-center gap-2 pl-3 mt-0.5 text-[10px]">
                       {task.recurrence && task.recurrence !== 'none' && (
-                        <span className="flex items-center gap-0.5 text-slate-500">
+                        <span className="flex items-center gap-0.5 text-fg-500">
                           <Repeat className="h-2.5 w-2.5" />
                           {task.recurrence}
                         </span>
@@ -313,7 +313,7 @@ const QUOTE_STATUS_COLORS: Record<string, string> = {
   'Estimating': 'bg-orange-100 text-orange-700 border-orange-200',
   'Sent':       'bg-cyan-100 text-cyan-700 border-cyan-200',
   'Lost':       'bg-red-100 text-red-700 border-red-200',
-  'Discarded':  'bg-slate-100 text-slate-600 border-slate-200',
+  'Discarded':  'bg-surf-muted text-fg-600 border-border-soft',
   'Cancelled':  'bg-gray-100 text-gray-600 border-gray-200',
 };
 
@@ -881,30 +881,30 @@ export function HomePage() {
       <div className="glass-indigo px-6 py-5 hero-enter">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{member ? getGreeting(member.name) : 'Home'}</h1>
-            <p className="text-sm text-slate-500 mt-0.5">Track tasks and activity across all your projects</p>
+            <h1 className="text-2xl font-bold text-fg-900 tracking-tight">{member ? getGreeting(member.name) : 'Home'}</h1>
+            <p className="text-sm text-fg-500 mt-0.5">Track tasks and activity across all your projects</p>
           </div>
 
           {tasks.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/60 border border-blue-200/60 shadow-sm">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-blue-200/60 shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
                 <span className="text-sm font-bold text-blue-800 tabular-nums">{inProgressAll}</span>
                 <span className="text-xs text-blue-600 font-medium hidden sm:inline">In Progress</span>
               </div>
               {inReviewAll > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/60 border border-purple-200/60 shadow-sm">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-purple-200/60 shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0" />
                   <span className="text-sm font-bold text-purple-800 tabular-nums">{inReviewAll}</span>
                   <span className="text-xs text-purple-600 font-medium hidden sm:inline">In Review</span>
                 </div>
               )}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/60 border border-amber-200/60 shadow-sm">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-amber-200/60 shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
                 <span className="text-sm font-bold text-amber-800 tabular-nums">{pendingAll}</span>
                 <span className="text-xs text-amber-600 font-medium hidden sm:inline">To-do</span>
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/60 border border-emerald-200/60 shadow-sm">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-emerald-200/60 shadow-sm">
                 <TrendingUp className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
                 <span className="text-sm font-bold text-emerald-800 tabular-nums">{doneAll}</span>
                 <span className="text-xs text-emerald-600 font-medium hidden sm:inline">Done</span>
@@ -933,12 +933,12 @@ export function HomePage() {
         <div className="glass-white px-5 py-3.5">
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-1.5 flex-shrink-0">
-              <div className="p-1 rounded-md bg-slate-100">
-                <GitMerge className="h-3.5 w-3.5 text-slate-500" />
+              <div className="p-1 rounded-md bg-surf-muted">
+                <GitMerge className="h-3.5 w-3.5 text-fg-500" />
               </div>
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Projects Pipeline</span>
+              <span className="text-xs font-semibold text-fg-500 uppercase tracking-wide">Projects Pipeline</span>
             </div>
-            <div className="w-px h-4 bg-slate-200 hidden sm:block" />
+            <div className="w-px h-4 bg-surf-muted hidden sm:block" />
             <div className="flex items-center gap-2 flex-wrap">
               {PIPELINE_ORDER.map(status => {
                 const count = pipeline[status];
@@ -962,14 +962,14 @@ export function HomePage() {
 
       {/* ── Recent Quotes ─────────────────────────────────────────────────── */}
       <div className="glass-white overflow-hidden p-0">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100/80">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border-soft">
           <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-indigo-100">
-              <FolderOpen className="h-4 w-4 text-indigo-600" />
+            <div className="p-1.5 rounded-lg bg-accent-tint-strong">
+              <FolderOpen className="h-4 w-4 text-accent-text" />
             </div>
-            <h2 className="text-base font-semibold text-slate-900">Recent Quotes</h2>
+            <h2 className="text-base font-semibold text-fg-900">Recent Quotes</h2>
             {recentQuotes.length > 0 && (
-              <span className="text-xs font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-semibold bg-surf-muted text-fg-500 px-2 py-0.5 rounded-full">
                 {recentQuotes.length}
               </span>
             )}
@@ -984,7 +984,7 @@ export function HomePage() {
         </div>
 
         {recentQuotes.length === 0 ? (
-          <div className="py-10 text-center text-slate-400">
+          <div className="py-10 text-center text-fg-400">
             <FolderOpen className="h-8 w-8 mx-auto mb-2 opacity-20" />
             <p className="text-sm font-medium">No quotes yet</p>
           </div>
@@ -994,29 +994,29 @@ export function HomePage() {
               <div
                 key={q.id}
                 onClick={() => navigate(`/projects/${q.project_id}/quotations/${q.id}`)}
-                className={`group p-4 rounded-xl border border-slate-200/60 hover:border-blue-400/60 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer transition-all bg-white/60 backdrop-blur-sm card-enter stagger-${Math.min(idx + 1, 12)}`}
+                className={`group p-4 rounded-xl border border-border-soft hover:border-blue-400/60 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer transition-all bg-surf-card backdrop-blur-sm card-enter stagger-${Math.min(idx + 1, 12)}`}
               >
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-slate-900 truncate flex-1 mr-2 leading-snug">
+                  <h3 className="text-sm font-semibold text-fg-900 truncate flex-1 mr-2 leading-snug">
                     {q.name}
                   </h3>
-                  <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 transition-colors flex-shrink-0 mt-0.5" />
+                  <ArrowRight className="h-3.5 w-3.5 text-fg-400 group-hover:text-blue-600 transition-colors flex-shrink-0 mt-0.5" />
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-3">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${QUOTE_STATUS_COLORS[q.status] ?? 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${QUOTE_STATUS_COLORS[q.status] ?? 'bg-surf-muted text-fg-700 border-border-soft'}`}>
                     {q.status}
                   </span>
                   {q.project_type && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-surf-muted text-fg-600 border border-border-soft">
                       {q.project_type}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-fg-400">
                     {new Date(q.quote_date).toLocaleDateString()}
                   </span>
-                  <span className="text-sm font-bold text-slate-900">
+                  <span className="text-sm font-bold text-fg-900">
                     {formatCurrency((q.total_amount ?? 0) / exchangeRate, 'USD')}
                   </span>
                 </div>
@@ -1036,7 +1036,7 @@ export function HomePage() {
             <div className={`p-1.5 rounded-lg transition-colors duration-500 ${taskTab === 'planner' ? 'bg-violet-100' : 'bg-blue-100'}`}>
               <CheckSquare className={`h-4 w-4 transition-colors duration-500 ${taskTab === 'planner' ? 'text-violet-600' : 'text-blue-600'}`} />
             </div>
-            <h2 className="text-base font-semibold text-slate-900">Tasks</h2>
+            <h2 className="text-base font-semibold text-fg-900">Tasks</h2>
 
             {/* Mine / All toggle — applies to the active tab */}
             {member && (() => {
@@ -1046,18 +1046,18 @@ export function HomePage() {
               const mineCount = taskTab === 'planner' ? myPersonalTasks.length : myTasks.length;
               const allCount  = taskTab === 'planner' ? allPersonalTasks.length : projectTasks.length;
               return (
-                <div className="ml-auto flex items-center rounded-lg border border-slate-200 bg-white overflow-hidden text-xs font-medium shadow-sm">
+                <div className="ml-auto flex items-center rounded-lg border border-border-soft bg-surf-card overflow-hidden text-xs font-medium shadow-sm">
                   <button
                     onClick={() => toggleMyTasks(true)}
-                    className={`px-3 py-1.5 transition-all duration-200 ${myTasksOnly ? activeAccent : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+                    className={`px-3 py-1.5 transition-all duration-200 ${myTasksOnly ? activeAccent : 'text-fg-500 hover:text-fg-700 hover:bg-surf-app'}`}
                     aria-pressed={myTasksOnly}
                   >
                     Mine <span className="tabular-nums opacity-90">({mineCount})</span>
                   </button>
-                  <span className="w-px self-stretch bg-slate-200/80" />
+                  <span className="w-px self-stretch bg-surf-muted" />
                   <button
                     onClick={() => toggleMyTasks(false)}
-                    className={`px-3 py-1.5 transition-all duration-200 ${!myTasksOnly ? activeAccent : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+                    className={`px-3 py-1.5 transition-all duration-200 ${!myTasksOnly ? activeAccent : 'text-fg-500 hover:text-fg-700 hover:bg-surf-app'}`}
                     aria-pressed={!myTasksOnly}
                   >
                     All <span className="tabular-nums opacity-90">({allCount})</span>
@@ -1068,13 +1068,13 @@ export function HomePage() {
           </div>
 
           {/* ── Prominent 2-column tab switcher ───────────────────────── */}
-          <div className="relative grid grid-cols-2 border-y border-slate-100/80 bg-slate-50/40">
+          <div className="relative grid grid-cols-2 border-y border-border-soft bg-surf-app">
             <button
               onClick={() => switchTaskTab('projects')}
               className={`relative group flex items-center justify-center gap-2 px-4 py-4 text-sm font-semibold transition-all duration-300 ${
                 taskTab === 'projects'
                   ? 'text-blue-700 bg-gradient-to-b from-blue-50/70 to-white'
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+                  : 'text-fg-400 hover:text-fg-600 hover:bg-surf-card'
               }`}
               aria-pressed={taskTab === 'projects'}
             >
@@ -1094,7 +1094,7 @@ export function HomePage() {
               className={`relative group flex items-center justify-center gap-2 px-4 py-4 text-sm font-semibold transition-all duration-300 ${
                 taskTab === 'planner'
                   ? 'text-violet-700 bg-gradient-to-b from-violet-50/70 to-white'
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+                  : 'text-fg-400 hover:text-fg-600 hover:bg-surf-card'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
               aria-pressed={taskTab === 'planner'}
             >
@@ -1108,27 +1108,27 @@ export function HomePage() {
               />
             </button>
             {/* Vertical divider between tabs */}
-            <span className="pointer-events-none absolute top-2 bottom-2 left-1/2 w-px bg-slate-200/70" />
+            <span className="pointer-events-none absolute top-2 bottom-2 left-1/2 w-px bg-surf-muted" />
           </div>
 
           {/* ── Projects tab ───────────────────────────────────────────── */}
           {taskTab === 'projects' && (
           <div key="projects-tab" className="tab-enter-left">
             {visibleTasks.length === 0 ? (
-              <div className="py-16 text-center text-slate-400">
+              <div className="py-16 text-center text-fg-400">
                 <CheckSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
                 <p className="text-sm font-medium">{myTasksOnly ? 'You have no assigned tasks at this time' : 'No tasks across any project yet'}</p>
               </div>
             ) : (
               <>
                 {/* Filter bar */}
-                <div className="px-5 py-3 border-b border-slate-100/80 bg-slate-50/60 flex items-center gap-2 flex-wrap">
-                  <Filter className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                <div className="px-5 py-3 border-b border-border-soft bg-surf-app flex items-center gap-2 flex-wrap">
+                  <Filter className="h-3.5 w-3.5 text-fg-400 flex-shrink-0" />
 
                   <select
                     value={taskFilters.priority}
                     onChange={e => setTaskFilters(p => ({ ...p, priority: e.target.value as TaskPriority | '' }))}
-                    className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="text-xs border border-border-soft rounded-lg px-2 py-1 bg-surf-card text-fg-600 focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-transparent"
                   >
                     <option value="">All priorities</option>
                     {(Object.entries(TASK_PRIORITY_CONFIG) as [TaskPriority, typeof TASK_PRIORITY_CONFIG[TaskPriority]][]).map(([val, cfg]) => (
@@ -1139,7 +1139,7 @@ export function HomePage() {
                   <select
                     value={taskFilters.assigneeId}
                     onChange={e => setTaskFilters(p => ({ ...p, assigneeId: e.target.value }))}
-                    className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="text-xs border border-border-soft rounded-lg px-2 py-1 bg-surf-card text-fg-600 focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-transparent"
                   >
                     <option value="">All assignees</option>
                     {teamMembers.filter(m => m.is_active).map(m => (
@@ -1151,7 +1151,7 @@ export function HomePage() {
                     <select
                       value={taskFilters.projectId}
                       onChange={e => setTaskFilters(p => ({ ...p, projectId: e.target.value }))}
-                      className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="text-xs border border-border-soft rounded-lg px-2 py-1 bg-surf-card text-fg-600 focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-transparent"
                     >
                       <option value="">All projects</option>
                       {allProjects.map(p => (
@@ -1163,7 +1163,7 @@ export function HomePage() {
                   {hasActiveFilters && (
                     <button
                       onClick={() => setTaskFilters({ priority: '', assigneeId: '', projectId: '' })}
-                      className="flex items-center gap-1 px-2 py-1 text-xs text-slate-400 hover:text-slate-700 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 text-xs text-fg-400 hover:text-fg-700 transition-colors"
                     >
                       <X className="h-3 w-3" />
                       Clear
@@ -1253,19 +1253,19 @@ export function HomePage() {
           {taskTab === 'planner' && (
           <div key="planner-tab" className="tab-enter-right">
             {!member ? (
-              <div className="py-16 text-center text-slate-400">
+              <div className="py-16 text-center text-fg-400">
                 <CheckSquare className="h-10 w-10 mx-auto mb-3 opacity-20" />
                 <p className="text-sm font-medium">Sign in to use the planner</p>
               </div>
             ) : (
               <>
                 {/* Quick-add bar */}
-                <div className="px-5 py-3 border-b border-slate-100/80 bg-slate-50/60">
+                <div className="px-5 py-3 border-b border-border-soft bg-surf-app">
                   <div className="flex items-center gap-2">
                     <select
                       value={personalQuickBucket}
                       onChange={e => setPersonalQuickBucket(e.target.value as TaskBucket)}
-                      className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="text-xs border border-border-soft rounded-lg px-2 py-1.5 bg-surf-card text-fg-600 focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-transparent"
                     >
                       <option value="inbox">Inbox</option>
                       <option value="daily">Daily</option>
@@ -1279,14 +1279,14 @@ export function HomePage() {
                         onChange={e => setPersonalQuickAdd(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') quickAddPersonalTask(personalQuickBucket); }}
                         placeholder={`Add to ${personalQuickBucket}…  (press Enter)`}
-                        className="w-full text-xs border border-slate-200 rounded-lg pl-8 pr-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full text-xs border border-border-soft rounded-lg pl-8 pr-2 py-1.5 bg-surf-card text-fg-700 focus:outline-none focus:ring-2 focus-visible:ring-focus"
                       />
-                      <Plus className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                      <Plus className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-fg-400 pointer-events-none" />
                     </div>
                     <button
                       onClick={() => quickAddPersonalTask(personalQuickBucket)}
                       disabled={!personalQuickAdd.trim() || creatingPersonal}
-                      className="text-xs font-semibold bg-blue-500 hover:bg-blue-600 disabled:bg-slate-200 disabled:text-slate-400 text-white px-3 py-1.5 rounded-lg transition-colors"
+                      className="text-xs font-semibold bg-blue-500 hover:bg-blue-600 disabled:bg-surf-muted disabled:text-fg-400 text-white px-3 py-1.5 rounded-lg transition-colors"
                     >
                       {creatingPersonal ? 'Adding…' : 'Add'}
                     </button>
@@ -1294,12 +1294,12 @@ export function HomePage() {
                 </div>
 
                 {/* Priority filter (only) */}
-                <div className="px-5 py-3 border-b border-slate-100/80 bg-slate-50/60 flex items-center gap-2 flex-wrap">
-                  <Filter className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                <div className="px-5 py-3 border-b border-border-soft bg-surf-app flex items-center gap-2 flex-wrap">
+                  <Filter className="h-3.5 w-3.5 text-fg-400 flex-shrink-0" />
                   <select
                     value={taskFilters.priority}
                     onChange={e => setTaskFilters(p => ({ ...p, priority: e.target.value as TaskPriority | '' }))}
-                    className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="text-xs border border-border-soft rounded-lg px-2 py-1 bg-surf-card text-fg-600 focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-transparent"
                   >
                     <option value="">All priorities</option>
                     {(Object.entries(TASK_PRIORITY_CONFIG) as [TaskPriority, typeof TASK_PRIORITY_CONFIG[TaskPriority]][]).map(([val, cfg]) => (
@@ -1309,7 +1309,7 @@ export function HomePage() {
                   {taskFilters.priority && (
                     <button
                       onClick={() => setTaskFilters(p => ({ ...p, priority: '' }))}
-                      className="flex items-center gap-1 px-2 py-1 text-xs text-slate-400 hover:text-slate-700 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 text-xs text-fg-400 hover:text-fg-700 transition-colors"
                     >
                       <X className="h-3 w-3" />
                       Clear
@@ -1320,7 +1320,7 @@ export function HomePage() {
                 {/* Bucket sections */}
                 <div className="p-4 space-y-3">
                   {visiblePersonalTasks.length === 0 ? (
-                    <div className="py-12 text-center text-slate-400">
+                    <div className="py-12 text-center text-fg-400">
                       <Inbox className="h-8 w-8 mx-auto mb-2 opacity-30" />
                       <p className="text-sm font-medium">
                         {myTasksOnly ? 'Your planner is empty' : 'No planner tasks on the team yet'}
@@ -1392,14 +1392,14 @@ export function HomePage() {
 
         {/* Team Workload */}
         <div className="glass-white overflow-hidden p-0">
-          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100/80">
+          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border-soft">
             <div className="p-1.5 rounded-lg bg-teal-100">
               <Users className="h-4 w-4 text-teal-600" />
             </div>
-            <h2 className="text-base font-semibold text-slate-900">Team Workload</h2>
+            <h2 className="text-base font-semibold text-fg-900">Team Workload</h2>
           </div>
           {workload.length === 0 ? (
-            <div className="py-10 text-center text-slate-400">
+            <div className="py-10 text-center text-fg-400">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-20" />
               <p className="text-sm font-medium">No active tasks assigned</p>
             </div>
@@ -1430,7 +1430,7 @@ export function HomePage() {
                       className={`flex items-center gap-3 px-2 py-2.5 -mx-2 rounded-xl cursor-pointer transition-all ${
                         isExpanded
                           ? 'bg-blue-50/60 ring-1 ring-blue-200/50'
-                          : 'hover:bg-slate-50/80'
+                          : 'hover:bg-surf-app'
                       }`}
                     >
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${AVATAR_COLORS[idx % AVATAR_COLORS.length]}`}>
@@ -1439,7 +1439,7 @@ export function HomePage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1.5">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-sm font-medium text-slate-700 truncate">{member.name.split(' ')[0]}</span>
+                            <span className="text-sm font-medium text-fg-700 truncate">{member.name.split(' ')[0]}</span>
                             {overdue > 0 && (
                               <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded-full animate-pulse">
                                 <AlertTriangle className="h-2.5 w-2.5" />
@@ -1447,10 +1447,10 @@ export function HomePage() {
                               </span>
                             )}
                           </div>
-                          <span className="text-xs font-bold text-slate-500 tabular-nums ml-2 flex-shrink-0">{total}</span>
+                          <span className="text-xs font-bold text-fg-500 tabular-nums ml-2 flex-shrink-0">{total}</span>
                         </div>
                         {/* Proportional stacked bar — segments show composition of member's work */}
-                        <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden flex">
+                        <div className="h-1.5 rounded-full bg-surf-muted overflow-hidden flex">
                           {overdue > 0    && <div className="bg-red-500 transition-all"  style={{ width: pct(overdue) }} />}
                           {bk > 0         && <div className="bg-rose-400 transition-all" style={{ width: pct(bk) }} />}
                           {inProgress > 0 && <div className="bg-blue-500 transition-all" style={{ width: pct(inProgress) }} />}
@@ -1463,7 +1463,7 @@ export function HomePage() {
                           {pending > 0    && <span className="text-[10px] text-amber-600 font-medium">{pending} pending</span>}
                         </div>
                       </div>
-                      <ChevronDown className={`h-3.5 w-3.5 text-slate-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`h-3.5 w-3.5 text-fg-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                     </div>
 
                     {/* Expanded task list */}
@@ -1475,7 +1475,7 @@ export function HomePage() {
                             <div
                               key={task.id}
                               onClick={e => { e.stopPropagation(); openTaskEditor(task); }}
-                              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer hover:bg-white/80 hover:shadow-sm transition-all group"
+                              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer hover:bg-surf-card hover:shadow-sm transition-all group"
                             >
                               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                                 taskOverdue ? 'bg-red-500' :
@@ -1484,9 +1484,9 @@ export function HomePage() {
                                 task.status === 'in_review' ? 'bg-purple-500' :
                                 'bg-amber-400'
                               }`} />
-                              <span className="text-slate-700 truncate flex-1 group-hover:text-blue-700 transition-colors">{task.title}</span>
+                              <span className="text-fg-700 truncate flex-1 group-hover:text-blue-700 transition-colors">{task.title}</span>
                               {task.due_date && (
-                                <span className={`text-[10px] tabular-nums flex-shrink-0 ${taskOverdue ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
+                                <span className={`text-[10px] tabular-nums flex-shrink-0 ${taskOverdue ? 'text-red-500 font-semibold' : 'text-fg-400'}`}>
                                   {format(new Date(task.due_date), 'MMM d')}
                                 </span>
                               )}
@@ -1494,7 +1494,7 @@ export function HomePage() {
                           );
                         })}
                         {memberTasks.length > 8 && (
-                          <span className="block text-[10px] text-slate-400 px-2.5 py-1">
+                          <span className="block text-[10px] text-fg-400 px-2.5 py-1">
                             +{memberTasks.length - 8} more
                           </span>
                         )}
@@ -1511,13 +1511,13 @@ export function HomePage() {
         <div className="glass-white overflow-hidden p-0">
           {/* Header */}
           {/* Header row */}
-          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100/80">
+          <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border-soft">
             <div className="p-1.5 rounded-lg bg-violet-100 flex-shrink-0">
               <Activity className="h-4 w-4 text-violet-600" />
             </div>
-            <h2 className="text-base font-semibold text-slate-900 flex-shrink-0">Feed</h2>
+            <h2 className="text-base font-semibold text-fg-900 flex-shrink-0">Feed</h2>
             {logs.length > 0 && (
-              <span className="text-xs font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full flex-shrink-0">
+              <span className="text-xs font-semibold bg-surf-muted text-fg-500 px-2 py-0.5 rounded-full flex-shrink-0">
                 {logs.length}
               </span>
             )}
@@ -1531,9 +1531,9 @@ export function HomePage() {
 
           {/* Search bar — separate row below header */}
           {logs.length > 0 && (
-            <div className="px-5 py-2.5 border-b border-slate-100/80 bg-slate-50/40">
+            <div className="px-5 py-2.5 border-b border-border-soft bg-surf-app">
               <div ref={feedSearchRef} className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-fg-400 pointer-events-none" />
                 <input
                   type="text"
                   value={feedSearch}
@@ -1541,23 +1541,23 @@ export function HomePage() {
                   onFocus={() => setFeedDropdownOpen(true)}
                   onBlur={() => setTimeout(() => setFeedDropdownOpen(false), 150)}
                   placeholder="Search project…"
-                  className="w-full pl-7 pr-7 py-1.5 text-xs border border-slate-200/70 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/50 bg-white/70 placeholder-slate-400 text-slate-700"
+                  className="w-full pl-7 pr-7 py-1.5 text-xs border border-border-soft rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400/50 bg-surf-card placeholder:text-fg-400 text-fg-700"
                 />
                 {feedSearch && (
                   <button
                     onMouseDown={e => { e.preventDefault(); setFeedSearch(''); setFeedDropdownOpen(false); }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-400 hover:text-fg-600"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 )}
                 {feedDropdownOpen && feedSuggestions.length > 0 && (
-                  <div className="absolute top-full mt-1 left-0 right-0 z-20 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
+                  <div className="absolute top-full mt-1 left-0 right-0 z-20 bg-surf-card border border-border-soft rounded-lg shadow-lg overflow-hidden">
                     {feedSuggestions.map(({ id, name }) => (
                       <button
                         key={id}
                         onMouseDown={e => { e.preventDefault(); setFeedSearch(name); setFeedDropdownOpen(false); }}
-                        className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-violet-50 hover:text-violet-700 transition-colors truncate"
+                        className="w-full text-left px-3 py-2 text-xs text-fg-700 hover:bg-violet-50 hover:text-violet-700 transition-colors truncate"
                       >
                         {name}
                       </button>
@@ -1569,12 +1569,12 @@ export function HomePage() {
           )}
 
           {logs.length === 0 ? (
-            <div className="py-16 text-center text-slate-400">
+            <div className="py-16 text-center text-fg-400">
               <Activity className="h-10 w-10 mx-auto mb-3 opacity-20" />
               <p className="text-sm font-medium">No log entries yet</p>
             </div>
           ) : filteredLogProjectOrder.length === 0 ? (
-            <div className="py-10 text-center text-slate-400">
+            <div className="py-10 text-center text-fg-400">
               <Search className="h-8 w-8 mx-auto mb-2 opacity-20" />
               <p className="text-sm font-medium">No projects match &ldquo;{feedSearch}&rdquo;</p>
             </div>
@@ -1593,10 +1593,10 @@ export function HomePage() {
                       to={`/projects/${projectId}`}
                       className="inline-flex items-center gap-1.5 mb-3 group"
                     >
-                      <span className="text-sm font-semibold text-slate-700 group-hover:text-blue-600 transition-colors truncate max-w-[240px]">
+                      <span className="text-sm font-semibold text-fg-700 group-hover:text-blue-600 transition-colors truncate max-w-[240px]">
                         {projectName}
                       </span>
-                      <ExternalLink className="h-3 w-3 text-slate-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+                      <ExternalLink className="h-3 w-3 text-fg-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
                     </Link>
 
                     {/* Log entries (max 3) */}
@@ -1620,16 +1620,16 @@ export function HomePage() {
                                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${cfg.badgeBg} ${cfg.color}`}>
                                   {cfg.label}
                                 </span>
-                                <span className="text-[10px] text-slate-500 font-medium truncate">
+                                <span className="text-[10px] text-fg-500 font-medium truncate">
                                   {log.author_name ?? 'Previous user'}
                                 </span>
-                                <span className="text-[10px] text-slate-400 flex items-center gap-0.5 ml-auto flex-shrink-0">
+                                <span className="text-[10px] text-fg-400 flex items-center gap-0.5 ml-auto flex-shrink-0">
                                   <Clock className="h-2.5 w-2.5" />
                                   {format(new Date(log.created_at), 'MMM d, HH:mm')}
                                 </span>
                               </div>
                               {text && (
-                                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">{text}</p>
+                                <p className="text-xs text-fg-600 line-clamp-2 leading-relaxed">{text}</p>
                               )}
                             </div>
                           </div>

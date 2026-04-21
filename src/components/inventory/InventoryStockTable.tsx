@@ -90,10 +90,10 @@ export function InventoryStockTable() {
     <div className="space-y-4">
       {/* Summary row */}
       <div className="flex flex-wrap gap-3">
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50/80 border border-slate-200/50 rounded-xl">
-          <Package className="h-4 w-4 text-slate-400" />
-          <span className="text-sm text-slate-600">
-            <strong className="text-slate-800">{totalItems}</strong> items
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-surf-app border border-border-soft rounded-xl">
+          <Package className="h-4 w-4 text-fg-400" />
+          <span className="text-sm text-fg-600">
+            <strong className="text-fg-800">{totalItems}</strong> items
           </span>
         </div>
         <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50/80 border border-amber-200/50 rounded-xl">
@@ -113,24 +113,24 @@ export function InventoryStockTable() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-400 pointer-events-none" />
           <input
             type="text"
             placeholder="Search by item name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200/60 bg-white/80 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
+            className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-border-soft bg-surf-card placeholder:text-fg-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
           />
         </div>
-        <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/80 border border-slate-200/60 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-          <Filter className="h-4 w-4 text-slate-400" />
+        <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-surf-card border border-border-soft rounded-xl cursor-pointer hover:bg-surf-app transition-colors">
+          <Filter className="h-4 w-4 text-fg-400" />
           <input
             type="checkbox"
             checked={showLowOnly}
             onChange={(e) => setShowLowOnly(e.target.checked)}
-            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+            className="rounded border-border-solid text-blue-600 focus-visible:ring-focus"
           />
-          <span className="text-sm text-slate-600">Show only low/no stock items</span>
+          <span className="text-sm text-fg-600">Show only low/no stock items</span>
         </label>
       </div>
 
@@ -139,34 +139,34 @@ export function InventoryStockTable() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200/60 bg-slate-50/60">
-                <th className="text-left px-5 py-3 font-semibold text-slate-600">Item</th>
-                <th className="text-left px-5 py-3 font-semibold text-slate-600 hidden md:table-cell">Type</th>
-                <th className="text-left px-5 py-3 font-semibold text-slate-600 hidden lg:table-cell">Location</th>
-                <th className="text-right px-5 py-3 font-semibold text-slate-600">Current Stock</th>
-                <th className="text-right px-5 py-3 font-semibold text-slate-600 hidden sm:table-cell">Min Stock</th>
-                <th className="text-right px-5 py-3 font-semibold text-slate-600 hidden lg:table-cell">WAC</th>
-                <th className="text-right px-5 py-3 font-semibold text-slate-600 hidden xl:table-cell">Last Cost</th>
-                <th className="text-left px-5 py-3 font-semibold text-slate-600 hidden xl:table-cell">Primary Supplier</th>
-                <th className="text-center px-5 py-3 font-semibold text-slate-600">Status</th>
-                <th className="text-center px-5 py-3 font-semibold text-slate-600">Actions</th>
+              <tr className="border-b border-border-soft bg-surf-app">
+                <th className="text-left px-5 py-3 font-semibold text-fg-600">Item</th>
+                <th className="text-left px-5 py-3 font-semibold text-fg-600 hidden md:table-cell">Type</th>
+                <th className="text-left px-5 py-3 font-semibold text-fg-600 hidden lg:table-cell">Location</th>
+                <th className="text-right px-5 py-3 font-semibold text-fg-600">Current Stock</th>
+                <th className="text-right px-5 py-3 font-semibold text-fg-600 hidden sm:table-cell">Min Stock</th>
+                <th className="text-right px-5 py-3 font-semibold text-fg-600 hidden lg:table-cell">WAC</th>
+                <th className="text-right px-5 py-3 font-semibold text-fg-600 hidden xl:table-cell">Last Cost</th>
+                <th className="text-left px-5 py-3 font-semibold text-fg-600 hidden xl:table-cell">Primary Supplier</th>
+                <th className="text-center px-5 py-3 font-semibold text-fg-600">Status</th>
+                <th className="text-center px-5 py-3 font-semibold text-fg-600">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-5 py-12 text-center text-slate-400">
-                    <Package className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                  <td colSpan={10} className="px-5 py-12 text-center text-fg-400">
+                    <Package className="h-8 w-8 mx-auto mb-2 text-fg-300" />
                     <p>No items found</p>
                   </td>
                 </tr>
               ) : (
                 filtered.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-5 py-3.5 font-medium text-slate-800 max-w-[200px] truncate">
+                  <tr key={item.id} className="hover:bg-surf-app transition-colors">
+                    <td className="px-5 py-3.5 font-medium text-fg-800 max-w-[200px] truncate">
                       {item.concept_description}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-500 hidden md:table-cell">{item.type}</td>
+                    <td className="px-5 py-3.5 text-fg-500 hidden md:table-cell">{item.type}</td>
                     <td className="px-5 py-3.5 hidden lg:table-cell">
                       {editingCell?.id === item.id && editingCell.field === 'stock_location' ? (
                         <input
@@ -180,14 +180,14 @@ export function InventoryStockTable() {
                       ) : (
                         <button
                           onClick={() => startEdit(item.id, 'stock_location', item.stock_location)}
-                          className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 px-2 py-1 rounded-md transition-colors text-left w-full"
+                          className="text-fg-500 hover:text-fg-700 hover:bg-surf-muted px-2 py-1 rounded-md transition-colors text-left w-full"
                           title="Click to edit"
                         >
                           {item.stock_location || '—'}
                         </button>
                       )}
                     </td>
-                    <td className="px-5 py-3.5 text-right tabular-nums text-slate-700">
+                    <td className="px-5 py-3.5 text-right tabular-nums text-fg-700">
                       {item.stock_quantity} {item.unit}
                     </td>
                     <td className="px-5 py-3.5 text-right hidden sm:table-cell">
@@ -206,20 +206,20 @@ export function InventoryStockTable() {
                       ) : (
                         <button
                           onClick={() => startEdit(item.id, 'min_stock_level', item.min_stock_level)}
-                          className="text-slate-500 hover:text-slate-700 hover:bg-slate-100 px-2 py-1 rounded-md transition-colors tabular-nums"
+                          className="text-fg-500 hover:text-fg-700 hover:bg-surf-muted px-2 py-1 rounded-md transition-colors tabular-nums"
                           title="Click to edit"
                         >
                           {item.min_stock_level}
                         </button>
                       )}
                     </td>
-                    <td className="px-5 py-3.5 text-right tabular-nums text-slate-700 hidden lg:table-cell">
+                    <td className="px-5 py-3.5 text-right tabular-nums text-fg-700 hidden lg:table-cell">
                       {item.average_cost ? formatCurrency(item.average_cost) : '—'}
                     </td>
-                    <td className="px-5 py-3.5 text-right tabular-nums text-slate-700 hidden xl:table-cell">
+                    <td className="px-5 py-3.5 text-right tabular-nums text-fg-700 hidden xl:table-cell">
                       {item.last_purchase_cost ? formatCurrency(item.last_purchase_cost) : '—'}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-500 hidden xl:table-cell">
+                    <td className="px-5 py-3.5 text-fg-500 hidden xl:table-cell">
                       {getPrimarySupplier(item)}
                     </td>
                     <td className="px-5 py-3.5 text-center">

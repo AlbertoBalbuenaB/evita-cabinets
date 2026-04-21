@@ -24,7 +24,7 @@ interface LogTypeConfig {
 }
 
 const LOG_TYPES: Record<SupplierLogType, LogTypeConfig> = {
-  note:        { label: 'Note',        Icon: FileText,      color: 'text-slate-600',  bg: 'bg-slate-50',   border: 'border-l-slate-300',  badgeBg: 'bg-slate-100',  badgeText: 'text-slate-700'  },
+  note:        { label: 'Note',        Icon: FileText,      color: 'text-fg-600',  bg: 'bg-surf-app',   border: 'border-l-slate-300',  badgeBg: 'bg-surf-muted',  badgeText: 'text-fg-700'  },
   incident:    { label: 'Incident',    Icon: AlertTriangle, color: 'text-red-600',    bg: 'bg-red-50',     border: 'border-l-red-400',    badgeBg: 'bg-red-100',    badgeText: 'text-red-700'    },
   observation: { label: 'Observation', Icon: Eye,           color: 'text-blue-600',   bg: 'bg-blue-50',    border: 'border-l-blue-400',   badgeBg: 'bg-blue-100',   badgeText: 'text-blue-700'   },
   visit:       { label: 'Visit',       Icon: MapPin,        color: 'text-green-600',  bg: 'bg-green-50',   border: 'border-l-green-400',  badgeBg: 'bg-green-100',  badgeText: 'text-green-700'  },
@@ -157,8 +157,8 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
   return (
     <div className="space-y-4">
       {/* Add new entry */}
-      <div className="bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">New Entry</p>
+      <div className="bg-surf-card border border-border-soft rounded-xl p-4 shadow-sm">
+        <p className="text-xs font-semibold text-fg-500 uppercase tracking-wide mb-3">New Entry</p>
 
         {/* Type selector */}
         <div className="flex flex-wrap gap-2 mb-3">
@@ -172,7 +172,7 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   active
                     ? `${cfg.badgeBg} ${cfg.badgeText} ring-1 ring-inset ring-current/20`
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    : 'bg-surf-muted text-fg-500 hover:bg-surf-muted'
                 }`}
               >
                 <cfg.Icon className="h-3 w-3" />
@@ -188,13 +188,13 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Write your entry here..."
           rows={3}
-          className="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none placeholder-slate-400"
+          className="block w-full px-3 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus focus:border-blue-500 resize-none placeholder:text-fg-400"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAdd();
           }}
         />
         <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-slate-400">Ctrl+Enter to submit</span>
+          <span className="text-xs text-fg-400">Ctrl+Enter to submit</span>
           <button
             onClick={handleAdd}
             disabled={!newComment.trim() || saving}
@@ -214,10 +214,10 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
           ))}
         </div>
       ) : logs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 bg-slate-50/80 border border-slate-200/50 rounded-xl text-center">
-          <FileText className="h-10 w-10 text-slate-200 mb-3" />
-          <p className="text-sm font-medium text-slate-400">No activity entries yet</p>
-          <p className="text-xs text-slate-300 mt-1">Add notes, incidents, observations, or visits above.</p>
+        <div className="flex flex-col items-center justify-center py-12 bg-surf-app border border-border-soft rounded-xl text-center">
+          <FileText className="h-10 w-10 text-fg-400 mb-3" />
+          <p className="text-sm font-medium text-fg-400">No activity entries yet</p>
+          <p className="text-xs text-fg-300 mt-1">Add notes, incidents, observations, or visits above.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -232,7 +232,7 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
             return (
               <div
                 key={log.id}
-                className={`${cfg.bg} border border-slate-200/60 border-l-4 ${cfg.border} rounded-xl p-4 transition-shadow hover:shadow-sm`}
+                className={`${cfg.bg} border border-border-soft border-l-4 ${cfg.border} rounded-xl p-4 transition-shadow hover:shadow-sm`}
               >
                 {isEditing ? (
                   /* Edit mode */
@@ -248,7 +248,7 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                               active
                                 ? `${tc.badgeBg} ${tc.badgeText}`
-                                : 'bg-white/60 text-slate-400 hover:bg-white'
+                                : 'bg-surf-card text-fg-400 hover:bg-surf-card'
                             }`}
                           >
                             <tc.Icon className="h-3 w-3" />
@@ -262,7 +262,7 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
                       onChange={(e) => setEditComment(e.target.value)}
                       rows={3}
                       autoFocus
-                      className="block w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white"
+                      className="block w-full px-3 py-2 border border-border-solid rounded-lg text-sm focus:outline-none focus:ring-2 focus-visible:ring-focus resize-none bg-surf-card"
                     />
                     <div className="flex items-center gap-2">
                       <button
@@ -274,7 +274,7 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
                       </button>
                       <button
                         onClick={cancelEdit}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-fg-500 bg-surf-card hover:bg-surf-app border border-border-soft rounded-lg transition-colors"
                       >
                         <X className="h-3 w-3" />
                         Cancel
@@ -295,7 +295,7 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
                         <div className="flex items-center gap-1 flex-shrink-0">
                           {isDeleting ? (
                             <>
-                              <span className="text-xs text-slate-500 mr-1">Delete?</span>
+                              <span className="text-xs text-fg-500 mr-1">Delete?</span>
                               <button
                                 onClick={() => handleDelete(log.id)}
                                 className="p-1 rounded text-red-600 hover:bg-red-100 transition-colors"
@@ -305,7 +305,7 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
                               </button>
                               <button
                                 onClick={() => setDeletingId(null)}
-                                className="p-1 rounded text-slate-400 hover:bg-slate-200 transition-colors"
+                                className="p-1 rounded text-fg-400 hover:bg-surf-muted transition-colors"
                                 title="Cancel"
                               >
                                 <X className="h-3.5 w-3.5" />
@@ -315,14 +315,14 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
                             <>
                               <button
                                 onClick={() => startEdit(log)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                className="p-1.5 rounded-lg text-fg-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                                 title="Edit"
                               >
                                 <Edit2 className="h-3.5 w-3.5" />
                               </button>
                               <button
                                 onClick={() => setDeletingId(log.id)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                className="p-1.5 rounded-lg text-fg-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                 title="Delete"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
@@ -333,12 +333,12 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
                       )}
                     </div>
 
-                    <p className="mt-2 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{log.comment}</p>
+                    <p className="mt-2 text-sm text-fg-700 whitespace-pre-wrap leading-relaxed">{log.comment}</p>
 
-                    <div className="mt-3 flex items-center gap-3 text-xs text-slate-400">
+                    <div className="mt-3 flex items-center gap-3 text-xs text-fg-400">
                       {log.author_name && (
                         <>
-                          <span className="font-medium text-slate-500">{log.author_name}</span>
+                          <span className="font-medium text-fg-500">{log.author_name}</span>
                           <span>·</span>
                         </>
                       )}

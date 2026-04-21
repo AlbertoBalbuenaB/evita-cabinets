@@ -56,14 +56,14 @@ export function TaskDeliverables({ taskId, deliverables, onChange }: Props) {
             value={d.label}
             onChange={(e) => updateLabel(d.id, e.target.value)}
             placeholder="Label"
-            className="w-24 text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 flex-shrink-0"
+            className="w-24 text-xs border border-border-soft rounded px-2 py-1 focus:outline-none focus:ring-1 focus-visible:ring-focus flex-shrink-0"
           />
           <input
             type="url"
             value={d.url}
             onChange={(e) => updateUrl(d.id, e.target.value)}
             placeholder="https://…"
-            className="flex-1 text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="flex-1 text-xs border border-border-soft rounded px-2 py-1 focus:outline-none focus:ring-1 focus-visible:ring-focus"
           />
           {d.url && (
             <a
@@ -77,7 +77,7 @@ export function TaskDeliverables({ taskId, deliverables, onChange }: Props) {
           )}
           <button
             onClick={() => remove(d.id)}
-            className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all flex-shrink-0"
+            className="opacity-0 group-hover:opacity-100 text-fg-300 hover:text-red-500 transition-all flex-shrink-0"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -91,7 +91,7 @@ export function TaskDeliverables({ taskId, deliverables, onChange }: Props) {
           value={newLabel}
           onChange={(e) => setNewLabel(e.target.value)}
           placeholder="Label"
-          className="w-24 text-xs border border-dashed border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 flex-shrink-0"
+          className="w-24 text-xs border border-dashed border-border-solid rounded px-2 py-1 focus:outline-none focus:ring-1 focus-visible:ring-focus flex-shrink-0"
           onKeyDown={(e) => { if (e.key === 'Enter') add(); }}
         />
         <input
@@ -99,13 +99,13 @@ export function TaskDeliverables({ taskId, deliverables, onChange }: Props) {
           value={newUrl}
           onChange={(e) => setNewUrl(e.target.value)}
           placeholder="https://… (optional)"
-          className="flex-1 text-xs border border-dashed border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="flex-1 text-xs border border-dashed border-border-solid rounded px-2 py-1 focus:outline-none focus:ring-1 focus-visible:ring-focus"
           onKeyDown={(e) => { if (e.key === 'Enter') add(); }}
         />
         <button
           onClick={add}
           disabled={!newLabel.trim()}
-          className="text-blue-600 hover:text-blue-700 disabled:text-slate-300 transition-colors flex-shrink-0"
+          className="text-blue-600 hover:text-blue-700 disabled:text-fg-300 transition-colors flex-shrink-0"
         >
           <Plus className="h-4 w-4" />
         </button>

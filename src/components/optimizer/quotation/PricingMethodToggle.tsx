@@ -25,14 +25,14 @@ export function PricingMethodToggle({ value, onChange, canSelectOptimizer, size 
     : 'px-3 py-1.5 text-sm';
 
   return (
-    <div className="inline-flex items-center rounded border border-slate-200 overflow-hidden bg-white">
+    <div className="inline-flex items-center rounded border border-border-soft overflow-hidden bg-surf-card">
       <button
         type="button"
         onClick={() => onChange('sqft')}
         className={`${btn} flex items-center gap-1.5 font-medium transition-colors ${
           value === 'sqft'
             ? 'bg-blue-600 text-white'
-            : 'text-slate-500 hover:bg-slate-50'
+            : 'text-fg-500 hover:bg-surf-app'
         }`}
       >
         <Calculator className="h-3.5 w-3.5" />
@@ -42,12 +42,12 @@ export function PricingMethodToggle({ value, onChange, canSelectOptimizer, size 
         type="button"
         disabled={!canSelectOptimizer}
         onClick={() => onChange('optimizer')}
-        className={`${btn} flex items-center gap-1.5 font-medium transition-colors border-l border-slate-200 ${
+        className={`${btn} flex items-center gap-1.5 font-medium transition-colors border-l border-border-soft ${
           value === 'optimizer'
             ? 'bg-blue-600 text-white'
             : canSelectOptimizer
-              ? 'text-slate-500 hover:bg-slate-50'
-              : 'text-slate-300 cursor-not-allowed'
+              ? 'text-fg-500 hover:bg-surf-app'
+              : 'text-fg-300 cursor-not-allowed'
         }`}
         title={canSelectOptimizer ? undefined : 'Save and activate a run first to enable breakdown pricing.'}
       >

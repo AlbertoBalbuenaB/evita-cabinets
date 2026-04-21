@@ -308,11 +308,11 @@ export function HomeTaskFormModal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
-      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/70 w-full max-w-lg max-h-[92vh] overflow-y-auto">
+      <div className="bg-surf-card backdrop-blur-xl rounded-2xl shadow-2xl border border-white/70 w-full max-w-lg max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/60 bg-gradient-to-r from-indigo-50/40 to-blue-50/20 sticky top-0 z-10 backdrop-blur-xl">
           <div className="flex items-center gap-2 min-w-0">
-            <h3 className="text-base font-semibold text-slate-900 truncate">
+            <h3 className="text-base font-semibold text-fg-900 truncate">
               {modalTitle}
             </h3>
             {!isCreate && !isPersonal && task?.project_id && (
@@ -326,7 +326,7 @@ export function HomeTaskFormModal({
               </Link>
             )}
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+          <button onClick={onClose} className="text-fg-400 hover:text-fg-600 transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -335,7 +335,7 @@ export function HomeTaskFormModal({
           {/* Project selector — create mode, project kind only */}
           {needsProject && (
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1">
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-fg-500 mb-1">
                 <FolderKanban className="h-3 w-3" />
                 Project <span className="text-red-500">*</span>
               </label>
@@ -351,45 +351,45 @@ export function HomeTaskFormModal({
 
           {/* Project context (for existing project tasks in edit mode) */}
           {!isCreate && !isPersonal && task?.project_name && (
-            <div className="text-[11px] text-slate-500 -mt-1">
-              Project: <span className="font-medium text-slate-700">{task.project_name}</span>
+            <div className="text-[11px] text-fg-500 -mt-1">
+              Project: <span className="font-medium text-fg-700">{task.project_name}</span>
             </div>
           )}
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">Title *</label>
+            <label className="block text-xs font-semibold text-fg-500 mb-1">Title *</label>
             <input
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Task title…"
               autoFocus
-              className="w-full text-sm border border-slate-200/60 rounded-lg px-3 py-2 bg-white/60 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full text-sm border border-border-soft rounded-lg px-3 py-2 bg-surf-card backdrop-blur-sm focus:outline-none focus:ring-2 focus-visible:ring-focus"
               onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) save(); }}
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">Description</label>
+            <label className="block text-xs font-semibold text-fg-500 mb-1">Description</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Add details or links…"
               rows={3}
-              className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full text-sm border border-border-soft rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus-visible:ring-focus"
             />
           </div>
 
           {/* Status + Priority */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Status</label>
+              <label className="block text-xs font-semibold text-fg-500 mb-1">Status</label>
               <select
                 value={status}
                 onChange={e => setStatus(e.target.value as TaskStatus)}
-                className="w-full text-xs border border-slate-200/60 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/60 backdrop-blur-sm"
+                className="w-full text-xs border border-border-soft rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card backdrop-blur-sm"
               >
                 {(Object.entries(TASK_STATUS_CONFIG) as [TaskStatus, typeof TASK_STATUS_CONFIG[TaskStatus]][]).map(([val, cfg]) => (
                   <option key={val} value={val}>{cfg.label}</option>
@@ -397,11 +397,11 @@ export function HomeTaskFormModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Priority</label>
+              <label className="block text-xs font-semibold text-fg-500 mb-1">Priority</label>
               <select
                 value={priority}
                 onChange={e => setPriority(e.target.value as TaskPriority)}
-                className="w-full text-xs border border-slate-200/60 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/60 backdrop-blur-sm"
+                className="w-full text-xs border border-border-soft rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card backdrop-blur-sm"
               >
                 {(Object.entries(TASK_PRIORITY_CONFIG) as [TaskPriority, typeof TASK_PRIORITY_CONFIG[TaskPriority]][]).map(([val, cfg]) => (
                   <option key={val} value={val}>{cfg.label}</option>
@@ -412,19 +412,19 @@ export function HomeTaskFormModal({
 
           {/* Due date */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">Due Date & Time</label>
+            <label className="block text-xs font-semibold text-fg-500 mb-1">Due Date & Time</label>
             <div className="flex gap-2">
               <input
                 type="datetime-local"
                 value={dueDate}
                 onChange={e => setDueDate(e.target.value)}
-                className="flex-1 text-xs border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 text-xs border border-border-soft rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus-visible:ring-focus"
               />
               {dueDate && (
                 <button
                   type="button"
                   onClick={() => setDueDate('')}
-                  className="text-xs text-slate-400 hover:text-slate-700 px-2"
+                  className="text-xs text-fg-400 hover:text-fg-700 px-2"
                 >
                   Clear
                 </button>
@@ -436,7 +436,7 @@ export function HomeTaskFormModal({
           {isPersonal && (
             <>
               <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1.5">Bucket</label>
+                <label className="block text-xs font-semibold text-fg-500 mb-1.5">Bucket</label>
                 <div className="grid grid-cols-4 gap-1.5">
                   {BUCKET_OPTIONS.map(({ value, label, Icon }) => {
                     const active = bucket === value;
@@ -447,8 +447,8 @@ export function HomeTaskFormModal({
                         onClick={() => setBucket(value)}
                         className={`flex flex-col items-center gap-1 py-2 rounded-lg border text-[11px] font-medium transition-all ${
                           active
-                            ? 'bg-gradient-to-br from-indigo-500 to-blue-500 text-white border-transparent shadow-sm'
-                            : 'bg-white/60 border-slate-200 text-slate-600 hover:border-blue-200 hover:bg-white/80'
+                            ? 'bg-accent-primary text-accent-on border-transparent shadow-sm'
+                            : 'bg-surf-card border-border-soft text-fg-600 hover:border-blue-200 hover:bg-surf-card'
                         }`}
                       >
                         <Icon className="h-3.5 w-3.5" />
@@ -460,21 +460,21 @@ export function HomeTaskFormModal({
               </div>
 
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1">
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-fg-500 mb-1">
                   <Repeat className="h-3 w-3" />
                   Recurrence
                 </label>
                 <select
                   value={recurrence}
                   onChange={e => setRecurrence(e.target.value as TaskRecurrence)}
-                  className="w-full text-xs border border-slate-200/60 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/60 backdrop-blur-sm"
+                  className="w-full text-xs border border-border-soft rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus-visible:ring-focus bg-surf-card backdrop-blur-sm"
                 >
                   {RECURRENCE_OPTIONS.map(opt => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
                 {recurrence !== 'none' && (
-                  <p className="text-[10px] text-slate-400 mt-1">
+                  <p className="text-[10px] text-fg-400 mt-1">
                     When you mark this task done, its due date will roll forward automatically.
                   </p>
                 )}
@@ -485,7 +485,7 @@ export function HomeTaskFormModal({
           {/* Assignees */}
           {activeMembers.length > 0 && (
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5">Assignees</label>
+              <label className="block text-xs font-semibold text-fg-500 mb-1.5">Assignees</label>
               <div className="flex flex-wrap gap-1.5">
                 {activeMembers.map(m => (
                   <button
@@ -494,8 +494,8 @@ export function HomeTaskFormModal({
                     onClick={() => toggleAssignee(m.id)}
                     className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-150 ${
                       assigneeIds.includes(m.id)
-                        ? 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-sm'
-                        : 'bg-white/60 backdrop-blur-sm border border-slate-200/60 text-slate-600 hover:border-blue-200 hover:bg-white/80'
+                        ? 'bg-accent-primary text-accent-on shadow-sm'
+                        : 'bg-surf-card backdrop-blur-sm border border-border-soft text-fg-600 hover:border-blue-200 hover:bg-surf-card'
                     }`}
                   >
                     {m.name}
@@ -507,7 +507,7 @@ export function HomeTaskFormModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-white/60 bg-white/30 backdrop-blur-sm sticky bottom-0">
+        <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-white/60 bg-surf-card backdrop-blur-sm sticky bottom-0">
           <div>
             {!isCreate && !confirmDelete && (
               <button
@@ -535,7 +535,7 @@ export function HomeTaskFormModal({
                   type="button"
                   onClick={() => setConfirmDelete(false)}
                   disabled={deleting}
-                  className="text-[11px] text-slate-500 hover:text-slate-700 px-1"
+                  className="text-[11px] text-fg-500 hover:text-fg-700 px-1"
                 >
                   Cancel
                 </button>

@@ -59,10 +59,10 @@ export function KbSupplierPage() {
   if (error || !supplier) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="glass-white rounded-2xl p-6 text-center text-slate-700">
+        <div className="glass-white rounded-2xl p-6 text-center text-fg-700">
           {error ?? 'Proveedor no disponible.'}
           <div className="mt-3">
-            <Link to="/kb" className="text-indigo-600 hover:text-indigo-800 text-sm">
+            <Link to="/kb" className="text-accent-text hover:text-indigo-800 text-sm">
               ← Knowledge Base
             </Link>
           </div>
@@ -75,7 +75,7 @@ export function KbSupplierPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
-      <Link to="/kb" className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800">
+      <Link to="/kb" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-indigo-800">
         <ArrowLeft className="w-4 h-4" /> Knowledge Base
       </Link>
 
@@ -84,13 +84,13 @@ export function KbSupplierPage() {
           <div className="min-w-0 flex-1">
             <div className="inline-flex items-center gap-2 mb-2">
               <Building2 className="w-5 h-5 text-emerald-600" />
-              <span className="text-xs uppercase tracking-wide text-slate-600 font-semibold">Supplier</span>
+              <span className="text-xs uppercase tracking-wide text-fg-600 font-semibold">Supplier</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">{pickText(supplier, 'name', locale)}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-fg-900">{pickText(supplier, 'name', locale)}</h1>
             {supplier.categories && supplier.categories.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {supplier.categories.map((c) => (
-                  <span key={c} className="px-2 py-0.5 rounded bg-white/60 text-[11px] text-slate-700 font-mono">
+                  <span key={c} className="px-2 py-0.5 rounded bg-surf-card text-[11px] text-fg-700 font-mono">
                     {c}
                   </span>
                 ))}
@@ -100,7 +100,7 @@ export function KbSupplierPage() {
           {supplier.ops_supplier_id && (
             <Link
               to={`/suppliers/${supplier.ops_supplier_id}`}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg glass-white text-sm text-indigo-600 hover:text-indigo-800"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg glass-white text-sm text-accent-text hover:text-indigo-800"
             >
               Ops record <ExternalLink className="w-3.5 h-3.5" />
             </Link>
@@ -118,11 +118,11 @@ export function KbSupplierPage() {
       })()}
 
       <div>
-        <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">
+        <h3 className="text-sm font-semibold text-fg-700 uppercase tracking-wide mb-2">
           Referenced by {entries.length} entrie{entries.length === 1 ? '' : 's'}
         </h3>
         {entries.length === 0 ? (
-          <div className="glass-white rounded-2xl p-6 text-center text-slate-500 text-sm">
+          <div className="glass-white rounded-2xl p-6 text-center text-fg-500 text-sm">
             Este proveedor aún no está referenciado por ninguna entrada del KB.
           </div>
         ) : (

@@ -287,9 +287,9 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
 
   if (hardwareLoading) {
     return (
-      <div className="bg-slate-50 rounded-lg border border-slate-200 p-4">
+      <div className="bg-surf-app rounded-lg border border-border-soft p-4">
         <div className="flex items-center justify-center py-4">
-          <div className="text-sm text-slate-600">Loading materials...</div>
+          <div className="text-sm text-fg-600">Loading materials...</div>
         </div>
       </div>
     );
@@ -304,8 +304,8 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
 
   if (isEmpty) {
     return (
-      <div className="bg-slate-50 rounded-lg border border-slate-200 p-4">
-        <div className="text-center py-4 text-sm text-slate-500">
+      <div className="bg-surf-app rounded-lg border border-border-soft p-4">
+        <div className="text-center py-4 text-sm text-fg-500">
           No optimizer data for this area. Run the optimizer in the Breakdown tab.
         </div>
       </div>
@@ -316,7 +316,7 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
     <div className="bg-gradient-to-br from-blue-50/60 to-slate-100 rounded-lg border border-blue-200 p-4">
       <div className="flex items-center mb-3">
         <Layers className="h-4 w-4 text-blue-700 mr-2" />
-        <h4 className="text-sm font-semibold text-slate-900">
+        <h4 className="text-sm font-semibold text-fg-900">
           Material Breakdown
           <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 border border-blue-200 text-[9px] font-bold tracking-wide uppercase">
             Optimizer
@@ -336,9 +336,9 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {boardRows.map((row) => (
-                <div key={row.name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{row.name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={row.name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{row.name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span>
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.boards.toFixed(2)} boards
@@ -366,9 +366,9 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {edgebandRows.map((row) => (
-                <div key={row.name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{row.name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={row.name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{row.name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span>
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.rolls} rolls
@@ -386,21 +386,21 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
         )}
 
         {hardware.length > 0 && (
-          <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 lg:col-span-2">
+          <div className="bg-surf-app rounded-lg p-3 border border-border-soft lg:col-span-2">
             <div className="flex items-center mb-2">
-              <Package className="h-3 w-3 text-slate-700 mr-1.5" />
-              <h5 className="text-xs font-semibold text-slate-900">Hardware</h5>
+              <Package className="h-3 w-3 text-fg-700 mr-1.5" />
+              <h5 className="text-xs font-semibold text-fg-900">Hardware</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
               {hardware.map((row) => (
-                <div key={row.name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{row.name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={row.name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{row.name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span>
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.quantity} pcs
                     </span>
-                    <span className="font-semibold text-slate-700">{formatCurrency(row.cost)}</span>
+                    <span className="font-semibold text-fg-700">{formatCurrency(row.cost)}</span>
                   </div>
                 </div>
               ))}
@@ -416,9 +416,9 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
               {accessories.map((row) => (
-                <div key={row.name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{row.name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={row.name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{row.name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span>
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.quantity} pcs
@@ -439,9 +439,9 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
               {countertops.map((row) => (
-                <div key={row.name} className="bg-white rounded p-2 text-xs">
-                  <div className="font-medium text-slate-900 truncate mb-1">{row.name}</div>
-                  <div className="flex justify-between text-slate-600">
+                <div key={row.name} className="bg-surf-card rounded p-2 text-xs">
+                  <div className="font-medium text-fg-900 truncate mb-1">{row.name}</div>
+                  <div className="flex justify-between text-fg-600">
                     <span>
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.quantity.toFixed(2)} units

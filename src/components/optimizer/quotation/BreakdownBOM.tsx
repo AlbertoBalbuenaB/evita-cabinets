@@ -103,10 +103,10 @@ const CATEGORY_ORDER: BOMCategory[] = [
 const CATEGORY_COLORS: Record<BOMCategory, string> = {
   'Boards':            'bg-amber-50 text-amber-800',
   'Edgeband':          'bg-purple-50 text-purple-800',
-  'Hardware':          'bg-slate-100 text-slate-700',
+  'Hardware':          'bg-surf-muted text-fg-700',
   'Accessories':       'bg-green-50 text-green-800',
   'Interior Finish':   'bg-sky-50 text-sky-800',
-  'Door Profile':      'bg-indigo-50 text-indigo-800',
+  'Door Profile':      'bg-accent-tint-soft text-indigo-800',
   'Items':             'bg-orange-50 text-orange-800',
   'Countertops':       'bg-teal-50 text-teal-800',
   'Closet Items':      'bg-pink-50 text-pink-800',
@@ -689,7 +689,7 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
   // ── Render ────────────────────────────────────────────────────────────────
   if (loadingPrices) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6 text-center text-slate-500 text-sm">
+      <div className="bg-surf-card rounded-xl border border-border-soft p-6 text-center text-fg-500 text-sm">
         Loading Bill of Materials…
       </div>
     );
@@ -697,7 +697,7 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
 
   if (!bom || bom.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6 text-center text-slate-400 text-sm">
+      <div className="bg-surf-card rounded-xl border border-border-soft p-6 text-center text-fg-400 text-sm">
         No materials found for this run.
       </div>
     );
@@ -711,12 +711,12 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
   return (
     <div className="space-y-6">
       {/* ── BOM Table ─────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+      <div className="bg-surf-card rounded-xl border border-border-soft overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border-soft">
           <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-slate-500" />
-            <h2 className="text-base font-semibold text-slate-800">Bill of Materials</h2>
-            <span className="ml-1 text-xs text-slate-400 font-normal">({bom.length} items)</span>
+            <FileText className="h-5 w-5 text-fg-500" />
+            <h2 className="text-base font-semibold text-fg-800">Bill of Materials</h2>
+            <span className="ml-1 text-xs text-fg-400 font-normal">({bom.length} items)</span>
           </div>
           <button
             onClick={handleExportToPurchases}
@@ -731,12 +731,12 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left px-4 py-2.5 font-semibold text-slate-600 w-[40%]">Concept</th>
-                <th className="text-left px-3 py-2.5 font-semibold text-slate-600 w-[12%]">Unit</th>
-                <th className="text-right px-3 py-2.5 font-semibold text-slate-600 w-[10%]">Qty</th>
-                <th className="text-right px-3 py-2.5 font-semibold text-slate-600 w-[16%]">Price</th>
-                <th className="text-right px-4 py-2.5 font-semibold text-slate-600 w-[16%]">Subtotal</th>
+              <tr className="bg-surf-app border-b border-border-soft">
+                <th className="text-left px-4 py-2.5 font-semibold text-fg-600 w-[40%]">Concept</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-fg-600 w-[12%]">Unit</th>
+                <th className="text-right px-3 py-2.5 font-semibold text-fg-600 w-[10%]">Qty</th>
+                <th className="text-right px-3 py-2.5 font-semibold text-fg-600 w-[16%]">Price</th>
+                <th className="text-right px-4 py-2.5 font-semibold text-fg-600 w-[16%]">Subtotal</th>
               </tr>
             </thead>
             <tbody>
@@ -747,7 +747,7 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
                 const colorClass = CATEGORY_COLORS[cat];
                 return (
                   <>
-                    <tr key={`hdr-${cat}`} className={`${colorClass} border-t border-b border-slate-200`}>
+                    <tr key={`hdr-${cat}`} className={`${colorClass} border-t border-b border-border-soft`}>
                       <td colSpan={4} className="px-4 py-2 font-semibold text-xs uppercase tracking-wide">
                         {cat}
                       </td>
@@ -758,17 +758,17 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
                     {catRows.map((row, idx) => (
                       <tr
                         key={`${cat}-${idx}`}
-                        className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                        className="border-b border-border-soft hover:bg-surf-app transition-colors"
                       >
-                        <td className="px-4 py-2 text-slate-700">{row.concept}</td>
-                        <td className="px-3 py-2 text-slate-500">{row.unit}</td>
-                        <td className="px-3 py-2 text-right text-slate-700 font-mono">
+                        <td className="px-4 py-2 text-fg-700">{row.concept}</td>
+                        <td className="px-3 py-2 text-fg-500">{row.unit}</td>
+                        <td className="px-3 py-2 text-right text-fg-700 font-mono">
                           {Number.isInteger(row.qty) ? row.qty : row.qty.toFixed(2)}
                         </td>
-                        <td className="px-3 py-2 text-right text-slate-600 font-mono">
+                        <td className="px-3 py-2 text-right text-fg-600 font-mono">
                           {formatCurrency(row.price)}
                         </td>
-                        <td className="px-4 py-2 text-right text-slate-800 font-semibold font-mono">
+                        <td className="px-4 py-2 text-right text-fg-800 font-semibold font-mono">
                           {formatCurrency(row.subtotal)}
                         </td>
                       </tr>
@@ -787,10 +787,10 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
 
       {/* ── Project Cost Summary ──────────────────────────────────────── */}
       {costSummary && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-200">
-            <FileText className="h-5 w-5 text-slate-500" />
-            <h2 className="text-base font-semibold text-slate-800">Project Cost Summary</h2>
+        <div className="bg-surf-card rounded-xl border border-border-soft overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-border-soft">
+            <FileText className="h-5 w-5 text-fg-500" />
+            <h2 className="text-base font-semibold text-fg-800">Project Cost Summary</h2>
           </div>
           <div className="px-5 py-4 flex justify-end">
             <table className="text-sm w-full max-w-lg">
@@ -850,17 +850,17 @@ function SummaryRow({
   const labelClass = grandTotal
     ? 'font-bold text-base py-3 pl-3'
     : bold
-      ? 'font-semibold text-slate-800 py-2'
+      ? 'font-semibold text-fg-800 py-2'
       : muted
-        ? 'text-slate-500 py-1.5'
-        : 'text-slate-700 py-1.5';
+        ? 'text-fg-500 py-1.5'
+        : 'text-fg-700 py-1.5';
   const valueClass = grandTotal
     ? 'font-bold text-base py-3 pr-3 text-right font-mono'
     : bold
-      ? 'font-semibold text-slate-800 py-2 text-right font-mono'
+      ? 'font-semibold text-fg-800 py-2 text-right font-mono'
       : muted
-        ? 'text-slate-500 py-1.5 text-right font-mono'
-        : 'text-slate-700 py-1.5 text-right font-mono';
+        ? 'text-fg-500 py-1.5 text-right font-mono'
+        : 'text-fg-700 py-1.5 text-right font-mono';
 
   return (
     <tr className={rowClass}>
@@ -873,7 +873,7 @@ function SummaryRow({
 function SummaryDivider({ thick = false }: { thick?: boolean }) {
   return (
     <tr>
-      <td colSpan={2} className={`py-0.5 ${thick ? 'border-t-2 border-slate-300' : 'border-t border-slate-200'}`} />
+      <td colSpan={2} className={`py-0.5 ${thick ? 'border-t-2 border-border-solid' : 'border-t border-border-soft'}`} />
     </tr>
   );
 }
