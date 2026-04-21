@@ -1025,7 +1025,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-sm p-6 text-white">
+        <div className="bg-accent-primary rounded-xl shadow-sm p-6 text-white">
           <h2 className="text-lg font-semibold mb-2">Quick Actions</h2>
           <p className="text-sm text-blue-100 mb-4">
             Get started with your quotation system

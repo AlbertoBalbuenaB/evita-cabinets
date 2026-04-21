@@ -178,7 +178,7 @@ export function HomeLogDetailModal({ log, currentMemberId, currentMemberName, on
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
       <div className="bg-surf-card backdrop-blur-xl rounded-2xl shadow-2xl border border-white/70 w-full max-w-lg max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/60 bg-gradient-to-r from-violet-50/40 to-indigo-50/20 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border-rail bg-accent-tint-card flex-shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <h3 className="text-base font-semibold text-fg-900 truncate">Log Entry</h3>
             <Link
@@ -263,7 +263,7 @@ export function HomeLogDetailModal({ log, currentMemberId, currentMemberName, on
         </div>
 
         {/* Reply input — sticky at bottom */}
-        <div className="flex-shrink-0 px-4 py-3 border-t border-white/60 bg-surf-card backdrop-blur-sm">
+        <div className="flex-shrink-0 px-4 py-3 border-t border-border-rail bg-surf-card backdrop-blur-sm">
           <div className="flex gap-2">
             <textarea
               value={replyText}

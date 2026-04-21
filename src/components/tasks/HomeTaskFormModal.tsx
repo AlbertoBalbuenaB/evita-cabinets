@@ -310,7 +310,7 @@ export function HomeTaskFormModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
       <div className="bg-surf-card backdrop-blur-xl rounded-2xl shadow-2xl border border-white/70 w-full max-w-lg max-h-[92vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/60 bg-gradient-to-r from-indigo-50/40 to-blue-50/20 sticky top-0 z-10 backdrop-blur-xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border-rail bg-accent-tint-card sticky top-0 z-10 backdrop-blur-xl">
           <div className="flex items-center gap-2 min-w-0">
             <h3 className="text-base font-semibold text-fg-900 truncate">
               {modalTitle}
@@ -507,7 +507,7 @@ export function HomeTaskFormModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-white/60 bg-surf-card backdrop-blur-sm sticky bottom-0">
+        <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-border-rail bg-surf-card backdrop-blur-sm sticky bottom-0">
           <div>
             {!isCreate && !confirmDelete && (
               <button

@@ -52,10 +52,10 @@ export function SectionDivider({
       onDrop={onDrop}
     >
       {isDropBefore && (
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-green-500 z-10" style={{ marginTop: '-1px' }} />
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-accent-primary z-10" style={{ marginTop: '-1px' }} />
       )}
       {isDropAfter && (
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-green-500 z-10" style={{ marginBottom: '-1px' }} />
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent-primary z-10" style={{ marginBottom: '-1px' }} />
       )}
       {draggable && (
         <div className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1 rounded hover:bg-surf-muted transition-colors" title="Drag to reorder">

@@ -196,7 +196,7 @@ export function TasksSection({ projectId, teamMembers, initialTaskId }: Props) {
       {/* Main panel */}
       <div className={`glass-white flex-1 min-w-0 overflow-hidden transition-all ${selectedTask ? 'lg:max-w-[calc(100%-420px)]' : ''}`}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/60 bg-gradient-to-r from-indigo-50/40 to-blue-50/20">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border-rail bg-accent-tint-card">
           <div className="flex items-center gap-2">
             <CheckSquare className="h-5 w-5 text-accent-text" />
             <h3 className="text-lg font-semibold text-fg-900">Tasks</h3>
@@ -242,7 +242,7 @@ export function TasksSection({ projectId, teamMembers, initialTaskId }: Props) {
         </div>
 
         {/* Filters */}
-        <div className="px-5 py-3 border-b border-white/60 bg-surf-card">
+        <div className="px-5 py-3 border-b border-border-rail bg-surf-card">
           <TaskFilters
             filters={filters}
             onFiltersChange={setFilters}

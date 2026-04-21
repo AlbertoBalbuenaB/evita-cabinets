@@ -99,7 +99,7 @@ export function TaskFormModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
       <div className="bg-surf-card backdrop-blur-xl rounded-2xl shadow-2xl border border-white/70 w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/60 bg-gradient-to-r from-indigo-50/40 to-blue-50/20">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border-rail bg-accent-tint-card">
           <h3 className="text-base font-semibold text-fg-900">New Task</h3>
           <button onClick={onClose} className="text-fg-400 hover:text-fg-600 transition-colors">
             <X className="h-5 w-5" />
@@ -206,7 +206,7 @@ export function TaskFormModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-white/60 bg-surf-card backdrop-blur-sm">
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border-rail bg-surf-card backdrop-blur-sm">
           <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
           <Button size="sm" onClick={create} disabled={!title.trim() || saving}>
             {saving ? 'Creating…' : 'Create Task'}
