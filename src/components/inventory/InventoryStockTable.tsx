@@ -96,15 +96,15 @@ export function InventoryStockTable() {
             <strong className="text-fg-800">{totalItems}</strong> items
           </span>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50/80 border border-amber-200/50 rounded-xl">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-status-amber-bg border border-status-amber-brd rounded-xl">
           <AlertTriangle className="h-4 w-4 text-amber-500" />
-          <span className="text-sm text-amber-700">
+          <span className="text-sm text-status-amber-fg">
             <strong>{lowStockCount}</strong> low stock
           </span>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-red-50/80 border border-red-200/50 rounded-xl">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-status-red-bg border border-status-red-brd rounded-xl">
           <PackageX className="h-4 w-4 text-red-500" />
-          <span className="text-sm text-red-700">
+          <span className="text-sm text-status-red-fg">
             <strong>{noStockCount}</strong> no stock
           </span>
         </div>
@@ -119,7 +119,7 @@ export function InventoryStockTable() {
             placeholder="Search by item name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-border-soft bg-surf-card placeholder:text-fg-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
+            className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-border-soft bg-surf-card placeholder:text-fg-400 focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 outline-none transition"
           />
         </div>
         <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-surf-card border border-border-soft rounded-xl cursor-pointer hover:bg-surf-app transition-colors">
@@ -128,7 +128,7 @@ export function InventoryStockTable() {
             type="checkbox"
             checked={showLowOnly}
             onChange={(e) => setShowLowOnly(e.target.checked)}
-            className="rounded border-border-solid text-blue-600 focus-visible:ring-focus"
+            className="rounded border-border-solid text-accent-text focus-visible:ring-focus"
           />
           <span className="text-sm text-fg-600">Show only low/no stock items</span>
         </label>
@@ -175,7 +175,7 @@ export function InventoryStockTable() {
                           onChange={(e) => setEditValue(e.target.value)}
                           onBlur={() => saveEdit(item.id, 'stock_location')}
                           onKeyDown={(e) => e.key === 'Enter' && saveEdit(item.id, 'stock_location')}
-                          className="w-full px-2 py-1 text-sm border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-100 outline-none"
+                          className="w-full px-2 py-1 text-sm border border-accent-tint-border rounded-md focus:ring-2 focus:ring-blue-100 outline-none"
                         />
                       ) : (
                         <button
@@ -201,7 +201,7 @@ export function InventoryStockTable() {
                           onChange={(e) => setEditValue(e.target.value)}
                           onBlur={() => saveEdit(item.id, 'min_stock_level')}
                           onKeyDown={(e) => e.key === 'Enter' && saveEdit(item.id, 'min_stock_level')}
-                          className="w-20 px-2 py-1 text-sm text-right border border-blue-300 rounded-md focus:ring-2 focus:ring-blue-100 outline-none ml-auto"
+                          className="w-20 px-2 py-1 text-sm text-right border border-accent-tint-border rounded-md focus:ring-2 focus:ring-blue-100 outline-none ml-auto"
                         />
                       ) : (
                         <button
@@ -231,7 +231,7 @@ export function InventoryStockTable() {
                     <td className="px-5 py-3.5 text-center">
                       <button
                         onClick={() => setAdjustItem({ id: item.id, name: item.concept_description })}
-                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-accent-text bg-accent-tint-soft hover:bg-accent-tint-soft rounded-lg transition-colors"
                       >
                         Adjust
                       </button>

@@ -112,16 +112,16 @@ export function InventoryMovementModal({
   }
 
   const typeOptions: { value: MovementType; label: string; color: string }[] = [
-    { value: 'IN', label: 'IN', color: 'bg-green-100 text-green-700 border-green-300' },
-    { value: 'OUT', label: 'OUT', color: 'bg-red-100 text-red-700 border-red-300' },
-    { value: 'ADJUSTMENT', label: 'ADJUSTMENT', color: 'bg-blue-100 text-blue-700 border-blue-300' },
+    { value: 'IN', label: 'IN', color: 'bg-status-emerald-bg text-status-emerald-fg border-status-emerald-brd' },
+    { value: 'OUT', label: 'OUT', color: 'bg-status-red-bg text-status-red-fg border-status-red-brd' },
+    { value: 'ADJUSTMENT', label: 'ADJUSTMENT', color: 'bg-accent-tint-soft text-accent-text border-accent-tint-border' },
   ];
 
   return (
     <Modal isOpen onClose={onClose} title="Record Inventory Movement" size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-lg bg-red-50 border border-red-200/60 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-lg bg-status-red-bg border border-status-red-brd px-4 py-3 text-sm text-status-red-fg">
             {error}
           </div>
         )}
@@ -179,7 +179,7 @@ export function InventoryMovementModal({
             placeholder="0"
           />
           {form.movementType === 'ADJUSTMENT' && (
-            <p className="mt-1 text-xs text-blue-600">
+            <p className="mt-1 text-xs text-accent-text">
               This value will replace the current stock level.
             </p>
           )}
@@ -205,7 +205,7 @@ export function InventoryMovementModal({
             value={form.notes}
             onChange={(e) => set('notes', e.target.value)}
             rows={2}
-            className="w-full rounded-lg border border-border-soft bg-surf-card px-3 py-2 text-sm text-fg-800 placeholder:text-fg-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
+            className="w-full rounded-lg border border-border-soft bg-surf-card px-3 py-2 text-sm text-fg-800 placeholder:text-fg-400 focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 outline-none transition"
             placeholder="Optional notes..."
           />
         </div>

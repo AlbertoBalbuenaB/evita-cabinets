@@ -19,7 +19,7 @@ export function BoxesPalletsBreakdown({
   );
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-border-soft p-4">
+    <div className="bg-surf-muted rounded-lg border border-border-soft p-4">
       {areaName && (
         <h4 className="text-sm font-semibold text-fg-700 mb-3">{areaName}</h4>
       )}
@@ -27,7 +27,7 @@ export function BoxesPalletsBreakdown({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-surf-card rounded-lg p-3 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between mb-1">
-            <Package className="h-4 w-4 text-blue-600" />
+            <Package className="h-4 w-4 text-accent-text" />
             <span className="text-xs text-fg-500">Boxes</span>
           </div>
           <div className="text-xl sm:text-2xl font-bold text-fg-900 break-all">{boxes}</div>
@@ -35,7 +35,7 @@ export function BoxesPalletsBreakdown({
 
         <div className="bg-surf-card rounded-lg p-3 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between mb-1">
-            <Truck className="h-4 w-4 text-green-600" />
+            <Truck className="h-4 w-4 text-status-emerald-fg" />
             <span className="text-xs text-fg-500">Pallets</span>
           </div>
           <div className="text-xl sm:text-2xl font-bold text-fg-900 break-all">{pallets}</div>
@@ -43,7 +43,7 @@ export function BoxesPalletsBreakdown({
 
         <div className="bg-surf-card rounded-lg p-3 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between mb-1">
-            <Grid className="h-4 w-4 text-purple-600" />
+            <Grid className="h-4 w-4 text-accent-text" />
             <span className="text-xs text-fg-500">Acc. ft²</span>
           </div>
           <div className="text-xl sm:text-2xl font-bold text-fg-900 break-all">

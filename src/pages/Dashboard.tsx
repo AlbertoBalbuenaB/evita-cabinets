@@ -527,22 +527,22 @@ export function Dashboard() {
       label: 'Won',
       value: stats.wonProjects,
       icon: CheckCircle2,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      color: 'text-status-emerald-fg',
+      bgColor: 'bg-status-emerald-bg',
     },
     {
       label: 'Pending',
       value: stats.pendingProjects,
       icon: Clock,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      color: 'text-accent-text',
+      bgColor: 'bg-accent-tint-soft',
     },
     {
       label: 'Lost',
       value: stats.lostProjects,
       icon: XCircle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
+      color: 'text-status-red-fg',
+      bgColor: 'bg-status-red-bg',
     },
   ];
 
@@ -575,7 +575,7 @@ export function Dashboard() {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
-        <p className="text-red-600 font-semibold mb-2">Error Loading Dashboard</p>
+        <p className="text-status-red-fg font-semibold mb-2">Error Loading Dashboard</p>
         <p className="text-fg-600 mb-4">{error}</p>
         <Button
           onClick={() => {
@@ -626,7 +626,7 @@ export function Dashboard() {
           return (
             <div
               key={card.label}
-              className={`glass-blue p-6 overflow-hidden stat-enter stagger-${idx + 1} hover:shadow-lg hover:border-blue-300/60 transition-all duration-200`}
+              className={`glass-blue p-6 overflow-hidden stat-enter stagger-${idx + 1} hover:shadow-lg hover:border-accent-tint-border transition-all duration-200`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -702,7 +702,7 @@ export function Dashboard() {
                         <span className="text-xs text-fg-500">
                           {data.wonProjects}/{data.totalProjects} projects
                         </span>
-                        <span className="text-sm font-semibold text-green-600">
+                        <span className="text-sm font-semibold text-status-emerald-fg">
                           {convRate.toFixed(0)}%
                         </span>
                       </div>
@@ -753,7 +753,7 @@ export function Dashboard() {
                       <span className="text-xs text-fg-500">
                         Total: {formatCurrency(data.totalValue / exchangeRate, 'USD')}
                       </span>
-                      <span className="text-xs font-semibold text-green-600">
+                      <span className="text-xs font-semibold text-status-emerald-fg">
                         Won: {formatCurrency(data.wonValue / exchangeRate, 'USD')}
                       </span>
                     </div>
@@ -782,7 +782,7 @@ export function Dashboard() {
       {(topCabinets.length > 0 || doorMaterialTrends.length > 0 || boxMaterialTrends.length > 0 || hardwareTrends.length > 0) && (
         <div className="mt-6 mb-6 section-enter" style={{ animationDelay: '0.35s' }}>
           <h2 className="text-2xl font-bold text-fg-900 mb-4 flex items-center">
-            <TrendingUp className="h-6 w-6 text-blue-600 mr-3" />
+            <TrendingUp className="h-6 w-6 text-accent-text mr-3" />
             Quotation Trends & Analytics
           </h2>
 
@@ -790,7 +790,7 @@ export function Dashboard() {
             {topCabinets.length > 0 && (
               <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
                 <div className="flex items-center mb-4">
-                  <Package className="h-5 w-5 text-blue-600 mr-2" />
+                  <Package className="h-5 w-5 text-accent-text mr-2" />
                   <h3 className="text-lg font-semibold text-fg-900">Top 5 Most Quoted Cabinets</h3>
                 </div>
                 <div className="space-y-3">
@@ -818,7 +818,7 @@ export function Dashboard() {
                         </div>
                       </div>
                       <div className="text-right ml-3">
-                        <div className="text-lg font-bold text-blue-600">
+                        <div className="text-lg font-bold text-accent-text">
                           {cabinet.total_quantity}
                         </div>
                         <div className="text-xs text-fg-500">
@@ -834,7 +834,7 @@ export function Dashboard() {
             {doorMaterialTrends.length > 0 && (
               <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
                 <div className="flex items-center mb-4">
-                  <Package className="h-5 w-5 text-purple-600 mr-2" />
+                  <Package className="h-5 w-5 text-accent-text mr-2" />
                   <h3 className="text-lg font-semibold text-fg-900">Popular Door Materials</h3>
                 </div>
                 <div className="space-y-3">
@@ -845,7 +845,7 @@ export function Dashboard() {
                           {material.material_name}
                         </span>
                         <div className="flex items-center ml-3">
-                          <span className="text-sm font-bold text-purple-600">
+                          <span className="text-sm font-bold text-accent-text">
                             {material.percentage.toFixed(1)}%
                           </span>
                           <span className="text-xs text-fg-500 ml-2">
@@ -873,7 +873,7 @@ export function Dashboard() {
             {boxMaterialTrends.length > 0 && (
               <div className="glass-white p-6 hover:shadow-lg transition-shadow duration-200">
                 <div className="flex items-center mb-4">
-                  <Package className="h-5 w-5 text-orange-600 mr-2" />
+                  <Package className="h-5 w-5 text-status-orange-fg mr-2" />
                   <h3 className="text-lg font-semibold text-fg-900">Popular Box Materials</h3>
                 </div>
                 <div className="space-y-3">
@@ -884,7 +884,7 @@ export function Dashboard() {
                           {material.material_name}
                         </span>
                         <div className="flex items-center ml-3">
-                          <span className="text-sm font-bold text-orange-600">
+                          <span className="text-sm font-bold text-status-orange-fg">
                             {material.percentage.toFixed(1)}%
                           </span>
                           <span className="text-xs text-fg-500 ml-2">
@@ -953,7 +953,7 @@ export function Dashboard() {
       {projectTypeStats.length > 0 && (
         <div className="mt-6 glass-white p-6">
           <div className="flex items-center mb-4">
-            <Tag className="h-5 w-5 text-blue-600 mr-2" />
+            <Tag className="h-5 w-5 text-accent-text mr-2" />
             <h2 className="text-lg font-semibold text-fg-900">Project Type Analytics</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

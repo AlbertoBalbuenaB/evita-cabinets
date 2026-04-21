@@ -62,7 +62,7 @@ function ToolBtn({ active, onClick, title, disabled, children }: {
   return (
     <button onClick={onClick} disabled={disabled} title={title}
       className={`p-1.5 rounded-md transition-colors ${
-        active ? 'bg-blue-100 text-blue-700 shadow-sm'
+        active ? 'bg-accent-tint-soft text-accent-text shadow-sm'
         : 'text-fg-500 hover:text-fg-700 hover:bg-surf-muted disabled:opacity-40 disabled:cursor-not-allowed'
       }`}
     >{children}</button>

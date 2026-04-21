@@ -27,7 +27,7 @@ interface MentionItem {
 
 const GROUP_CONFIG = {
   member:     { label: 'Team Members', Icon: User,  iconColor: 'text-sky-600',     iconBg: 'bg-sky-100'     },
-  department: { label: 'Departments',  Icon: Users, iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100' },
+  department: { label: 'Departments',  Icon: Users, iconColor: 'text-status-emerald-fg', iconBg: 'bg-status-emerald-bg' },
 } as const;
 
 interface SuggestionListRef {
@@ -101,7 +101,7 @@ const MentionSuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>
                     type="button"
                     onClick={() => command(item)}
                     className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                      isSelected ? 'bg-blue-50 text-blue-900' : 'text-fg-700 hover:bg-surf-app'
+                      isSelected ? 'bg-accent-tint-soft text-blue-900' : 'text-fg-700 hover:bg-surf-app'
                     }`}
                   >
                     @{item.label}
@@ -136,7 +136,7 @@ function buildMentionItems(teamMembers: TeamMember[], departments: Department[])
 
 function buildMentionExtension(allItems: MentionItem[]) {
   return Mention.configure({
-    HTMLAttributes: { class: 'mention text-blue-600 font-medium' },
+    HTMLAttributes: { class: 'mention text-accent-text font-medium' },
     suggestion: {
       items: ({ query }: { query: string }) => {
         const q = query.toLowerCase();
@@ -221,7 +221,7 @@ function CommentEditor({ mentionItems, placeholder, onSubmit, onCancel, compact 
         )}
         <button
           onClick={submit}
-          className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:text-fg-300"
+          className="flex items-center gap-1 text-xs font-medium text-accent-text hover:text-accent-text disabled:text-fg-300"
         >
           <Send className="h-3 w-3" />
           {compact ? 'Reply' : 'Comment'}
@@ -385,7 +385,7 @@ export function TaskComments({ taskId, projectId, comments, teamMembers, onChang
         ) : (
           <button
             onClick={() => setShowAuthorInput(true)}
-            className="text-xs font-medium text-blue-600 hover:text-blue-700"
+            className="text-xs font-medium text-accent-text hover:text-accent-text"
           >
             {authorName || 'Set your name'}
           </button>
@@ -397,7 +397,7 @@ export function TaskComments({ taskId, projectId, comments, teamMembers, onChang
         <div key={comment.id} className="space-y-2">
           {/* Comment bubble */}
           <div className="flex items-start gap-2 group">
-            <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
+            <div className="w-6 h-6 rounded-full bg-accent-tint-soft text-accent-text flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
               {(comment.author_name || 'U').slice(0, 1).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
@@ -410,13 +410,13 @@ export function TaskComments({ taskId, projectId, comments, teamMembers, onChang
                 </span>
               </div>
               <div
-                className="text-sm text-fg-700 prose prose-sm max-w-none [&_.mention]:text-blue-600 [&_.mention]:font-medium"
+                className="text-sm text-fg-700 prose prose-sm max-w-none [&_.mention]:text-accent-text [&_.mention]:font-medium"
                 dangerouslySetInnerHTML={{ __html: comment.body }}
               />
               <div className="flex items-center gap-3 mt-1">
                 <button
                   onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                  className="text-[10px] text-fg-400 hover:text-blue-600 flex items-center gap-0.5 transition-colors"
+                  className="text-[10px] text-fg-400 hover:text-accent-text flex items-center gap-0.5 transition-colors"
                 >
                   <CornerDownRight className="h-2.5 w-2.5" />
                   Reply
@@ -450,7 +450,7 @@ export function TaskComments({ taskId, projectId, comments, teamMembers, onChang
                       </span>
                     </div>
                     <div
-                      className="text-xs text-fg-700 prose prose-sm max-w-none [&_.mention]:text-blue-600"
+                      className="text-xs text-fg-700 prose prose-sm max-w-none [&_.mention]:text-accent-text"
                       dangerouslySetInnerHTML={{ __html: reply.body }}
                     />
                   </div>

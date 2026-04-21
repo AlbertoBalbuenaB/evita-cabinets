@@ -1910,9 +1910,9 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       </Modal>
 
       {activeTab === 'pricing' && hasStalePrices && (
-        <div className="mb-6 bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+        <div className="mb-6 bg-status-amber-bg border-2 border-status-amber-brd rounded-lg p-4">
           <div className="flex items-start">
-            <AlertTriangle className="h-6 w-6 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-6 w-6 text-status-amber-fg mr-3 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <h3 className="text-base font-semibold text-yellow-900 mb-1">Price Updates Available</h3>
               <p className="text-sm text-yellow-800 mb-3">
@@ -1931,7 +1931,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                   size="sm"
                   variant="ghost"
                   onClick={() => setHasStalePrices(false)}
-                  className="text-yellow-800 hover:bg-yellow-100"
+                  className="text-yellow-800 hover:bg-status-amber-bg"
                 >
                   Dismiss
                 </Button>
@@ -1946,7 +1946,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
         <div className="glass-indigo p-4">
           <div className="flex items-center mb-4">
-            <DollarSign className="h-5 w-5 text-blue-600 mr-2" />
+            <DollarSign className="h-5 w-5 text-accent-text mr-2" />
             <h3 className="text-lg font-semibold text-fg-900">Additional Costs</h3>
           </div>
 
@@ -2137,7 +2137,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <p className="text-sm text-fg-600">Prefab Closets Subtotal:</p>
                 <p className="text-sm text-fg-600">Prefab Cabinets Subtotal:</p>
                 <p className="text-sm text-fg-600">Individual Items Subtotal:</p>
-                {riskAmount > 0 && <p className="text-sm text-amber-700">Risk Factor ({riskFactorPct}%):</p>}
+                {riskAmount > 0 && <p className="text-sm text-status-amber-fg">Risk Factor ({riskFactorPct}%):</p>}
                 <p className="text-sm text-fg-600 mt-2 pt-2 border-t border-border-solid">Subtotal:</p>
                 {profitMultiplier > 0 && <p className="text-sm text-fg-600">Profit ({(profitMultiplier * 100).toFixed(1)}%):</p>}
                 <p className="text-sm font-semibold text-fg-900 mt-2 pt-2 border-t border-border-solid">Price:</p>
@@ -2154,7 +2154,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <p className="text-sm font-medium text-fg-700">{formatPrice(closetItemsSubtotal)}</p>
                 <p className="text-sm font-medium text-fg-700">{formatPrice(prefabItemsSubtotal)}</p>
                 <p className="text-sm font-medium text-fg-700">{formatPrice(itemsSubtotal)}</p>
-                {riskAmount > 0 && <p className="text-sm font-medium text-amber-700">{formatPrice(riskAmount)}</p>}
+                {riskAmount > 0 && <p className="text-sm font-medium text-status-amber-fg">{formatPrice(riskAmount)}</p>}
                 <p className="text-sm font-semibold text-fg-900 mt-2 pt-2 border-t border-border-solid">{formatPrice(materialsSubtotal + riskAmount)}</p>
                 {profitMultiplier > 0 && <p className="text-sm font-medium text-fg-700">{formatPrice(profitAmount)}</p>}
                 <p className="text-sm font-bold text-blue-900 mt-2 pt-2 border-t border-border-solid">{formatPrice(price)}</p>
@@ -2171,7 +2171,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
 
         <div className="bg-surf-card rounded-lg border border-border-soft p-4">
           <div className="flex items-center mb-4">
-            <Receipt className="h-5 w-5 text-blue-600 mr-2" />
+            <Receipt className="h-5 w-5 text-accent-text mr-2" />
             <h3 className="text-lg font-semibold text-fg-900">PDF Disclaimers</h3>
           </div>
           <p className="text-sm text-fg-600 mb-4">
@@ -2218,7 +2218,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         <div className="bg-surf-card rounded-lg border border-border-soft p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center">
-              <FileText className="h-5 w-5 text-blue-600 mr-2" />
+              <FileText className="h-5 w-5 text-accent-text mr-2" />
               <h3 className="text-lg font-semibold text-fg-900">PDF Project Details</h3>
             </div>
             {isAnyPdfFieldModified && (
@@ -2237,9 +2237,9 @@ const [isEditingDate, setIsEditingDate] = useState(false);
               </button>
             )}
           </div>
-          <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg mb-4">
+          <div className="flex items-start gap-2 p-3 bg-accent-tint-soft border border-blue-100 rounded-lg mb-4">
             <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-blue-700 leading-relaxed">
+            <p className="text-xs text-accent-text leading-relaxed">
               These values default to your Project Brief. Changes here only affect PDF output and will not modify your original Project Brief.
             </p>
           </div>
@@ -2250,7 +2250,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <div className="flex items-center gap-2">
                   <label className="text-sm font-medium text-fg-700">Project Name</label>
                   {isPdfNameModified && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-status-amber-bg text-status-amber-fg rounded">
                       Modified
                     </span>
                   )}
@@ -2280,7 +2280,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <div className="flex items-center gap-2">
                   <label className="text-sm font-medium text-fg-700">Customer</label>
                   {isPdfCustomerModified && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-status-amber-bg text-status-amber-fg rounded">
                       Modified
                     </span>
                   )}
@@ -2310,7 +2310,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <div className="flex items-center gap-2">
                   <label className="text-sm font-medium text-fg-700">Address</label>
                   {isPdfAddressModified && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-status-amber-bg text-status-amber-fg rounded">
                       Modified
                     </span>
                   )}
@@ -2340,7 +2340,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                 <div className="flex items-center gap-2">
                   <label className="text-sm font-medium text-fg-700">Project Brief / Details</label>
                   {isPdfBriefModified && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-status-amber-bg text-status-amber-fg rounded">
                       Modified
                     </span>
                   )}
@@ -2371,7 +2371,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
         </div>
 
         {project.project_brief && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-5">
             <h3 className="text-sm font-semibold text-blue-900 flex items-center gap-2 mb-3">
               <Package className="h-4 w-4" />
               Project Brief
@@ -2504,7 +2504,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                     </p>
                     <button
                       onClick={() => setAreaSearchQuery('')}
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      className="text-accent-text hover:text-accent-text text-sm font-medium"
                     >
                       Clear search
                     </button>
@@ -2555,7 +2555,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                     <p className="mt-1 text-xs sm:text-sm text-fg-600">
                       {countActualCabinets(area.cabinets)} cabinet{countActualCabinets(area.cabinets) !== 1 ? 's' : ''} ({countCabinetEntries(area.cabinets)} {countCabinetEntries(area.cabinets) !== 1 ? 'entries' : 'entry'})
                       {area.cabinets.length !== countCabinetEntries(area.cabinets) && (
-                        <span className="ml-2 text-purple-600">+ {area.cabinets.length - countCabinetEntries(area.cabinets)} accessories</span>
+                        <span className="ml-2 text-accent-text">+ {area.cabinets.length - countCabinetEntries(area.cabinets)} accessories</span>
                       )}
                     </p>
                     </div>
@@ -2578,7 +2578,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                         title={area.applies_tariff === true ? 'Tariff applied to this area — click to disable' : 'Tariff not applied — click to enable'}
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
                           area.applies_tariff === true
-                            ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
+                            ? 'bg-status-amber-bg border-status-amber-brd text-status-amber-fg hover:bg-status-amber-bg'
                             : 'bg-surf-muted border-border-soft text-fg-400 hover:bg-surf-muted hover:text-fg-600'
                         }`}
                       >
@@ -2603,7 +2603,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                           }}
                           className={`w-14 px-1.5 py-1 text-sm text-center border rounded focus:outline-none focus:ring-2 focus-visible:ring-focus ${
                             (area.quantity ?? 1) > 1
-                              ? 'border-blue-300 bg-blue-50 text-blue-800 font-semibold'
+                              ? 'border-accent-tint-border bg-accent-tint-soft text-blue-800 font-semibold'
                               : 'border-border-soft bg-surf-app text-fg-400'
                           }`}
                           title="Area quantity multiplier — all subtotals are multiplied by this number"
@@ -2613,7 +2613,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                         <div className="text-xs sm:text-sm text-fg-600">
                           Area Total
                           {quotationView.usingOptimizer && (
-                            <span className="ml-1 inline-flex items-center gap-0.5 px-1 py-0 rounded bg-blue-50 border border-blue-200 text-blue-700 text-[9px] font-semibold uppercase tracking-wide">
+                            <span className="ml-1 inline-flex items-center gap-0.5 px-1 py-0 rounded bg-accent-tint-soft border border-accent-tint-border text-accent-text text-[9px] font-semibold uppercase tracking-wide">
                               OPT
                             </span>
                           )}
@@ -2702,7 +2702,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                         size="sm"
                         onClick={() => handleDeleteArea(area)}
                       >
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <Trash2 className="h-4 w-4 text-status-red-fg" />
                       </Button>
                     </div>
                   </div>
@@ -2715,7 +2715,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                     <Plus className="h-4 w-4 mr-2" />
                     Add Cabinet
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setSelectedAreaForCountertop(area.id)} className="w-full sm:w-auto border-orange-300 hover:bg-orange-50">
+                  <Button size="sm" variant="outline" onClick={() => setSelectedAreaForCountertop(area.id)} className="w-full sm:w-auto border-status-orange-brd hover:bg-status-orange-bg">
                     <Hammer className="h-4 w-4 mr-2" />
                     Add Countertop
                   </Button>
@@ -2723,7 +2723,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                     <ListPlus className="h-4 w-4 mr-2" />
                     Add Item
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleAddSection(area.id)} className="w-full sm:w-auto border-purple-300 hover:bg-purple-50 text-purple-700">
+                  <Button size="sm" variant="outline" onClick={() => handleAddSection(area.id)} className="w-full sm:w-auto border-accent-tint-border hover:bg-accent-tint-soft text-accent-text">
                     <SeparatorHorizontal className="h-4 w-4 mr-2" />
                     Add Section
                   </Button>
@@ -2846,13 +2846,13 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                           {area.countertops.map((countertop) => (
                             <div
                               key={countertop.id}
-                              className="bg-orange-50 border border-orange-200 rounded-lg p-4"
+                              className="bg-status-orange-bg border border-status-orange-brd rounded-lg p-4"
                             >
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2">
                                     <h4 className="font-semibold text-fg-900">{countertop.item_name}</h4>
-                                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded">
+                                    <span className="text-xs bg-status-orange-bg text-orange-800 px-2 py-0.5 rounded">
                                       Countertop
                                     </span>
                                   </div>
@@ -2865,7 +2865,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                       <span className="text-fg-600">Unit Price:</span>
                                       <span className="font-medium">{formatPrice(countertop.unit_price)}</span>
                                     </div>
-                                    <div className="flex justify-between col-span-2 pt-1 border-t border-orange-200">
+                                    <div className="flex justify-between col-span-2 pt-1 border-t border-status-orange-brd">
                                       <span className="text-fg-600 font-medium">Subtotal:</span>
                                       <span className="font-semibold text-orange-900">
                                         {formatPrice(countertop.subtotal)}
@@ -2894,7 +2894,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                     size="sm"
                                     onClick={() => handleDeleteCountertop(countertop.id)}
                                   >
-                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                    <Trash2 className="h-4 w-4 text-status-red-fg" />
                                   </Button>
                                 </div>
                               </div>
@@ -2911,13 +2911,13 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                           {area.items.map((item) => (
                             <div
                               key={item.id}
-                              className="bg-amber-50 border border-amber-200 rounded-lg p-4"
+                              className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4"
                             >
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2">
                                     <h4 className="font-semibold text-fg-900">{item.item_name}</h4>
-                                    <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">
+                                    <span className="text-xs bg-status-amber-bg text-amber-800 px-2 py-0.5 rounded">
                                       Item
                                     </span>
                                   </div>
@@ -2930,7 +2930,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                       <span className="text-fg-600">Unit Price:</span>
                                       <span className="font-medium">{formatPrice(item.unit_price)}</span>
                                     </div>
-                                    <div className="flex justify-between col-span-2 pt-1 border-t border-amber-200">
+                                    <div className="flex justify-between col-span-2 pt-1 border-t border-status-amber-brd">
                                       <span className="text-fg-600 font-medium">Subtotal:</span>
                                       <span className="font-semibold text-amber-900">
                                         {formatPrice(item.subtotal)}
@@ -2956,7 +2956,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                     size="sm"
                                     onClick={() => handleDeleteItem(item.id)}
                                   >
-                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                    <Trash2 className="h-4 w-4 text-status-red-fg" />
                                   </Button>
                                 </div>
                               </div>
@@ -3042,7 +3042,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                       size="sm"
                                       onClick={() => handleDeletePrefabItem(prefabItem.id)}
                                     >
-                                      <Trash2 className="h-4 w-4 text-red-600" />
+                                      <Trash2 className="h-4 w-4 text-status-red-fg" />
                                     </Button>
                                   </div>
                                 </div>
@@ -3125,7 +3125,7 @@ const [isEditingDate, setIsEditingDate] = useState(false);
                                     size="sm"
                                     onClick={() => handleDeleteClosetItem(closetItem.id)}
                                   >
-                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                    <Trash2 className="h-4 w-4 text-status-red-fg" />
                                   </Button>
                                 </div>
                               </div>

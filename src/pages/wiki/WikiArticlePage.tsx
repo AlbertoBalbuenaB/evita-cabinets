@@ -63,7 +63,7 @@ export function WikiArticlePage() {
         <div className="glass-white rounded-2xl p-6 text-center">
           <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-3" />
           <p className="text-fg-700">{error ?? 'Artículo no disponible.'}</p>
-          <Link to="/wiki" className="inline-flex items-center gap-1 text-violet-600 hover:text-violet-800 mt-3 text-sm">
+          <Link to="/wiki" className="inline-flex items-center gap-1 text-accent-text hover:text-violet-800 mt-3 text-sm">
             <ArrowLeft className="w-4 h-4" /> Volver al Wiki
           </Link>
         </div>
@@ -80,7 +80,7 @@ export function WikiArticlePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
       <div className="flex items-center gap-2 text-sm">
-        <Link to="/wiki" className="inline-flex items-center gap-1 text-violet-600 hover:text-violet-800">
+        <Link to="/wiki" className="inline-flex items-center gap-1 text-accent-text hover:text-violet-800">
           <ArrowLeft className="w-4 h-4" /> Wiki
         </Link>
         {category && (
@@ -95,7 +95,7 @@ export function WikiArticlePage() {
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0 flex-1">
             <div className="inline-flex items-center gap-2 mb-2">
-              <Library className="w-5 h-5 text-violet-600" />
+              <Library className="w-5 h-5 text-accent-text" />
               <span className="text-xs uppercase tracking-wide text-fg-600 font-semibold">Wiki article</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-fg-900">{title}</h1>
@@ -153,15 +153,15 @@ export function WikiArticlePage() {
                 <li
                   key={v.id}
                   className={`flex items-start gap-3 p-2 rounded-lg ${
-                    isCurrent ? 'bg-violet-50/60 border border-violet-200/60' : ''
+                    isCurrent ? 'bg-accent-tint-soft border border-accent-tint-border' : ''
                   }`}
                 >
-                  <span className="font-mono text-xs text-violet-700 font-semibold w-10">v{v.version_num}</span>
+                  <span className="font-mono text-xs text-accent-text font-semibold w-10">v{v.version_num}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-fg-800 truncate">{v.edit_summary ?? 'No summary'}</p>
                     <p className="text-xs text-fg-500 mt-0.5">
                       {editor} · {new Date(v.created_at).toLocaleString()}
-                      {isCurrent && <span className="ml-2 text-violet-700 font-medium">current</span>}
+                      {isCurrent && <span className="ml-2 text-accent-text font-medium">current</span>}
                     </p>
                   </div>
                 </li>

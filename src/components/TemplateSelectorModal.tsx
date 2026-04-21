@@ -158,14 +158,14 @@ export function TemplateSelectorModal({
                   key={template.id}
                   onClick={() => setSelectedTemplate(template)}
                   className={`text-left p-4 hover:bg-surf-app transition-colors ${
-                    selectedTemplate?.id === template.id ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''
+                    selectedTemplate?.id === template.id ? 'bg-accent-tint-soft border-l-4 border-l-blue-600' : ''
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <h3 className="font-semibold text-fg-900">{template.name}</h3>
-                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
+                        <span className="px-2 py-0.5 bg-accent-tint-soft text-blue-800 text-xs rounded">
                           {template.category}
                         </span>
                       </div>
@@ -178,7 +178,7 @@ export function TemplateSelectorModal({
                         <span>Product: {template.product_sku || 'N/A'}</span>
                         <span>Used {template.usage_count} times</span>
                         {(template.use_box_interior_finish || template.use_doors_interior_finish) && (
-                          <span className="flex items-center gap-1 text-amber-600 font-medium">
+                          <span className="flex items-center gap-1 text-status-amber-fg font-medium">
                             <Layers className="h-3 w-3" />
                             Composite Materials
                           </span>
@@ -186,7 +186,7 @@ export function TemplateSelectorModal({
                       </div>
                     </div>
                     {selectedTemplate?.id === template.id && (
-                      <Check className="h-5 w-5 text-blue-600 flex-shrink-0 ml-2" />
+                      <Check className="h-5 w-5 text-accent-text flex-shrink-0 ml-2" />
                     )}
                   </div>
                 </button>
@@ -196,20 +196,20 @@ export function TemplateSelectorModal({
         )}
 
         {selectedTemplate && validationStatus && !validationStatus.isValid && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4">
             <div className="flex items-start">
-              <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-status-amber-fg flex-shrink-0 mt-0.5" />
               <div className="ml-3 flex-1">
                 <h4 className="text-sm font-medium text-yellow-800 mb-2">
                   Some materials are no longer available
                 </h4>
-                <ul className="text-sm text-yellow-700 space-y-1">
+                <ul className="text-sm text-status-amber-fg space-y-1">
                   {validationStatus.missingMaterials.map((material, index) => (
                     <li key={index}>• {material}</li>
                   ))}
                 </ul>
                 {validationStatus.inactiveProduct && (
-                  <p className="text-sm text-yellow-700 mt-2">
+                  <p className="text-sm text-status-amber-fg mt-2">
                     • The product associated with this template is inactive
                   </p>
                 )}
@@ -222,19 +222,19 @@ export function TemplateSelectorModal({
         )}
 
         {selectedTemplate && validationStatus?.isValid && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="bg-status-emerald-bg border border-status-emerald-brd rounded-lg p-3">
             <div className="space-y-2">
               <p className="text-sm text-green-800">
                 <Check className="h-4 w-4 inline mr-1" />
                 All materials are available. Template is ready to use.
               </p>
               {(selectedTemplate.use_box_interior_finish || selectedTemplate.use_doors_interior_finish) && (
-                <div className="bg-amber-50 border border-amber-200 rounded p-2 mt-2">
+                <div className="bg-status-amber-bg border border-status-amber-brd rounded p-2 mt-2">
                   <p className="text-xs text-amber-800 flex items-center gap-1">
                     <Layers className="h-3.5 w-3.5" />
                     <span className="font-medium">This template uses composite materials:</span>
                   </p>
-                  <ul className="text-xs text-amber-700 mt-1 ml-5 space-y-0.5">
+                  <ul className="text-xs text-status-amber-fg mt-1 ml-5 space-y-0.5">
                     {selectedTemplate.use_box_interior_finish && (
                       <li>• Box: {selectedTemplate.box_material_name} + {selectedTemplate.box_interior_finish_name}</li>
                     )}
@@ -242,7 +242,7 @@ export function TemplateSelectorModal({
                       <li>• Doors: {selectedTemplate.doors_material_name} + {selectedTemplate.doors_interior_finish_name}</li>
                     )}
                   </ul>
-                  <p className="text-xs text-amber-600 mt-1.5 italic">
+                  <p className="text-xs text-status-amber-fg mt-1.5 italic">
                     Both materials will require the same number of sheets.
                   </p>
                 </div>

@@ -382,7 +382,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
                     className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-150 ${
                       active
                         ? 'bg-accent-primary text-accent-on shadow-sm'
-                        : 'bg-surf-card backdrop-blur-sm border border-border-soft text-fg-600 hover:border-blue-200 hover:bg-surf-card'
+                        : 'bg-surf-card backdrop-blur-sm border border-border-soft text-fg-600 hover:border-accent-tint-border hover:bg-surf-card'
                     }`}
                   >
                     {m.name}
@@ -485,7 +485,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
               <button
                 onClick={addSubtask}
                 disabled={!newSubtaskTitle.trim()}
-                className="text-blue-600 hover:text-blue-700 disabled:text-fg-300 transition-colors"
+                className="text-accent-text hover:text-accent-text disabled:text-fg-300 transition-colors"
               >
                 <Plus className="h-4 w-4" />
               </button>
@@ -526,7 +526,7 @@ export function TaskDetailPanel({ task, teamMembers, tags, projectId, onClose, o
                 <span className="text-xs text-fg-600">Delete this task?</span>
                 <button
                   onClick={() => onDelete(task.id)}
-                  className="text-xs font-semibold text-red-600 hover:text-red-700"
+                  className="text-xs font-semibold text-status-red-fg hover:text-status-red-fg"
                 >
                   Yes, delete
                 </button>

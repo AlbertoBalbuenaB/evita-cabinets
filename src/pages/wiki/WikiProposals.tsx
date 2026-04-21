@@ -53,7 +53,7 @@ export function WikiProposals() {
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <Link to="/wiki" className="text-sm text-violet-600 hover:text-violet-800 inline-flex items-center gap-1 mb-2">
+            <Link to="/wiki" className="text-sm text-accent-text hover:text-violet-800 inline-flex items-center gap-1 mb-2">
               <Library className="w-4 h-4" /> Wiki
             </Link>
             <h1 className="text-xl sm:text-2xl font-bold text-fg-900">Wiki proposals</h1>
@@ -84,7 +84,7 @@ export function WikiProposals() {
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition ${
                   active
                     ? 'bg-violet-600 text-white border-violet-600'
-                    : 'glass-white text-fg-700 border-border-soft hover:bg-violet-50'
+                    : 'glass-white text-fg-700 border-border-soft hover:bg-accent-tint-soft'
                 }`}
               >
                 {f.label}
@@ -98,7 +98,7 @@ export function WikiProposals() {
       </div>
 
       {error && (
-        <div className="glass-white rounded-xl p-4 border border-red-200/70 text-sm text-red-700">
+        <div className="glass-white rounded-xl p-4 border border-status-red-brd text-sm text-status-red-fg">
           {error}
         </div>
       )}
@@ -119,7 +119,7 @@ export function WikiProposals() {
             <li key={p.id}>
               <Link
                 to={`/wiki/proposals/${p.id}`}
-                className="glass-white rounded-xl p-4 block transition hover:bg-violet-50/30 hover:shadow-md row-enter"
+                className="glass-white rounded-xl p-4 block transition hover:bg-accent-tint-soft hover:shadow-md row-enter"
               >
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="min-w-0 flex-1">

@@ -93,7 +93,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/projects/${id}`)}
-          className="text-blue-600 hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-accent-text hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -106,7 +106,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/projects/${projectPart}/quotations/${quotationPart}`)}
-          className="text-blue-600 hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-accent-text hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -130,7 +130,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/kb/${id}`)}
-          className="text-emerald-600 hover:text-emerald-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-status-emerald-fg hover:text-emerald-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -141,7 +141,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/kb/suppliers/${id}`)}
-          className="text-emerald-600 hover:text-emerald-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-status-emerald-fg hover:text-emerald-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -152,7 +152,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/wiki/${id}`)}
-          className="text-violet-600 hover:text-violet-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-accent-text hover:text-violet-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -163,7 +163,7 @@ function formatInline(text: string, keyPrefix: string = '', onNavigate?: (path: 
           key={`${keyPrefix}lnk${idx}`}
           type="button"
           onClick={() => onNavigate?.(`/prices/${id}`)}
-          className="text-blue-600 hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
+          className="text-accent-text hover:text-blue-800 underline cursor-pointer font-medium bg-transparent border-0 p-0 inline text-inherit"
         >
           {label}
         </button>
@@ -730,7 +730,7 @@ export function AiChat() {
               <div className="flex-shrink-0 px-4 pt-3 pb-2 space-y-2">
                 <button
                   onClick={handleNewConversation}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-blue-600 transition-all hover:bg-blue-50"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-accent-text transition-all hover:bg-accent-tint-soft"
                   style={{ border: '1px dashed rgba(59,130,246,0.3)' }}
                 >
                   <Plus size={14} />
@@ -791,7 +791,7 @@ export function AiChat() {
                             className="px-4 py-3 rounded-xl space-y-2"
                             style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}
                           >
-                            <p className="text-xs text-red-600 font-medium">Delete this conversation?</p>
+                            <p className="text-xs text-status-red-fg font-medium">Delete this conversation?</p>
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setDeletingId(null)}
@@ -815,7 +815,7 @@ export function AiChat() {
                       return (
                         <div
                           key={session.id}
-                          className="group relative rounded-xl transition-all hover:bg-blue-50/70"
+                          className="group relative rounded-xl transition-all hover:bg-accent-tint-soft"
                           style={{
                             background: isActive ? 'rgba(59,130,246,0.06)' : 'rgba(255,255,255,0.6)',
                             border: isActive ? '1px solid rgba(59,130,246,0.2)' : '1px solid rgba(0,0,0,0.07)',
@@ -865,7 +865,7 @@ export function AiChat() {
                             {isEditing ? (
                               <button
                                 onClick={e => { e.stopPropagation(); handleRenameSession(session.id, editingTitle); }}
-                                className="p-1.5 rounded-lg text-green-500 hover:bg-green-50 transition-colors"
+                                className="p-1.5 rounded-lg text-green-500 hover:bg-status-emerald-bg transition-colors"
                                 title="Save"
                               >
                                 <Check size={13} />
@@ -873,7 +873,7 @@ export function AiChat() {
                             ) : (
                               <button
                                 onClick={e => { e.stopPropagation(); setEditingId(session.id); setEditingTitle(session.title); }}
-                                className="p-1.5 rounded-lg text-fg-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                className="p-1.5 rounded-lg text-fg-400 hover:text-accent-text hover:bg-accent-tint-soft transition-colors"
                                 title="Rename"
                               >
                                 <Pencil size={13} />
@@ -881,7 +881,7 @@ export function AiChat() {
                             )}
                             <button
                               onClick={e => { e.stopPropagation(); setDeletingId(session.id); }}
-                              className="p-1.5 rounded-lg text-fg-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                              className="p-1.5 rounded-lg text-fg-400 hover:text-red-500 hover:bg-status-red-bg transition-colors"
                               title="Delete"
                             >
                               <Trash2 size={13} />
@@ -932,7 +932,7 @@ export function AiChat() {
                         <button
                           key={i}
                           onClick={() => sendMessage(s.text)}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all hover:bg-blue-50 hover:border-blue-200"
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all hover:bg-accent-tint-soft hover:border-accent-tint-border"
                           style={{
                             background: 'rgba(255,255,255,0.6)',
                             border: '1px solid rgba(0,0,0,0.07)',

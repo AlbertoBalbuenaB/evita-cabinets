@@ -7,10 +7,10 @@ import type { WikiAuditRow } from '../../lib/wiki/wikiTypes';
 
 function styleForAction(action: string) {
   if (action.startsWith('proposal.')) {
-    if (action.endsWith('.merge')) return { bg: 'bg-violet-100/70', text: 'text-violet-800' };
-    if (action.includes('_to_approved'))  return { bg: 'bg-emerald-100/70', text: 'text-emerald-800' };
-    if (action.includes('_to_rejected'))  return { bg: 'bg-rose-100/70',    text: 'text-rose-800' };
-    if (action.includes('_to_changes_requested')) return { bg: 'bg-amber-100/70', text: 'text-amber-800' };
+    if (action.endsWith('.merge')) return { bg: 'bg-accent-tint-soft', text: 'text-violet-800' };
+    if (action.includes('_to_approved'))  return { bg: 'bg-status-emerald-bg', text: 'text-emerald-800' };
+    if (action.includes('_to_rejected'))  return { bg: 'bg-status-red-bg',    text: 'text-rose-800' };
+    if (action.includes('_to_changes_requested')) return { bg: 'bg-status-amber-bg', text: 'text-amber-800' };
     if (action.includes('_to_withdrawn')) return { bg: 'bg-surf-muted',   text: 'text-fg-700' };
     if (action.includes('_to_open'))      return { bg: 'bg-accent-tint-strong',  text: 'text-indigo-800' };
   }
@@ -41,13 +41,13 @@ export function WikiAudit() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
-      <Link to="/wiki" className="inline-flex items-center gap-1 text-sm text-violet-600 hover:text-violet-800">
+      <Link to="/wiki" className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-violet-800">
         <ArrowLeft className="w-4 h-4" /> Wiki
       </Link>
 
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
         <div className="flex items-start gap-3">
-          <Shield className="w-6 h-6 text-violet-600 mt-1" />
+          <Shield className="w-6 h-6 text-accent-text mt-1" />
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-fg-900">Wiki audit log</h1>
             <p className="text-sm text-fg-700 mt-1">
@@ -58,7 +58,7 @@ export function WikiAudit() {
       </div>
 
       {error && (
-        <div className="glass-white rounded-xl p-4 border border-red-200/70 text-sm text-red-700">
+        <div className="glass-white rounded-xl p-4 border border-status-red-brd text-sm text-status-red-fg">
           {error}
         </div>
       )}
@@ -104,7 +104,7 @@ export function WikiAudit() {
                         {row.proposal_id && (
                           <Link
                             to={`/wiki/proposals/${row.proposal_id}`}
-                            className="text-violet-600 hover:text-violet-800 font-mono block"
+                            className="text-accent-text hover:text-violet-800 font-mono block"
                           >
                             prop {row.proposal_id.slice(0, 8)}
                           </Link>

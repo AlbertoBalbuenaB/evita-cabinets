@@ -259,7 +259,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none pl-3 pr-7 py-2 text-xs font-medium border border-border-soft bg-surf-card rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
+              className="appearance-none pl-3 pr-7 py-2 text-xs font-medium border border-border-soft bg-surf-card rounded-lg focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
             >
               {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -274,7 +274,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="appearance-none pl-3 pr-7 py-2 text-xs font-medium border border-border-soft bg-surf-card rounded-lg focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
+              className="appearance-none pl-3 pr-7 py-2 text-xs font-medium border border-border-soft bg-surf-card rounded-lg focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
             >
               {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
@@ -288,7 +288,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
             onClick={() => setShowGroupMenu((v) => !v)}
             className={`flex items-center gap-1.5 pl-3 pr-2.5 py-2 text-xs font-medium border rounded-lg transition-colors cursor-pointer ${
               groupBy !== 'none'
-                ? 'border-blue-400 bg-blue-50 text-blue-700'
+                ? 'border-accent-tint-border bg-accent-tint-soft text-accent-text'
                 : 'border-border-soft bg-surf-card text-fg-600 hover:bg-surf-app'
             }`}
           >
@@ -303,7 +303,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
                   key={g}
                   onClick={() => { setGroupBy(g); setShowGroupMenu(false); }}
                   className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                    groupBy === g ? 'bg-blue-50 text-blue-700 font-medium' : 'text-fg-700 hover:bg-surf-app'
+                    groupBy === g ? 'bg-accent-tint-soft text-accent-text font-medium' : 'text-fg-700 hover:bg-surf-app'
                   }`}
                 >
                   {g === 'none' ? 'No grouping' : GROUP_LABELS[g]}
@@ -323,7 +323,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
             placeholder="Search items..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 pr-3 py-2 text-sm rounded-lg border border-border-soft bg-surf-card focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition w-44"
+            className="pl-8 pr-3 py-2 text-sm rounded-lg border border-border-soft bg-surf-card focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 outline-none transition w-44"
           />
         </div>
 
@@ -370,7 +370,7 @@ export function PurchaseListSection({ projectId }: PurchaseListSectionProps) {
                     <p className="text-sm">No purchase items yet.</p>
                     <button
                       onClick={handleAddItem}
-                      className="mt-2 inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+                      className="mt-2 inline-flex items-center gap-1 text-sm text-accent-text hover:text-accent-text"
                     >
                       <Plus className="h-3.5 w-3.5" />
                       Add your first item

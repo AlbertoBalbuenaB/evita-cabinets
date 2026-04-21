@@ -302,7 +302,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 type="checkbox"
                 checked={formData.has_drawers ?? false}
                 onChange={(e) => syncFormHasDrawers(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus"
+                className="w-4 h-4 text-accent-text border-border-solid rounded focus-visible:ring-focus"
               />
               <span className="text-sm font-medium text-fg-700">Has Drawers</span>
             </label>
@@ -369,7 +369,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 onChange={(e) =>
                   setFormData({ ...formData, default_is_rta: e.target.checked })
                 }
-                className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus"
+                className="w-4 h-4 text-accent-text border-border-solid rounded focus-visible:ring-focus"
               />
               <div>
                 <span className="text-sm font-medium text-fg-700">Default RTA</span>
@@ -383,7 +383,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
           <button
             type="button"
             onClick={() => setCalcOpen((o) => !o)}
-            className="flex items-center gap-2 w-full text-left text-sm font-semibold text-blue-700 hover:text-blue-800 transition-colors"
+            className="flex items-center gap-2 w-full text-left text-sm font-semibold text-accent-text hover:text-blue-800 transition-colors"
           >
             <span>📐 Auto-calculate from dimensions</span>
             <svg
@@ -507,7 +507,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                   <label className="flex items-center gap-2 cursor-pointer text-xs text-fg-700">
                     <input type="checkbox" checked={calcOptimizeDepth}
                       onChange={(e) => setCalcOptimizeDepth(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus" />
+                      className="w-4 h-4 text-accent-text border-border-solid rounded focus-visible:ring-focus" />
                     Optimize depth (300/400/450/600mm)
                   </label>
                 </div>
@@ -519,7 +519,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                           setCalcIsSink(e.target.checked);
                           if (e.target.checked) setCalcShelves(0);
                         }}
-                        className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus" />
+                        className="w-4 h-4 text-accent-text border-border-solid rounded focus-visible:ring-focus" />
                       Sink base (no top, no shelves)
                     </label>
                   </div>
@@ -532,7 +532,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                     type="checkbox"
                     checked={calcHasDoors}
                     onChange={(e) => setCalcHasDoors(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus"
+                    className="w-4 h-4 text-accent-text border-border-solid rounded focus-visible:ring-focus"
                   />
                   Has Doors (Puertas)
                 </label>
@@ -541,14 +541,14 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                     type="checkbox"
                     checked={calcHasDrawers}
                     onChange={(e) => syncCalcHasDrawers(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus"
+                    className="w-4 h-4 text-accent-text border-border-solid rounded focus-visible:ring-focus"
                   />
                   Has Drawers (Cajones)
                 </label>
               </div>
 
               {calcHasDoors && (
-                <div className="grid grid-cols-2 gap-3 pl-4 border-l-2 border-blue-200">
+                <div className="grid grid-cols-2 gap-3 pl-4 border-l-2 border-accent-tint-border">
                   <div>
                     <label className="block text-xs font-medium text-fg-700 mb-1">Number of Doors</label>
                     <input
@@ -573,7 +573,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
               )}
 
               {calcHasDrawers && (
-                <div className="grid grid-cols-2 gap-3 pl-4 border-l-2 border-amber-200">
+                <div className="grid grid-cols-2 gap-3 pl-4 border-l-2 border-status-amber-brd">
                   <div>
                     <label className="block text-xs font-medium text-fg-700 mb-1">Number of Drawers</label>
                     <input
@@ -583,7 +583,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                       className="w-full px-3 py-2 border border-border-solid rounded-lg focus:outline-none focus:ring-2 focus-visible:ring-focus text-sm"
                     />
                     <p className="mt-1 text-xs text-fg-500">Each drawer gets 1 front panel automatically.</p>
-                    <p className="mt-1 text-xs text-amber-700">ℹ️ Drawer box height is fixed at 7" (Blum standard). Front height = Drawer section height ÷ number of drawers.</p>
+                    <p className="mt-1 text-xs text-status-amber-fg">ℹ️ Drawer box height is fixed at 7" (Blum standard). Front height = Drawer section height ÷ number of drawers.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-fg-700 mb-1">Drawer Section Height (in)</label>
@@ -599,7 +599,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
               )}
 
               {calcError && (
-                <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{calcError}</p>
+                <p className="text-xs text-status-red-fg bg-status-red-bg border border-status-red-brd rounded-lg px-3 py-2">{calcError}</p>
               )}
 
               <div className="grid grid-cols-2 gap-2">
@@ -625,7 +625,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
         <div className="border-t border-border-soft pt-4">
           <h3 className="text-sm font-semibold text-fg-900 mb-3">Box Construction</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('box_sf') ? 'bg-green-50 ring-1 ring-green-300' : ''}`}>
+            <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('box_sf') ? 'bg-status-emerald-bg ring-1 ring-green-300' : ''}`}>
               <Input
                 label="Box Square Feet"
                 type="number"
@@ -637,7 +637,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 required
               />
             </div>
-            <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('box_edgeband') ? 'bg-green-50 ring-1 ring-green-300' : ''}`}>
+            <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('box_edgeband') ? 'bg-status-emerald-bg ring-1 ring-green-300' : ''}`}>
               <Input
                 label="Box Edgeband (m)"
                 type="number"
@@ -651,7 +651,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 }
               />
             </div>
-            <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('box_edgeband_color') ? 'bg-green-50 ring-1 ring-green-300' : ''}`}>
+            <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('box_edgeband_color') ? 'bg-status-emerald-bg ring-1 ring-green-300' : ''}`}>
               <Input
                 label="Box Edgeband Color (m)"
                 type="number"
@@ -673,7 +673,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
             Doors & Drawer Fronts
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('doors_fronts_sf') ? 'bg-green-50 ring-1 ring-green-300' : ''}`}>
+            <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('doors_fronts_sf') ? 'bg-status-emerald-bg ring-1 ring-green-300' : ''}`}>
               <Input
                 label="Doors & Fronts Square Feet"
                 type="number"
@@ -688,7 +688,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                 required
               />
             </div>
-            <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('doors_fronts_edgeband') ? 'bg-green-50 ring-1 ring-green-300' : ''}`}>
+            <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('doors_fronts_edgeband') ? 'bg-status-emerald-bg ring-1 ring-green-300' : ''}`}>
               <Input
                 label="Doors Edgeband (m)"
                 type="number"
@@ -706,7 +706,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
         </div>
 
         <div className="border-t border-border-soft pt-4">
-          <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('total_edgeband') ? 'bg-green-50 ring-1 ring-green-300' : ''}`}>
+          <div className={`rounded-lg transition-colors duration-700 ${flashFields.has('total_edgeband') ? 'bg-status-emerald-bg ring-1 ring-green-300' : ''}`}>
             <Input
               label="Total Edgeband (m)"
               type="number"
@@ -731,11 +731,11 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
           <button
             type="button"
             onClick={() => setDespieceOpen((o) => !o)}
-            className="flex items-center gap-2 w-full text-left text-sm font-semibold text-amber-700 hover:text-amber-800 transition-colors"
+            className="flex items-center gap-2 w-full text-left text-sm font-semibold text-status-amber-fg hover:text-amber-800 transition-colors"
           >
             <span>🪚 Cut List</span>
             {cutPieces.length > 0 && (
-              <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+              <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-status-amber-bg text-amber-800">
                 {cutPieces.length} {cutPieces.length === 1 ? 'piece' : 'pieces'}
               </span>
             )}
@@ -821,11 +821,11 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                                 prev.map((p) => p.id === piece.id ? { ...p, material: e.target.value as CutPiece['material'] } : p)
                               )}
                               className={`px-1.5 py-0.5 rounded text-xs font-medium border-0 focus:outline-none focus:ring-1 focus-visible:ring-focus ${
-                                piece.material === 'cuerpo'      ? 'bg-blue-100 text-blue-800' :
-                                piece.material === 'frente'      ? 'bg-amber-100 text-amber-800' :
-                                piece.material === 'back'        ? 'bg-emerald-100 text-emerald-800' :
+                                piece.material === 'cuerpo'      ? 'bg-accent-tint-soft text-blue-800' :
+                                piece.material === 'frente'      ? 'bg-status-amber-bg text-amber-800' :
+                                piece.material === 'back'        ? 'bg-status-emerald-bg text-emerald-800' :
                                 piece.material === 'drawer_box'  ? 'bg-teal-100 text-teal-800' :
-                                piece.material === 'shelf'       ? 'bg-violet-100 text-violet-800' :
+                                piece.material === 'shelf'       ? 'bg-accent-tint-soft text-violet-800' :
                                                                    'bg-surf-muted text-fg-700'
                               }`}
                             >
@@ -844,7 +844,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                                 prev.map((p) => p.id === piece.id ? { ...p, veta: e.target.value as CutPiece['veta'] } : p)
                               )}
                               className={`px-1 py-0.5 rounded text-xs font-medium border-0 focus:outline-none focus:ring-1 focus-visible:ring-focus ${
-                                piece.veta === 'vertical'   ? 'bg-purple-100 text-purple-800' :
+                                piece.veta === 'vertical'   ? 'bg-accent-tint-soft text-purple-800' :
                                 piece.veta === 'horizontal' ? 'bg-teal-100 text-teal-800' :
                                                               'bg-surf-muted text-fg-600'
                               }`}
@@ -870,7 +870,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
                             <button
                               type="button"
                               onClick={() => setCutPieces((prev) => prev.filter((p) => p.id !== piece.id))}
-                              className="text-red-400 hover:text-red-600 transition-colors"
+                              className="text-red-400 hover:text-status-red-fg transition-colors"
                               title="Remove piece"
                             >
                               ✕
@@ -899,7 +899,7 @@ export function ProductFormModal({ product, onSave, onClose, safeEditMode }: Pro
         </div>
 
         {safeEditMode && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-3">
             <p className="text-xs text-amber-900">
               <strong>Note:</strong> This product is in use. Changes will create a new version to
               protect historical data.

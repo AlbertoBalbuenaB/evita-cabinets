@@ -114,7 +114,7 @@ export function CollectionSelector({
                     type="button"
                     onClick={() => handleSelectCollection(collection)}
                     className={`w-full text-left px-3 py-2 hover:bg-surf-muted text-sm ${
-                      collection === value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-fg-700'
+                      collection === value ? 'bg-accent-tint-soft text-accent-text font-medium' : 'text-fg-700'
                     }`}
                   >
                     {collection}
@@ -130,7 +130,7 @@ export function CollectionSelector({
                 <button
                   type="button"
                   onClick={() => handleSelectCollection(inputValue)}
-                  className="w-full text-left px-3 py-2 bg-blue-50 hover:bg-blue-100 text-sm text-blue-700 font-medium border-t border-border-soft"
+                  className="w-full text-left px-3 py-2 bg-accent-tint-soft hover:bg-accent-tint-soft text-sm text-accent-text font-medium border-t border-border-soft"
                 >
                   Create &quot;{inputValue}&quot;
                 </button>

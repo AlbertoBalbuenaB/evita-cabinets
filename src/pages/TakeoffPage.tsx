@@ -309,14 +309,14 @@ export function TakeoffPage() {
               {sessionName ?? file.name}
             </span>
             {currentSessionId && (
-              <span className="text-[10px] bg-emerald-50 text-emerald-700 rounded px-1.5 py-0.5 flex-shrink-0">
+              <span className="text-[10px] bg-status-emerald-bg text-status-emerald-fg rounded px-1.5 py-0.5 flex-shrink-0">
                 {sessionProjectId ? 'project' : 'saved'}
               </span>
             )}
           </>
         )}
         <div className="ml-auto flex items-center gap-2">
-          {loadError && <span className="text-xs text-red-600 truncate max-w-xs">{loadError}</span>}
+          {loadError && <span className="text-xs text-status-red-fg truncate max-w-xs">{loadError}</span>}
           <button
             onClick={() => setShowSessionsList(true)}
             className="inline-flex items-center gap-1 text-xs text-fg-500 hover:text-fg-700"
@@ -336,7 +336,7 @@ export function TakeoffPage() {
           {file && (
             <button
               onClick={() => setShowSaveModal(true)}
-              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+              className="inline-flex items-center gap-1 text-xs text-accent-text hover:text-blue-800"
               title={currentSessionId ? 'Update this saved session' : 'Save to Supabase'}
             >
               <UploadCloud className="h-3.5 w-3.5" />
@@ -344,7 +344,7 @@ export function TakeoffPage() {
             </button>
           )}
           {!file && (
-            <button onClick={() => setShowUrlModal(true)} className="inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700">
+            <button onClick={() => setShowUrlModal(true)} className="inline-flex items-center gap-1 text-xs text-blue-500 hover:text-accent-text">
               <Link2 className="h-3.5 w-3.5" /> Import from URL
             </button>
           )}

@@ -42,11 +42,11 @@ const STATUS_GRADIENTS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  Awarded: 'bg-green-50 text-green-700 border-green-200/50',
-  Pending: 'bg-blue-50 text-blue-700 border-blue-200/50',
-  Estimating: 'bg-amber-50 text-amber-700 border-amber-200/50',
+  Awarded: 'bg-status-emerald-bg text-status-emerald-fg border-status-emerald-brd',
+  Pending: 'bg-accent-tint-soft text-accent-text border-accent-tint-border',
+  Estimating: 'bg-status-amber-bg text-status-amber-fg border-status-amber-brd',
   Sent: 'bg-cyan-50 text-cyan-700 border-cyan-200/50',
-  Lost: 'bg-red-50 text-red-700 border-red-200/50',
+  Lost: 'bg-status-red-bg text-status-red-fg border-status-red-brd',
   Discarded: 'bg-surf-muted text-fg-600 border-border-soft',
   Cancelled: 'bg-surf-muted text-fg-500 border-border-soft',
 };
@@ -183,7 +183,7 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
               {analytics.withDeltas.map((q) => (
                 <tr key={q.id} className="border-b border-border-soft last:border-0">
                   <td className="py-3 px-2">
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-accent-tint-soft text-accent-text text-xs font-bold">
                       {q.version_number ?? '?'}
                     </span>
                   </td>
@@ -201,7 +201,7 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
                       {q.deltaAbs === null ? (
                         <span className="text-fg-300">—</span>
                       ) : (
-                        <div className={`flex items-center justify-end gap-1 ${q.deltaAbs > 0 ? 'text-red-600' : q.deltaAbs < 0 ? 'text-green-600' : 'text-fg-400'}`}>
+                        <div className={`flex items-center justify-end gap-1 ${q.deltaAbs > 0 ? 'text-status-red-fg' : q.deltaAbs < 0 ? 'text-status-emerald-fg' : 'text-fg-400'}`}>
                           {q.deltaAbs !== 0 && (q.deltaAbs > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />)}
                           <span className="text-xs">
                             {q.deltaAbs > 0 ? '+' : ''}{formatCurrency(q.deltaAbs / fx, 'USD')}
@@ -267,10 +267,10 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
                           )}
                           <span className="flex-1 text-fg-700 truncate">{change.name}</span>
                           <div className="flex items-center gap-2 flex-shrink-0 tabular-nums">
-                            {change.type === 'added' && <span className="text-xs text-green-600">New area: {formatCurrency(change.currAmount)}</span>}
-                            {change.type === 'removed' && <span className="text-xs text-red-600">Removed: {formatCurrency(change.prevAmount)}</span>}
+                            {change.type === 'added' && <span className="text-xs text-status-emerald-fg">New area: {formatCurrency(change.currAmount)}</span>}
+                            {change.type === 'removed' && <span className="text-xs text-status-red-fg">Removed: {formatCurrency(change.prevAmount)}</span>}
                             {change.type === 'changed' && (
-                              <span className={`text-xs ${change.delta > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              <span className={`text-xs ${change.delta > 0 ? 'text-status-red-fg' : 'text-status-emerald-fg'}`}>
                                 {change.delta > 0 ? '+' : ''}{formatCurrency(change.delta)}
                                 {change.prevAmount > 0 && (
                                   <span className="text-fg-400 ml-1">({change.delta > 0 ? '+' : ''}{((change.delta / change.prevAmount) * 100).toFixed(1)}%)</span>
@@ -353,7 +353,7 @@ export function CrossQuotationAnalytics({ quotations, exchangeRate, quotationAre
                 {analytics.sorted.map((q, i) => {
                   const prev = i > 0 ? analytics.sorted[i - 1] : null;
                   const ch = (curr: number | null | undefined, prv: number | null | undefined) =>
-                    prev && curr !== prv ? 'bg-amber-50 text-amber-700 font-semibold' : 'text-fg-700';
+                    prev && curr !== prv ? 'bg-status-amber-bg text-status-amber-fg font-semibold' : 'text-fg-700';
                   return (
                     <tr key={q.id} className="border-b border-border-soft last:border-0">
                       <td className="py-2.5 px-2 font-medium text-fg-600">v{q.version_number}</td>

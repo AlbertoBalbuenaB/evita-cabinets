@@ -68,28 +68,28 @@ type SubsectionVariant = 'blue' | 'amber' | 'green' | 'red' | 'rose' | 'purple';
 
 const VARIANT = {
   blue: {
-    bg: 'bg-blue-50/50',    border: 'border-blue-100/80',    dot: 'bg-blue-500',
-    label: 'text-blue-800', badge: 'bg-blue-100 text-blue-700', emptyDot: 'text-blue-300',
+    bg: 'bg-accent-tint-soft',    border: 'border-blue-100/80',    dot: 'bg-blue-500',
+    label: 'text-blue-800', badge: 'bg-accent-tint-soft text-accent-text', emptyDot: 'text-blue-300',
   },
   amber: {
-    bg: 'bg-amber-50/50',    border: 'border-amber-100/80',    dot: 'bg-amber-500',
-    label: 'text-amber-800', badge: 'bg-amber-100 text-amber-700', emptyDot: 'text-amber-300',
+    bg: 'bg-status-amber-bg',    border: 'border-amber-100/80',    dot: 'bg-amber-500',
+    label: 'text-amber-800', badge: 'bg-status-amber-bg text-status-amber-fg', emptyDot: 'text-amber-300',
   },
   green: {
-    bg: 'bg-emerald-50/50',    border: 'border-emerald-100/80',    dot: 'bg-emerald-500',
-    label: 'text-emerald-800', badge: 'bg-emerald-100 text-emerald-700', emptyDot: 'text-emerald-300',
+    bg: 'bg-status-emerald-bg',    border: 'border-emerald-100/80',    dot: 'bg-emerald-500',
+    label: 'text-emerald-800', badge: 'bg-status-emerald-bg text-status-emerald-fg', emptyDot: 'text-emerald-300',
   },
   red: {
-    bg: 'bg-red-50/60',    border: 'border-red-200/80',    dot: 'bg-red-500',
-    label: 'text-red-800', badge: 'bg-red-100 text-red-700', emptyDot: 'text-red-300',
+    bg: 'bg-status-red-bg',    border: 'border-status-red-brd',    dot: 'bg-red-500',
+    label: 'text-red-800', badge: 'bg-status-red-bg text-status-red-fg', emptyDot: 'text-red-300',
   },
   rose: {
-    bg: 'bg-rose-50/50',    border: 'border-rose-200/70',    dot: 'bg-rose-500',
-    label: 'text-rose-800', badge: 'bg-rose-100 text-rose-700', emptyDot: 'text-rose-300',
+    bg: 'bg-status-red-bg',    border: 'border-status-red-brd',    dot: 'bg-rose-500',
+    label: 'text-rose-800', badge: 'bg-status-red-bg text-status-red-fg', emptyDot: 'text-rose-300',
   },
   purple: {
-    bg: 'bg-purple-50/50',    border: 'border-purple-100/80',    dot: 'bg-purple-500',
-    label: 'text-purple-800', badge: 'bg-purple-100 text-purple-700', emptyDot: 'text-purple-300',
+    bg: 'bg-accent-tint-soft',    border: 'border-purple-100/80',    dot: 'bg-purple-500',
+    label: 'text-purple-800', badge: 'bg-accent-tint-soft text-accent-text', emptyDot: 'text-purple-300',
   },
 } satisfies Record<SubsectionVariant, object>;
 
@@ -100,12 +100,12 @@ type LogType = 'note' | 'change' | 'decision' | 'risk' | 'issue' | 'milestone' |
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const LOG_TYPES: Record<LogType, { label: string; Icon: any; color: string; bg: string; border: string; badgeBg: string }> = {
   note:      { label: 'Note',      Icon: ScrollText,       color: 'text-fg-500',   bg: 'bg-surf-app',    border: 'border-l-slate-300',   badgeBg: 'bg-surf-muted'   },
-  change:    { label: 'Change',    Icon: ArrowRightCircle, color: 'text-amber-600',   bg: 'bg-amber-50/70',    border: 'border-l-amber-400',   badgeBg: 'bg-amber-100'   },
-  decision:  { label: 'Decision',  Icon: CheckCircle2,     color: 'text-blue-600',    bg: 'bg-blue-50/70',     border: 'border-l-blue-400',    badgeBg: 'bg-blue-100'    },
-  risk:      { label: 'Risk',      Icon: AlertTriangle,    color: 'text-orange-600',  bg: 'bg-orange-50/70',   border: 'border-l-orange-400',  badgeBg: 'bg-orange-100'  },
-  issue:     { label: 'Issue',     Icon: Lightbulb,        color: 'text-red-600',     bg: 'bg-red-50/70',      border: 'border-l-red-400',     badgeBg: 'bg-red-100'     },
-  milestone: { label: 'Milestone', Icon: Star,             color: 'text-green-600',   bg: 'bg-green-50/70',    border: 'border-l-green-400',   badgeBg: 'bg-green-100'   },
-  update:    { label: 'Update',    Icon: Activity,         color: 'text-purple-600',  bg: 'bg-purple-50/70',   border: 'border-l-purple-400',  badgeBg: 'bg-purple-100'  },
+  change:    { label: 'Change',    Icon: ArrowRightCircle, color: 'text-status-amber-fg',   bg: 'bg-status-amber-bg',    border: 'border-l-amber-400',   badgeBg: 'bg-status-amber-bg'   },
+  decision:  { label: 'Decision',  Icon: CheckCircle2,     color: 'text-accent-text',    bg: 'bg-accent-tint-soft',     border: 'border-l-blue-400',    badgeBg: 'bg-accent-tint-soft'    },
+  risk:      { label: 'Risk',      Icon: AlertTriangle,    color: 'text-status-orange-fg',  bg: 'bg-status-orange-bg',   border: 'border-l-orange-400',  badgeBg: 'bg-status-orange-bg'  },
+  issue:     { label: 'Issue',     Icon: Lightbulb,        color: 'text-status-red-fg',     bg: 'bg-status-red-bg',      border: 'border-l-red-400',     badgeBg: 'bg-status-red-bg'     },
+  milestone: { label: 'Milestone', Icon: Star,             color: 'text-status-emerald-fg',   bg: 'bg-status-emerald-bg',    border: 'border-l-green-400',   badgeBg: 'bg-status-emerald-bg'   },
+  update:    { label: 'Update',    Icon: Activity,         color: 'text-accent-text',  bg: 'bg-accent-tint-soft',   border: 'border-l-purple-400',  badgeBg: 'bg-accent-tint-soft'  },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -115,18 +115,18 @@ function getInitials(name: string) {
 }
 
 const AVATAR_COLORS = [
-  'bg-violet-100 text-violet-700', 'bg-blue-100 text-blue-700',
-  'bg-amber-100 text-amber-700',   'bg-emerald-100 text-emerald-700',
-  'bg-rose-100 text-rose-700',     'bg-cyan-100 text-cyan-700',
+  'bg-accent-tint-soft text-accent-text', 'bg-accent-tint-soft text-accent-text',
+  'bg-status-amber-bg text-status-amber-fg',   'bg-status-emerald-bg text-status-emerald-fg',
+  'bg-status-red-bg text-status-red-fg',     'bg-cyan-100 text-cyan-700',
 ];
 
 const PIPELINE_ORDER = ['Pending', 'Estimating', 'Sent', 'Awarded', 'Lost'];
 const PIPELINE_COLORS: Record<string, string> = {
-  Pending:    'bg-blue-50   text-blue-700   border-blue-200',
-  Estimating: 'bg-orange-50 text-orange-700 border-orange-200',
+  Pending:    'bg-accent-tint-soft   text-accent-text   border-accent-tint-border',
+  Estimating: 'bg-status-orange-bg text-status-orange-fg border-status-orange-brd',
   Sent:       'bg-cyan-50   text-cyan-700   border-cyan-200',
-  Awarded:    'bg-green-50  text-green-700  border-green-200',
-  Lost:       'bg-red-50    text-red-600    border-red-200',
+  Awarded:    'bg-status-emerald-bg  text-status-emerald-fg  border-status-emerald-brd',
+  Lost:       'bg-status-red-bg    text-status-red-fg    border-status-red-brd',
 };
 
 function getLogText(comment: string): string {
@@ -291,7 +291,7 @@ function PersonalBucketSection({
                         </span>
                       )}
                       {isOverdue && (
-                        <span className="text-rose-600 font-medium">Overdue</span>
+                        <span className="text-status-red-fg font-medium">Overdue</span>
                       )}
                     </div>
                   ) : null}
@@ -308,11 +308,11 @@ function PersonalBucketSection({
 // ── Main component ────────────────────────────────────────────────────────────
 
 const QUOTE_STATUS_COLORS: Record<string, string> = {
-  'Awarded':    'bg-green-100 text-green-700 border-green-200',
-  'Pending':    'bg-blue-100 text-blue-700 border-blue-200',
-  'Estimating': 'bg-orange-100 text-orange-700 border-orange-200',
+  'Awarded':    'bg-status-emerald-bg text-status-emerald-fg border-status-emerald-brd',
+  'Pending':    'bg-accent-tint-soft text-accent-text border-accent-tint-border',
+  'Estimating': 'bg-status-orange-bg text-status-orange-fg border-status-orange-brd',
   'Sent':       'bg-cyan-100 text-cyan-700 border-cyan-200',
-  'Lost':       'bg-red-100 text-red-700 border-red-200',
+  'Lost':       'bg-status-red-bg text-status-red-fg border-status-red-brd',
   'Discarded':  'bg-surf-muted text-fg-600 border-border-soft',
   'Cancelled':  'bg-gray-100 text-gray-600 border-gray-200',
 };
@@ -887,40 +887,40 @@ export function HomePage() {
 
           {tasks.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-blue-200/60 shadow-sm">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-accent-tint-border shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
                 <span className="text-sm font-bold text-blue-800 tabular-nums">{inProgressAll}</span>
-                <span className="text-xs text-blue-600 font-medium hidden sm:inline">In Progress</span>
+                <span className="text-xs text-accent-text font-medium hidden sm:inline">In Progress</span>
               </div>
               {inReviewAll > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-purple-200/60 shadow-sm">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-accent-tint-border shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0" />
                   <span className="text-sm font-bold text-purple-800 tabular-nums">{inReviewAll}</span>
-                  <span className="text-xs text-purple-600 font-medium hidden sm:inline">In Review</span>
+                  <span className="text-xs text-accent-text font-medium hidden sm:inline">In Review</span>
                 </div>
               )}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-amber-200/60 shadow-sm">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-status-amber-brd shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
                 <span className="text-sm font-bold text-amber-800 tabular-nums">{pendingAll}</span>
-                <span className="text-xs text-amber-600 font-medium hidden sm:inline">To-do</span>
+                <span className="text-xs text-status-amber-fg font-medium hidden sm:inline">To-do</span>
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-emerald-200/60 shadow-sm">
-                <TrendingUp className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surf-card border border-status-emerald-brd shadow-sm">
+                <TrendingUp className="h-3.5 w-3.5 text-status-emerald-fg flex-shrink-0" />
                 <span className="text-sm font-bold text-emerald-800 tabular-nums">{doneAll}</span>
-                <span className="text-xs text-emerald-600 font-medium hidden sm:inline">Done</span>
+                <span className="text-xs text-status-emerald-fg font-medium hidden sm:inline">Done</span>
               </div>
               {overdueAll > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50/80 border border-red-300/70 shadow-sm">
-                  <AlertTriangle className="h-3.5 w-3.5 text-red-600 flex-shrink-0" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-status-red-bg border border-status-red-brd shadow-sm">
+                  <AlertTriangle className="h-3.5 w-3.5 text-status-red-fg flex-shrink-0" />
                   <span className="text-sm font-bold text-red-800 tabular-nums">{overdueAll}</span>
-                  <span className="text-xs text-red-600 font-medium hidden sm:inline">Overdue</span>
+                  <span className="text-xs text-status-red-fg font-medium hidden sm:inline">Overdue</span>
                 </div>
               )}
               {blockedAll > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50/80 border border-rose-300/70 shadow-sm">
-                  <Ban className="h-3.5 w-3.5 text-rose-600 flex-shrink-0" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-status-red-bg border border-status-red-brd shadow-sm">
+                  <Ban className="h-3.5 w-3.5 text-status-red-fg flex-shrink-0" />
                   <span className="text-sm font-bold text-rose-800 tabular-nums">{blockedAll}</span>
-                  <span className="text-xs text-rose-600 font-medium hidden sm:inline">Blocked</span>
+                  <span className="text-xs text-status-red-fg font-medium hidden sm:inline">Blocked</span>
                 </div>
               )}
             </div>
@@ -952,7 +952,7 @@ export function HomePage() {
               })}
             </div>
             <div className="ml-auto flex items-center gap-3 flex-shrink-0">
-              <Link to="/projects" className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors">
+              <Link to="/projects" className="flex items-center gap-1 text-xs text-blue-500 hover:text-accent-text font-medium transition-colors">
                 View all <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
@@ -976,7 +976,7 @@ export function HomePage() {
           </div>
           <button
             onClick={() => navigate('/projects')}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            className="flex items-center gap-1 text-sm text-accent-text hover:text-accent-text font-medium transition-colors"
           >
             View all
             <ArrowRight className="h-4 w-4" />
@@ -994,13 +994,13 @@ export function HomePage() {
               <div
                 key={q.id}
                 onClick={() => navigate(`/projects/${q.project_id}/quotations/${q.id}`)}
-                className={`group p-4 rounded-xl border border-border-soft hover:border-blue-400/60 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer transition-all bg-surf-card backdrop-blur-sm card-enter stagger-${Math.min(idx + 1, 12)}`}
+                className={`group p-4 rounded-xl border border-border-soft hover:border-accent-tint-border hover:shadow-lg hover:-translate-y-0.5 cursor-pointer transition-all bg-surf-card backdrop-blur-sm card-enter stagger-${Math.min(idx + 1, 12)}`}
               >
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="text-sm font-semibold text-fg-900 truncate flex-1 mr-2 leading-snug">
                     {q.name}
                   </h3>
-                  <ArrowRight className="h-3.5 w-3.5 text-fg-400 group-hover:text-blue-600 transition-colors flex-shrink-0 mt-0.5" />
+                  <ArrowRight className="h-3.5 w-3.5 text-fg-400 group-hover:text-accent-text transition-colors flex-shrink-0 mt-0.5" />
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${QUOTE_STATUS_COLORS[q.status] ?? 'bg-surf-muted text-fg-700 border-border-soft'}`}>
@@ -1030,19 +1030,17 @@ export function HomePage() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 items-start">
 
         {/* ── Tasks column ──────────────────────────────────────────────── */}
-        <div className={`glass-white overflow-hidden p-0 transition-colors duration-500 ${taskTab === 'planner' ? 'ring-1 ring-violet-200/50' : 'ring-1 ring-blue-100/40'}`}>
+        <div className={`glass-white overflow-hidden p-0 transition-colors duration-500 ${taskTab === 'planner' ? 'ring-1 ring-[color:var(--accent-tint-border)]' : 'ring-1 ring-[color:var(--accent-tint-border)]'}`}>
           {/* ── Title row + Mine/All toggle ───────────────────────────── */}
           <div className="flex items-center gap-2.5 px-5 pt-4 pb-3">
-            <div className={`p-1.5 rounded-lg transition-colors duration-500 ${taskTab === 'planner' ? 'bg-violet-100' : 'bg-blue-100'}`}>
-              <CheckSquare className={`h-4 w-4 transition-colors duration-500 ${taskTab === 'planner' ? 'text-violet-600' : 'text-blue-600'}`} />
+            <div className="p-1.5 rounded-lg transition-colors duration-500 bg-accent-tint-strong">
+              <CheckSquare className="h-4 w-4 transition-colors duration-500 text-accent-text" />
             </div>
             <h2 className="text-base font-semibold text-fg-900">Tasks</h2>
 
             {/* Mine / All toggle — applies to the active tab */}
             {member && (() => {
-              const activeAccent = taskTab === 'planner'
-                ? 'bg-violet-500 text-white shadow-sm'
-                : 'bg-blue-500 text-white shadow-sm';
+              const activeAccent = 'bg-accent-primary text-accent-on shadow-btn';
               const mineCount = taskTab === 'planner' ? myPersonalTasks.length : myTasks.length;
               const allCount  = taskTab === 'planner' ? allPersonalTasks.length : projectTasks.length;
               return (
@@ -1073,7 +1071,7 @@ export function HomePage() {
               onClick={() => switchTaskTab('projects')}
               className={`relative group flex items-center justify-center gap-2 px-4 py-4 text-sm font-semibold transition-all duration-300 ${
                 taskTab === 'projects'
-                  ? 'text-blue-700 bg-gradient-to-b from-blue-50/70 to-white'
+                  ? 'text-accent-text bg-accent-tint-soft'
                   : 'text-fg-400 hover:text-fg-600 hover:bg-surf-card'
               }`}
               aria-pressed={taskTab === 'projects'}
@@ -1082,7 +1080,7 @@ export function HomePage() {
               <span>Projects</span>
               {/* Animated underline indicator */}
               <span
-                className={`absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 rounded-t-full transition-all duration-300 ${
+                className={`absolute bottom-0 left-0 right-0 h-[3px] bg-accent-primary rounded-t-full transition-all duration-300 ${
                   taskTab === 'projects' ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-75'
                 }`}
               />
@@ -1093,7 +1091,7 @@ export function HomePage() {
               title={!member ? 'Sign in to use the planner' : undefined}
               className={`relative group flex items-center justify-center gap-2 px-4 py-4 text-sm font-semibold transition-all duration-300 ${
                 taskTab === 'planner'
-                  ? 'text-violet-700 bg-gradient-to-b from-violet-50/70 to-white'
+                  ? 'text-accent-text bg-accent-tint-soft'
                   : 'text-fg-400 hover:text-fg-600 hover:bg-surf-card'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
               aria-pressed={taskTab === 'planner'}
@@ -1102,7 +1100,7 @@ export function HomePage() {
               <span>Planner</span>
               {/* Animated underline indicator */}
               <span
-                className={`absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-400 via-violet-500 to-fuchsia-500 rounded-t-full transition-all duration-300 ${
+                className={`absolute bottom-0 left-0 right-0 h-[3px] bg-accent-primary rounded-t-full transition-all duration-300 ${
                   taskTab === 'planner' ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-75'
                 }`}
               />
@@ -1172,7 +1170,7 @@ export function HomePage() {
 
                   <button
                     onClick={() => setCreatingTask({ kind: 'project' })}
-                    className="ml-auto flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200/60 px-2.5 py-1 rounded-lg transition-all"
+                    className="ml-auto flex items-center gap-1 text-xs font-semibold text-accent-text hover:text-blue-800 bg-accent-tint-soft hover:bg-accent-tint-soft border border-accent-tint-border px-2.5 py-1 rounded-lg transition-all"
                   >
                     <Plus className="h-3 w-3" /> New Task
                   </button>
@@ -1429,7 +1427,7 @@ export function HomePage() {
                       onClick={handleMemberClick}
                       className={`flex items-center gap-3 px-2 py-2.5 -mx-2 rounded-xl cursor-pointer transition-all ${
                         isExpanded
-                          ? 'bg-blue-50/60 ring-1 ring-blue-200/50'
+                          ? 'bg-accent-tint-soft ring-1 ring-blue-200/50'
                           : 'hover:bg-surf-app'
                       }`}
                     >
@@ -1441,7 +1439,7 @@ export function HomePage() {
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="text-sm font-medium text-fg-700 truncate">{member.name.split(' ')[0]}</span>
                             {overdue > 0 && (
-                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded-full animate-pulse">
+                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-status-red-fg bg-status-red-bg px-1.5 py-0.5 rounded-full animate-pulse">
                                 <AlertTriangle className="h-2.5 w-2.5" />
                                 {overdue} overdue
                               </span>
@@ -1457,10 +1455,10 @@ export function HomePage() {
                           {pending > 0    && <div className="bg-amber-400 transition-all" style={{ width: pct(pending) }} />}
                         </div>
                         <div className="flex items-center gap-3 mt-1">
-                          {overdue > 0    && <span className="text-[10px] text-red-600 font-medium">{overdue} overdue</span>}
-                          {bk > 0         && <span className="text-[10px] text-rose-600 font-medium">{bk} blocked</span>}
-                          {inProgress > 0 && <span className="text-[10px] text-blue-600 font-medium">{inProgress} in progress</span>}
-                          {pending > 0    && <span className="text-[10px] text-amber-600 font-medium">{pending} pending</span>}
+                          {overdue > 0    && <span className="text-[10px] text-status-red-fg font-medium">{overdue} overdue</span>}
+                          {bk > 0         && <span className="text-[10px] text-status-red-fg font-medium">{bk} blocked</span>}
+                          {inProgress > 0 && <span className="text-[10px] text-accent-text font-medium">{inProgress} in progress</span>}
+                          {pending > 0    && <span className="text-[10px] text-status-amber-fg font-medium">{pending} pending</span>}
                         </div>
                       </div>
                       <ChevronDown className={`h-3.5 w-3.5 text-fg-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
@@ -1484,7 +1482,7 @@ export function HomePage() {
                                 task.status === 'in_review' ? 'bg-purple-500' :
                                 'bg-amber-400'
                               }`} />
-                              <span className="text-fg-700 truncate flex-1 group-hover:text-blue-700 transition-colors">{task.title}</span>
+                              <span className="text-fg-700 truncate flex-1 group-hover:text-accent-text transition-colors">{task.title}</span>
                               {task.due_date && (
                                 <span className={`text-[10px] tabular-nums flex-shrink-0 ${taskOverdue ? 'text-red-500 font-semibold' : 'text-fg-400'}`}>
                                   {format(new Date(task.due_date), 'MMM d')}
@@ -1512,8 +1510,8 @@ export function HomePage() {
           {/* Header */}
           {/* Header row */}
           <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border-soft">
-            <div className="p-1.5 rounded-lg bg-violet-100 flex-shrink-0">
-              <Activity className="h-4 w-4 text-violet-600" />
+            <div className="p-1.5 rounded-lg bg-accent-tint-soft flex-shrink-0">
+              <Activity className="h-4 w-4 text-accent-text" />
             </div>
             <h2 className="text-base font-semibold text-fg-900 flex-shrink-0">Feed</h2>
             {logs.length > 0 && (
@@ -1523,7 +1521,7 @@ export function HomePage() {
             )}
             <button
               onClick={() => setShowNewLogModal(true)}
-              className="flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 border border-violet-200/60 px-2.5 py-1 rounded-lg transition-all flex-shrink-0"
+              className="flex items-center gap-1 text-xs font-semibold text-accent-text hover:text-violet-800 bg-accent-tint-soft hover:bg-accent-tint-soft border border-accent-tint-border px-2.5 py-1 rounded-lg transition-all flex-shrink-0"
             >
               <Plus className="h-3 w-3" /> New Entry
             </button>
@@ -1557,7 +1555,7 @@ export function HomePage() {
                       <button
                         key={id}
                         onMouseDown={e => { e.preventDefault(); setFeedSearch(name); setFeedDropdownOpen(false); }}
-                        className="w-full text-left px-3 py-2 text-xs text-fg-700 hover:bg-violet-50 hover:text-violet-700 transition-colors truncate"
+                        className="w-full text-left px-3 py-2 text-xs text-fg-700 hover:bg-accent-tint-soft hover:text-accent-text transition-colors truncate"
                       >
                         {name}
                       </button>
@@ -1593,7 +1591,7 @@ export function HomePage() {
                       to={`/projects/${projectId}`}
                       className="inline-flex items-center gap-1.5 mb-3 group"
                     >
-                      <span className="text-sm font-semibold text-fg-700 group-hover:text-blue-600 transition-colors truncate max-w-[240px]">
+                      <span className="text-sm font-semibold text-fg-700 group-hover:text-accent-text transition-colors truncate max-w-[240px]">
                         {projectName}
                       </span>
                       <ExternalLink className="h-3 w-3 text-fg-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
@@ -1641,7 +1639,7 @@ export function HomePage() {
                     {extra > 0 && (
                       <Link
                         to={`/projects/${projectId}`}
-                        className="mt-2 flex items-center gap-1 text-[11px] text-blue-500 hover:text-blue-700 font-medium transition-colors pl-0.5"
+                        className="mt-2 flex items-center gap-1 text-[11px] text-blue-500 hover:text-accent-text font-medium transition-colors pl-0.5"
                       >
                         +{extra} more {extra === 1 ? 'entry' : 'entries'}
                         <ExternalLink className="h-3 w-3" />

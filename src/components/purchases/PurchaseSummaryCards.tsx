@@ -14,9 +14,9 @@ export function PurchaseSummaryCards({ items }: PurchaseSummaryCardsProps) {
 
   const cards = [
     { label: 'Estimated Total', value: formatCurrency(estimatedTotal), icon: DollarSign, color: 'text-fg-700', bg: 'bg-surf-app border-border-soft' },
-    { label: 'Pending', value: String(pendingCount), icon: Clock, color: 'text-amber-700', bg: 'bg-amber-50/80 border-amber-200/50' },
-    { label: 'In Warehouse', value: String(inWarehouseCount), icon: Warehouse, color: 'text-green-700', bg: 'bg-green-50/80 border-green-200/50' },
-    { label: 'Paid', value: String(paidCount), icon: CreditCard, color: 'text-blue-700', bg: 'bg-blue-50/80 border-blue-200/50' },
+    { label: 'Pending', value: String(pendingCount), icon: Clock, color: 'text-status-amber-fg', bg: 'bg-status-amber-bg border-status-amber-brd' },
+    { label: 'In Warehouse', value: String(inWarehouseCount), icon: Warehouse, color: 'text-status-emerald-fg', bg: 'bg-status-emerald-bg border-status-emerald-brd' },
+    { label: 'Paid', value: String(paidCount), icon: CreditCard, color: 'text-accent-text', bg: 'bg-accent-tint-soft border-accent-tint-border' },
   ];
 
   return (

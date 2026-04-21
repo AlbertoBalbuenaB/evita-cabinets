@@ -57,13 +57,13 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
         return {
           icon: TrendingUp,
           label: 'Price Recalculation',
-          color: 'bg-blue-100 text-blue-800 border-blue-200',
+          color: 'bg-accent-tint-soft text-blue-800 border-accent-tint-border',
         };
       case 'material_change':
         return {
           icon: Package,
           label: 'Material Change',
-          color: 'bg-purple-100 text-purple-800 border-purple-200',
+          color: 'bg-accent-tint-soft text-purple-800 border-accent-tint-border',
         };
       case 'manual_snapshot':
         return {
@@ -164,7 +164,7 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                 <div
                   key={version.id}
                   className={`bg-surf-card rounded-lg shadow-sm border-2 transition-all hover:shadow-md ${
-                    isFirst ? 'border-blue-300' : 'border-border-soft'
+                    isFirst ? 'border-accent-tint-border' : 'border-border-soft'
                   }`}
                 >
                   <div className="p-6">
@@ -179,7 +179,7 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                               {version.version_name}
                             </h3>
                             {isFirst && (
-                              <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                              <span className="px-2 py-0.5 bg-accent-tint-soft text-blue-800 text-xs font-medium rounded-full">
                                 Latest
                               </span>
                             )}
@@ -300,8 +300,8 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                         className={`rounded-lg border p-4 ${
                           hasChange
                             ? difference > 0
-                              ? 'bg-red-50 border-red-200'
-                              : 'bg-green-50 border-green-200'
+                              ? 'bg-status-red-bg border-status-red-brd'
+                              : 'bg-status-emerald-bg border-status-emerald-brd'
                             : 'bg-surf-app border-border-soft'
                         }`}
                       >
@@ -314,10 +314,10 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                           </div>
                           <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
                             detail.change_type === 'both'
-                              ? 'bg-purple-100 text-purple-800'
+                              ? 'bg-accent-tint-soft text-purple-800'
                               : detail.change_type === 'material_change'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-green-100 text-green-800'
+                              ? 'bg-accent-tint-soft text-blue-800'
+                              : 'bg-status-emerald-bg text-green-800'
                           }`}>
                             {detail.change_type === 'both' ? 'Material + Price' :
                              detail.change_type === 'material_change' ? 'Material Change' : 'Price Update'}
@@ -342,13 +342,13 @@ export function ProjectVersionHistory({ projectId, projectName, onBack }: Projec
                             <div className="flex items-center space-x-2">
                               {hasChange && (
                                 difference > 0 ? (
-                                  <TrendingUp className="h-4 w-4 text-red-600" />
+                                  <TrendingUp className="h-4 w-4 text-status-red-fg" />
                                 ) : (
-                                  <TrendingDown className="h-4 w-4 text-green-600" />
+                                  <TrendingDown className="h-4 w-4 text-status-emerald-fg" />
                                 )
                               )}
                               <span className={`font-semibold ${
-                                difference > 0 ? 'text-red-600' : difference < 0 ? 'text-green-600' : 'text-fg-600'
+                                difference > 0 ? 'text-status-red-fg' : difference < 0 ? 'text-status-emerald-fg' : 'text-fg-600'
                               }`}>
                                 {difference > 0 ? '+' : ''}{formatCurrency(difference)}
                               </span>

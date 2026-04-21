@@ -32,18 +32,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       return (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 my-4">
+        <div className="bg-status-red-bg border border-status-red-brd rounded-lg p-6 my-4">
           <div className="flex items-start space-x-3">
-            <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-6 w-6 text-status-red-fg flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-red-900 mb-2">
                 Something went wrong
               </h3>
-              <p className="text-sm text-red-700 mb-3">
+              <p className="text-sm text-status-red-fg mb-3">
                 We encountered an error while displaying this content. Please try refreshing the page.
               </p>
               {this.state.error && (
-                <details className="text-xs text-red-600 bg-red-100 p-2 rounded">
+                <details className="text-xs text-status-red-fg bg-status-red-bg p-2 rounded">
                   <summary className="cursor-pointer font-medium mb-1">Error details</summary>
                   <pre className="whitespace-pre-wrap mt-2 overflow-auto max-h-48">
                     {this.state.error.message}

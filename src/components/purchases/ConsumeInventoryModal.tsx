@@ -62,7 +62,7 @@ export function ConsumeInventoryModal({ item, projectName, onConfirm, onCancel }
     <Modal isOpen onClose={onCancel} title="Consume from Inventory" size="sm">
       <div className="space-y-4">
         {error && (
-          <div className="rounded-lg bg-red-50 border border-red-200/60 px-4 py-3 text-sm text-red-700">{error}</div>
+          <div className="rounded-lg bg-status-red-bg border border-status-red-brd px-4 py-3 text-sm text-status-red-fg">{error}</div>
         )}
 
         <div className="space-y-3 text-sm">
@@ -87,9 +87,9 @@ export function ConsumeInventoryModal({ item, projectName, onConfirm, onCancel }
         </div>
 
         {exceedsStock && (
-          <div className="flex items-start gap-2 px-4 py-3 rounded-lg bg-amber-50 border border-amber-200/60">
+          <div className="flex items-start gap-2 px-4 py-3 rounded-lg bg-status-amber-bg border border-status-amber-brd">
             <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-amber-700">
+            <p className="text-sm text-status-amber-fg">
               Quantity exceeds current stock ({stockQty} available). Stock will be set to 0.
             </p>
           </div>

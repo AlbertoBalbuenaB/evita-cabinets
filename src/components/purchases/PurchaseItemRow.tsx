@@ -31,12 +31,12 @@ interface PurchaseItemRowProps {
 
 const STATUS_STYLES: Record<string, string> = {
   Ordered: 'bg-surf-muted text-fg-600',
-  Paid: 'bg-blue-100 text-blue-700',
-  'In Transit': 'bg-amber-100 text-amber-700',
-  'In Warehouse': 'bg-green-100 text-green-700',
-  Return: 'bg-red-100 text-red-700',
-  Delay: 'bg-orange-100 text-orange-700',
-  Pending: 'bg-yellow-100 text-yellow-700',
+  Paid: 'bg-accent-tint-soft text-accent-text',
+  'In Transit': 'bg-status-amber-bg text-status-amber-fg',
+  'In Warehouse': 'bg-status-emerald-bg text-status-emerald-fg',
+  Return: 'bg-status-red-bg text-status-red-fg',
+  Delay: 'bg-status-orange-bg text-status-orange-fg',
+  Pending: 'bg-status-amber-bg text-status-amber-fg',
 };
 
 const PRIORITY_DOT: Record<string, string> = {
@@ -208,7 +208,7 @@ export function PurchaseItemRow({
                   e.preventDefault();
                   handleSelectPriceListItem(pli);
                 }}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors flex items-center justify-between"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-accent-tint-soft transition-colors flex items-center justify-between"
               >
                 <span className="flex-1 truncate pr-2">{pli.concept_description}</span>
                 <span className="text-xs text-fg-400 flex-shrink-0">{pli.unit}</span>
@@ -243,7 +243,7 @@ export function PurchaseItemRow({
           onChange={(e) => handleConceptChange(e.target.value)}
           onFocus={() => conceptSearch && setShowDropdown(true)}
           onKeyDown={(e) => { if (e.key === 'Escape') setShowDropdown(false); }}
-          className="w-full px-2 py-1.5 text-sm border border-transparent hover:border-border-soft focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
+          className="w-full px-2 py-1.5 text-sm border border-transparent hover:border-border-soft focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
           placeholder="Type to search items..."
         />
         {dropdownPortal}
@@ -258,7 +258,7 @@ export function PurchaseItemRow({
           value={localQty}
           onChange={(e) => setLocalQty(parseFloat(e.target.value) || 1)}
           onBlur={() => handleFieldChange('quantity', localQty)}
-          className="w-full px-1.5 py-1.5 text-sm text-right tabular-nums border border-transparent hover:border-border-soft focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
+          className="w-full px-1.5 py-1.5 text-sm text-right tabular-nums border border-transparent hover:border-border-soft focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
         />
       </td>
 
@@ -267,7 +267,7 @@ export function PurchaseItemRow({
         {hasLinkedItem ? (
           <span
             className={`text-sm tabular-nums font-medium ${
-              stockQty >= item.quantity ? 'text-green-600' : stockQty > 0 ? 'text-amber-600' : 'text-red-500'
+              stockQty >= item.quantity ? 'text-status-emerald-fg' : stockQty > 0 ? 'text-status-amber-fg' : 'text-red-500'
             }`}
             title="Current inventory stock"
           >
@@ -284,7 +284,7 @@ export function PurchaseItemRow({
           toBuy! > 0 ? (
             <span className="text-sm tabular-nums font-medium text-red-500">{toBuy}</span>
           ) : (
-            <span className="text-sm text-green-600 font-medium">&#10003;</span>
+            <span className="text-sm text-status-emerald-fg font-medium">&#10003;</span>
           )
         ) : (
           <span className="text-fg-300">—</span>
@@ -299,7 +299,7 @@ export function PurchaseItemRow({
           onChange={(e) => setLocalUnit(e.target.value)}
           onBlur={() => handleFieldChange('unit', localUnit)}
           title={localUnit}
-          className="w-full px-1.5 py-1.5 text-sm border border-transparent hover:border-border-soft focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
+          className="w-full px-1.5 py-1.5 text-sm border border-transparent hover:border-border-soft focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
         />
       </td>
 
@@ -313,7 +313,7 @@ export function PurchaseItemRow({
             value={localPrice}
             onChange={(e) => setLocalPrice(parseFloat(e.target.value) || 0)}
             onBlur={() => handleFieldChange('price', localPrice)}
-            className="w-full px-1.5 py-1.5 text-sm text-right tabular-nums border border-transparent hover:border-border-soft focus:border-blue-300 focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
+            className="w-full px-1.5 py-1.5 text-sm text-right tabular-nums border border-transparent hover:border-border-soft focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 rounded-md outline-none transition bg-transparent"
           />
           {isPriceOverridden && (
             <span title={`Manually overridden (list price: ${formatCurrency(listPrice!)})`}>
@@ -334,7 +334,7 @@ export function PurchaseItemRow({
           <select
             value={item.priority ?? 'Medium'}
             onChange={(e) => handleImmediateUpdate({ priority: e.target.value })}
-            className="w-full appearance-none pl-5 pr-2 py-1.5 text-xs font-medium border border-transparent hover:border-border-soft focus:border-blue-300 rounded-md outline-none transition bg-transparent cursor-pointer"
+            className="w-full appearance-none pl-5 pr-2 py-1.5 text-xs font-medium border border-transparent hover:border-border-soft focus:border-accent-tint-border rounded-md outline-none transition bg-transparent cursor-pointer"
           >
             <option value="Urgent">Urgent</option>
             <option value="High">High</option>
@@ -368,7 +368,7 @@ export function PurchaseItemRow({
           type="date"
           defaultValue={item.deadline ?? ''}
           onChange={(e) => handleImmediateUpdate({ deadline: e.target.value || null })}
-          className="w-full px-1 py-1.5 text-xs border border-transparent hover:border-border-soft focus:border-blue-300 rounded-md outline-none transition bg-transparent"
+          className="w-full px-1 py-1.5 text-xs border border-transparent hover:border-border-soft focus:border-accent-tint-border rounded-md outline-none transition bg-transparent"
         />
       </td>
 
@@ -377,7 +377,7 @@ export function PurchaseItemRow({
         <div className="flex items-center gap-0.5">
           <button
             onClick={() => onOpenDetail(item)}
-            className="p-1.5 text-fg-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
+            className="p-1.5 text-fg-400 hover:text-blue-500 hover:bg-accent-tint-soft rounded-md transition-colors"
             title="More info (assigned, provider, comments)"
           >
             <Info className="h-3.5 w-3.5" />
@@ -385,7 +385,7 @@ export function PurchaseItemRow({
           {canConsume && (
             <button
               onClick={() => onConsumeInventory(item)}
-              className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
+              className="p-1.5 text-blue-500 hover:bg-accent-tint-soft rounded-md transition-colors"
               title="Consume Inventory"
             >
               <Package className="h-3.5 w-3.5" />
@@ -395,7 +395,7 @@ export function PurchaseItemRow({
             <div className="flex items-center gap-0.5">
               <button
                 onClick={() => onDelete(item.id)}
-                className="px-1.5 py-0.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded transition-colors"
+                className="px-1.5 py-0.5 text-xs font-medium text-status-red-fg bg-status-red-bg hover:bg-status-red-bg rounded transition-colors"
               >
                 Yes
               </button>
@@ -409,7 +409,7 @@ export function PurchaseItemRow({
           ) : (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="p-1.5 text-fg-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+              className="p-1.5 text-fg-400 hover:text-red-500 hover:bg-status-red-bg rounded-md transition-colors opacity-0 group-hover:opacity-100"
               title="Delete"
             >
               <Trash2 className="h-3.5 w-3.5" />

@@ -107,7 +107,7 @@ export function CADViewer({ board, unit }: Props) {
   const handleMouseLeave = () => { setIsDragging(false); setHoverIdx(null); };
 
   const ToolBtn = ({
-    icon: Icon, active, onClick, title, activeColor = 'text-blue-600 bg-blue-50',
+    icon: Icon, active, onClick, title, activeColor = 'text-accent-text bg-accent-tint-soft',
   }: { icon: React.ComponentType<{ className?: string }>; active?: boolean; onClick: () => void; title: string; activeColor?: string }) => (
     <button onClick={onClick} title={title}
       className={`p-1.5 rounded transition-colors ${active ? activeColor : 'text-fg-500 hover:bg-surf-muted'}`}>
@@ -139,13 +139,13 @@ export function CADViewer({ board, unit }: Props) {
         <ToolBtn icon={Ruler}    active={showDimensions} onClick={() => setShowDimensions(v => !v)} title="Show dimensions" />
         <ToolBtn icon={Tag}      active={showLabels}     onClick={() => setShowLabels(v => !v)}     title="Show labels" />
         <ToolBtn icon={TreePine}  active={showGrain}      onClick={() => setShowGrain(v => !v)}      title="Show grain"
-          activeColor="text-amber-600 bg-amber-50" />
+          activeColor="text-status-amber-fg bg-status-amber-bg" />
         <ToolBtn icon={Square}   active={showEdgeBand}  onClick={() => setShowEdgeBand(v => !v)}  title="Show edge band"
           activeColor="text-fg-800 bg-surf-muted" />
         <ToolBtn icon={BoxSelect} active={showOffcuts}   onClick={() => setShowOffcuts(v => !v)}    title="Show offcuts"
-          activeColor="text-green-600 bg-green-50" />
+          activeColor="text-status-emerald-fg bg-status-emerald-bg" />
         <ToolBtn icon={Disc}     active={showKerf}       onClick={() => setShowKerf(v => !v)}       title="Show kerf"
-          activeColor="text-red-500 bg-red-50" />
+          activeColor="text-red-500 bg-status-red-bg" />
         <div className="w-px h-4 bg-surf-muted mx-1" />
         <ToolBtn icon={Minus} onClick={() => setLabelScale(Math.round((labelScale - 0.1) * 10) / 10)} title="Decrease text size" />
         <span className="text-xs text-fg-400 px-0.5 tabular-nums select-none w-8 text-center">{labelScale.toFixed(1)}x</span>

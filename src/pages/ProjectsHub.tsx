@@ -169,18 +169,18 @@ export function ProjectsHub() {
           {filtered.map((project, idx) => {
             const latest = project.latestQuotation;
             const statusColors: Record<string, string> = {
-              Awarded: 'bg-green-50 text-green-700 border-green-200/50',
-              Pending: 'bg-blue-50 text-blue-700 border-blue-200/50',
-              Estimating: 'bg-amber-50 text-amber-700 border-amber-200/50',
+              Awarded: 'bg-status-emerald-bg text-status-emerald-fg border-status-emerald-brd',
+              Pending: 'bg-accent-tint-soft text-accent-text border-accent-tint-border',
+              Estimating: 'bg-status-amber-bg text-status-amber-fg border-status-amber-brd',
               Sent: 'bg-cyan-50 text-cyan-700 border-cyan-200/50',
-              Lost: 'bg-red-50 text-red-700 border-red-200/50',
+              Lost: 'bg-status-red-bg text-status-red-fg border-status-red-brd',
             };
 
             return (
               <div
                 key={project.id}
                 onClick={() => navigate(`/projects/${project.id}`)}
-                className={`glass-white p-0 overflow-hidden cursor-pointer group hover:shadow-lg hover:border-blue-300/60 hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
+                className={`glass-white p-0 overflow-hidden cursor-pointer group hover:shadow-lg hover:border-accent-tint-border hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
               >
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-2 mb-2">
@@ -207,7 +207,7 @@ export function ProjectsHub() {
 
                   <div className="flex items-center gap-2 flex-wrap">
                     {project.project_type && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/50">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-accent-tint-soft text-accent-text border border-accent-tint-border">
                         {project.project_type}
                       </span>
                     )}

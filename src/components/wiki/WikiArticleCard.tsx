@@ -16,7 +16,7 @@ export function WikiArticleCard({ article, category }: WikiArticleCardProps) {
   return (
     <Link
       to={`/wiki/${article.slug}`}
-      className="glass-white rounded-xl p-4 block transition hover:bg-violet-50/30 hover:shadow-md card-enter"
+      className="glass-white rounded-xl p-4 block transition hover:bg-accent-tint-soft hover:shadow-md card-enter"
     >
       <div className="flex items-start gap-2 mb-2">
         <FileText className="w-4 h-4 text-violet-500 flex-shrink-0 mt-0.5" />

@@ -53,12 +53,12 @@ const CATEGORY_ORDER: BOMCategory[] = [
 ];
 
 const CATEGORY_COLORS: Record<BOMCategory, string> = {
-  'Box Construction': 'bg-amber-50 text-amber-800',
+  'Box Construction': 'bg-status-amber-bg text-amber-800',
   'Doors & Fronts':   'bg-sky-50 text-sky-800',
-  'Edgeband':         'bg-purple-50 text-purple-800',
+  'Edgeband':         'bg-accent-tint-soft text-purple-800',
   'Hardware':         'bg-surf-muted text-fg-700',
-  'Accessories':      'bg-green-50 text-green-800',
-  'Items':            'bg-orange-50 text-orange-800',
+  'Accessories':      'bg-status-emerald-bg text-green-800',
+  'Items':            'bg-status-orange-bg text-orange-800',
   'Countertops':      'bg-teal-50 text-teal-800',
   'Prefab Cabinets':  'bg-accent-tint-soft text-indigo-800',
 };

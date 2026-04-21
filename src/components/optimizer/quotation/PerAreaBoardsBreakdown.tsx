@@ -28,7 +28,7 @@ export function PerAreaBoardsBreakdown({ rows }: Props) {
     return (
       <div className="rounded-lg border border-border-soft bg-surf-card p-4">
         <div className="flex items-center gap-1.5 mb-2">
-          <Layers className="h-3.5 w-3.5 text-blue-600" />
+          <Layers className="h-3.5 w-3.5 text-accent-text" />
           <h3 className="text-xs font-semibold text-fg-800 uppercase tracking-wide">Cost by Area</h3>
         </div>
         <p className="text-xs text-fg-400 italic">No areas to display. Build and run the optimizer first.</p>
@@ -51,7 +51,7 @@ export function PerAreaBoardsBreakdown({ rows }: Props) {
         className="flex items-center gap-1.5 px-3 py-2 border-b border-border-soft"
         title="Per-area material cost allocated from the optimizer run. Used by the MXN and USD quotation PDFs when pricing method = Optimizer."
       >
-        <Layers className="h-3.5 w-3.5 text-blue-600" />
+        <Layers className="h-3.5 w-3.5 text-accent-text" />
         <h3 className="text-xs font-semibold text-fg-800 uppercase tracking-wide">Cost by Area</h3>
       </div>
       <div className="overflow-x-auto">

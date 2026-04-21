@@ -198,13 +198,13 @@ export function MaterialPriceUpdateModal({
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <RefreshCw className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-4" />
+            <RefreshCw className="h-8 w-8 text-accent-text animate-spin mx-auto mb-4" />
             <p className="text-fg-600">Loading project data...</p>
           </div>
         </div>
       ) : updating ? (
         <div className="text-center py-12">
-          <RefreshCw className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <RefreshCw className="h-12 w-12 text-accent-text animate-spin mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-fg-900 mb-2">Recalculating Prices...</h3>
           <p className="text-fg-600 mb-4">{updateProgress.message}</p>
           {updateProgress.total > 0 && (
@@ -226,7 +226,7 @@ export function MaterialPriceUpdateModal({
           <div className="text-center py-6">
             {updateResult.updated > 0 && updateResult.errors.length === 0 ? (
               <>
-                <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                <CheckCircle className="h-12 w-12 text-status-emerald-fg mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-fg-900 mb-2">Prices Recalculated Successfully</h3>
                 <p className="text-fg-600">
                   Updated {updateResult.updated} cabinet{updateResult.updated !== 1 ? 's' : ''} with current price list values.
@@ -234,13 +234,13 @@ export function MaterialPriceUpdateModal({
               </>
             ) : (
               <>
-                <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+                <AlertCircle className="h-12 w-12 text-status-red-fg mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-fg-900 mb-2">Recalculation Completed with Errors</h3>
                 <p className="text-fg-600 mb-4">
                   Successfully updated: {updateResult.updated} cabinet{updateResult.updated !== 1 ? 's' : ''}
                 </p>
                 {updateResult.errors.length > 0 && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-left max-w-md mx-auto">
+                  <div className="bg-status-red-bg border border-status-red-brd rounded-lg p-4 text-left max-w-md mx-auto">
                     <h4 className="font-semibold text-red-900 mb-2">Errors:</h4>
                     <ul className="text-sm text-red-800 space-y-1">
                       {updateResult.errors.slice(0, 5).map((error, idx) => (
@@ -271,7 +271,7 @@ export function MaterialPriceUpdateModal({
                       </div>
                       <div className="text-right">
                         <div className={`text-lg font-bold ${
-                          change.difference >= 0 ? 'text-red-600' : 'text-green-600'
+                          change.difference >= 0 ? 'text-status-red-fg' : 'text-status-emerald-fg'
                         }`}>
                           {change.difference >= 0 ? '+' : ''}{formatCurrency(change.difference)}
                         </div>
@@ -290,7 +290,7 @@ export function MaterialPriceUpdateModal({
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold text-fg-900">Total Project Change:</span>
                   <span className={`text-2xl font-bold ${
-                    updateResult.totalDifference >= 0 ? 'text-red-600' : 'text-green-600'
+                    updateResult.totalDifference >= 0 ? 'text-status-red-fg' : 'text-status-emerald-fg'
                   }`}>
                     {updateResult.totalDifference >= 0 ? '+' : ''}{formatCurrency(updateResult.totalDifference)}
                   </span>
@@ -305,8 +305,8 @@ export function MaterialPriceUpdateModal({
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start">
-            <Info className="h-5 w-5 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4 flex items-start">
+            <Info className="h-5 w-5 text-accent-text mr-3 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <h4 className="font-semibold text-blue-900 mb-1">What does this do?</h4>
               <p className="text-sm text-blue-800">
@@ -326,7 +326,7 @@ export function MaterialPriceUpdateModal({
                   name="scope"
                   checked={scope === 'all'}
                   onChange={() => setScope('all')}
-                  className="h-4 w-4 text-blue-600 border-border-solid focus-visible:ring-focus mt-0.5"
+                  className="h-4 w-4 text-accent-text border-border-solid focus-visible:ring-focus mt-0.5"
                 />
                 <div className="ml-3 flex-1">
                   <div className="font-medium text-fg-900">All Areas in Project</div>
@@ -342,7 +342,7 @@ export function MaterialPriceUpdateModal({
                   name="scope"
                   checked={scope === 'area'}
                   onChange={() => setScope('area')}
-                  className="h-4 w-4 text-blue-600 border-border-solid focus-visible:ring-focus mt-0.5"
+                  className="h-4 w-4 text-accent-text border-border-solid focus-visible:ring-focus mt-0.5"
                 />
                 <div className="ml-3 flex-1">
                   <div className="font-medium text-fg-900">Specific Area</div>
@@ -404,7 +404,7 @@ export function MaterialPriceUpdateModal({
               id="confirm"
               checked={confirmed}
               onChange={(e) => setConfirmed(e.target.checked)}
-              className="h-4 w-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus mt-1"
+              className="h-4 w-4 text-accent-text border-border-solid rounded focus-visible:ring-focus mt-1"
             />
             <label htmlFor="confirm" className="ml-2 text-sm text-fg-700">
               I understand this will recalculate all costs using current price list values.

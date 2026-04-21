@@ -112,7 +112,7 @@ export function KbHub() {
               {needsEnrichmentCount > 0 && (
                 <>
                   <span>·</span>
-                  <span className="inline-flex items-center gap-1 text-amber-700">
+                  <span className="inline-flex items-center gap-1 text-status-amber-fg">
                     <AlertCircle className="w-3 h-3" /> {needsEnrichmentCount} necesitan enriquecimiento
                   </span>
                 </>
@@ -154,7 +154,7 @@ export function KbHub() {
       )}
 
       {error && (
-        <div className="glass-white rounded-xl p-4 border border-red-200/70 text-sm text-red-700">
+        <div className="glass-white rounded-xl p-4 border border-status-red-brd text-sm text-status-red-fg">
           Error: {error}
         </div>
       )}

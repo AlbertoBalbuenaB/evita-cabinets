@@ -27,7 +27,7 @@ function highlightMatch(text: string, query: string) {
     <>
       {parts.map((part, i) =>
         regex.test(part) ? (
-          <mark key={i} className="bg-yellow-100 text-yellow-800 rounded-sm px-0.5">
+          <mark key={i} className="bg-status-amber-bg text-yellow-800 rounded-sm px-0.5">
             {part}
           </mark>
         ) : (
@@ -43,25 +43,25 @@ const CATEGORY_CONFIG = {
     label: 'Projects',
     icon: FolderOpen,
     iconColor: 'text-blue-500',
-    bgColor: 'bg-blue-50',
+    bgColor: 'bg-accent-tint-soft',
   },
   quotations: {
     label: 'Quotations',
     icon: FileText,
     iconColor: 'text-emerald-500',
-    bgColor: 'bg-emerald-50',
+    bgColor: 'bg-status-emerald-bg',
   },
   cabinets: {
     label: 'Cabinets',
     icon: Package,
     iconColor: 'text-violet-500',
-    bgColor: 'bg-violet-50',
+    bgColor: 'bg-accent-tint-soft',
   },
   priceItems: {
     label: 'Price Items',
     icon: DollarSign,
     iconColor: 'text-amber-500',
-    bgColor: 'bg-amber-50',
+    bgColor: 'bg-status-amber-bg',
   },
   kbEntries: {
     label: 'Knowledge Base',
@@ -79,7 +79,7 @@ const CATEGORY_CONFIG = {
     label: 'Wiki',
     icon: Library,
     iconColor: 'text-violet-500',
-    bgColor: 'bg-violet-50',
+    bgColor: 'bg-accent-tint-soft',
   },
 } as const;
 
@@ -268,7 +268,7 @@ export function GlobalSearch({ open, onClose }: GlobalSearchProps) {
                         onMouseEnter={() => setActiveIndex(flatIdx)}
                         aria-selected={isActive}
                         className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                          isActive ? 'bg-blue-50' : 'hover:bg-surf-app'
+                          isActive ? 'bg-accent-tint-soft' : 'hover:bg-surf-app'
                         }`}
                       >
                         {/* Icon */}
@@ -280,7 +280,7 @@ export function GlobalSearch({ open, onClose }: GlobalSearchProps) {
 
                         {/* Text */}
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium truncate ${isActive ? 'text-blue-700' : 'text-fg-800'}`}>
+                          <p className={`text-sm font-medium truncate ${isActive ? 'text-accent-text' : 'text-fg-800'}`}>
                             {highlightMatch(result.title, query)}
                           </p>
                           {result.subtitle && (

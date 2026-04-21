@@ -114,7 +114,7 @@ export function SaveSessionModal({ isOpen, onClose, file, defaultProjectId, lock
             <p className="text-[10px] text-fg-400 mt-1">Locked to the project you opened from.</p>
           )}
         </div>
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-status-red-fg">{error}</p>}
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="ghost" size="sm" onClick={onClose} disabled={saving}>Cancel</Button>
           <Button variant="primary" size="sm" onClick={handleSubmit} disabled={saving || !name.trim()}>

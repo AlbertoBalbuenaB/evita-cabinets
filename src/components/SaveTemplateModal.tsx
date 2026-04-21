@@ -69,7 +69,7 @@ export function SaveTemplateModal({
     <Modal isOpen={isOpen} onClose={handleClose} title="Save as Template" size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="bg-status-red-bg border border-status-red-brd rounded-lg p-3">
             <p className="text-sm text-red-800">{error}</p>
           </div>
         )}
@@ -115,7 +115,7 @@ export function SaveTemplateModal({
           </select>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3">
           <p className="text-sm text-blue-800">
             This cabinet configuration will be saved as a reusable template. You can apply it to any
             area in any project. The quantity will be set when you load the template.

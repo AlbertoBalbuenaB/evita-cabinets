@@ -67,10 +67,10 @@ function CompactAutocomplete({ options, value, onChange, placeholder, className 
       {open ? (
         <input ref={inputRef} value={search} onChange={e => setSearch(e.target.value)} onKeyDown={handleKey}
           placeholder="Search..." onClick={e => e.stopPropagation()}
-          className="w-full text-sm border border-blue-400 bg-surf-card rounded-md px-2.5 py-1.5 outline-none" />
+          className="w-full text-sm border border-accent-tint-border bg-surf-card rounded-md px-2.5 py-1.5 outline-none" />
       ) : (
         <button onClick={() => setOpen(true)}
-          className="w-full text-sm text-left text-fg-600 truncate cursor-pointer hover:text-blue-600 py-1">
+          className="w-full text-sm text-left text-fg-600 truncate cursor-pointer hover:text-accent-text py-1">
           {selected?.label || placeholder || 'Select...'}
         </button>
       )}
@@ -80,7 +80,7 @@ function CompactAutocomplete({ options, value, onChange, placeholder, className 
           <div ref={listRef}>
             {filtered.length > 0 ? filtered.map((o, i) => (
               <div key={o.value} onClick={() => { onChange(o.value); setOpen(false); setSearch(''); }}
-                className={`px-3 py-1.5 text-sm cursor-pointer truncate ${i === hlIdx ? 'bg-blue-50 text-blue-700' : 'hover:bg-surf-app'} ${value === o.value ? 'font-semibold' : ''}`}>
+                className={`px-3 py-1.5 text-sm cursor-pointer truncate ${i === hlIdx ? 'bg-accent-tint-soft text-accent-text' : 'hover:bg-surf-app'} ${value === o.value ? 'font-semibold' : ''}`}>
                 {o.label}
               </div>
             )) : (
@@ -368,7 +368,7 @@ export function OptimizerSidebar() {
 
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={store.trimIncludesKerf} onChange={e => store.setTrimIncludesKerf(e.target.checked)}
-                    className="w-3.5 h-3.5 rounded border-border-solid text-blue-600" />
+                    className="w-3.5 h-3.5 rounded border-border-solid text-accent-text" />
                   <span className="text-xs text-fg-500">Include kerf in board trim</span>
                 </label>
 
@@ -384,7 +384,7 @@ export function OptimizerSidebar() {
                           value={mode}
                           checked={store.engineMode === mode}
                           onChange={() => store.setEngineMode(mode)}
-                          className="border-border-solid text-blue-600"
+                          className="border-border-solid text-accent-text"
                         />
                         <span className="text-xs text-fg-500">
                           {mode === 'guillotine' ? 'Guillotine only (panel saw)' : 'Both engines (+ MaxRect)'}
@@ -410,7 +410,7 @@ export function OptimizerSidebar() {
                           value={val}
                           checked={store.objective === val}
                           onChange={() => store.setObjective(val)}
-                          className="border-border-solid text-blue-600"
+                          className="border-border-solid text-accent-text"
                         />
                         <span className="text-xs text-fg-500">{label}</span>
                       </label>
@@ -497,7 +497,7 @@ export function OptimizerSidebar() {
           <ChevronDown className={`h-3.5 w-3.5 text-fg-400 transition-transform duration-200 ${sidebarOpen ? '-rotate-90' : 'rotate-90'}`} />
         </button>
         {sidebarOpen && (
-          <div className="flex-1 w-5 cursor-col-resize hover:bg-blue-100 active:bg-blue-200 transition-colors"
+          <div className="flex-1 w-5 cursor-col-resize hover:bg-accent-tint-soft active:bg-blue-200 transition-colors"
             onMouseDown={e => { dragRef.current = { startX: e.clientX, startW: sidebarW }; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; }} />
         )}
       </div>
@@ -507,7 +507,7 @@ export function OptimizerSidebar() {
 
       <Section icon={LayoutList} title="Parts">
         {/* Add piece form */}
-        <div className="px-5 py-4 bg-blue-50/30 border-b border-border-soft space-y-2">
+        <div className="px-5 py-4 bg-accent-tint-soft border-b border-border-soft space-y-2">
           {/* Row 1: dimensions + name */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 items-end">
             <div>
@@ -557,7 +557,7 @@ export function OptimizerSidebar() {
                 <button type="button" onClick={() => setPVeta(v => v === 'none' ? 'horizontal' : v === 'horizontal' ? 'vertical' : 'none')}
                   title={`Grain: ${pVeta} — click to cycle`}
                   className={`w-10 h-[38px] rounded-lg text-sm font-bold flex items-center justify-center transition-all border
-                    ${pVeta === 'none' ? 'border-border-soft bg-surf-card text-fg-300' : 'border-amber-300 bg-amber-50 text-amber-700'}`}>
+                    ${pVeta === 'none' ? 'border-border-soft bg-surf-card text-fg-300' : 'border-status-amber-brd bg-status-amber-bg text-status-amber-fg'}`}>
                   {pVeta === 'none' ? '—' : pVeta === 'horizontal' ? '↔' : '↕'}
                 </button>
               </div>
@@ -594,9 +594,9 @@ export function OptimizerSidebar() {
                   <Fragment key={`${area}|||${material}`}>
                     {/* Area group header */}
                     {(gi === 0 || area !== groupedPieces[gi - 1].area) && (
-                      <tr className="bg-blue-50/40">
+                      <tr className="bg-accent-tint-soft">
                         <td colSpan={13} className="py-1.5 px-4">
-                          <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">{area === '—' ? 'Unassigned' : area}</span>
+                          <span className="text-xs font-semibold text-accent-text uppercase tracking-wide">{area === '—' ? 'Unassigned' : area}</span>
                         </td>
                       </tr>
                     )}
@@ -627,7 +627,7 @@ export function OptimizerSidebar() {
                           store.updatePiece(p.id, { veta: next });
                         }} title={`Grain: ${p.veta} — click to cycle`}
                           className={`w-7 h-6 rounded text-xs font-bold flex items-center justify-center mx-auto transition-all
-                            ${p.veta !== 'none' ? 'bg-amber-100 text-amber-700 ring-1 ring-offset-1 ring-amber-300' : 'bg-surf-app text-fg-300 hover:bg-surf-muted'}`}>
+                            ${p.veta !== 'none' ? 'bg-status-amber-bg text-status-amber-fg ring-1 ring-offset-1 ring-amber-300' : 'bg-surf-app text-fg-300 hover:bg-surf-muted'}`}>
                           {p.veta === 'none' ? '—' : p.veta === 'horizontal' ? '↔' : '↕'}
                         </button>
                       </td>
@@ -677,12 +677,12 @@ export function OptimizerSidebar() {
 
         {/* Summary bar */}
         {store.pieces.length > 0 && (
-          <div className="flex items-center gap-4 px-5 py-2.5 bg-blue-50/30 border-t border-border-soft text-sm text-fg-500">
+          <div className="flex items-center gap-4 px-5 py-2.5 bg-accent-tint-soft border-t border-border-soft text-sm text-fg-500">
             <span className="font-medium text-fg-700">{store.pieces.length} part{store.pieces.length !== 1 ? 's' : ''}</span>
             <span>{(store.pieces.reduce((s, p) => s + p.ancho * p.alto * p.cantidad, 0) / 1e6).toFixed(2)} m²</span>
-            {totalEB > 0 && <span className="text-amber-600">EB: {(totalEB / 1000).toFixed(2)} m</span>}
+            {totalEB > 0 && <span className="text-status-amber-fg">EB: {(totalEB / 1000).toFixed(2)} m</span>}
             <div className="flex-1" />
-            <button onClick={() => store.clearPieces()} className="text-red-400 hover:text-red-600 text-sm flex items-center gap-1">
+            <button onClick={() => store.clearPieces()} className="text-red-400 hover:text-status-red-fg text-sm flex items-center gap-1">
               <Trash2 className="h-3.5 w-3.5" />Clear all
             </button>
           </div>

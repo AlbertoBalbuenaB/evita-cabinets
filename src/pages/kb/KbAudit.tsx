@@ -5,12 +5,12 @@ import { fetchAuditLog, fetchMemberNames } from '../../lib/kb/kbApi';
 import type { KbAuditRow } from '../../lib/kb/kbTypes';
 
 const ACTION_STYLES: Record<string, { bg: string; text: string }> = {
-  'proposal.create.merge':  { bg: 'bg-violet-100/70',   text: 'text-violet-800' },
-  'proposal.edit.merge':    { bg: 'bg-violet-100/70',   text: 'text-violet-800' },
-  'proposal.delete.merge':  { bg: 'bg-rose-100/70',     text: 'text-rose-800' },
-  default_approved:         { bg: 'bg-emerald-100/70',  text: 'text-emerald-800' },
-  default_rejected:         { bg: 'bg-rose-100/70',     text: 'text-rose-800' },
-  default_changes:          { bg: 'bg-amber-100/70',    text: 'text-amber-800' },
+  'proposal.create.merge':  { bg: 'bg-accent-tint-soft',   text: 'text-violet-800' },
+  'proposal.edit.merge':    { bg: 'bg-accent-tint-soft',   text: 'text-violet-800' },
+  'proposal.delete.merge':  { bg: 'bg-status-red-bg',     text: 'text-rose-800' },
+  default_approved:         { bg: 'bg-status-emerald-bg',  text: 'text-emerald-800' },
+  default_rejected:         { bg: 'bg-status-red-bg',     text: 'text-rose-800' },
+  default_changes:          { bg: 'bg-status-amber-bg',    text: 'text-amber-800' },
   default_withdrawn:        { bg: 'bg-surf-muted',    text: 'text-fg-700' },
   default_open:             { bg: 'bg-accent-tint-strong',   text: 'text-indigo-800' },
 };
@@ -68,7 +68,7 @@ export function KbAudit() {
       </div>
 
       {error && (
-        <div className="glass-white rounded-xl p-4 border border-red-200/70 text-sm text-red-700">
+        <div className="glass-white rounded-xl p-4 border border-status-red-brd text-sm text-status-red-fg">
           {error}
         </div>
       )}

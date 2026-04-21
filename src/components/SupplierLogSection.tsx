@@ -25,10 +25,10 @@ interface LogTypeConfig {
 
 const LOG_TYPES: Record<SupplierLogType, LogTypeConfig> = {
   note:        { label: 'Note',        Icon: FileText,      color: 'text-fg-600',  bg: 'bg-surf-app',   border: 'border-l-slate-300',  badgeBg: 'bg-surf-muted',  badgeText: 'text-fg-700'  },
-  incident:    { label: 'Incident',    Icon: AlertTriangle, color: 'text-red-600',    bg: 'bg-red-50',     border: 'border-l-red-400',    badgeBg: 'bg-red-100',    badgeText: 'text-red-700'    },
-  observation: { label: 'Observation', Icon: Eye,           color: 'text-blue-600',   bg: 'bg-blue-50',    border: 'border-l-blue-400',   badgeBg: 'bg-blue-100',   badgeText: 'text-blue-700'   },
-  visit:       { label: 'Visit',       Icon: MapPin,        color: 'text-green-600',  bg: 'bg-green-50',   border: 'border-l-green-400',  badgeBg: 'bg-green-100',  badgeText: 'text-green-700'  },
-  commercial:  { label: 'Commercial',  Icon: DollarSign,    color: 'text-amber-600',  bg: 'bg-amber-50',   border: 'border-l-amber-400',  badgeBg: 'bg-amber-100',  badgeText: 'text-amber-700'  },
+  incident:    { label: 'Incident',    Icon: AlertTriangle, color: 'text-status-red-fg',    bg: 'bg-status-red-bg',     border: 'border-l-red-400',    badgeBg: 'bg-status-red-bg',    badgeText: 'text-status-red-fg'    },
+  observation: { label: 'Observation', Icon: Eye,           color: 'text-accent-text',   bg: 'bg-accent-tint-soft',    border: 'border-l-blue-400',   badgeBg: 'bg-accent-tint-soft',   badgeText: 'text-accent-text'   },
+  visit:       { label: 'Visit',       Icon: MapPin,        color: 'text-status-emerald-fg',  bg: 'bg-status-emerald-bg',   border: 'border-l-green-400',  badgeBg: 'bg-status-emerald-bg',  badgeText: 'text-status-emerald-fg'  },
+  commercial:  { label: 'Commercial',  Icon: DollarSign,    color: 'text-status-amber-fg',  bg: 'bg-status-amber-bg',   border: 'border-l-amber-400',  badgeBg: 'bg-status-amber-bg',  badgeText: 'text-status-amber-fg'  },
 };
 
 const LOG_TYPE_ORDER: SupplierLogType[] = ['note', 'incident', 'observation', 'visit', 'commercial'];
@@ -298,7 +298,7 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
                               <span className="text-xs text-fg-500 mr-1">Delete?</span>
                               <button
                                 onClick={() => handleDelete(log.id)}
-                                className="p-1 rounded text-red-600 hover:bg-red-100 transition-colors"
+                                className="p-1 rounded text-status-red-fg hover:bg-status-red-bg transition-colors"
                                 title="Confirm delete"
                               >
                                 <Check className="h-3.5 w-3.5" />
@@ -315,14 +315,14 @@ export function SupplierLogSection({ supplierId }: SupplierLogSectionProps) {
                             <>
                               <button
                                 onClick={() => startEdit(log)}
-                                className="p-1.5 rounded-lg text-fg-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                className="p-1.5 rounded-lg text-fg-400 hover:text-accent-text hover:bg-accent-tint-soft transition-colors"
                                 title="Edit"
                               >
                                 <Edit2 className="h-3.5 w-3.5" />
                               </button>
                               <button
                                 onClick={() => setDeletingId(log.id)}
-                                className="p-1.5 rounded-lg text-fg-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                className="p-1.5 rounded-lg text-fg-400 hover:text-status-red-fg hover:bg-status-red-bg transition-colors"
                                 title="Delete"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />

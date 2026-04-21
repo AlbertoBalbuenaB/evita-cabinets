@@ -380,7 +380,7 @@ function SaveStatusPill({
 }) {
   if (status === 'saving') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px]">
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-accent-tint-soft text-accent-text text-[11px]">
         <Loader2 className="h-3 w-3 animate-spin" />
         Saving…
       </span>
@@ -388,7 +388,7 @@ function SaveStatusPill({
   }
   if (status === 'saved') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[11px]">
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-status-emerald-bg text-status-emerald-fg text-[11px]">
         <Save className="h-3 w-3" />
         Saved
       </span>
@@ -397,7 +397,7 @@ function SaveStatusPill({
   if (status === 'error') {
     return (
       <span
-        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 text-red-700 text-[11px]"
+        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-status-red-bg text-status-red-fg text-[11px]"
         title={error ?? ''}
       >
         <AlertCircle className="h-3 w-3" />

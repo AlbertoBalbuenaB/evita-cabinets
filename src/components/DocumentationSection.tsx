@@ -31,19 +31,19 @@ function getUrlMeta(url: string): UrlMeta {
   const u = url.toLowerCase();
 
   if (u.includes('docs.google.com/document/'))
-    return { Icon: FileText, iconTileClass: 'bg-blue-50 text-blue-600', typeLabel: 'Google Docs' };
+    return { Icon: FileText, iconTileClass: 'bg-accent-tint-soft text-accent-text', typeLabel: 'Google Docs' };
   if (u.includes('docs.google.com/spreadsheets/'))
-    return { Icon: Sheet, iconTileClass: 'bg-emerald-50 text-emerald-600', typeLabel: 'Google Sheets' };
+    return { Icon: Sheet, iconTileClass: 'bg-status-emerald-bg text-status-emerald-fg', typeLabel: 'Google Sheets' };
   if (u.includes('docs.google.com/presentation/'))
-    return { Icon: Presentation, iconTileClass: 'bg-amber-50 text-amber-600', typeLabel: 'Google Slides' };
+    return { Icon: Presentation, iconTileClass: 'bg-status-amber-bg text-status-amber-fg', typeLabel: 'Google Slides' };
   if (u.includes('docs.google.com/forms/'))
-    return { Icon: ClipboardList, iconTileClass: 'bg-purple-50 text-purple-600', typeLabel: 'Google Forms' };
+    return { Icon: ClipboardList, iconTileClass: 'bg-accent-tint-soft text-accent-text', typeLabel: 'Google Forms' };
   if (u.includes('drive.google.com/drive/folders/'))
-    return { Icon: Folder, iconTileClass: 'bg-yellow-50 text-yellow-700', typeLabel: 'Drive Folder' };
+    return { Icon: Folder, iconTileClass: 'bg-status-amber-bg text-status-amber-fg', typeLabel: 'Drive Folder' };
   if (u.includes('drive.google.com/file/') || u.includes('drive.google.com/open'))
     return { Icon: File, iconTileClass: 'bg-surf-muted text-fg-600', typeLabel: 'Drive File' };
   if (u.endsWith('.pdf'))
-    return { Icon: FileText, iconTileClass: 'bg-red-50 text-red-600', typeLabel: 'PDF' };
+    return { Icon: FileText, iconTileClass: 'bg-status-red-bg text-status-red-fg', typeLabel: 'PDF' };
 
   return { Icon: Link2, iconTileClass: 'bg-surf-muted text-fg-500', typeLabel: 'Link' };
 }
@@ -385,7 +385,7 @@ export function DocumentationSection({ projectId }: Props) {
               'hover:bg-surf-card hover:border-white hover:shadow-[0_4px_14px_rgba(99,102,241,0.1)]',
               'transition-all duration-200',
               isDragging ? 'opacity-50' : '',
-              isDropTarget ? 'ring-2 ring-blue-400/60 border-blue-300' : '',
+              isDropTarget ? 'ring-2 ring-blue-400/60 border-accent-tint-border' : '',
               isEditing ? 'ring-2 ring-blue-400/40' : '',
             ]
               .filter(Boolean)
@@ -501,7 +501,7 @@ export function DocumentationSection({ projectId }: Props) {
                     <button
                       onClick={saveEdit}
                       disabled={!editDraft.label.trim()}
-                      className="p-1.5 rounded-md text-emerald-600 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="p-1.5 rounded-md text-status-emerald-fg hover:bg-status-emerald-bg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                       title="Save"
                     >
                       <Check className="h-4 w-4" />
@@ -518,21 +518,21 @@ export function DocumentationSection({ projectId }: Props) {
                   <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => startEdit(doc)}
-                      className="p-1.5 rounded-md text-fg-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      className="p-1.5 rounded-md text-fg-400 hover:text-accent-text hover:bg-accent-tint-soft transition-colors"
                       title="Edit name & URL"
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => pickForExistingRow(doc)}
-                      className="p-1.5 rounded-md text-fg-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                      className="p-1.5 rounded-md text-fg-400 hover:text-status-emerald-fg hover:bg-status-emerald-bg transition-colors"
                       title="Pick from Google Drive"
                     >
                       <HardDrive className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => deleteDocument(doc.id)}
-                      className="p-1.5 rounded-md text-fg-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="p-1.5 rounded-md text-fg-400 hover:text-red-500 hover:bg-status-red-bg transition-colors"
                       title="Delete"
                     >
                       <Trash2 className="h-4 w-4" />

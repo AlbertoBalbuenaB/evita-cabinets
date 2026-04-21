@@ -305,7 +305,7 @@ export function ProjectCharts({ areas, products, pricingMethod, riskAmount = 0, 
           value={analytics.totalCabinets}
           sub={`${analytics.totalSKUs} unique SKUs`}
           icon={<Boxes className="h-5 w-5" />}
-          accent="text-blue-700"
+          accent="text-accent-text"
         />
         <KpiCard
           label="Avg / Cabinet"

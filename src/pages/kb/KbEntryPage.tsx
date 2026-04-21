@@ -129,10 +129,10 @@ export function KbEntryPage() {
         </div>
 
         {entry.needs_enrichment && (
-          <div className="mt-4 flex items-start gap-2 glass-white rounded-xl p-3 border border-amber-200/60">
+          <div className="mt-4 flex items-start gap-2 glass-white rounded-xl p-3 border border-status-amber-brd">
             <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
             <div className="text-xs text-fg-700">
-              <strong className="text-amber-700">Esta entrada necesita enriquecimiento.</strong>
+              <strong className="text-status-amber-fg">Esta entrada necesita enriquecimiento.</strong>
               {entry.enrichment_notes && <> {entry.enrichment_notes}</>}
             </div>
           </div>

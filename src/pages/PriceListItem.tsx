@@ -70,10 +70,10 @@ function SectionCard({ icon, title, children }: { icon: React.ReactNode; title: 
 }
 
 const MOVEMENT_TYPE_STYLES: Record<string, string> = {
-  IN: 'bg-green-100 text-green-700',
-  OUT: 'bg-red-100 text-red-700',
-  ADJUSTMENT: 'bg-blue-100 text-blue-700',
-  RETURN: 'bg-orange-100 text-orange-700',
+  IN: 'bg-status-emerald-bg text-status-emerald-fg',
+  OUT: 'bg-status-red-bg text-status-red-fg',
+  ADJUSTMENT: 'bg-accent-tint-soft text-accent-text',
+  RETURN: 'bg-status-orange-bg text-status-orange-fg',
 };
 
 export function PriceListItem() {
@@ -176,7 +176,7 @@ export function PriceListItem() {
           </button>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-sm text-fg-400">
-              <button onClick={() => navigate('/prices')} className="hover:text-blue-600 transition-colors">
+              <button onClick={() => navigate('/prices')} className="hover:text-accent-text transition-colors">
                 Inventory
               </button>
               <span>/</span>
@@ -201,9 +201,9 @@ export function PriceListItem() {
             {item.type}
           </span>
           {item.is_active ? (
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200/50">Active</span>
+            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-status-emerald-bg text-status-emerald-fg border border-status-emerald-brd">Active</span>
           ) : (
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-200/50">Inactive</span>
+            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-status-red-bg text-status-red-fg border border-status-red-brd">Inactive</span>
           )}
         </div>
         <h2 className="text-xl sm:text-2xl font-bold text-fg-900 leading-snug">{item.concept_description}</h2>
@@ -262,7 +262,7 @@ export function PriceListItem() {
               rel="noopener noreferrer"
               className="flex items-center gap-3 bg-surf-app border border-border-soft rounded-xl p-5 hover:bg-surf-muted transition-colors group"
             >
-              <div className="p-2.5 rounded-lg bg-blue-50 text-blue-500 group-hover:bg-blue-100 transition-colors">
+              <div className="p-2.5 rounded-lg bg-accent-tint-soft text-blue-500 group-hover:bg-accent-tint-soft transition-colors">
                 <ExternalLink className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
@@ -295,9 +295,9 @@ export function PriceListItem() {
                     <div key={entry.id} className="flex items-center gap-3 px-3 py-2.5 bg-surf-card rounded-xl border border-border-soft hover:border-border-solid transition-colors">
                       <div className="flex-shrink-0">
                         {increased ? (
-                          <div className="p-1.5 rounded-full bg-red-50"><TrendingUp className="h-3.5 w-3.5 text-red-500" /></div>
+                          <div className="p-1.5 rounded-full bg-status-red-bg"><TrendingUp className="h-3.5 w-3.5 text-red-500" /></div>
                         ) : decreased ? (
-                          <div className="p-1.5 rounded-full bg-green-50"><TrendingDown className="h-3.5 w-3.5 text-green-500" /></div>
+                          <div className="p-1.5 rounded-full bg-status-emerald-bg"><TrendingDown className="h-3.5 w-3.5 text-green-500" /></div>
                         ) : (
                           <div className="p-1.5 rounded-full bg-surf-muted"><Minus className="h-3.5 w-3.5 text-fg-400" /></div>
                         )}
@@ -306,12 +306,12 @@ export function PriceListItem() {
                         <div className="flex items-center gap-1.5 text-sm flex-wrap">
                           <span className="text-fg-400 line-through text-xs">{formatCurrency(entry.old_price)}</span>
                           <span className="text-fg-400 text-xs">→</span>
-                          <span className={`font-semibold ${increased ? 'text-red-600' : decreased ? 'text-green-600' : 'text-fg-700'}`}>
+                          <span className={`font-semibold ${increased ? 'text-status-red-fg' : decreased ? 'text-status-emerald-fg' : 'text-fg-700'}`}>
                             {formatCurrency(entry.new_price)}
                           </span>
                           {pct !== null && (
                             <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
-                              increased ? 'bg-red-50 text-red-600' : decreased ? 'bg-green-50 text-green-600' : 'bg-surf-muted text-fg-500'
+                              increased ? 'bg-status-red-bg text-status-red-fg' : decreased ? 'bg-status-emerald-bg text-status-emerald-fg' : 'bg-surf-muted text-fg-500'
                             }`}>{pct}</span>
                           )}
                         </div>
@@ -391,7 +391,7 @@ export function PriceListItem() {
 
               <button
                 onClick={() => setShowMovementModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-accent-text bg-accent-tint-soft hover:bg-accent-tint-soft rounded-lg transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Record Movement
@@ -461,7 +461,7 @@ export function PriceListItem() {
                         </td>
                         <td className="py-1.5 pl-2 text-center">
                           {s.is_primary && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-status-amber-bg text-status-amber-fg">
                               <Star className="h-3 w-3" />
                               Primary
                             </span>
@@ -492,7 +492,7 @@ export function PriceListItem() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-fg-400">Status</span>
-                <span className={item.is_active ? 'text-green-600' : 'text-red-500'}>{item.is_active ? 'Active' : 'Inactive'}</span>
+                <span className={item.is_active ? 'text-status-emerald-fg' : 'text-red-500'}>{item.is_active ? 'Active' : 'Inactive'}</span>
               </div>
             </div>
           </SectionCard>

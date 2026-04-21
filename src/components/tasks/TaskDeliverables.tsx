@@ -70,7 +70,7 @@ export function TaskDeliverables({ taskId, deliverables, onChange }: Props) {
               href={d.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-500 hover:text-blue-700 flex-shrink-0"
+              className="text-blue-500 hover:text-accent-text flex-shrink-0"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
@@ -105,7 +105,7 @@ export function TaskDeliverables({ taskId, deliverables, onChange }: Props) {
         <button
           onClick={add}
           disabled={!newLabel.trim()}
-          className="text-blue-600 hover:text-blue-700 disabled:text-fg-300 transition-colors flex-shrink-0"
+          className="text-accent-text hover:text-accent-text disabled:text-fg-300 transition-colors flex-shrink-0"
         >
           <Plus className="h-4 w-4" />
         </button>

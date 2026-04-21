@@ -114,7 +114,7 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                   onClick={onSaveAsTemplate}
                   title="Save as Template"
                 >
-                  <Bookmark className="h-4 w-4 text-blue-600" />
+                  <Bookmark className="h-4 w-4 text-accent-text" />
                 </Button>
               )}
               <Button variant="ghost" size="sm" onClick={onEdit}>
@@ -164,7 +164,7 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                 </div>
               )}
               <Button variant="ghost" size="sm" onClick={onDelete}>
-                <Trash2 className="h-4 w-4 text-red-600" />
+                <Trash2 className="h-4 w-4 text-status-red-fg" />
               </Button>
             </div>
           </div>
@@ -269,9 +269,9 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                   ) : materialSummary ? (
                     <div className="grid grid-cols-1 gap-2">
                       {materialSummary.boxMaterial && (
-                        <div className="bg-blue-50 rounded-lg p-2 border border-blue-100">
+                        <div className="bg-accent-tint-soft rounded-lg p-2 border border-blue-100">
                           <div className="flex items-center gap-1 mb-1">
-                            <Package className="h-3 w-3 text-blue-700" />
+                            <Package className="h-3 w-3 text-accent-text" />
                             <span className="text-xs font-semibold text-blue-900">Box Material</span>
                           </div>
                           <div className="text-xs text-fg-700 mb-1">{materialSummary.boxMaterial.name}</div>
@@ -283,7 +283,7 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                       )}
 
                       {materialSummary.boxInteriorFinish && (
-                        <div className="bg-blue-100 rounded-lg p-2 border border-blue-200">
+                        <div className="bg-accent-tint-soft rounded-lg p-2 border border-accent-tint-border">
                           <div className="flex items-center gap-1 mb-1">
                             <Layers className="h-3 w-3 text-blue-800" />
                             <span className="text-xs font-semibold text-blue-900">Box Interior Finish</span>
@@ -297,9 +297,9 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                       )}
 
                       {materialSummary.boxEdgeband && (
-                        <div className="bg-amber-50 rounded-lg p-2 border border-amber-100">
+                        <div className="bg-status-amber-bg rounded-lg p-2 border border-amber-100">
                           <div className="flex items-center gap-1 mb-1">
-                            <Ruler className="h-3 w-3 text-amber-700" />
+                            <Ruler className="h-3 w-3 text-status-amber-fg" />
                             <span className="text-xs font-semibold text-amber-900">Box Edgeband</span>
                           </div>
                           <div className="text-xs text-fg-700 mb-1">{materialSummary.boxEdgeband.name}</div>
@@ -310,9 +310,9 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                       )}
 
                       {materialSummary.doorsMaterial && (
-                        <div className="bg-green-50 rounded-lg p-2 border border-green-100">
+                        <div className="bg-status-emerald-bg rounded-lg p-2 border border-green-100">
                           <div className="flex items-center gap-1 mb-1">
-                            <Package className="h-3 w-3 text-green-700" />
+                            <Package className="h-3 w-3 text-status-emerald-fg" />
                             <span className="text-xs font-semibold text-green-900">Doors Material</span>
                           </div>
                           <div className="text-xs text-fg-700 mb-1">{materialSummary.doorsMaterial.name}</div>
@@ -324,7 +324,7 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                       )}
 
                       {materialSummary.doorsInteriorFinish && (
-                        <div className="bg-green-100 rounded-lg p-2 border border-green-200">
+                        <div className="bg-status-emerald-bg rounded-lg p-2 border border-status-emerald-brd">
                           <div className="flex items-center gap-1 mb-1">
                             <Layers className="h-3 w-3 text-green-800" />
                             <span className="text-xs font-semibold text-green-900">Doors Interior Finish</span>
@@ -338,9 +338,9 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                       )}
 
                       {materialSummary.doorsEdgeband && (
-                        <div className="bg-amber-50 rounded-lg p-2 border border-amber-100">
+                        <div className="bg-status-amber-bg rounded-lg p-2 border border-amber-100">
                           <div className="flex items-center gap-1 mb-1">
-                            <Ruler className="h-3 w-3 text-amber-700" />
+                            <Ruler className="h-3 w-3 text-status-amber-fg" />
                             <span className="text-xs font-semibold text-amber-900">Doors Edgeband</span>
                           </div>
                           <div className="text-xs text-fg-700 mb-1">{materialSummary.doorsEdgeband.name}</div>
@@ -371,9 +371,9 @@ export function CabinetCard({ cabinet, onEdit, onDelete, onDuplicate, onSaveAsTe
                       )}
 
                       {materialSummary.accessories.length > 0 && (
-                        <div className="bg-purple-50 rounded-lg p-2 border border-purple-200">
+                        <div className="bg-accent-tint-soft rounded-lg p-2 border border-accent-tint-border">
                           <div className="flex items-center gap-1 mb-2">
-                            <Boxes className="h-3 w-3 text-purple-700" />
+                            <Boxes className="h-3 w-3 text-accent-text" />
                             <span className="text-xs font-semibold text-purple-900">Accessories</span>
                           </div>
                           <div className="space-y-1">

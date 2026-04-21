@@ -179,7 +179,7 @@ export function WikiProposalForm({ mode, baseArticle, authorId }: WikiProposalFo
       </div>
 
       {error && (
-        <div className="glass-white rounded-xl p-3 border border-red-200/70 text-sm text-red-700">
+        <div className="glass-white rounded-xl p-3 border border-status-red-brd text-sm text-status-red-fg">
           {error}
         </div>
       )}

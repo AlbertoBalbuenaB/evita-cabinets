@@ -222,16 +222,16 @@ export function MeasurementsPanel() {
         <div className="flex items-center gap-2">
           {calibration ? (
             <>
-              <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+              <CheckCircle2 className="h-4 w-4 text-status-emerald-fg flex-shrink-0" />
               <div className="text-xs">
-                <span className="font-medium text-green-700">Calibrated</span>
+                <span className="font-medium text-status-emerald-fg">Calibrated</span>
                 <span className="text-fg-500 ml-1.5">{formatMeasurement(calibration.realDistance, calibration.unit)}</span>
               </div>
             </>
           ) : (
             <>
               <XCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-              <span className="text-xs text-amber-600 font-medium">Not calibrated</span>
+              <span className="text-xs text-status-amber-fg font-medium">Not calibrated</span>
             </>
           )}
         </div>
@@ -251,7 +251,7 @@ export function MeasurementsPanel() {
         {sessionProjectId && (
           <button
             onClick={() => setShowSendToQuotation(true)}
-            className="p-1 rounded text-fg-400 hover:text-blue-600 hover:bg-blue-50"
+            className="p-1 rounded text-fg-400 hover:text-accent-text hover:bg-accent-tint-soft"
             title="Send linked measurements to a quotation in this project"
           >
             <Send className="h-3.5 w-3.5" />
@@ -259,7 +259,7 @@ export function MeasurementsPanel() {
         )}
         <div className="flex-1" />
         {filteredMeasurements.length > 0 && (
-          <button onClick={clearAllMeasurements} className="text-[10px] text-red-500 hover:text-red-700 font-medium">Clear all</button>
+          <button onClick={clearAllMeasurements} className="text-[10px] text-red-500 hover:text-status-red-fg font-medium">Clear all</button>
         )}
       </div>
 
@@ -269,7 +269,7 @@ export function MeasurementsPanel() {
           <button
             onClick={() => setActiveCategory(null)}
             className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors ${
-              !activeCategoryId ? 'bg-blue-100 text-blue-700' : 'bg-surf-muted text-fg-500 hover:bg-surf-muted'
+              !activeCategoryId ? 'bg-accent-tint-soft text-accent-text' : 'bg-surf-muted text-fg-500 hover:bg-surf-muted'
             }`}
             title="Show all / no active category"
           >All</button>
@@ -289,7 +289,7 @@ export function MeasurementsPanel() {
             </button>
           ))}
           {!showCategoryInput && (
-            <button onClick={() => setShowCategoryInput(true)} className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-0.5 px-1">
+            <button onClick={() => setShowCategoryInput(true)} className="text-[10px] text-blue-500 hover:text-accent-text flex items-center gap-0.5 px-1">
               <Plus className="h-3 w-3" /> Category
             </button>
           )}
@@ -309,7 +309,7 @@ export function MeasurementsPanel() {
               className="text-xs border border-border-soft rounded px-1.5 py-0.5 flex-1 min-w-0 focus:outline-none focus:ring-1 focus-visible:ring-focus"
               placeholder="e.g. Base Cabinets"
             />
-            <button onClick={submitNewCategory} disabled={!newCategoryName.trim()} className="text-[10px] text-blue-600 hover:text-blue-800 disabled:text-fg-300 font-medium px-1">Add</button>
+            <button onClick={submitNewCategory} disabled={!newCategoryName.trim()} className="text-[10px] text-accent-text hover:text-blue-800 disabled:text-fg-300 font-medium px-1">Add</button>
           </div>
         )}
       </div>
@@ -320,13 +320,13 @@ export function MeasurementsPanel() {
           <button
             onClick={() => setActiveGroup(undefined)}
             className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors ${
-              !activeGroup ? 'bg-blue-100 text-blue-700' : 'bg-surf-muted text-fg-500 hover:bg-surf-muted'
+              !activeGroup ? 'bg-accent-tint-soft text-accent-text' : 'bg-surf-muted text-fg-500 hover:bg-surf-muted'
             }`}
           >All</button>
           {groups.map((g) => (
             <button key={g} onClick={() => setActiveGroup(g === activeGroup ? undefined : g)}
               className={`text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors flex items-center gap-1 ${
-                activeGroup === g ? 'bg-blue-100 text-blue-700' : 'bg-surf-muted text-fg-500 hover:bg-surf-muted'
+                activeGroup === g ? 'bg-accent-tint-soft text-accent-text' : 'bg-surf-muted text-fg-500 hover:bg-surf-muted'
               }`}
             >
               {g}
@@ -347,7 +347,7 @@ export function MeasurementsPanel() {
             />
           </div>
         ) : (
-          <button onClick={() => setShowGroupInput(true)} className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-0.5">
+          <button onClick={() => setShowGroupInput(true)} className="text-[10px] text-blue-500 hover:text-accent-text flex items-center gap-0.5">
             <Plus className="h-3 w-3" /> Add group
           </button>
         )}
@@ -508,7 +508,7 @@ function MeasurementRow({ measurement: m, selected, displayUnit, categories, all
   const commitRename = () => { setEditing(false); if (editName.trim() && editName !== m.name) onRename(editName.trim()); else setEditName(m.name); };
 
   return (
-    <div className={`px-3 py-2 flex items-start gap-2 cursor-pointer transition-colors ${selected ? 'bg-blue-50' : 'hover:bg-surf-app'}`} onClick={onSelect}>
+    <div className={`px-3 py-2 flex items-start gap-2 cursor-pointer transition-colors ${selected ? 'bg-accent-tint-soft' : 'hover:bg-surf-app'}`} onClick={onSelect}>
       <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: effectiveColor + '20' }}>
         <TypeIcon className="h-3 w-3" style={{ color: effectiveColor }} />
       </div>
@@ -516,11 +516,11 @@ function MeasurementRow({ measurement: m, selected, displayUnit, categories, all
         {editing ? (
           <input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} onBlur={commitRename}
             onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') { setEditing(false); setEditName(m.name); } }}
-            className="text-xs font-medium text-fg-800 w-full bg-surf-card border border-blue-300 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus-visible:ring-focus"
+            className="text-xs font-medium text-fg-800 w-full bg-surf-card border border-accent-tint-border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus-visible:ring-focus"
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          <span className="text-xs font-medium text-fg-700 cursor-text hover:text-blue-600 block truncate"
+          <span className="text-xs font-medium text-fg-700 cursor-text hover:text-accent-text block truncate"
             onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}>{m.name}</span>
         )}
         <span className="text-[11px] text-fg-500 font-mono">{displayValue}</span>
@@ -531,7 +531,7 @@ function MeasurementRow({ measurement: m, selected, displayUnit, categories, all
           {m.group && <span className="text-[9px] bg-surf-muted text-fg-500 rounded px-1">{m.group}</span>}
           {m.linkedProduct && (
             <span
-              className="text-[9px] bg-blue-50 text-blue-700 rounded px-1 inline-flex items-center gap-0.5 max-w-[11rem]"
+              className="text-[9px] bg-accent-tint-soft text-accent-text rounded px-1 inline-flex items-center gap-0.5 max-w-[11rem]"
               title={`Linked to ${m.linkedProduct.label}`}
             >
               <Link2 className="h-2.5 w-2.5 flex-shrink-0" />
@@ -544,7 +544,7 @@ function MeasurementRow({ measurement: m, selected, displayUnit, categories, all
         {linkable && (
           <button
             onClick={(e) => { e.stopPropagation(); onLink(); }}
-            className={`p-1 rounded ${m.linkedProduct ? 'text-blue-600 hover:bg-blue-50' : 'text-fg-400 hover:text-fg-600 hover:bg-surf-muted'}`}
+            className={`p-1 rounded ${m.linkedProduct ? 'text-accent-text hover:bg-accent-tint-soft' : 'text-fg-400 hover:text-fg-600 hover:bg-surf-muted'}`}
             title={m.linkedProduct ? `Linked: ${m.linkedProduct.label}` : 'Link to price list'}
           >
             {m.linkedProduct ? <Link2 className="h-3 w-3" /> : <Link2Off className="h-3 w-3" />}
@@ -553,7 +553,7 @@ function MeasurementRow({ measurement: m, selected, displayUnit, categories, all
         <button onClick={(e) => { e.stopPropagation(); handleCopy(); }} className="p-1 rounded text-fg-400 hover:text-fg-600 hover:bg-surf-muted" title="Copy">
           {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
         </button>
-        <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 rounded text-fg-400 hover:text-red-500 hover:bg-red-50" title="Delete">
+        <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 rounded text-fg-400 hover:text-red-500 hover:bg-status-red-bg" title="Delete">
           <Trash2 className="h-3 w-3" />
         </button>
       </div>
@@ -566,7 +566,7 @@ function AnnotationRow({ annotation: a, onDelete }: { annotation: Annotation; on
     <div className="px-3 py-1.5 flex items-center gap-2 hover:bg-surf-app">
       <Type className="h-3 w-3 flex-shrink-0" style={{ color: a.color }} />
       <span className="text-xs text-fg-600 flex-1 truncate">{a.text}</span>
-      <button onClick={onDelete} className="p-1 rounded text-fg-400 hover:text-red-500 hover:bg-red-50"><Trash2 className="h-3 w-3" /></button>
+      <button onClick={onDelete} className="p-1 rounded text-fg-400 hover:text-red-500 hover:bg-status-red-bg"><Trash2 className="h-3 w-3" /></button>
     </div>
   );
 }

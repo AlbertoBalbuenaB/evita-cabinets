@@ -80,7 +80,7 @@ export function WikiHub() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5 page-enter">
       <div className="glass-indigo rounded-2xl p-5 sm:p-6 hero-enter">
         <div className="flex items-start gap-3">
-          <Library className="w-6 h-6 text-violet-600 mt-1" />
+          <Library className="w-6 h-6 text-accent-text mt-1" />
           <div className="flex-1">
             <div className="flex items-start justify-between gap-2 flex-wrap">
               <h1 className="text-xl sm:text-2xl font-bold text-fg-900">Wiki</h1>
@@ -130,7 +130,7 @@ export function WikiHub() {
             className={`px-2.5 py-1 rounded-lg border text-xs font-medium transition ${
               categoryFilter === null
                 ? 'bg-violet-600 text-white border-violet-600'
-                : 'glass-white text-fg-700 border-border-soft hover:bg-violet-50'
+                : 'glass-white text-fg-700 border-border-soft hover:bg-accent-tint-soft'
             }`}
           >
             All
@@ -145,7 +145,7 @@ export function WikiHub() {
                 className={`px-2.5 py-1 rounded-lg border text-xs font-medium transition ${
                   active
                     ? 'bg-violet-600 text-white border-violet-600'
-                    : 'glass-white text-fg-700 border-border-soft hover:bg-violet-50'
+                    : 'glass-white text-fg-700 border-border-soft hover:bg-accent-tint-soft'
                 }`}
               >
                 {pickText(cat, 'name', locale)}
@@ -163,7 +163,7 @@ export function WikiHub() {
               <button
                 type="button"
                 onClick={() => setTagFilter(null)}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-100/70 text-rose-700 text-xs font-medium hover:bg-rose-200/70"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-status-red-bg text-status-red-fg text-xs font-medium hover:bg-rose-200/70"
               >
                 <X className="w-3 h-3" /> {tagFilter}
               </button>
@@ -178,7 +178,7 @@ export function WikiHub() {
                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono transition ${
                     active
                       ? 'bg-violet-600 text-white'
-                      : 'bg-surf-muted text-fg-700 hover:bg-violet-100/70'
+                      : 'bg-surf-muted text-fg-700 hover:bg-accent-tint-soft'
                   }`}
                 >
                   {t}
@@ -200,7 +200,7 @@ export function WikiHub() {
       )}
 
       {error && (
-        <div className="glass-white rounded-xl p-4 border border-red-200/70 text-sm text-red-700">
+        <div className="glass-white rounded-xl p-4 border border-status-red-brd text-sm text-status-red-fg">
           {error}
         </div>
       )}

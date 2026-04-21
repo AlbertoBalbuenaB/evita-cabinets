@@ -200,9 +200,9 @@ export function Templates({ embedded = false }: TemplatesProps) {
       )}
 
       {recentTemplates.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 section-enter" style={{ animationDelay: '0.05s' }}>
+        <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4 section-enter" style={{ animationDelay: '0.05s' }}>
           <div className="flex items-center mb-3">
-            <Clock className="h-5 w-5 text-blue-600 mr-2" />
+            <Clock className="h-5 w-5 text-accent-text mr-2" />
             <h2 className="font-semibold text-fg-900">Recently Used Templates</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -210,7 +210,7 @@ export function Templates({ embedded = false }: TemplatesProps) {
               <button
                 key={template.id}
                 onClick={() => setPreviewTemplate(template)}
-                className="text-left px-3 py-2 bg-surf-card border border-blue-200 rounded-lg hover:bg-blue-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200"
+                className="text-left px-3 py-2 bg-surf-card border border-accent-tint-border rounded-lg hover:bg-accent-tint-soft hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200"
               >
                 <div className="font-medium text-fg-900 text-sm">{template.name}</div>
                 <div className="text-xs text-fg-600 mt-1">
@@ -286,13 +286,13 @@ export function Templates({ embedded = false }: TemplatesProps) {
             {filteredTemplates.map((template, idx) => (
               <div
                 key={template.id}
-                className={`bg-surf-card border border-border-soft rounded-lg overflow-hidden hover:shadow-lg hover:border-blue-300/60 hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
+                className={`bg-surf-card border border-border-soft rounded-lg overflow-hidden hover:shadow-lg hover:border-accent-tint-border hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
               >
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <h3 className="font-semibold text-fg-900">{template.name}</h3>
-                      <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-accent-tint-soft text-blue-800 text-xs rounded">
                         {template.category}
                       </span>
                     </div>
@@ -347,7 +347,7 @@ export function Templates({ embedded = false }: TemplatesProps) {
                         size="sm"
                         onClick={() => setDeletingTemplate(template)}
                       >
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <Trash2 className="h-4 w-4 text-status-red-fg" />
                       </Button>
                     </div>
                   </div>
@@ -397,7 +397,7 @@ export function Templates({ embedded = false }: TemplatesProps) {
               Are you sure you want to delete the template "{deletingTemplate.name}"?
             </p>
             {deletingTemplate.usage_count > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-3">
                 <p className="text-sm text-yellow-800">
                   This template has been used {deletingTemplate.usage_count} times in projects.
                   Deleting it will not affect existing cabinets.
@@ -441,7 +441,7 @@ function TemplatePreviewModal({ template, onClose }: TemplatePreviewModalProps) 
       <div className="space-y-4">
         <div>
           <h3 className="text-lg font-semibold text-fg-900">{template.name}</h3>
-          <span className="inline-block mt-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+          <span className="inline-block mt-1 px-2 py-1 bg-accent-tint-soft text-blue-800 text-xs rounded">
             {template.category}
           </span>
         </div>
@@ -616,7 +616,7 @@ function TemplateEditModal({ template, onClose, onSave }: TemplateEditModalProps
           </select>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3">
           <p className="text-sm text-blue-800">
             <strong>Note:</strong> Only the name, description, and category can be edited.
             To change materials or hardware, create a new template from a cabinet.
@@ -646,16 +646,16 @@ function TemplateAnalyticsModal({ analytics, onClose }: TemplateAnalyticsModalPr
     <Modal isOpen={true} onClose={onClose} title="Template Analytics" size="xl">
       <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="text-sm text-blue-600 mb-1">Total Templates</div>
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4">
+            <div className="text-sm text-accent-text mb-1">Total Templates</div>
             <div className="text-2xl font-bold text-fg-900">{analytics.totalTemplates}</div>
           </div>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="text-sm text-green-600 mb-1">Total Uses</div>
+          <div className="bg-status-emerald-bg border border-status-emerald-brd rounded-lg p-4">
+            <div className="text-sm text-status-emerald-fg mb-1">Total Uses</div>
             <div className="text-2xl font-bold text-fg-900">{analytics.totalUses}</div>
           </div>
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <div className="text-sm text-purple-600 mb-1">Avg Uses per Template</div>
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4">
+            <div className="text-sm text-accent-text mb-1">Avg Uses per Template</div>
             <div className="text-2xl font-bold text-fg-900">
               {analytics.averageUsesPerTemplate.toFixed(1)}
             </div>
@@ -672,7 +672,7 @@ function TemplateAnalyticsModal({ analytics, onClose }: TemplateAnalyticsModalPr
                   className="flex items-center justify-between p-3 bg-surf-app rounded-lg"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-700 rounded-full font-semibold text-sm">
+                    <div className="flex items-center justify-center w-8 h-8 bg-accent-tint-soft text-accent-text rounded-full font-semibold text-sm">
                       {index + 1}
                     </div>
                     <div>

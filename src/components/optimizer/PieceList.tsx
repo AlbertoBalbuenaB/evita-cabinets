@@ -13,7 +13,7 @@ export function PieceList({ pieces, onRemove }: Props) {
       <div className="flex items-center justify-between px-4 py-3 bg-surf-app border-b border-border-soft">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-fg-700">Piece List</span>
-          <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">{pieces.length}</span>
+          <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-accent-tint-soft text-accent-text text-xs font-bold">{pieces.length}</span>
         </div>
         <div className="text-xs text-fg-500">Area: <span className="font-semibold">{totalArea.toFixed(2)}</span> m²</div>
       </div>
@@ -41,7 +41,7 @@ export function PieceList({ pieces, onRemove }: Props) {
                   <td className="px-2 py-1.5 text-center text-fg-700">{fmtNum(p.grosor, unit)}</td>
                   <td className="px-2 py-1.5 text-center font-semibold text-fg-700">{p.cantidad}</td>
                   <td className="px-2 py-1.5 text-center">
-                    <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${p.veta !== 'none' ? 'bg-amber-100 text-amber-700' : 'bg-surf-muted text-fg-500'}`}>
+                    <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${p.veta !== 'none' ? 'bg-status-amber-bg text-status-amber-fg' : 'bg-surf-muted text-fg-500'}`}>
                       {p.veta === 'none' ? '—' : p.veta === 'horizontal' ? '↔' : '↕'}
                     </span>
                   </td>

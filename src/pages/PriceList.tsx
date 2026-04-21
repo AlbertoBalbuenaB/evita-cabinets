@@ -356,14 +356,14 @@ export function PriceList() {
         <div className="flex items-center gap-1 p-1 bg-surf-muted rounded-lg self-start sm:self-auto">
           <button
             onClick={() => setViewMode('list')}
-            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-surf-card shadow-sm text-blue-600' : 'text-fg-500 hover:text-fg-700'}`}
+            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-surf-card shadow-sm text-accent-text' : 'text-fg-500 hover:text-fg-700'}`}
             title="List view"
           >
             <LayoutList className="h-4 w-4" />
           </button>
           <button
             onClick={() => setViewMode('card')}
-            className={`p-2 rounded-md transition-all ${viewMode === 'card' ? 'bg-surf-card shadow-sm text-blue-600' : 'text-fg-500 hover:text-fg-700'}`}
+            className={`p-2 rounded-md transition-all ${viewMode === 'card' ? 'bg-surf-card shadow-sm text-accent-text' : 'text-fg-500 hover:text-fg-700'}`}
             title="Card view"
           >
             <LayoutGrid className="h-4 w-4" />
@@ -385,7 +385,7 @@ export function PriceList() {
           {!searchTerm && !typeFilter && (
             <button
               onClick={handleAddNew}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-accent-text border border-accent-tint-border rounded-lg hover:bg-accent-tint-soft transition-colors"
             >
               <Plus className="h-4 w-4" />
               Add Item
@@ -455,9 +455,9 @@ function SortableHeader({ field, label, sortField, sortDirection, onSort, align 
       className={`px-5 py-3.5 text-xs font-semibold uppercase tracking-wider cursor-pointer select-none group transition-colors hover:bg-surf-muted ${align === 'right' ? 'text-right' : 'text-left'}`}
       onClick={() => onSort(field)}
     >
-      <span className={`inline-flex items-center gap-1 ${align === 'right' ? 'flex-row-reverse' : ''} ${isActive ? 'text-blue-600' : 'text-fg-500'}`}>
+      <span className={`inline-flex items-center gap-1 ${align === 'right' ? 'flex-row-reverse' : ''} ${isActive ? 'text-accent-text' : 'text-fg-500'}`}>
         {label}
-        <Icon className={`h-3.5 w-3.5 transition-colors ${isActive ? 'text-blue-600' : 'text-fg-400 group-hover:text-fg-600'}`} />
+        <Icon className={`h-3.5 w-3.5 transition-colors ${isActive ? 'text-accent-text' : 'text-fg-400 group-hover:text-fg-600'}`} />
       </span>
     </th>
   );
@@ -499,7 +499,7 @@ function ListView({ items, sortField, sortDirection, onSort, onOpenDetail, onEdi
             {items.map((item) => (
               <tr
                 key={item.id}
-                className="hover:bg-blue-50/40 cursor-pointer transition-colors group"
+                className="hover:bg-accent-tint-soft cursor-pointer transition-colors group"
                 onClick={() => onOpenDetail(item)}
               >
                 <td className="pl-5 py-3" onClick={(e) => e.stopPropagation()}>
@@ -527,7 +527,7 @@ function ListView({ items, sortField, sortDirection, onSort, onOpenDetail, onEdi
                   )}
                 </td>
                 <td className="px-5 py-3.5 whitespace-nowrap text-sm">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-accent-tint-soft text-accent-text border border-blue-100">
                     {item.type}
                   </span>
                 </td>
@@ -552,13 +552,13 @@ function ListView({ items, sortField, sortDirection, onSort, onOpenDetail, onEdi
                 </td>
                 <td className="px-5 py-3.5 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ActionButton onClick={() => onEdit(item)} title="Edit" className="hover:text-blue-600 hover:bg-blue-50">
+                    <ActionButton onClick={() => onEdit(item)} title="Edit" className="hover:text-accent-text hover:bg-accent-tint-soft">
                       <Edit2 className="h-3.5 w-3.5" />
                     </ActionButton>
-                    <ActionButton onClick={() => onDuplicate(item)} title="Duplicate" className="hover:text-blue-600 hover:bg-blue-50">
+                    <ActionButton onClick={() => onDuplicate(item)} title="Duplicate" className="hover:text-accent-text hover:bg-accent-tint-soft">
                       <Copy className="h-3.5 w-3.5" />
                     </ActionButton>
-                    <ActionButton onClick={() => onDelete(item)} title="Delete" className="hover:text-red-600 hover:bg-red-50">
+                    <ActionButton onClick={() => onDelete(item)} title="Delete" className="hover:text-status-red-fg hover:bg-status-red-bg">
                       <Trash2 className="h-3.5 w-3.5" />
                     </ActionButton>
                   </div>
@@ -578,7 +578,7 @@ function CardView({ items, onOpenDetail, onEdit, onDuplicate, onDelete }: ViewPr
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className={`bg-surf-card rounded-xl border border-border-soft shadow-sm overflow-hidden cursor-pointer group hover:shadow-lg hover:border-blue-300/60 hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
+          className={`bg-surf-card rounded-xl border border-border-soft shadow-sm overflow-hidden cursor-pointer group hover:shadow-lg hover:border-accent-tint-border hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
           onClick={() => onOpenDetail(item)}
         >
           <div className="relative h-40 bg-surf-app overflow-hidden">
@@ -602,7 +602,7 @@ function CardView({ items, onOpenDetail, onEdit, onDuplicate, onDelete }: ViewPr
             )}
 
             <div className="absolute top-2 left-2">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-surf-card backdrop-blur-sm text-blue-700 border border-blue-100 shadow-sm">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-surf-card backdrop-blur-sm text-accent-text border border-blue-100 shadow-sm">
                 <Tag className="h-2.5 w-2.5" />
                 {item.type}
               </span>
@@ -611,21 +611,21 @@ function CardView({ items, onOpenDetail, onEdit, onDuplicate, onDelete }: ViewPr
             <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => onEdit(item)}
-                className="p-1.5 rounded-lg bg-surf-card backdrop-blur-sm text-fg-600 hover:text-blue-600 hover:bg-surf-card shadow-sm transition-colors"
+                className="p-1.5 rounded-lg bg-surf-card backdrop-blur-sm text-fg-600 hover:text-accent-text hover:bg-surf-card shadow-sm transition-colors"
                 title="Edit"
               >
                 <Edit2 className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => onDuplicate(item)}
-                className="p-1.5 rounded-lg bg-surf-card backdrop-blur-sm text-fg-600 hover:text-blue-600 hover:bg-surf-card shadow-sm transition-colors"
+                className="p-1.5 rounded-lg bg-surf-card backdrop-blur-sm text-fg-600 hover:text-accent-text hover:bg-surf-card shadow-sm transition-colors"
                 title="Duplicate"
               >
                 <Copy className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => onDelete(item)}
-                className="p-1.5 rounded-lg bg-surf-card backdrop-blur-sm text-fg-600 hover:text-red-600 hover:bg-surf-card shadow-sm transition-colors"
+                className="p-1.5 rounded-lg bg-surf-card backdrop-blur-sm text-fg-600 hover:text-status-red-fg hover:bg-surf-card shadow-sm transition-colors"
                 title="Delete"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -661,7 +661,7 @@ function CardView({ items, onOpenDetail, onEdit, onDuplicate, onDelete }: ViewPr
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center gap-0.5 text-xs text-blue-500 hover:text-blue-700 mt-1 transition-colors"
+                    className="inline-flex items-center gap-0.5 text-xs text-blue-500 hover:text-accent-text mt-1 transition-colors"
                   >
                     <ExternalLink className="h-3 w-3" />
                     Link
@@ -1124,7 +1124,7 @@ function PriceListFormModal({
                       </td>
                       <td className="py-1.5 px-2 text-center">
                         {s.is_primary && (
-                          <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Primary</span>
+                          <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-status-amber-bg text-status-amber-fg">Primary</span>
                         )}
                       </td>
                       <td className="py-1.5 pl-2 text-center">
@@ -1175,7 +1175,7 @@ function PriceListFormModal({
                   type="checkbox"
                   checked={supplierForm.is_primary}
                   onChange={(e) => setSupplierForm((p) => ({ ...p, is_primary: e.target.checked }))}
-                  className="rounded border-border-solid text-blue-600 focus-visible:ring-focus"
+                  className="rounded border-border-solid text-accent-text focus-visible:ring-focus"
                 />
                 Set as Primary Supplier
               </label>
@@ -1188,7 +1188,7 @@ function PriceListFormModal({
             <button
               type="button"
               onClick={() => setShowAddSupplier(true)}
-              className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm text-accent-text hover:text-accent-text font-medium transition-colors"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Supplier

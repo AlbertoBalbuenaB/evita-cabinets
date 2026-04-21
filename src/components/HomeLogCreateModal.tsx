@@ -11,12 +11,12 @@ type LogType = 'note' | 'change' | 'decision' | 'risk' | 'issue' | 'milestone' |
 
 const LOG_TYPE_OPTIONS: Array<{ value: LogType; label: string; Icon: typeof FileText; color: string; activeBg: string; activeBorder: string }> = [
   { value: 'note',      label: 'Note',      Icon: FileText,       color: 'text-fg-600',  activeBg: 'bg-surf-muted',  activeBorder: 'border-slate-400' },
-  { value: 'change',    label: 'Change',    Icon: RefreshCw,      color: 'text-amber-600',  activeBg: 'bg-amber-100',  activeBorder: 'border-amber-400' },
-  { value: 'decision',  label: 'Decision',  Icon: CheckCircle,    color: 'text-blue-600',   activeBg: 'bg-blue-100',   activeBorder: 'border-blue-400' },
-  { value: 'risk',      label: 'Risk',      Icon: AlertTriangle,  color: 'text-orange-600', activeBg: 'bg-orange-100', activeBorder: 'border-orange-400' },
-  { value: 'issue',     label: 'Issue',     Icon: XCircle,        color: 'text-red-600',    activeBg: 'bg-red-100',    activeBorder: 'border-red-400' },
-  { value: 'milestone', label: 'Milestone', Icon: Trophy,         color: 'text-green-600',  activeBg: 'bg-green-100',  activeBorder: 'border-green-400' },
-  { value: 'update',    label: 'Update',    Icon: Radio,          color: 'text-purple-600', activeBg: 'bg-purple-100', activeBorder: 'border-purple-400' },
+  { value: 'change',    label: 'Change',    Icon: RefreshCw,      color: 'text-status-amber-fg',  activeBg: 'bg-status-amber-bg',  activeBorder: 'border-status-amber-brd' },
+  { value: 'decision',  label: 'Decision',  Icon: CheckCircle,    color: 'text-accent-text',   activeBg: 'bg-accent-tint-soft',   activeBorder: 'border-accent-tint-border' },
+  { value: 'risk',      label: 'Risk',      Icon: AlertTriangle,  color: 'text-status-orange-fg', activeBg: 'bg-status-orange-bg', activeBorder: 'border-status-orange-brd' },
+  { value: 'issue',     label: 'Issue',     Icon: XCircle,        color: 'text-status-red-fg',    activeBg: 'bg-status-red-bg',    activeBorder: 'border-status-red-brd' },
+  { value: 'milestone', label: 'Milestone', Icon: Trophy,         color: 'text-status-emerald-fg',  activeBg: 'bg-status-emerald-bg',  activeBorder: 'border-status-emerald-brd' },
+  { value: 'update',    label: 'Update',    Icon: Radio,          color: 'text-accent-text', activeBg: 'bg-accent-tint-soft', activeBorder: 'border-accent-tint-border' },
 ];
 
 /** Convert a plain string to the TipTap JSON doc format used by BitacoraSection. */

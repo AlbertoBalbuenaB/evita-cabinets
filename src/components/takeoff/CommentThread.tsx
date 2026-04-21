@@ -107,13 +107,13 @@ export function CommentThread() {
           </div>
         )}
 
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-status-red-fg">{error}</p>}
 
         <div className="flex items-center justify-between gap-2 pt-2 border-t border-border-soft">
           <button
             onClick={deleteThread}
             disabled={busy !== null}
-            className="inline-flex items-center gap-1 text-xs text-fg-400 hover:text-red-600 disabled:opacity-40"
+            className="inline-flex items-center gap-1 text-xs text-fg-400 hover:text-status-red-fg disabled:opacity-40"
             title="Delete comment"
           >
             {busy === 'delete' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
@@ -125,8 +125,8 @@ export function CommentThread() {
               disabled={busy !== null}
               className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded ${
                 root.resolved
-                  ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-                  : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                  ? 'bg-status-amber-bg text-status-amber-fg hover:bg-status-amber-bg'
+                  : 'bg-status-emerald-bg text-status-emerald-fg hover:bg-status-emerald-bg'
               } disabled:opacity-40`}
             >
               {busy === 'resolve' ? (
@@ -157,7 +157,7 @@ function CommentBlock({ comment, isRoot }: { comment: TakeoffComment; isRoot?: b
         <span className="text-xs font-semibold text-fg-800">{comment.authorName ?? 'Team member'}</span>
         <span className="text-[10px] text-fg-400">{formatDate(comment.createdAt)}</span>
         {comment.resolved && isRoot && (
-          <span className="text-[10px] bg-emerald-100 text-emerald-700 rounded px-1.5 py-0.5 ml-auto">resolved</span>
+          <span className="text-[10px] bg-status-emerald-bg text-status-emerald-fg rounded px-1.5 py-0.5 ml-auto">resolved</span>
         )}
       </div>
       <p className="text-sm text-fg-700 whitespace-pre-wrap">{comment.text}</p>

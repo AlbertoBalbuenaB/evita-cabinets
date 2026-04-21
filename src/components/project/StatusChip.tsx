@@ -27,11 +27,11 @@ interface StatusStyle {
 
 const STATUS_STYLES: Record<QuoteStatus, StatusStyle> = {
   Estimating: {
-    pill: 'bg-orange-600/10 text-orange-600 border-orange-600/25',
+    pill: 'bg-orange-600/10 text-status-orange-fg border-orange-600/25',
     dot: 'bg-orange-500',
   },
   Pending: {
-    pill: 'bg-blue-600/10 text-blue-600 border-blue-600/25',
+    pill: 'bg-blue-600/10 text-accent-text border-blue-600/25',
     dot: 'bg-blue-500',
   },
   Sent: {
@@ -39,11 +39,11 @@ const STATUS_STYLES: Record<QuoteStatus, StatusStyle> = {
     dot: 'bg-cyan-500',
   },
   Awarded: {
-    pill: 'bg-emerald-600/10 text-emerald-600 border-emerald-600/25',
+    pill: 'bg-emerald-600/10 text-status-emerald-fg border-emerald-600/25',
     dot: 'bg-emerald-500',
   },
   Lost: {
-    pill: 'bg-rose-600/10 text-rose-600 border-rose-600/25',
+    pill: 'bg-rose-600/10 text-status-red-fg border-rose-600/25',
     dot: 'bg-rose-500',
   },
   Discarded: {

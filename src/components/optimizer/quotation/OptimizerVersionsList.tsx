@@ -102,7 +102,7 @@ export function OptimizerVersionsList({
               <button
                 type="button"
                 onClick={() => { setOpen(false); onOpenCompare(); }}
-                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                className="inline-flex items-center gap-1 text-xs text-accent-text hover:text-blue-800 font-medium"
               >
                 <GitCompareArrows className="h-3 w-3" />
                 Compare
@@ -123,7 +123,7 @@ export function OptimizerVersionsList({
                 return (
                   <li
                     key={run.id}
-                    className={`border-b border-border-soft last:border-b-0 px-3 py-2 ${isActive ? 'bg-blue-50/50' : ''}`}
+                    className={`border-b border-border-soft last:border-b-0 px-3 py-2 ${isActive ? 'bg-accent-tint-soft' : ''}`}
                   >
                     <div className="flex items-center gap-2">
                       {isEditing ? (
@@ -137,13 +137,13 @@ export function OptimizerVersionsList({
                           }}
                           onBlur={() => handleRenameSubmit(run.id)}
                           autoFocus
-                          className="flex-1 px-1.5 py-0.5 text-xs border border-blue-300 rounded focus:ring-1 focus-visible:ring-focus focus:outline-none"
+                          className="flex-1 px-1.5 py-0.5 text-xs border border-accent-tint-border rounded focus:ring-1 focus-visible:ring-focus focus:outline-none"
                         />
                       ) : (
                         <button
                           type="button"
                           onClick={() => handleLoad(run.id)}
-                          className="flex-1 text-left text-xs font-medium text-fg-800 hover:text-blue-600 truncate"
+                          className="flex-1 text-left text-xs font-medium text-fg-800 hover:text-accent-text truncate"
                         >
                           {run.name}
                         </button>
@@ -154,7 +154,7 @@ export function OptimizerVersionsList({
                       )}
 
                       {isActive && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-accent-text bg-accent-tint-soft px-1.5 py-0.5 rounded">
                           <Check className="h-2.5 w-2.5" /> ACTIVE
                         </span>
                       )}
@@ -164,7 +164,7 @@ export function OptimizerVersionsList({
                           type="button"
                           onClick={() => handleSetActive(run.id)}
                           disabled={isPending}
-                          className="text-[10px] text-blue-600 hover:text-blue-800 font-medium disabled:opacity-40"
+                          className="text-[10px] text-accent-text hover:text-blue-800 font-medium disabled:opacity-40"
                         >
                           Set active
                         </button>
@@ -185,7 +185,7 @@ export function OptimizerVersionsList({
                             type="button"
                             onClick={() => handleDelete(run.id, run.name)}
                             disabled={isPending}
-                            className="p-0.5 text-fg-400 hover:text-red-600 disabled:opacity-40"
+                            className="p-0.5 text-fg-400 hover:text-status-red-fg disabled:opacity-40"
                             title="Delete"
                           >
                             <Trash2 className="h-3 w-3" />

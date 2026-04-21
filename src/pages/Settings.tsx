@@ -494,8 +494,8 @@ export function Settings() {
         <div
           className={`flex items-center space-x-2 p-4 rounded-lg ${
             message.type === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : 'bg-red-50 text-red-800 border border-red-200'
+              ? 'bg-status-emerald-bg text-green-800 border border-status-emerald-brd'
+              : 'bg-status-red-bg text-red-800 border border-status-red-brd'
           }`}
         >
           <AlertCircle className="h-5 w-5" />
@@ -592,11 +592,11 @@ export function Settings() {
         </div>
 
         {backupResult && (
-          <div className="mt-4 flex items-start space-x-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+          <div className="mt-4 flex items-start space-x-3 p-4 bg-status-emerald-bg border border-status-emerald-brd rounded-lg">
+            <CheckCircle className="h-5 w-5 text-status-emerald-fg mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-green-800">Backup downloaded successfully</p>
-              <p className="text-sm text-green-700 mt-0.5">
+              <p className="text-sm text-status-emerald-fg mt-0.5">
                 {backupResult.projectCount} {backupResult.projectCount === 1 ? 'project' : 'projects'},{' '}
                 {backupResult.productCount} {backupResult.productCount === 1 ? 'product' : 'products'},{' '}
                 {backupResult.priceListCount} price list {backupResult.priceListCount === 1 ? 'item' : 'items'} &mdash; saved as <strong>{backupResult.fileName}</strong>
@@ -619,7 +619,7 @@ export function Settings() {
               <input
                 type="file"
                 accept=".csv"
-                className="block w-full text-sm text-fg-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="block w-full text-sm text-fg-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent-tint-soft file:text-accent-text hover:file:bg-accent-tint-soft"
               />
             </div>
 
@@ -632,7 +632,7 @@ export function Settings() {
               <input
                 type="file"
                 accept=".csv"
-                className="block w-full text-sm text-fg-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="block w-full text-sm text-fg-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent-tint-soft file:text-accent-text hover:file:bg-accent-tint-soft"
               />
             </div>
 
@@ -649,7 +649,7 @@ export function Settings() {
       <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter" style={{ animationDelay: '0.15s' }}>
         <h2 className="text-xl font-semibold text-fg-900 mb-6">Taxes by Material Type</h2>
         <div className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4 mb-4">
             <p className="text-sm text-blue-800">
               <strong>How it works:</strong> Configure tax percentages for different material types.
               These taxes are automatically applied to price list items based on their type.
@@ -689,7 +689,7 @@ export function Settings() {
                   variant="ghost"
                   size="sm"
                   onClick={() => deleteTaxByType(tax.id)}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-status-red-fg hover:text-status-red-fg"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -755,7 +755,7 @@ export function Settings() {
                   variant="ghost"
                   size="sm"
                   onClick={() => deleteCustomType(type.id)}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-status-red-fg hover:text-status-red-fg"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
@@ -797,7 +797,7 @@ export function Settings() {
                   variant="ghost"
                   size="sm"
                   onClick={() => deleteCustomUnit(unit.id)}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-status-red-fg hover:text-status-red-fg"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
@@ -880,7 +880,7 @@ export function Settings() {
       <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter">
         <h2 className="text-xl font-semibold text-fg-900 mb-6">Company Logo</h2>
         <div className="space-y-4">
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4">
             <p className="text-sm text-amber-800 font-medium mb-2">
               How to upload your company logo:
             </p>
@@ -888,7 +888,7 @@ export function Settings() {
               <li>Go to your Supabase Dashboard</li>
               <li>Navigate to Storage in the left sidebar</li>
               <li>Open the "logos" bucket</li>
-              <li>Upload your logo file with the exact name: <code className="bg-amber-100 px-2 py-0.5 rounded font-mono text-xs">evita_logo.png</code></li>
+              <li>Upload your logo file with the exact name: <code className="bg-status-amber-bg px-2 py-0.5 rounded font-mono text-xs">evita_logo.png</code></li>
               <li>The logo will automatically appear in your quotation PDFs</li>
             </ol>
             <p className="text-sm text-amber-800 mt-3">
@@ -913,7 +913,7 @@ export function Settings() {
       <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6 section-enter">
         <h2 className="text-xl font-semibold text-fg-900 mb-6">Material Waste Percentages</h2>
         <div className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4 mb-4">
             <p className="text-sm text-blue-800">
               <strong>How it works:</strong> Waste percentages are applied directly to the Box SF
               and Doors SF values in the Products Catalog. For example, if a product has 24.58 Box SF
@@ -978,14 +978,14 @@ export function Settings() {
                     <div className="flex items-center gap-4 min-w-0">
                       <span className="text-sm font-medium text-fg-900">{member.name}</span>
                       {member.job_title && <span className="text-sm text-fg-500">{member.job_title}</span>}
-                      {dept && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{dept.name}</span>}
+                      {dept && <span className="text-xs bg-accent-tint-soft text-accent-text px-2 py-0.5 rounded-full">{dept.name}</span>}
                       {member.email && <span className="text-sm text-fg-400">{member.email}</span>}
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => deleteTeamMember(member.id)}
-                      className="text-red-600 hover:text-red-700 flex-shrink-0"
+                      className="text-status-red-fg hover:text-status-red-fg flex-shrink-0"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -1071,7 +1071,7 @@ export function Settings() {
                     <td className="py-2.5 px-3 font-medium text-fg-800">
                       <div>
                         {m.name}
-                        {isSelf && <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold">You</span>}
+                        {isSelf && <span className="ml-2 text-[10px] bg-accent-tint-soft text-accent-text px-1.5 py-0.5 rounded-full font-semibold">You</span>}
                       </div>
                       {m.job_title && <div className="text-xs text-fg-400 mt-0.5">{m.job_title}</div>}
                     </td>
@@ -1102,13 +1102,13 @@ export function Settings() {
                     </td>
                     <td className="py-2.5 px-3 text-center">
                       {m.auth_user_id ? (
-                        <span className="text-green-600 font-bold">✓</span>
+                        <span className="text-status-emerald-fg font-bold">✓</span>
                       ) : (
                         <span className="text-fg-300">✗</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3 text-center">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${m.is_active ? 'bg-green-100 text-green-700' : 'bg-surf-muted text-fg-500'}`}>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${m.is_active ? 'bg-status-emerald-bg text-status-emerald-fg' : 'bg-surf-muted text-fg-500'}`}>
                         {m.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>

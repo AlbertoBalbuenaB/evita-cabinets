@@ -134,13 +134,13 @@ export function ImportQuotationModal({ isOpen, onClose, projectId, onSuccess }: 
             <div className="flex gap-2">
               <button
                 onClick={() => setCreateNew(false)}
-                className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${!createNew ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-border-soft text-fg-600 hover:bg-surf-app'}`}
+                className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${!createNew ? 'border-blue-500 bg-accent-tint-soft text-accent-text' : 'border-border-soft text-fg-600 hover:bg-surf-app'}`}
               >
                 Existing Project
               </button>
               <button
                 onClick={() => setCreateNew(true)}
-                className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${createNew ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-border-soft text-fg-600 hover:bg-surf-app'}`}
+                className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${createNew ? 'border-blue-500 bg-accent-tint-soft text-accent-text' : 'border-border-soft text-fg-600 hover:bg-surf-app'}`}
               >
                 New Project
               </button>
@@ -176,7 +176,7 @@ export function ImportQuotationModal({ isOpen, onClose, projectId, onSuccess }: 
 
         {/* File upload */}
         <div
-          className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${isDragging ? 'border-blue-400 bg-blue-50' : 'border-border-solid hover:border-blue-300'}`}
+          className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${isDragging ? 'border-accent-tint-border bg-accent-tint-soft' : 'border-border-solid hover:border-accent-tint-border'}`}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
@@ -210,21 +210,21 @@ export function ImportQuotationModal({ isOpen, onClose, projectId, onSuccess }: 
 
         {/* Validation status */}
         {isValidating && (
-          <div className="flex items-center gap-2 text-blue-600">
+          <div className="flex items-center gap-2 text-accent-text">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="text-sm">Validating...</span>
           </div>
         )}
 
         {validationResult && (
-          <div className={`rounded-lg p-3 ${validationResult.isValid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+          <div className={`rounded-lg p-3 ${validationResult.isValid ? 'bg-status-emerald-bg border border-status-emerald-brd' : 'bg-status-red-bg border border-status-red-brd'}`}>
             <div className="flex items-center gap-2 mb-1">
               {validationResult.isValid ? (
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <CheckCircle2 className="h-4 w-4 text-status-emerald-fg" />
               ) : (
-                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <AlertTriangle className="h-4 w-4 text-status-red-fg" />
               )}
-              <span className={`text-sm font-medium ${validationResult.isValid ? 'text-green-700' : 'text-red-700'}`}>
+              <span className={`text-sm font-medium ${validationResult.isValid ? 'text-status-emerald-fg' : 'text-status-red-fg'}`}>
                 {validationResult.isValid ? 'File is valid' : validationResult.error}
               </span>
             </div>
@@ -235,7 +235,7 @@ export function ImportQuotationModal({ isOpen, onClose, projectId, onSuccess }: 
               </div>
             )}
             {validationResult.warnings.length > 0 && (
-              <p className="text-xs text-amber-600 mt-1">{validationResult.warnings.length} material warning(s)</p>
+              <p className="text-xs text-status-amber-fg mt-1">{validationResult.warnings.length} material warning(s)</p>
             )}
           </div>
         )}

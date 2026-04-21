@@ -75,7 +75,7 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
         {/* ── Build summary ─────────────────────────────────── */}
         <section>
           <header className="flex items-center gap-1.5 mb-2">
-            <Layers className="h-3.5 w-3.5 text-blue-600" />
+            <Layers className="h-3.5 w-3.5 text-accent-text" />
             <h3 className="text-xs font-semibold text-fg-800 uppercase tracking-wide">Build Summary</h3>
           </header>
           {pendingBuiltAt ? (
@@ -108,7 +108,7 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
                 type="button"
                 onClick={handleClear}
                 title="Discard the current build."
-                className="inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium rounded border border-border-soft bg-surf-card text-fg-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                className="inline-flex items-center justify-center gap-1 px-2 py-1 text-[11px] font-medium rounded border border-border-soft bg-surf-card text-fg-600 hover:bg-status-red-bg hover:text-status-red-fg hover:border-status-red-brd"
               >
                 <Eraser className="h-3 w-3" />
                 Clear
@@ -120,7 +120,7 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
         {/* ── Stocks list ────────────────────────────────────── */}
         <section>
           <header className="flex items-center gap-1.5 mb-2">
-            <Package className="h-3.5 w-3.5 text-blue-600" />
+            <Package className="h-3.5 w-3.5 text-accent-text" />
             <h3 className="text-xs font-semibold text-fg-800 uppercase tracking-wide">Stocks ({pendingStocks.length})</h3>
           </header>
           {pendingStocks.length === 0 ? (
@@ -153,7 +153,7 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
         {/* ── Edge banding types ─────────────────────────────── */}
         <section>
           <header className="flex items-center gap-1.5 mb-2">
-            <Scissors className="h-3.5 w-3.5 text-blue-600" />
+            <Scissors className="h-3.5 w-3.5 text-accent-text" />
             <h3 className="text-xs font-semibold text-fg-800 uppercase tracking-wide">Edge Banding</h3>
           </header>
           <ul className="space-y-1">
@@ -210,7 +210,7 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
         {/* ── Settings ────────────────────────────────────────── */}
         <section>
           <header className="flex items-center gap-1.5 mb-2">
-            <Settings className="h-3.5 w-3.5 text-blue-600" />
+            <Settings className="h-3.5 w-3.5 text-accent-text" />
             <h3 className="text-xs font-semibold text-fg-800 uppercase tracking-wide">Settings</h3>
           </header>
           <div className="space-y-2">
@@ -257,7 +257,7 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
                       value={mode}
                       checked={engineMode === mode}
                       onChange={() => setEngineMode(mode)}
-                      className="border-border-solid text-blue-600"
+                      className="border-border-solid text-accent-text"
                     />
                     {mode === 'guillotine' ? 'Guillotine only (panel saw)' : 'Both engines (+ MaxRect)'}
                   </label>
@@ -281,7 +281,7 @@ export function QuotationOptimizerSidebar({ useStore }: Props) {
                       value={val}
                       checked={objective === val}
                       onChange={() => setObjective(val)}
-                      className="border-border-solid text-blue-600"
+                      className="border-border-solid text-accent-text"
                     />
                     {label}
                   </label>

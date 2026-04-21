@@ -21,9 +21,9 @@ export function BoardGrid({ result, onSelectBoard }: Props) {
     <div className="flex-1 overflow-auto p-4">
       <div className="flex flex-wrap gap-4">
         {result.boards.map((board, idx) => {
-          const usageColor = board.usage > 75 ? 'bg-green-100 text-green-700' : board.usage > 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
+          const usageColor = board.usage > 75 ? 'bg-status-emerald-bg text-status-emerald-fg' : board.usage > 50 ? 'bg-status-amber-bg text-status-amber-fg' : 'bg-status-red-bg text-status-red-fg';
           return (
-            <div key={idx} onClick={() => onSelectBoard(idx)} className="bg-surf-card rounded-lg border border-border-soft overflow-hidden cursor-pointer hover:border-blue-400 hover:shadow-md transition-all">
+            <div key={idx} onClick={() => onSelectBoard(idx)} className="bg-surf-card rounded-lg border border-border-soft overflow-hidden cursor-pointer hover:border-accent-tint-border hover:shadow-md transition-all">
               <div className="flex justify-between items-center px-3 py-2 bg-surf-app border-b border-border-soft">
                 <div>
                   <div className="font-medium text-sm text-fg-900">Board {idx + 1}</div>

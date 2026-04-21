@@ -293,15 +293,15 @@ export function ProductsCatalog() {
             </select>
           </div>
           <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border border-border-soft rounded-lg hover:bg-surf-app text-sm">
-            <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="w-3.5 h-3.5 text-blue-600 border-border-solid rounded" />
+            <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="w-3.5 h-3.5 text-accent-text border-border-solid rounded" />
             <Archive className="h-3.5 w-3.5 text-fg-500" />
             <span className="text-fg-600">Archived</span>
           </label>
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-xs text-fg-400 hidden sm:inline">{filteredProducts.length} items</span>
             <div className="flex p-1 bg-surf-muted rounded-lg">
-              <button onClick={() => setViewMode('card')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'card' ? 'bg-surf-card text-blue-600 shadow-sm' : 'text-fg-400 hover:text-fg-600'}`}><LayoutGrid className="h-4 w-4" /></button>
-              <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-surf-card text-blue-600 shadow-sm' : 'text-fg-400 hover:text-fg-600'}`}><LayoutList className="h-4 w-4" /></button>
+              <button onClick={() => setViewMode('card')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'card' ? 'bg-surf-card text-accent-text shadow-sm' : 'text-fg-400 hover:text-fg-600'}`}><LayoutGrid className="h-4 w-4" /></button>
+              <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-surf-card text-accent-text shadow-sm' : 'text-fg-400 hover:text-fg-600'}`}><LayoutList className="h-4 w-4" /></button>
             </div>
           </div>
         </div>
@@ -319,15 +319,15 @@ export function ProductsCatalog() {
             <div
               key={product.id}
               onClick={() => navigate(`/products/${product.id}`)}
-              className={`glass-white p-0 overflow-hidden cursor-pointer group hover:shadow-lg hover:border-blue-300/60 hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
+              className={`glass-white p-0 overflow-hidden cursor-pointer group hover:shadow-lg hover:border-accent-tint-border hover:-translate-y-0.5 transition-all duration-200 card-enter stagger-${Math.min(idx + 1, 12)}`}
             >
               <div className="px-4 pt-4 pb-3">
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className="text-xs font-mono font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{product.sku}</span>
+                  <span className="text-xs font-mono font-semibold text-accent-text bg-accent-tint-soft px-2 py-0.5 rounded">{product.sku}</span>
                   {product.status === 'archived' ? (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-surf-muted text-fg-500">Archived</span>
                   ) : (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-status-emerald-bg text-status-emerald-fg">Active</span>
                   )}
                 </div>
                 <p className="text-sm font-medium text-fg-800 line-clamp-2 mb-2 min-h-[2.5rem]">{product.description}</p>
@@ -354,13 +354,13 @@ export function ProductsCatalog() {
                     <span className="flex items-center gap-0.5"><Box className="h-3 w-3" /> {product.boxes_per_unit ?? 1} box</span>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={(e) => { e.stopPropagation(); handleEdit(product); }} className="p-1 rounded hover:bg-surf-card text-fg-400 hover:text-blue-600"><Edit2 className="h-3.5 w-3.5" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleEdit(product); }} className="p-1 rounded hover:bg-surf-card text-fg-400 hover:text-accent-text"><Edit2 className="h-3.5 w-3.5" /></button>
                     {product.status === 'active' ? (
-                      <button onClick={(e) => { e.stopPropagation(); handleArchive(product); }} className="p-1 rounded hover:bg-surf-card text-fg-400 hover:text-amber-600"><Archive className="h-3.5 w-3.5" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); handleArchive(product); }} className="p-1 rounded hover:bg-surf-card text-fg-400 hover:text-status-amber-fg"><Archive className="h-3.5 w-3.5" /></button>
                     ) : (
-                      <button onClick={(e) => { e.stopPropagation(); handleRestore(product); }} className="p-1 rounded hover:bg-surf-card text-fg-400 hover:text-green-600"><ArchiveRestore className="h-3.5 w-3.5" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); handleRestore(product); }} className="p-1 rounded hover:bg-surf-card text-fg-400 hover:text-status-emerald-fg"><ArchiveRestore className="h-3.5 w-3.5" /></button>
                     )}
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(product); }} className="p-1 rounded hover:bg-surf-card text-fg-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(product); }} className="p-1 rounded hover:bg-surf-card text-fg-400 hover:text-status-red-fg"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
               </div>
@@ -386,24 +386,24 @@ export function ProductsCatalog() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} onClick={() => navigate(`/products/${product.id}`)} className="hover:bg-blue-50/40 cursor-pointer transition-colors group">
-                    <td className="px-4 py-3 text-sm font-mono font-medium text-blue-700">{product.sku}</td>
+                  <tr key={product.id} onClick={() => navigate(`/products/${product.id}`)} className="hover:bg-accent-tint-soft cursor-pointer transition-colors group">
+                    <td className="px-4 py-3 text-sm font-mono font-medium text-accent-text">{product.sku}</td>
                     <td className="px-4 py-3 text-sm text-fg-700 max-w-xs truncate">{product.description}</td>
-                    <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{product.collection_name || 'Standard'}</span></td>
+                    <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs px-2 py-0.5 rounded-full bg-accent-tint-soft text-accent-text">{product.collection_name || 'Standard'}</span></td>
                     <td className="px-4 py-3 text-sm text-right tabular-nums text-fg-800">{product.box_sf.toFixed(2)}</td>
                     <td className="px-4 py-3 text-sm text-right tabular-nums text-fg-800">{product.doors_fronts_sf.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-center hidden lg:table-cell">{product.has_drawers ? <Check className="h-4 w-4 text-green-600 mx-auto" /> : <X className="h-4 w-4 text-fg-300 mx-auto" />}</td>
+                    <td className="px-4 py-3 text-center hidden lg:table-cell">{product.has_drawers ? <Check className="h-4 w-4 text-status-emerald-fg mx-auto" /> : <X className="h-4 w-4 text-fg-300 mx-auto" />}</td>
                     <td className="px-4 py-3 text-center hidden lg:table-cell text-sm text-fg-700">{product.boxes_per_unit ?? 1}</td>
-                    <td className="px-4 py-3 text-center">{product.status === 'archived' ? <span className="text-xs px-2 py-0.5 rounded-full bg-surf-muted text-fg-500">Archived</span> : <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">Active</span>}</td>
+                    <td className="px-4 py-3 text-center">{product.status === 'archived' ? <span className="text-xs px-2 py-0.5 rounded-full bg-surf-muted text-fg-500">Archived</span> : <span className="text-xs px-2 py-0.5 rounded-full bg-status-emerald-bg text-status-emerald-fg">Active</span>}</td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); handleEdit(product); }} className="p-1.5 rounded-md hover:bg-surf-card text-fg-400 hover:text-blue-600"><Edit2 className="h-3.5 w-3.5" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); handleEdit(product); }} className="p-1.5 rounded-md hover:bg-surf-card text-fg-400 hover:text-accent-text"><Edit2 className="h-3.5 w-3.5" /></button>
                         {product.status === 'active' ? (
-                          <button onClick={(e) => { e.stopPropagation(); handleArchive(product); }} className="p-1.5 rounded-md hover:bg-surf-card text-fg-400 hover:text-amber-600"><Archive className="h-3.5 w-3.5" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleArchive(product); }} className="p-1.5 rounded-md hover:bg-surf-card text-fg-400 hover:text-status-amber-fg"><Archive className="h-3.5 w-3.5" /></button>
                         ) : (
-                          <button onClick={(e) => { e.stopPropagation(); handleRestore(product); }} className="p-1.5 rounded-md hover:bg-surf-card text-fg-400 hover:text-green-600"><ArchiveRestore className="h-3.5 w-3.5" /></button>
+                          <button onClick={(e) => { e.stopPropagation(); handleRestore(product); }} className="p-1.5 rounded-md hover:bg-surf-card text-fg-400 hover:text-status-emerald-fg"><ArchiveRestore className="h-3.5 w-3.5" /></button>
                         )}
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete(product); }} className="p-1.5 rounded-md hover:bg-surf-card text-fg-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(product); }} className="p-1.5 rounded-md hover:bg-surf-card text-fg-400 hover:text-status-red-fg"><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
                     </td>
                   </tr>
@@ -581,7 +581,7 @@ function ClosetLibraryTab() {
                 <tr key={item.id} className={`hover:bg-surf-app transition-colors ${!item.is_active ? 'opacity-50' : ''}`}>
                   <td className="px-4 py-2 font-mono text-xs text-fg-600">{item.cabinet_code}</td>
                   <td className="px-4 py-2">
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${item.evita_line === 'Evita Premium' ? 'bg-amber-100 text-amber-800' : 'bg-teal-100 text-teal-800'}`}>
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${item.evita_line === 'Evita Premium' ? 'bg-status-amber-bg text-amber-800' : 'bg-teal-100 text-teal-800'}`}>
                       {item.evita_line}
                     </span>
                   </td>
@@ -943,7 +943,7 @@ function PrefabLibraryTab() {
                     <td className="px-4 py-2 text-center space-x-1">
                       {item.dims_locked && (
                         <span
-                          className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800"
+                          className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-status-amber-bg text-amber-800"
                           title="User-edited dimensions (importer won't overwrite)"
                         >
                           locked
@@ -1008,11 +1008,11 @@ function PrefabLibraryTab() {
               <div>Sheet: <span className="font-mono">{importReport.sheetName}</span></div>
               <div>Rows parsed: <b>{importReport.rowsParsed}</b></div>
               <div>SKUs parsed: <b>{importReport.skusParsed}</b></div>
-              <div>Catalog inserted: <b className="text-green-700">{importReport.catalogInserted}</b></div>
+              <div>Catalog inserted: <b className="text-status-emerald-fg">{importReport.catalogInserted}</b></div>
               <div>Catalog updated: <b>{importReport.catalogUpdated}</b></div>
-              <div>Catalog deactivated: <b className="text-red-700">{importReport.catalogDeactivated}</b></div>
+              <div>Catalog deactivated: <b className="text-status-red-fg">{importReport.catalogDeactivated}</b></div>
               <div>Prices archived: <b>{importReport.pricesArchived}</b></div>
-              <div>Prices inserted: <b className="text-green-700">{importReport.pricesInserted}</b></div>
+              <div>Prices inserted: <b className="text-status-emerald-fg">{importReport.pricesInserted}</b></div>
             </div>
             {importReport.priceChanges.length > 0 && (
               <div>
@@ -1047,10 +1047,10 @@ function PrefabLibraryTab() {
             )}
             {importReport.errors.length > 0 && (
               <div>
-                <h4 className="font-semibold text-red-700 mt-3 mb-1">
+                <h4 className="font-semibold text-status-red-fg mt-3 mb-1">
                   Errors ({importReport.errors.length})
                 </h4>
-                <ul className="max-h-40 overflow-y-auto text-xs text-red-700 list-disc pl-5">
+                <ul className="max-h-40 overflow-y-auto text-xs text-status-red-fg list-disc pl-5">
                   {importReport.errors.slice(0, 20).map((e, i) => <li key={i}>{e}</li>)}
                 </ul>
               </div>

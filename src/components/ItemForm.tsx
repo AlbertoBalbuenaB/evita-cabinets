@@ -152,7 +152,7 @@ export function ItemForm({ areaId, item, onClose }: ItemFormProps) {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-fg-600">Unit Price:</span>
-              <span className="font-medium text-blue-600">{formatCurrency(unitPrice)}</span>
+              <span className="font-medium text-accent-text">{formatCurrency(unitPrice)}</span>
             </div>
           </div>
         )}
@@ -179,11 +179,11 @@ export function ItemForm({ areaId, item, onClose }: ItemFormProps) {
         </div>
 
         {selectedPriceListItem && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4">
             <div className="flex justify-between items-center">
               <div>
                 <div className="text-sm text-blue-800 font-medium">Subtotal</div>
-                <div className="text-xs text-blue-600">
+                <div className="text-xs text-accent-text">
                   {quantity} × {formatCurrency(unitPrice)}
                 </div>
               </div>

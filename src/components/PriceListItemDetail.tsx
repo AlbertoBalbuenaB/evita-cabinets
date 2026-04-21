@@ -203,7 +203,7 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
               rel="noopener noreferrer"
               className="flex items-center gap-3 bg-surf-app border border-border-soft rounded-xl p-4 hover:bg-surf-muted transition-colors group"
             >
-              <div className="p-2 rounded-lg bg-blue-50 text-blue-500 group-hover:bg-blue-100 transition-colors">
+              <div className="p-2 rounded-lg bg-accent-tint-soft text-blue-500 group-hover:bg-accent-tint-soft transition-colors">
                 <ExternalLink className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
@@ -266,11 +266,11 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
                     >
                       <div className="flex-shrink-0">
                         {increased ? (
-                          <div className="p-1.5 rounded-full bg-red-50">
+                          <div className="p-1.5 rounded-full bg-status-red-bg">
                             <TrendingUp className="h-3.5 w-3.5 text-red-500" />
                           </div>
                         ) : decreased ? (
-                          <div className="p-1.5 rounded-full bg-green-50">
+                          <div className="p-1.5 rounded-full bg-status-emerald-bg">
                             <TrendingDown className="h-3.5 w-3.5 text-green-500" />
                           </div>
                         ) : (
@@ -286,15 +286,15 @@ export function PriceListItemDetail({ item, onClose, onEdit }: PriceListItemDeta
                             {formatCurrency(entry.old_price)}
                           </span>
                           <span className="text-fg-400 text-xs">→</span>
-                          <span className={`font-semibold ${increased ? 'text-red-600' : decreased ? 'text-green-600' : 'text-fg-700'}`}>
+                          <span className={`font-semibold ${increased ? 'text-status-red-fg' : decreased ? 'text-status-emerald-fg' : 'text-fg-700'}`}>
                             {formatCurrency(entry.new_price)}
                           </span>
                           {pct !== null && (
                             <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
                               increased
-                                ? 'bg-red-50 text-red-600'
+                                ? 'bg-status-red-bg text-status-red-fg'
                                 : decreased
-                                ? 'bg-green-50 text-green-600'
+                                ? 'bg-status-emerald-bg text-status-emerald-fg'
                                 : 'bg-surf-muted text-fg-500'
                             }`}>
                               {pct}

@@ -96,7 +96,7 @@ export function PurchaseItemDetailPanel({
               <select
                 value={assignedId}
                 onChange={(e) => onUpdate(item.id, { assigned_to_member_id: e.target.value || null })}
-                className="w-full px-3 py-2 text-sm border border-border-soft rounded-lg bg-surf-card focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
+                className="w-full px-3 py-2 text-sm border border-border-soft rounded-lg bg-surf-card focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 outline-none transition"
               >
                 <option value="">— Unassigned —</option>
                 {teamMembers.map((m) => (
@@ -114,7 +114,7 @@ export function PurchaseItemDetailPanel({
               <select
                 value={item.supplier_id ?? ''}
                 onChange={(e) => onUpdate(item.id, { supplier_id: e.target.value || null })}
-                className="w-full px-3 py-2 text-sm border border-border-soft rounded-lg bg-surf-card focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
+                className="w-full px-3 py-2 text-sm border border-border-soft rounded-lg bg-surf-card focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 outline-none transition"
               >
                 <option value="">— None —</option>
                 {suppliers.map((s) => (

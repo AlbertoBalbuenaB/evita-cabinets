@@ -97,7 +97,7 @@ export function KbProposals() {
       </div>
 
       {error && (
-        <div className="glass-white rounded-xl p-4 border border-red-200/70 text-sm text-red-700">
+        <div className="glass-white rounded-xl p-4 border border-status-red-brd text-sm text-status-red-fg">
           {error}
         </div>
       )}

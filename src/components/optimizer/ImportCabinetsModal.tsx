@@ -160,7 +160,7 @@ export function ImportCabinetsModal({ isOpen, onClose }: Props) {
                   return (
                     <tr
                       key={product.id}
-                      className={`transition-colors cursor-pointer ${isSelected ? 'bg-blue-50/60' : 'hover:bg-surf-app'}`}
+                      className={`transition-colors cursor-pointer ${isSelected ? 'bg-accent-tint-soft' : 'hover:bg-surf-app'}`}
                       onClick={() => toggleProduct(product.id)}
                     >
                       <td className="py-2 px-3 text-center">
@@ -169,14 +169,14 @@ export function ImportCabinetsModal({ isOpen, onClose }: Props) {
                           checked={isSelected}
                           onChange={() => toggleProduct(product.id)}
                           onClick={e => e.stopPropagation()}
-                          className="w-4 h-4 rounded border-border-solid text-blue-600 focus-visible:ring-focus"
+                          className="w-4 h-4 rounded border-border-solid text-accent-text focus-visible:ring-focus"
                         />
                       </td>
                       <td className="py-2 px-3 font-mono text-xs text-fg-600">{product.sku}</td>
                       <td className="py-2 px-3 text-fg-800 font-medium">{product.description}</td>
                       <td className="py-2 px-3 text-fg-500 text-xs">{product.collection_name || '—'}</td>
                       <td className="py-2 px-3 text-center">
-                        <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">
+                        <span className="inline-flex items-center gap-1 text-xs bg-status-amber-bg text-amber-800 px-2 py-0.5 rounded-full font-medium">
                           <Package className="h-3 w-3" />{pieces.length}
                         </span>
                       </td>
@@ -187,7 +187,7 @@ export function ImportCabinetsModal({ isOpen, onClose }: Props) {
                             min="1"
                             value={qty}
                             onChange={e => setQty(product.id, parseInt(e.target.value) || 0)}
-                            className="w-16 text-sm text-center border border-blue-300 rounded-md bg-surf-card py-0.5 focus:outline-none focus:ring-2 focus-visible:ring-focus tabular-nums"
+                            className="w-16 text-sm text-center border border-accent-tint-border rounded-md bg-surf-card py-0.5 focus:outline-none focus:ring-2 focus-visible:ring-focus tabular-nums"
                           />
                         ) : (
                           <span className="text-fg-300">—</span>
@@ -207,7 +207,7 @@ export function ImportCabinetsModal({ isOpen, onClose }: Props) {
             {selected.size > 0 ? (
               <span>
                 <span className="font-semibold text-fg-700">{selected.size}</span> cabinet{selected.size !== 1 ? 's' : ''} selected
-                {totalPieces > 0 && <span> · <span className="font-semibold text-blue-600">{totalPieces}</span> total pieces</span>}
+                {totalPieces > 0 && <span> · <span className="font-semibold text-accent-text">{totalPieces}</span> total pieces</span>}
               </span>
             ) : (
               'Select cabinets to import their cut lists'

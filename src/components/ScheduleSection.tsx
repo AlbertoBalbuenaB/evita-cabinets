@@ -147,7 +147,7 @@ export function ScheduleSection({ projectId }: Props) {
   return (
     <div className="bg-surf-card rounded-lg border border-border-soft p-4">
       <div className="flex items-center mb-4">
-        <CalendarDays className="h-5 w-5 text-blue-600 mr-2" />
+        <CalendarDays className="h-5 w-5 text-accent-text mr-2" />
         <h3 className="text-lg font-semibold text-fg-900">Schedule</h3>
       </div>
 
@@ -176,7 +176,7 @@ export function ScheduleSection({ projectId }: Props) {
                         if (e.key === 'Enter') updateActivityName(activity.id, editingName);
                         if (e.key === 'Escape') setEditingId(null);
                       }}
-                      className="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-2 focus-visible:ring-focus"
+                      className="w-full px-2 py-1 text-sm border border-accent-tint-border rounded focus:outline-none focus:ring-2 focus-visible:ring-focus"
                     />
                   ) : (
                     <button
@@ -184,7 +184,7 @@ export function ScheduleSection({ projectId }: Props) {
                         setEditingId(activity.id);
                         setEditingName(activity.name);
                       }}
-                      className="text-sm font-medium text-fg-700 hover:text-blue-600 truncate block w-full text-left"
+                      className="text-sm font-medium text-fg-700 hover:text-accent-text truncate block w-full text-left"
                     >
                       {activity.name}
                     </button>

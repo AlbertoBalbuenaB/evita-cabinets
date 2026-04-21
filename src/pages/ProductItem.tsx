@@ -90,7 +90,7 @@ export function ProductItem() {
           </button>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-sm text-fg-400">
-              <button onClick={() => navigate('/products')} className="hover:text-blue-600 transition-colors">Cabinets</button>
+              <button onClick={() => navigate('/products')} className="hover:text-accent-text transition-colors">Cabinets</button>
               <span>/</span>
             </div>
             <h1 className="text-lg font-semibold text-fg-900 truncate">{product.sku}</h1>
@@ -123,7 +123,7 @@ export function ProductItem() {
           {isArchived ? (
             <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-surf-muted text-fg-600 border border-border-soft">Archived</span>
           ) : (
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200/50">Active</span>
+            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-status-emerald-bg text-status-emerald-fg border border-status-emerald-brd">Active</span>
           )}
         </div>
 
@@ -188,12 +188,12 @@ export function ProductItem() {
             </div>
             <div className="flex items-center justify-between py-2 border-b border-border-soft">
               <span className="text-sm text-fg-500">Has Drawers</span>
-              {product.has_drawers ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-fg-300" />}
+              {product.has_drawers ? <Check className="h-4 w-4 text-status-emerald-fg" /> : <X className="h-4 w-4 text-fg-300" />}
             </div>
             <Spec label="Boxes per Unit" value={product.boxes_per_unit ?? 1} />
             <div className="flex items-center justify-between py-2 border-b border-border-soft">
               <span className="text-sm text-fg-500">RTA Default</span>
-              {product.default_is_rta ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-fg-300" />}
+              {product.default_is_rta ? <Check className="h-4 w-4 text-status-emerald-fg" /> : <X className="h-4 w-4 text-fg-300" />}
             </div>
             <Spec label="Custom Labor Cost" value={product.custom_labor_cost !== null && product.custom_labor_cost !== undefined ? `$${product.custom_labor_cost.toFixed(2)}` : 'Global'} />
           </div>
@@ -223,7 +223,7 @@ export function ProductItem() {
               </div>
               <div className="flex items-center justify-between py-2 border-b border-border-soft">
                 <span className="text-sm text-fg-500">Waste Applied</span>
-                {product.waste_applied ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-fg-300" />}
+                {product.waste_applied ? <Check className="h-4 w-4 text-status-emerald-fg" /> : <X className="h-4 w-4 text-fg-300" />}
               </div>
               {product.original_box_sf != null && (
                 <Spec label="Original Box SF" value={product.original_box_sf} unit="sf" />
@@ -247,7 +247,7 @@ export function ProductItem() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-fg-400">Status</span>
-                <span className={isArchived ? 'text-fg-500' : 'text-green-600'}>{isArchived ? 'Archived' : 'Active'}</span>
+                <span className={isArchived ? 'text-fg-500' : 'text-status-emerald-fg'}>{isArchived ? 'Archived' : 'Active'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-fg-400">Created</span>
@@ -272,7 +272,7 @@ export function ProductItem() {
                 <LayoutDashboard className="h-4 w-4 text-fg-400" />
                 <h3 className="text-xs font-semibold text-fg-500 uppercase tracking-wide">Cut List</h3>
               </div>
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-status-amber-bg text-amber-800">
                 {pieces.length} {pieces.length === 1 ? 'piece' : 'pieces'}
               </span>
             </div>
@@ -301,11 +301,11 @@ export function ProductItem() {
                       <td className="py-2 text-center text-fg-700 tabular-nums font-semibold">{piece.cantidad}</td>
                       <td className="py-2 text-center">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          piece.material === 'cuerpo'     ? 'bg-blue-100 text-blue-800' :
-                          piece.material === 'frente'     ? 'bg-amber-100 text-amber-800' :
-                          piece.material === 'back'       ? 'bg-emerald-100 text-emerald-800' :
+                          piece.material === 'cuerpo'     ? 'bg-accent-tint-soft text-blue-800' :
+                          piece.material === 'frente'     ? 'bg-status-amber-bg text-amber-800' :
+                          piece.material === 'back'       ? 'bg-status-emerald-bg text-emerald-800' :
                           piece.material === 'drawer_box' ? 'bg-teal-100 text-teal-800' :
-                          piece.material === 'shelf'      ? 'bg-violet-100 text-violet-800' :
+                          piece.material === 'shelf'      ? 'bg-accent-tint-soft text-violet-800' :
                                                             'bg-surf-muted text-fg-700'
                         }`}>
                           {piece.material === 'cuerpo'     ? 'Box Construction' :

@@ -62,7 +62,7 @@ export function TakeoffsSection({ projectId }: { projectId: string }) {
         </Button>
       </div>
 
-      {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+      {error && <p className="text-xs text-status-red-fg mb-2">{error}</p>}
 
       {loading ? (
         <div className="py-8 flex items-center justify-center text-fg-400">
@@ -98,7 +98,7 @@ export function TakeoffsSection({ projectId }: { projectId: string }) {
                 <button
                   onClick={() => handleDelete(s.id)}
                   disabled={pendingDelete === s.id}
-                  className="p-1.5 rounded text-fg-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-40"
+                  className="p-1.5 rounded text-fg-400 hover:text-red-500 hover:bg-status-red-bg disabled:opacity-40"
                   title="Delete session"
                 >
                   {pendingDelete === s.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}

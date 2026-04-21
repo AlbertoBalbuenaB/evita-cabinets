@@ -201,7 +201,7 @@ export function OptimizerPage() {
 
       {/* ── Page header ───────────────────────────────────── */}
       <div className="bg-surf-card border-b border-border-soft px-4 py-2.5 flex items-center gap-2 flex-shrink-0 flex-wrap">
-        <LayoutDashboard className="h-5 w-5 text-blue-600 shrink-0" />
+        <LayoutDashboard className="h-5 w-5 text-accent-text shrink-0" />
         <span className="font-semibold text-fg-800 text-sm">Evita Optimizer</span>
         <span className="text-xs text-fg-400">v1.3</span>
         <div className="w-px h-4 bg-surf-muted mx-0.5" />
@@ -318,7 +318,7 @@ export function OptimizerPage() {
       {store.isOptimizing && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center spinner-overlay-enter">
           <div className="bg-surf-card rounded-xl p-6 flex flex-col items-center gap-3 shadow-xl spinner-card-enter">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-accent-text" />
             <p className="font-semibold text-fg-900">Optimizing...</p>
             <p className="text-xs text-fg-400">GRASP Multi-Strategy in progress</p>
           </div>
@@ -334,7 +334,7 @@ export function OptimizerPage() {
           <button key={id} onClick={() => store.setActiveTab(id)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               store.activeTab === id
-                ? 'border-blue-600 text-blue-600'
+                ? 'border-blue-600 text-accent-text'
                 : 'border-transparent text-fg-500 hover:text-fg-900'
             }`}>
             <Icon className="h-4 w-4" />{label}

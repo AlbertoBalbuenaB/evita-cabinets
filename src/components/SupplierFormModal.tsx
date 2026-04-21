@@ -140,7 +140,7 @@ function CategoryPicker({
           {selected.map((cat) => (
             <span
               key={cat}
-              className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
+              className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-medium bg-accent-tint-soft text-accent-text"
             >
               <Tag className="h-3 w-3" />
               {cat}
@@ -188,7 +188,7 @@ function CategoryPicker({
                     key={opt}
                     type="button"
                     onClick={() => { toggle(opt); setInputValue(''); }}
-                    className="w-full text-left px-3 py-2 text-sm text-fg-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm text-fg-700 hover:bg-accent-tint-soft hover:text-accent-text rounded-lg transition-colors"
                   >
                     {opt}
                   </button>
@@ -293,7 +293,7 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-lg bg-status-red-bg border border-status-red-brd px-4 py-3 text-sm text-status-red-fg">
             {error}
           </div>
         )}
@@ -342,7 +342,7 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
               checked={form.is_active}
               onChange={(e) => set('is_active', e.target.checked)}
               disabled={saving}
-              className="h-4 w-4 rounded border-border-solid text-blue-600 focus-visible:ring-focus"
+              className="h-4 w-4 rounded border-border-solid text-accent-text focus-visible:ring-focus"
             />
             <span className="text-sm font-medium text-fg-700">Active</span>
           </label>
@@ -428,9 +428,9 @@ export function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: Supp
               {(['Alta', 'Media', 'Baja'] as const).map((p) => {
                 const active = form.punctuality === p;
                 const colors: Record<string, string> = {
-                  Alta:  active ? 'bg-green-100 text-green-700 border-green-300' : 'bg-surf-card text-fg-500 border-border-solid hover:border-green-300',
-                  Media: active ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-surf-card text-fg-500 border-border-solid hover:border-amber-300',
-                  Baja:  active ? 'bg-red-100 text-red-700 border-red-300' : 'bg-surf-card text-fg-500 border-border-solid hover:border-red-300',
+                  Alta:  active ? 'bg-status-emerald-bg text-status-emerald-fg border-status-emerald-brd' : 'bg-surf-card text-fg-500 border-border-solid hover:border-status-emerald-brd',
+                  Media: active ? 'bg-status-amber-bg text-status-amber-fg border-status-amber-brd' : 'bg-surf-card text-fg-500 border-border-solid hover:border-status-amber-brd',
+                  Baja:  active ? 'bg-status-red-bg text-status-red-fg border-status-red-brd' : 'bg-surf-card text-fg-500 border-border-solid hover:border-status-red-brd',
                 };
                 return (
                   <button

@@ -33,7 +33,7 @@ export function TaskFilters({ filters, onFiltersChange, teamMembers, tags }: Pro
           className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-150 ${
             !filters.assigneeId
               ? 'bg-accent-primary text-accent-on shadow-sm'
-              : 'bg-surf-card backdrop-blur-sm border border-border-soft text-fg-600 hover:border-blue-200 hover:bg-surf-card'
+              : 'bg-surf-card backdrop-blur-sm border border-border-soft text-fg-600 hover:border-accent-tint-border hover:bg-surf-card'
           }`}
         >
           All
@@ -45,7 +45,7 @@ export function TaskFilters({ filters, onFiltersChange, teamMembers, tags }: Pro
             className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-150 ${
               filters.assigneeId === m.id
                 ? 'bg-accent-primary text-accent-on shadow-sm'
-                : 'bg-surf-card backdrop-blur-sm border border-border-soft text-fg-600 hover:border-blue-200 hover:bg-surf-card'
+                : 'bg-surf-card backdrop-blur-sm border border-border-soft text-fg-600 hover:border-accent-tint-border hover:bg-surf-card'
             }`}
           >
             {m.name.split(' ')[0]}

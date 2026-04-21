@@ -212,21 +212,21 @@ export function TasksSection({ projectId, teamMembers, initialTaskId }: Props) {
               <button
                 onClick={() => setView('list')}
                 title="List view"
-                className={`p-1.5 rounded-md transition-all ${view === 'list' ? 'bg-surf-card shadow-md text-blue-600' : 'text-fg-400 hover:text-fg-600'}`}
+                className={`p-1.5 rounded-md transition-all ${view === 'list' ? 'bg-surf-card shadow-md text-accent-text' : 'text-fg-400 hover:text-fg-600'}`}
               >
                 <List className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setView('kanban')}
                 title="Board view"
-                className={`p-1.5 rounded-md transition-all ${view === 'kanban' ? 'bg-surf-card shadow-md text-blue-600' : 'text-fg-400 hover:text-fg-600'}`}
+                className={`p-1.5 rounded-md transition-all ${view === 'kanban' ? 'bg-surf-card shadow-md text-accent-text' : 'text-fg-400 hover:text-fg-600'}`}
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setView('calendar')}
                 title="Calendar view"
-                className={`p-1.5 rounded-md transition-all ${view === 'calendar' ? 'bg-surf-card shadow-md text-blue-600' : 'text-fg-400 hover:text-fg-600'}`}
+                className={`p-1.5 rounded-md transition-all ${view === 'calendar' ? 'bg-surf-card shadow-md text-accent-text' : 'text-fg-400 hover:text-fg-600'}`}
               >
                 <Calendar className="h-4 w-4" />
               </button>

@@ -80,7 +80,7 @@ export function NewProjectModal({ isOpen, onClose, onSuccess }: NewProjectModalP
     <Modal isOpen={isOpen} onClose={handleClose} title="New Project" size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-lg bg-status-red-bg border border-status-red-brd px-4 py-3 text-sm text-status-red-fg">
             {error}
           </div>
         )}

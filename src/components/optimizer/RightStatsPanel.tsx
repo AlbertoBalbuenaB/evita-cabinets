@@ -253,7 +253,7 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
             </thead>
             <tbody>
               {cuts.map((cut) => (
-                <tr key={cut.n} className={`border-t border-slate-50 ${cut.isTrim ? 'bg-amber-50' : 'hover:bg-surf-app'}`}>
+                <tr key={cut.n} className={`border-t border-slate-50 ${cut.isTrim ? 'bg-status-amber-bg' : 'hover:bg-surf-app'}`}>
                   <td className="py-1 px-4 font-mono text-fg-400">{cut.n}</td>
                   <td className="py-1 text-fg-600 text-xs">
                     {cut.isTrim ? '— trim —' : `${fmtNum(board.ancho, unit)}×${fmtNum(board.alto, unit)}`}
@@ -261,10 +261,10 @@ export function RightStatsPanel({ result, selectedIdx, onSelectBoard }: Props) {
                   <td className="py-1 text-center">
                     <span className={`inline-block px-1 py-0.5 rounded text-xs font-bold ${
                       cut.isTrim
-                        ? 'bg-amber-100 text-amber-700'
+                        ? 'bg-status-amber-bg text-status-amber-fg'
                         : cut.type === 'H'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-purple-100 text-purple-700'
+                          ? 'bg-accent-tint-soft text-accent-text'
+                          : 'bg-accent-tint-soft text-accent-text'
                     }`}>
                       {cut.type}
                     </span>

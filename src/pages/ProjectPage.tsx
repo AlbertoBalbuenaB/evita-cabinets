@@ -325,11 +325,11 @@ export function ProjectPage() {
   ];
 
   const statusColors: Record<string, string> = {
-    Awarded: 'bg-green-50 text-green-700 border-green-200/50',
-    Pending: 'bg-blue-50 text-blue-700 border-blue-200/50',
-    Estimating: 'bg-amber-50 text-amber-700 border-amber-200/50',
+    Awarded: 'bg-status-emerald-bg text-status-emerald-fg border-status-emerald-brd',
+    Pending: 'bg-accent-tint-soft text-accent-text border-accent-tint-border',
+    Estimating: 'bg-status-amber-bg text-status-amber-fg border-status-amber-brd',
     Sent: 'bg-cyan-50 text-cyan-700 border-cyan-200/50',
-    Lost: 'bg-red-50 text-red-700 border-red-200/50',
+    Lost: 'bg-status-red-bg text-status-red-fg border-status-red-brd',
     Discarded: 'bg-surf-muted text-fg-600 border-border-soft',
     Cancelled: 'bg-surf-muted text-fg-500 border-border-soft',
   };
@@ -395,7 +395,7 @@ export function ProjectPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${active ? 'border-blue-600 text-blue-600' : 'border-transparent text-fg-500 hover:text-fg-800'}`}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${active ? 'border-blue-600 text-accent-text' : 'border-transparent text-fg-500 hover:text-fg-800'}`}
             >
               <Icon className="h-4 w-4" />
               {tab.label}
@@ -414,7 +414,7 @@ export function ProjectPage() {
               {editing ? (
                 <div className="flex gap-2">
                   <button onClick={() => setEditing(false)} className="p-1.5 rounded-lg hover:bg-surf-muted text-fg-400"><X className="h-4 w-4" /></button>
-                  <button onClick={handleSaveOverview} disabled={saving} className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-600"><Save className="h-4 w-4" /></button>
+                  <button onClick={handleSaveOverview} disabled={saving} className="p-1.5 rounded-lg hover:bg-accent-tint-soft text-accent-text"><Save className="h-4 w-4" /></button>
                 </div>
               ) : (
                 <button onClick={() => setEditing(true)} className="p-1.5 rounded-lg hover:bg-surf-muted text-fg-400"><Edit2 className="h-4 w-4" /></button>
@@ -444,7 +444,7 @@ export function ProjectPage() {
                 <div className="flex items-center justify-between py-2 border-b border-border-soft"><span className="text-sm text-fg-500">Name</span><span className="text-sm font-medium text-fg-800">{project.name}</span></div>
                 <div className="flex items-center justify-between py-2 border-b border-border-soft"><span className="text-sm text-fg-500">Customer</span><span className="text-sm text-fg-800">{project.customer || '—'}</span></div>
                 <div className="flex items-center justify-between py-2 border-b border-border-soft"><span className="text-sm text-fg-500">Address</span><span className="text-sm text-fg-800 text-right max-w-[200px] truncate">{project.address || '—'}</span></div>
-                <div className="flex items-center justify-between py-2 border-b border-border-soft"><span className="text-sm text-fg-500">Type</span><span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{project.project_type}</span></div>
+                <div className="flex items-center justify-between py-2 border-b border-border-soft"><span className="text-sm text-fg-500">Type</span><span className="text-xs px-2 py-0.5 rounded-full bg-accent-tint-soft text-accent-text">{project.project_type}</span></div>
                 <div className="flex items-center justify-between py-2"><span className="text-sm text-fg-500">Status</span><span className={`text-xs px-2 py-0.5 rounded-full border ${statusColors[project.status || ''] || 'bg-surf-muted text-fg-600'}`}>{project.status}</span></div>
               </div>
             )}
@@ -547,12 +547,12 @@ export function ProjectPage() {
                   <div
                     key={q.id}
                     onClick={() => navigate(`/projects/${projectId}/quotations/${q.id}`)}
-                    className={`glass-white p-4 cursor-pointer hover:shadow-md hover:border-blue-200 transition-all ${isLatest ? 'border-l-4 border-l-blue-400' : ''} ${isMenuOpen ? 'relative z-10' : ''}`}
+                    className={`glass-white p-4 cursor-pointer hover:shadow-md hover:border-accent-tint-border transition-all ${isLatest ? 'border-l-4 border-l-blue-400' : ''} ${isMenuOpen ? 'relative z-10' : ''}`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       {/* Left: version badge + info */}
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold ${isLatest ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
+                        <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold ${isLatest ? 'bg-blue-600 text-white' : 'bg-accent-tint-soft text-accent-text'}`}>
                           {q.version_number || '?'}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -560,7 +560,7 @@ export function ProjectPage() {
                             <span className="text-sm font-medium text-fg-900 truncate">{q.version_label || q.name}</span>
                             <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full border ${statusColors[q.status || ''] || 'bg-surf-muted text-fg-600 border-border-soft'}`}>{q.status}</span>
                             {isLatest && (
-                              <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200/60 font-medium">Latest</span>
+                              <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-status-emerald-bg text-status-emerald-fg border border-status-emerald-brd font-medium">Latest</span>
                             )}
                             {marginPct !== null && (
                               <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-surf-muted text-fg-500 border border-border-soft">
@@ -599,7 +599,7 @@ export function ProjectPage() {
                             <div className="absolute right-0 top-9 z-50 w-44 bg-surf-card rounded-xl shadow-lg border border-border-soft py-1 text-sm">
                               <button
                                 onClick={() => { setOpenMenuId(null); navigate(`/projects/${projectId}/quotations/${q.id}`); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-fg-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-fg-700 hover:bg-accent-tint-soft hover:text-accent-text transition-colors"
                               >
                                 <FileText className="h-3.5 w-3.5" />View Details
                               </button>
@@ -618,7 +618,7 @@ export function ProjectPage() {
                               <div className="border-t border-border-soft my-1" />
                               <button
                                 onClick={() => { setOpenMenuId(null); handleDeleteQuotation(q); }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-status-red-fg hover:bg-status-red-bg transition-colors"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />Delete
                               </button>

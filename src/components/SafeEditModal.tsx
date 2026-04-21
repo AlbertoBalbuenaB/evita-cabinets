@@ -68,8 +68,8 @@ export function SafeEditModal({
   return (
     <Modal isOpen={true} onClose={onCancel} title="Product in Use - Create New Version" size="lg">
       <div className="space-y-4">
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start space-x-3">
-          <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+        <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4 flex items-start space-x-3">
+          <AlertCircle className="h-5 w-5 text-status-amber-fg mt-0.5 flex-shrink-0" />
           <div>
             <h3 className="text-sm font-semibold text-amber-900 mb-1">
               This product is currently in use
@@ -96,9 +96,9 @@ export function SafeEditModal({
           </div>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4">
           <div className="flex items-start space-x-3">
-            <Package className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <Package className="h-5 w-5 text-accent-text mt-0.5 flex-shrink-0" />
             <div>
               <h3 className="text-sm font-semibold text-blue-900 mb-1">Safe Editing Solution</h3>
               <p className="text-sm text-blue-800">
@@ -128,7 +128,7 @@ export function SafeEditModal({
                 type="checkbox"
                 checked={archiveOriginal}
                 onChange={(e) => setArchiveOriginal(e.target.checked)}
-                className="mt-1 w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus"
+                className="mt-1 w-4 h-4 text-accent-text border-border-solid rounded focus-visible:ring-focus"
               />
               <div>
                 <span className="text-sm font-medium text-fg-700">

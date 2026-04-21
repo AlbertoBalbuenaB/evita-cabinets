@@ -62,7 +62,7 @@ export function OptimizerComparisonPanel({ isOpen, onClose, runs, activeRunId }:
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <GitCompareArrows className="h-5 w-5 text-blue-600" />
+            <GitCompareArrows className="h-5 w-5 text-accent-text" />
             <h2 className="text-lg font-semibold text-fg-900">Compare Breakdown Runs</h2>
           </div>
           <button
@@ -149,8 +149,8 @@ export function OptimizerComparisonPanel({ isOpen, onClose, runs, activeRunId }:
                                 />
                               </div>
                               <span className={`w-24 text-right font-mono tabular-nums shrink-0 ${
-                                tone === 'green' ? 'text-green-700 font-semibold' :
-                                tone === 'red'   ? 'text-red-600'   : 'text-fg-700'
+                                tone === 'green' ? 'text-status-emerald-fg font-semibold' :
+                                tone === 'red'   ? 'text-status-red-fg'   : 'text-fg-700'
                               }`}>
                                 {kpi.fmt(v)}
                               </span>

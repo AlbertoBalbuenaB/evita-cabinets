@@ -44,13 +44,13 @@ interface LogTypeConfig {
 }
 
 const LOG_TYPES: Record<LogType, LogTypeConfig> = {
-  note:      { label: 'Note',      Icon: FileText,       color: 'text-fg-600',  bg: 'bg-surf-app',   border: 'border-border-solid',  badgeBg: 'bg-surf-muted'  },
-  change:    { label: 'Change',    Icon: RefreshCw,      color: 'text-amber-600',  bg: 'bg-amber-50',   border: 'border-amber-400',  badgeBg: 'bg-amber-100'  },
-  decision:  { label: 'Decision',  Icon: CheckCircle,    color: 'text-blue-600',   bg: 'bg-blue-50',    border: 'border-blue-400',   badgeBg: 'bg-blue-100'   },
-  risk:      { label: 'Risk',      Icon: AlertTriangle,  color: 'text-orange-600', bg: 'bg-orange-50',  border: 'border-orange-400', badgeBg: 'bg-orange-100' },
-  issue:     { label: 'Issue',     Icon: XCircle,        color: 'text-red-600',    bg: 'bg-red-50',     border: 'border-red-400',    badgeBg: 'bg-red-100'    },
-  milestone: { label: 'Milestone', Icon: Trophy,         color: 'text-green-600',  bg: 'bg-green-50',   border: 'border-green-400',  badgeBg: 'bg-green-100'  },
-  update:    { label: 'Update',    Icon: Radio,          color: 'text-purple-600', bg: 'bg-purple-50',  border: 'border-purple-400', badgeBg: 'bg-purple-100' },
+  note:      { label: 'Note',      Icon: FileText,       color: 'text-fg-600',           bg: 'bg-surf-card',          border: 'border-border-solid',      badgeBg: 'bg-surf-muted' },
+  change:    { label: 'Change',    Icon: RefreshCw,      color: 'text-status-amber-fg',   bg: 'bg-status-amber-bg',    border: 'border-status-amber-brd',  badgeBg: 'bg-status-amber-bg' },
+  decision:  { label: 'Decision',  Icon: CheckCircle,    color: 'text-accent-text',       bg: 'bg-accent-tint-soft',   border: 'border-accent-tint-border', badgeBg: 'bg-accent-tint-strong' },
+  risk:      { label: 'Risk',      Icon: AlertTriangle,  color: 'text-status-orange-fg',  bg: 'bg-status-orange-bg',   border: 'border-status-orange-brd', badgeBg: 'bg-status-orange-bg' },
+  issue:     { label: 'Issue',     Icon: XCircle,        color: 'text-status-red-fg',     bg: 'bg-status-red-bg',      border: 'border-status-red-brd',    badgeBg: 'bg-status-red-bg' },
+  milestone: { label: 'Milestone', Icon: Trophy,         color: 'text-status-emerald-fg', bg: 'bg-status-emerald-bg',  border: 'border-status-emerald-brd', badgeBg: 'bg-status-emerald-bg' },
+  update:    { label: 'Update',    Icon: Radio,          color: 'text-accent-text',       bg: 'bg-accent-tint-soft',   border: 'border-accent-tint-border', badgeBg: 'bg-accent-tint-strong' },
 };
 
 const LOG_TYPE_ORDER: LogType[] = ['note', 'change', 'decision', 'risk', 'issue', 'milestone', 'update'];
@@ -67,11 +67,11 @@ interface MentionItem {
 }
 
 const MENTION_TYPE_CONFIG = {
-  project:    { groupLabel: 'Projects',   Icon: Folder,    iconColor: 'text-violet-600', iconBg: 'bg-violet-100' },
-  quotation:  { groupLabel: 'Quotations', Icon: FileText,  iconColor: 'text-blue-600',   iconBg: 'bg-blue-100'   },
-  cabinet:    { groupLabel: 'Cabinets',   Icon: Package,   iconColor: 'text-amber-600',  iconBg: 'bg-amber-100'  },
-  price_item:  { groupLabel: 'Price List',  Icon: DollarSign, iconColor: 'text-green-600',   iconBg: 'bg-green-100'   },
-  department:   { groupLabel: 'Departments', Icon: Users,      iconColor: 'text-emerald-600', iconBg: 'bg-emerald-100' },
+  project:    { groupLabel: 'Projects',   Icon: Folder,    iconColor: 'text-accent-text', iconBg: 'bg-accent-tint-soft' },
+  quotation:  { groupLabel: 'Quotations', Icon: FileText,  iconColor: 'text-accent-text',   iconBg: 'bg-accent-tint-soft'   },
+  cabinet:    { groupLabel: 'Cabinets',   Icon: Package,   iconColor: 'text-status-amber-fg',  iconBg: 'bg-status-amber-bg'  },
+  price_item:  { groupLabel: 'Price List',  Icon: DollarSign, iconColor: 'text-status-emerald-fg',   iconBg: 'bg-status-emerald-bg'   },
+  department:   { groupLabel: 'Departments', Icon: Users,      iconColor: 'text-status-emerald-fg', iconBg: 'bg-status-emerald-bg' },
   team_member:  { groupLabel: 'Team Members',Icon: User,       iconColor: 'text-sky-600',     iconBg: 'bg-sky-100'     },
 } as const;
 
@@ -180,7 +180,7 @@ const SuggestionList = forwardRef<SuggestionListRef, SuggestionListProps>(
                     type="button"
                     onClick={() => command(item)}
                     className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors ${
-                      isSelected ? 'bg-blue-50' : 'hover:bg-surf-app'
+                      isSelected ? 'bg-accent-tint-soft' : 'hover:bg-surf-app'
                     }`}
                   >
                     <div className={`w-7 h-7 rounded-lg ${cfg.iconBg} flex items-center justify-center flex-shrink-0`}>
@@ -734,7 +734,7 @@ function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, 
             </button>
             <button
               onClick={onEdit}
-              className="text-fg-400 hover:text-blue-600 p-1 rounded hover:bg-surf-card"
+              className="text-fg-400 hover:text-accent-text p-1 rounded hover:bg-surf-card"
               title="Edit entry"
             >
               <Pencil className="h-3.5 w-3.5" />
@@ -811,7 +811,7 @@ function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, 
                       <span className="flex items-center gap-1 opacity-0 group-hover/reply:opacity-100 transition-opacity">
                         <button
                           onClick={() => setEditingReplyId(reply.id)}
-                          className="text-fg-400 hover:text-blue-600 p-0.5 rounded"
+                          className="text-fg-400 hover:text-accent-text p-0.5 rounded"
                           title="Edit reply"
                         >
                           <Pencil className="h-2.5 w-2.5" />
@@ -827,7 +827,7 @@ function LogEntry({ log, replies, getMentionItems, projectId, onEdit, onDelete, 
                     )}
                   </div>
                   {isRichContent(reply.comment) ? (
-                    <div className="text-xs text-fg-600 mt-0.5 prose prose-sm max-w-none [&_.mention-link]:text-purple-600 [&_.mention-link]:no-underline" dangerouslySetInnerHTML={{ __html: renderContent(reply.comment) }} />
+                    <div className="text-xs text-fg-600 mt-0.5 prose prose-sm max-w-none [&_.mention-link]:text-accent-text [&_.mention-link]:no-underline" dangerouslySetInnerHTML={{ __html: renderContent(reply.comment) }} />
                   ) : (
                     <p className="text-xs text-fg-600 mt-0.5 whitespace-pre-wrap">{reply.comment}</p>
                   )}
@@ -1246,7 +1246,7 @@ export function BitacoraSection({ projectId }: Props) {
     <div className="bg-surf-card rounded-lg border border-border-soft p-5 space-y-5">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <ScrollText className="h-5 w-5 text-amber-600" />
+        <ScrollText className="h-5 w-5 text-status-amber-fg" />
         <h3 className="text-lg font-semibold text-fg-900">Project Log</h3>
         {logs.length > 0 && (
           <span className="text-xs text-fg-500 bg-surf-muted px-2 py-0.5 rounded-full">
@@ -1309,7 +1309,7 @@ export function BitacoraSection({ projectId }: Props) {
         <div className="space-y-3">
           {filteredLogs.map((log) =>
             editingId === log.id ? (
-              <div key={log.id} className="border border-blue-200 rounded-lg p-4 bg-blue-50/30">
+              <div key={log.id} className="border border-accent-tint-border rounded-lg p-4 bg-accent-tint-soft">
                 <p className="text-xs text-fg-400 mb-3">Editing entry</p>
                 <EntryForm
                   getMentionItems={getMentionItems}

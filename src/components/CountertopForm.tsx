@@ -154,14 +154,14 @@ export function CountertopForm({ areaId, countertop, onClose }: CountertopFormPr
         </div>
 
         {selectedPriceListItem && (
-          <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg space-y-2">
+          <div className="bg-status-orange-bg border border-status-orange-brd p-4 rounded-lg space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-fg-600">Description:</span>
               <span className="font-medium text-right ml-2">{selectedPriceListItem.concept_description}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-fg-600">Type:</span>
-              <span className="font-medium text-orange-700">{selectedPriceListItem.type}</span>
+              <span className="font-medium text-status-orange-fg">{selectedPriceListItem.type}</span>
             </div>
             {selectedPriceListItem.dimensions && (
               <div className="flex justify-between text-sm">
@@ -175,7 +175,7 @@ export function CountertopForm({ areaId, countertop, onClose }: CountertopFormPr
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-fg-600">Unit Price:</span>
-              <span className="font-medium text-orange-600">{formatCurrency(unitPrice)}</span>
+              <span className="font-medium text-status-orange-fg">{formatCurrency(unitPrice)}</span>
             </div>
           </div>
         )}
@@ -202,11 +202,11 @@ export function CountertopForm({ areaId, countertop, onClose }: CountertopFormPr
         </div>
 
         {selectedPriceListItem && (
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="bg-status-orange-bg border border-status-orange-brd rounded-lg p-4">
             <div className="flex justify-between items-center">
               <div>
                 <div className="text-sm text-orange-800 font-medium">Subtotal</div>
-                <div className="text-xs text-orange-600">
+                <div className="text-xs text-status-orange-fg">
                   {quantity} × {formatCurrency(unitPrice)}
                 </div>
               </div>

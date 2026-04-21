@@ -80,7 +80,7 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
     return (
       <div className="bg-surf-card rounded-lg shadow-sm border border-border-soft p-6">
         <div className="flex items-center gap-2 text-sm font-semibold text-fg-700 mb-1">
-          <Layers className="h-4 w-4 text-blue-600" />
+          <Layers className="h-4 w-4 text-accent-text" />
           Breakdown Analytics
         </div>
         <p className="text-xs text-fg-400">
@@ -94,7 +94,7 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
     <div className="bg-surf-card rounded-lg shadow-sm border border-border-soft p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Layers className="h-4 w-4 text-blue-600" />
+          <Layers className="h-4 w-4 text-accent-text" />
           <h2 className="text-sm font-semibold text-fg-800">Breakdown Analytics</h2>
           <span className="text-xs text-fg-400">
             {runs.length} run{runs.length !== 1 ? 's' : ''}
@@ -198,7 +198,7 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
             </thead>
             <tbody>
               {runs.map((r) => (
-                <tr key={r.id} className={`border-b border-border-soft last:border-b-0 ${r.is_active ? 'bg-blue-50/40' : ''}`}>
+                <tr key={r.id} className={`border-b border-border-soft last:border-b-0 ${r.is_active ? 'bg-accent-tint-soft' : ''}`}>
                   <td className="px-3 py-1.5 font-medium text-fg-800 truncate max-w-[12rem]">{r.name}</td>
                   <td className="px-3 py-1.5 text-fg-500 whitespace-nowrap">{new Date(r.created_at).toLocaleDateString()}</td>
                   <td className="px-3 py-1.5 text-right tabular-nums text-fg-800">{formatCurrency(r.total_cost)}</td>
@@ -207,7 +207,7 @@ export function OptimizerRunsAnalytics({ quotationId }: Props) {
                   <td className="px-3 py-1.5 text-right tabular-nums text-fg-600">{formatCurrency(r.cost_per_m2)}</td>
                   <td className="px-3 py-1.5 text-center">
                     {r.is_active && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-accent-text bg-accent-tint-soft px-1.5 py-0.5 rounded">
                         ACTIVE
                       </span>
                     )}
@@ -270,8 +270,8 @@ function AnalyticsKpiCard({
       </div>
       <div className="text-2xl font-bold leading-none text-fg-900 tabular-nums">{value}</div>
       <div className={`flex items-center gap-1 text-xs tabular-nums ${
-        tone === 'green' ? 'text-green-600' :
-        tone === 'red'   ? 'text-red-600'   : 'text-fg-400'
+        tone === 'green' ? 'text-status-emerald-fg' :
+        tone === 'red'   ? 'text-status-red-fg'   : 'text-fg-400'
       }`}>
         <DeltaIcon className="h-3 w-3" />
         <span>

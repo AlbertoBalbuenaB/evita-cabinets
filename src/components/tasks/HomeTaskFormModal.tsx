@@ -319,7 +319,7 @@ export function HomeTaskFormModal({
               <Link
                 to={`/projects/${task.project_id}?tab=management&task=${task.id}`}
                 onClick={onClose}
-                className="ml-1 inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-medium"
+                className="ml-1 inline-flex items-center gap-1 text-[11px] text-accent-text hover:text-blue-800 font-medium"
                 title="Open full task view in the project"
               >
                 Open in project <ExternalLink className="h-3 w-3" />
@@ -448,7 +448,7 @@ export function HomeTaskFormModal({
                         className={`flex flex-col items-center gap-1 py-2 rounded-lg border text-[11px] font-medium transition-all ${
                           active
                             ? 'bg-accent-primary text-accent-on border-transparent shadow-sm'
-                            : 'bg-surf-card border-border-soft text-fg-600 hover:border-blue-200 hover:bg-surf-card'
+                            : 'bg-surf-card border-border-soft text-fg-600 hover:border-accent-tint-border hover:bg-surf-card'
                         }`}
                       >
                         <Icon className="h-3.5 w-3.5" />
@@ -495,7 +495,7 @@ export function HomeTaskFormModal({
                     className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-150 ${
                       assigneeIds.includes(m.id)
                         ? 'bg-accent-primary text-accent-on shadow-sm'
-                        : 'bg-surf-card backdrop-blur-sm border border-border-soft text-fg-600 hover:border-blue-200 hover:bg-surf-card'
+                        : 'bg-surf-card backdrop-blur-sm border border-border-soft text-fg-600 hover:border-accent-tint-border hover:bg-surf-card'
                     }`}
                   >
                     {m.name}
@@ -513,7 +513,7 @@ export function HomeTaskFormModal({
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-700 font-medium"
+                className="flex items-center gap-1 text-xs text-rose-500 hover:text-status-red-fg font-medium"
                 disabled={saving || deleting}
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -522,7 +522,7 @@ export function HomeTaskFormModal({
             )}
             {!isCreate && confirmDelete && (
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-rose-600 font-medium">Delete this task?</span>
+                <span className="text-[11px] text-status-red-fg font-medium">Delete this task?</span>
                 <button
                   type="button"
                   onClick={remove}

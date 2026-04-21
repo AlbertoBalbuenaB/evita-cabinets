@@ -291,7 +291,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
     return (
       <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6">
         <h2 className="text-xl font-bold text-fg-900 mb-4 flex items-center">
-          <Layers className="h-5 w-5 mr-2 text-blue-600" />
+          <Layers className="h-5 w-5 mr-2 text-accent-text" />
           Material Breakdown by Area
         </h2>
         <div className="text-center py-8 text-fg-500">
@@ -305,7 +305,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
   return (
     <div className="bg-surf-card rounded-xl shadow-sm border border-border-soft p-6">
       <h2 className="text-xl font-bold text-fg-900 mb-4 flex items-center">
-        <Layers className="h-5 w-5 mr-2 text-blue-600" />
+        <Layers className="h-5 w-5 mr-2 text-accent-text" />
         Material Breakdown by Area
       </h2>
 
@@ -324,7 +324,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                     {area.cabinetCount} cabinet{area.cabinetCount !== 1 ? 's' : ''}
                     {area.countertopCount > 0 && ` • ${area.countertopCount} countertop${area.countertopCount !== 1 ? 's' : ''}`}
                   </span>
-                  <span className="text-xs font-semibold text-green-600">
+                  <span className="text-xs font-semibold text-status-emerald-fg">
                     Total: {formatCurrency(area.totalCost)}
                   </span>
                 </div>
@@ -333,9 +333,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {area.boxMaterialSheets.size > 0 && (
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                <div className="bg-accent-tint-soft rounded-lg p-4 border border-blue-100">
                   <div className="flex items-center mb-3">
-                    <Package className="h-4 w-4 text-blue-700 mr-2" />
+                    <Package className="h-4 w-4 text-accent-text mr-2" />
                     <h4 className="text-sm font-semibold text-blue-900">Box Materials (Sheets)</h4>
                   </div>
                   <div className="space-y-2">
@@ -345,7 +345,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                         <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.sheetsNeeded} sheets</span>
                           <span><Ruler className="h-3 w-3 inline mr-1" />{data.totalSF.toFixed(1)} SF</span>
-                          <span className="font-semibold text-blue-700">{formatCurrency(data.cost)}</span>
+                          <span className="font-semibold text-accent-text">{formatCurrency(data.cost)}</span>
                         </div>
                       </div>
                     ))}
@@ -354,9 +354,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
               )}
 
               {area.doorsMaterialSheets.size > 0 && (
-                <div className="bg-green-50 rounded-lg p-4 border border-green-100">
+                <div className="bg-status-emerald-bg rounded-lg p-4 border border-green-100">
                   <div className="flex items-center mb-3">
-                    <Package className="h-4 w-4 text-green-700 mr-2" />
+                    <Package className="h-4 w-4 text-status-emerald-fg mr-2" />
                     <h4 className="text-sm font-semibold text-green-900">Doors Materials (Sheets)</h4>
                   </div>
                   <div className="space-y-2">
@@ -366,7 +366,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                         <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.sheetsNeeded} sheets</span>
                           <span><Ruler className="h-3 w-3 inline mr-1" />{data.totalSF.toFixed(1)} SF</span>
-                          <span className="font-semibold text-green-700">{formatCurrency(data.cost)}</span>
+                          <span className="font-semibold text-status-emerald-fg">{formatCurrency(data.cost)}</span>
                         </div>
                       </div>
                     ))}
@@ -375,9 +375,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
               )}
 
               {area.boxEdgebandRolls.size > 0 && (
-                <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
+                <div className="bg-status-amber-bg rounded-lg p-4 border border-amber-100">
                   <div className="flex items-center mb-3">
-                    <Ruler className="h-4 w-4 text-amber-700 mr-2" />
+                    <Ruler className="h-4 w-4 text-status-amber-fg mr-2" />
                     <h4 className="text-sm font-semibold text-amber-900">Box Edgeband (Rolls)</h4>
                   </div>
                   <div className="space-y-2">
@@ -387,7 +387,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                         <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.rollsNeeded} rolls</span>
                           <span><Ruler className="h-3 w-3 inline mr-1" />{data.totalMeters.toFixed(1)} m</span>
-                          <span className="font-semibold text-amber-700">{formatCurrency(data.cost)}</span>
+                          <span className="font-semibold text-status-amber-fg">{formatCurrency(data.cost)}</span>
                         </div>
                       </div>
                     ))}
@@ -396,9 +396,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
               )}
 
               {area.doorsEdgebandRolls.size > 0 && (
-                <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                <div className="bg-accent-tint-soft rounded-lg p-4 border border-purple-100">
                   <div className="flex items-center mb-3">
-                    <Ruler className="h-4 w-4 text-purple-700 mr-2" />
+                    <Ruler className="h-4 w-4 text-accent-text mr-2" />
                     <h4 className="text-sm font-semibold text-purple-900">Doors Edgeband (Rolls)</h4>
                   </div>
                   <div className="space-y-2">
@@ -408,7 +408,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                         <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.rollsNeeded} rolls</span>
                           <span><Ruler className="h-3 w-3 inline mr-1" />{data.totalMeters.toFixed(1)} m</span>
-                          <span className="font-semibold text-purple-700">{formatCurrency(data.cost)}</span>
+                          <span className="font-semibold text-accent-text">{formatCurrency(data.cost)}</span>
                         </div>
                       </div>
                     ))}
@@ -437,9 +437,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
               )}
 
               {area.accessories.size > 0 && (
-                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200 lg:col-span-2">
+                <div className="bg-accent-tint-soft rounded-lg p-4 border border-accent-tint-border lg:col-span-2">
                   <div className="flex items-center mb-3">
-                    <Package className="h-4 w-4 text-purple-700 mr-2" />
+                    <Package className="h-4 w-4 text-accent-text mr-2" />
                     <h4 className="text-sm font-semibold text-purple-900">Accessories</h4>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -448,7 +448,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                         <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
                         <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.quantity} pcs</span>
-                          <span className="font-semibold text-purple-700">{formatCurrency(data.cost)}</span>
+                          <span className="font-semibold text-accent-text">{formatCurrency(data.cost)}</span>
                         </div>
                       </div>
                     ))}
@@ -457,9 +457,9 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
               )}
 
               {area.countertops.size > 0 && (
-                <div className="bg-orange-50 rounded-lg p-4 border border-orange-200 lg:col-span-2">
+                <div className="bg-status-orange-bg rounded-lg p-4 border border-status-orange-brd lg:col-span-2">
                   <div className="flex items-center mb-3">
-                    <Hammer className="h-4 w-4 text-orange-700 mr-2" />
+                    <Hammer className="h-4 w-4 text-status-orange-fg mr-2" />
                     <h4 className="text-sm font-semibold text-orange-900">Countertops</h4>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -468,7 +468,7 @@ export function MaterialBreakdownByArea({ projectId }: MaterialBreakdownByAreaPr
                         <div className="font-medium text-fg-900 truncate mb-1">{name}</div>
                         <div className="flex justify-between text-fg-600">
                           <span><Hash className="h-3 w-3 inline mr-1" />{data.quantity.toFixed(2)} units</span>
-                          <span className="font-semibold text-orange-700">{formatCurrency(data.cost)}</span>
+                          <span className="font-semibold text-status-orange-fg">{formatCurrency(data.cost)}</span>
                         </div>
                       </div>
                     ))}

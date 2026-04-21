@@ -93,7 +93,7 @@ export function SectionDivider({
         </button>
         <button
           onClick={onDelete}
-          className="p-1 rounded hover:bg-red-50 transition-colors"
+          className="p-1 rounded hover:bg-status-red-bg transition-colors"
           title="Delete section"
         >
           <Trash2 className="h-3.5 w-3.5 text-fg-400 hover:text-red-500" />

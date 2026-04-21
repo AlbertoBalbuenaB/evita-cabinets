@@ -31,7 +31,7 @@ export function PdfDropZone({ onFile }: PdfDropZoneProps) {
   return (
     <div
       className={`flex-1 flex items-center justify-center transition-colors ${
-        dragging ? 'bg-blue-50/60' : ''
+        dragging ? 'bg-accent-tint-soft' : ''
       }`}
       onDragOver={(e) => {
         e.preventDefault();
@@ -45,12 +45,12 @@ export function PdfDropZone({ onFile }: PdfDropZoneProps) {
         onClick={() => inputRef.current?.click()}
         className={`flex flex-col items-center gap-4 p-12 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${
           dragging
-            ? 'border-blue-400 bg-blue-50/80'
-            : 'border-border-solid hover:border-blue-300 hover:bg-surf-app'
+            ? 'border-accent-tint-border bg-accent-tint-soft'
+            : 'border-border-solid hover:border-accent-tint-border hover:bg-surf-app'
         }`}
       >
         <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
-          dragging ? 'bg-blue-100' : 'bg-surf-muted'
+          dragging ? 'bg-accent-tint-soft' : 'bg-surf-muted'
         }`}>
           {dragging ? (
             <FileText className="h-8 w-8 text-blue-500" />

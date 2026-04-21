@@ -2,6 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* -------------------------------------------------------------------------
+   Global form-control defaults
+   -----------------------------------------------------------------------
+   Raw <input>/<textarea>/<select> without an explicit bg class fall back
+   to the browser default (white), so the Midnight token for input
+   backgrounds never fires. Pin defaults here via @layer base — any
+   Tailwind utility applied on the element overrides this (utilities have
+   higher specificity than @layer base), so the <Input/> primitive and
+   glass-classed elements are unaffected.
+   ----------------------------------------------------------------------- */
+@layer base {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']):not([type='submit']):not([type='reset']):not([type='button']):not([type='image']),
+  textarea,
+  select {
+    background-color: var(--surf-input);
+    color: var(--fg-900);
+    border-color: var(--border-input);
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--fg-400);
+  }
+  input:disabled,
+  textarea:disabled,
+  select:disabled {
+    background-color: var(--surf-muted);
+    color: var(--fg-400);
+  }
+}
+
 /* =============================================================================
    Midnight Glass — Design Tokens
    =============================================================================

@@ -275,7 +275,7 @@ export function CutListEditorModal({
                       variant="ghost"
                       size="sm"
                       onClick={() => removePiece(idx)}
-                      className="!p-1 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      className="!p-1 text-red-500 hover:text-status-red-fg hover:bg-status-red-bg"
                       title="Delete piece"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -298,7 +298,7 @@ export function CutListEditorModal({
         </div>
 
         {error && (
-          <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700">
+          <div className="rounded-lg bg-status-red-bg border border-status-red-brd px-3 py-2 text-xs text-status-red-fg">
             {error}
           </div>
         )}

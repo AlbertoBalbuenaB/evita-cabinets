@@ -92,8 +92,8 @@ export function ProjectHeader({
   const deltaColor = delta == null
     ? ''
     : deltaIsNegative
-    ? 'text-emerald-600'
-    : 'text-rose-600';
+    ? 'text-status-emerald-fg'
+    : 'text-status-red-fg';
 
   // z-40 sits above the FloatingActionBar (z-[36]) so the StatusChip's
   // dropdown can render over it when it extends below the header's bounds.
@@ -172,7 +172,7 @@ export function ProjectHeader({
               <StatusChip status={status} onChange={onStatusChange} />
               {isStale && (
                 <span
-                  className="inline-flex items-center gap-1 px-[8px] py-[2px] rounded-full border bg-amber-500/[0.12] text-amber-700 border-amber-500/30 text-[10px] font-bold tracking-[0.04em] uppercase"
+                  className="inline-flex items-center gap-1 px-[8px] py-[2px] rounded-full border bg-amber-500/[0.12] text-status-amber-fg border-amber-500/30 text-[10px] font-bold tracking-[0.04em] uppercase"
                   title="The optimizer run is stale because cabinets changed after it was saved. Re-optimize in the Breakdown tab to refresh these numbers."
                 >
                   <AlertTriangle className="h-[10px] w-[10px]" strokeWidth={1.5} />
@@ -210,7 +210,7 @@ export function ProjectHeader({
                 <button
                   type="button"
                   onClick={onEdit}
-                  className="text-blue-600 hover:text-blue-700 font-medium transition-colors focus:outline-none focus:underline"
+                  className="text-accent-text hover:text-accent-text font-medium transition-colors focus:outline-none focus:underline"
                 >
                   Edit
                 </button>

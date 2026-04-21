@@ -509,7 +509,7 @@ export function QuotationOptimizerTab({
 
       {/* ── Header bar ────────────────────────────────────── */}
       <div className="bg-surf-card border-b border-border-soft px-4 py-2.5 flex items-center gap-2 flex-wrap">
-        <Layers className="h-5 w-5 text-blue-600 shrink-0" />
+        <Layers className="h-5 w-5 text-accent-text shrink-0" />
         <span className="font-semibold text-fg-800 text-sm">Optimizer</span>
 
         <PricingMethodToggle
@@ -601,7 +601,7 @@ export function QuotationOptimizerTab({
       </div>
 
       {lastError && (
-        <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-xs text-red-800">
+        <div className="bg-status-red-bg border-b border-status-red-brd px-4 py-2 text-xs text-red-800">
           {lastError}
         </div>
       )}

@@ -20,8 +20,8 @@ const STATUS_CYCLE: Record<string, TaskStatus> = {
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-surf-muted text-fg-600',
-  in_progress: 'bg-amber-100 text-amber-700',
-  done: 'bg-green-100 text-green-700',
+  in_progress: 'bg-status-amber-bg text-status-amber-fg',
+  done: 'bg-status-emerald-bg text-status-emerald-fg',
 };
 
 const STATUS_DOT: Record<string, string> = {
@@ -244,7 +244,7 @@ export function TasksSection({ projectId, teamMembers }: Props) {
     <div className="bg-surf-card rounded-lg border border-border-soft p-4">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <CheckSquare className="h-5 w-5 text-green-600 mr-2" />
+          <CheckSquare className="h-5 w-5 text-status-emerald-fg mr-2" />
           <h3 className="text-lg font-semibold text-fg-900">Tasks</h3>
         </div>
         {!showAddForm && (
@@ -264,7 +264,7 @@ export function TasksSection({ projectId, teamMembers }: Props) {
         <div className="space-y-2 mb-4">
           {tasks.map((task) =>
             editingId === task.id && editState ? (
-              <div key={task.id} className="p-3 bg-surf-app rounded-lg border border-blue-200 space-y-3">
+              <div key={task.id} className="p-3 bg-surf-app rounded-lg border border-accent-tint-border space-y-3">
                 <div>
                   <label className="block text-xs text-fg-600 mb-1">Title *</label>
                   <input
@@ -368,7 +368,7 @@ export function TasksSection({ projectId, teamMembers }: Props) {
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                   <button
                     onClick={() => startEdit(task)}
-                    className="text-fg-400 hover:text-blue-600 p-0.5"
+                    className="text-fg-400 hover:text-accent-text p-0.5"
                     title="Edit task"
                   >
                     <Pencil className="h-3.5 w-3.5" />

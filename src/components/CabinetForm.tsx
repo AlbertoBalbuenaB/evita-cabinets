@@ -503,9 +503,9 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             {!cabinet && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+              <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3 flex items-center justify-between">
                 <div className="flex items-center">
-                  <Bookmark className="h-5 w-5 text-blue-600 mr-2" />
+                  <Bookmark className="h-5 w-5 text-accent-text mr-2" />
                   <span className="text-sm text-blue-800">Start with a template to save time</span>
                 </div>
                 <Button
@@ -554,7 +554,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
               id="is_rta"
               checked={isRta}
               onChange={(e) => setIsRta(e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus-visible:ring-focus border-border-solid rounded"
+              className="h-4 w-4 text-accent-text focus-visible:ring-focus border-border-solid rounded"
             />
             <label htmlFor="is_rta" className="ml-2 block text-sm text-fg-700">
               Ready To Assemble (RTA) - Affects pallet calculations
@@ -578,13 +578,13 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   )}
                   <h3 className="text-lg font-semibold text-fg-900">Box Construction</h3>
                   {costs && costs.boxMaterialCost > 0 && (
-                    <span className="ml-2 text-sm font-medium text-blue-600">
+                    <span className="ml-2 text-sm font-medium text-accent-text">
                       {formatCurrency(costs.boxMaterialCost + costs.boxEdgebandCost + costs.boxInteriorFinishCost)}
                     </span>
                   )}
                 </div>
                 {!boxMaterialId && !boxEdgebandId && (
-                  <span className="text-xs text-red-600 font-medium">Required</span>
+                  <span className="text-xs text-status-red-fg font-medium">Required</span>
                 )}
               </button>
 
@@ -614,17 +614,17 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   required
                 />
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-3">
                   <label className="flex items-start space-x-2 cursor-pointer group">
                     <input
                       type="checkbox"
                       checked={useBoxInteriorFinish}
                       onChange={(e) => setUseBoxInteriorFinish(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus mt-0.5"
+                      className="w-4 h-4 text-accent-text border-border-solid rounded focus-visible:ring-focus mt-0.5"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <Layers className="h-4 w-4 text-amber-600" />
+                        <Layers className="h-4 w-4 text-status-amber-fg" />
                         <span className="text-sm font-medium text-fg-700">
                           Add Surface Layer Material
                         </span>
@@ -639,11 +639,11 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                 </div>
 
                 {useBoxInteriorFinish && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <Layers className="h-4 w-4 text-blue-600" />
+                      <Layers className="h-4 w-4 text-accent-text" />
                       <span className="text-xs font-semibold text-blue-900">Surface Layer Material</span>
-                      <span className="text-xs text-blue-600">(Applied over base material)</span>
+                      <span className="text-xs text-accent-text">(Applied over base material)</span>
                     </div>
                     <AutocompleteSelect
                       label="Surface Layer (e.g., Laminate, Veneer)"
@@ -655,7 +655,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                         label: `${item.concept_description} - ${formatCurrency(item.price)}/${item.unit}`,
                       }))}
                     />
-                    <div className="flex items-start gap-2 mt-2 text-xs text-blue-700">
+                    <div className="flex items-start gap-2 mt-2 text-xs text-accent-text">
                       <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                       <span>
                         The surface layer will require the same number of sheets as the base material.
@@ -665,17 +665,17 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   </div>
                 )}
 
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-4">
+                <div className="bg-status-orange-bg border border-status-orange-brd rounded-lg p-3 mt-4">
                   <label className="flex items-start space-x-2 cursor-pointer group">
                     <input
                       type="checkbox"
                       checked={useBackPanelMaterial}
                       onChange={(e) => setUseBackPanelMaterial(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus mt-0.5"
+                      className="w-4 h-4 text-accent-text border-border-solid rounded focus-visible:ring-focus mt-0.5"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-orange-600" />
+                        <Package className="h-4 w-4 text-status-orange-fg" />
                         <span className="text-sm font-medium text-fg-700">
                           Use Different Material for Back Panel
                         </span>
@@ -690,11 +690,11 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                 </div>
 
                 {useBackPanelMaterial && (
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-2">
+                  <div className="bg-status-orange-bg border border-status-orange-brd rounded-lg p-3 mt-2">
                     <div className="flex items-center gap-2 mb-2">
-                      <Package className="h-4 w-4 text-orange-600" />
+                      <Package className="h-4 w-4 text-status-orange-fg" />
                       <span className="text-xs font-semibold text-orange-900">Back Panel Material</span>
-                      <span className="text-xs text-orange-600">(Will be subtracted from box material)</span>
+                      <span className="text-xs text-status-orange-fg">(Will be subtracted from box material)</span>
                     </div>
                     <AutocompleteSelect
                       label="Back Panel Material"
@@ -728,14 +728,14 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                       />
                     </div>
                     {backPanelSF > 0 && (
-                      <div className="mt-3 bg-orange-100 border border-orange-300 rounded-lg p-2">
+                      <div className="mt-3 bg-status-orange-bg border border-status-orange-brd rounded-lg p-2">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-orange-900">Back Panel Area:</span>
-                          <span className="text-sm font-bold text-orange-700">{backPanelSF.toFixed(2)} ft²</span>
+                          <span className="text-sm font-bold text-status-orange-fg">{backPanelSF.toFixed(2)} ft²</span>
                         </div>
                       </div>
                     )}
-                    <div className="flex items-start gap-2 mt-3 text-xs text-orange-700">
+                    <div className="flex items-start gap-2 mt-3 text-xs text-status-orange-fg">
                       <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                       <span>
                         The back panel area is subtracted from both box material and surface layer material (if applicable).
@@ -799,17 +799,17 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
               )}
 
               {/* ── Shelf Material + Extra Shelves ─────────────── */}
-              <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 mt-4">
+              <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3 mt-4">
                 <label className="flex items-start space-x-2 cursor-pointer group">
                   <input
                     type="checkbox"
                     checked={useShelfMaterial}
                     onChange={(e) => setUseShelfMaterial(e.target.checked)}
-                    className="w-4 h-4 text-violet-600 border-border-solid rounded focus:ring-violet-500 mt-0.5"
+                    className="w-4 h-4 text-accent-text border-border-solid rounded focus:ring-violet-500 mt-0.5"
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-violet-600" />
+                      <Package className="h-4 w-4 text-accent-text" />
                       <span className="text-sm font-medium text-fg-700">Use Different Material for Shelves</span>
                     </div>
                     <p className="text-xs text-fg-600 mt-1">
@@ -819,7 +819,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                 </label>
               </div>
               {useShelfMaterial && (
-                <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 mt-2 space-y-3">
+                <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3 mt-2 space-y-3">
                   <AutocompleteSelect
                     label="Shelf Material"
                     placeholder="Select shelf material..."
@@ -843,7 +843,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   />
                 </div>
               )}
-              <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 mt-2">
+              <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3 mt-2">
                 <Input
                   label="Extra Shelves"
                   type="number"
@@ -870,13 +870,13 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   )}
                   <h3 className="text-lg font-semibold text-fg-900">Doors & Drawer Fronts</h3>
                   {costs && costs.doorsMaterialCost > 0 && (
-                    <span className="ml-2 text-sm font-medium text-blue-600">
+                    <span className="ml-2 text-sm font-medium text-accent-text">
                       {formatCurrency(costs.doorsMaterialCost + costs.doorsEdgebandCost + costs.doorsInteriorFinishCost + costs.doorProfileCost)}
                     </span>
                   )}
                 </div>
                 {!doorsMaterialId && !doorsEdgebandId && (
-                  <span className="text-xs text-red-600 font-medium">Required</span>
+                  <span className="text-xs text-status-red-fg font-medium">Required</span>
                 )}
               </button>
 
@@ -906,17 +906,17 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   required
                 />
 
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-3">
                   <label className="flex items-start space-x-2 cursor-pointer group">
                     <input
                       type="checkbox"
                       checked={useDoorsInteriorFinish}
                       onChange={(e) => setUseDoorsInteriorFinish(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus mt-0.5"
+                      className="w-4 h-4 text-accent-text border-border-solid rounded focus-visible:ring-focus mt-0.5"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <Layers className="h-4 w-4 text-amber-600" />
+                        <Layers className="h-4 w-4 text-status-amber-fg" />
                         <span className="text-sm font-medium text-fg-700">
                           Add Surface Layer Material
                         </span>
@@ -931,11 +931,11 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                 </div>
 
                 {useDoorsInteriorFinish && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <div className="bg-status-emerald-bg border border-status-emerald-brd rounded-lg p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <Layers className="h-4 w-4 text-green-600" />
+                      <Layers className="h-4 w-4 text-status-emerald-fg" />
                       <span className="text-xs font-semibold text-green-900">Surface Layer Material</span>
-                      <span className="text-xs text-green-600">(Applied over base material)</span>
+                      <span className="text-xs text-status-emerald-fg">(Applied over base material)</span>
                     </div>
                     <AutocompleteSelect
                       label="Surface Layer (e.g., Laminate, Veneer)"
@@ -947,7 +947,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                         label: `${item.concept_description} - ${formatCurrency(item.price)}/${item.unit}`,
                       }))}
                     />
-                    <div className="flex items-start gap-2 mt-2 text-xs text-green-700">
+                    <div className="flex items-start gap-2 mt-2 text-xs text-status-emerald-fg">
                       <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                       <span>
                         The surface layer will require the same number of sheets as the base material.
@@ -1005,7 +1005,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   )}
                   <h3 className="text-lg font-semibold text-fg-900">Hardware</h3>
                   {costs && costs.hardwareCost > 0 && (
-                    <span className="ml-2 text-sm font-medium text-blue-600">
+                    <span className="ml-2 text-sm font-medium text-accent-text">
                       {formatCurrency(costs.hardwareCost)}
                     </span>
                   )}
@@ -1069,7 +1069,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                         setHardware(newHardware);
                       }}
                     >
-                      <Trash2 className="h-4 w-4 text-red-600" />
+                      <Trash2 className="h-4 w-4 text-status-red-fg" />
                     </Button>
                   </div>
                 ))}
@@ -1095,10 +1095,10 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   ) : (
                     <ChevronRight className="h-5 w-5 text-fg-600" />
                   )}
-                  <Package className="h-5 w-5 text-purple-600" />
+                  <Package className="h-5 w-5 text-accent-text" />
                   <h3 className="text-lg font-semibold text-fg-900">Accessories</h3>
                   {costs && costs.accessoriesCost > 0 && (
-                    <span className="ml-2 text-sm font-medium text-purple-600">
+                    <span className="ml-2 text-sm font-medium text-accent-text">
                       {formatCurrency(costs.accessoriesCost)}
                     </span>
                   )}
@@ -1121,12 +1121,12 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
 
               {accessoriesSectionExpanded && (
                 <div className="p-4 pt-0 space-y-3">
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-3">
+                  <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-3 mb-3">
                     <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                      <Info className="h-4 w-4 text-accent-text mt-0.5 flex-shrink-0" />
                       <div className="text-xs text-purple-900">
                         <p className="font-medium mb-1">Add accessories like glass, fabric, lighting, decorative items, etc.</p>
-                        <p className="text-purple-700">Accessories do not affect shipping or labor calculations.</p>
+                        <p className="text-accent-text">Accessories do not affect shipping or labor calculations.</p>
                       </div>
                     </div>
                   </div>
@@ -1173,7 +1173,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                           setAccessories(newAccessories);
                         }}
                       >
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <Trash2 className="h-4 w-4 text-status-red-fg" />
                       </Button>
                     </div>
                   ))}
@@ -1200,9 +1200,9 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     <span className="font-medium">{formatCurrency(costs.boxEdgebandCost)}</span>
                   </div>
                   {costs.boxInteriorFinishCost > 0 && (
-                    <div className="flex justify-between bg-blue-50 -mx-2 px-2 py-1 rounded">
+                    <div className="flex justify-between bg-accent-tint-soft -mx-2 px-2 py-1 rounded">
                       <span className="text-fg-600 flex items-center gap-1">
-                        <Layers className="h-3.5 w-3.5 text-blue-600" />
+                        <Layers className="h-3.5 w-3.5 text-accent-text" />
                         Box Surface Layer:
                       </span>
                       <span className="font-medium">
@@ -1211,9 +1211,9 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     </div>
                   )}
                   {costs.backPanelMaterialCost > 0 && (
-                    <div className="flex justify-between bg-orange-50 -mx-2 px-2 py-1 rounded">
+                    <div className="flex justify-between bg-status-orange-bg -mx-2 px-2 py-1 rounded">
                       <span className="text-fg-600 flex items-center gap-1">
-                        <Package className="h-3.5 w-3.5 text-orange-600" />
+                        <Package className="h-3.5 w-3.5 text-status-orange-fg" />
                         Back Panel Material:
                       </span>
                       <span className="font-medium">
@@ -1230,9 +1230,9 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                     <span className="font-medium">{formatCurrency(costs.doorsEdgebandCost)}</span>
                   </div>
                   {costs.doorsInteriorFinishCost > 0 && (
-                    <div className="flex justify-between bg-green-50 -mx-2 px-2 py-1 rounded">
+                    <div className="flex justify-between bg-status-emerald-bg -mx-2 px-2 py-1 rounded">
                       <span className="text-fg-600 flex items-center gap-1">
-                        <Layers className="h-3.5 w-3.5 text-green-600" />
+                        <Layers className="h-3.5 w-3.5 text-status-emerald-fg" />
                         Doors Surface Layer:
                       </span>
                       <span className="font-medium">
@@ -1266,7 +1266,7 @@ export function CabinetForm({ areaId, cabinet, onClose }: CabinetFormProps) {
                   <div className="border-t border-border-solid pt-2 mt-2">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-fg-900">Total:</span>
-                      <span className="text-2xl font-bold text-blue-600">
+                      <span className="text-2xl font-bold text-accent-text">
                         {formatCurrency(costs.subtotal)}
                       </span>
                     </div>

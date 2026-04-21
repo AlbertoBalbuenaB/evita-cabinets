@@ -133,14 +133,14 @@ export function TrimPagesModal({ isOpen, onClose, file, onApply }: TrimPagesModa
             {keep.size} of {pageCount} kept
           </span>
           {keep.size > 0 && wouldDelete > 0 && (
-            <span className="text-red-600">· {wouldDelete} will be deleted</span>
+            <span className="text-status-red-fg">· {wouldDelete} will be deleted</span>
           )}
           <div className="flex-1" />
           <Button variant="ghost" size="sm" onClick={markAll} disabled={applying || pageCount === 0}>Keep all</Button>
           <Button variant="ghost" size="sm" onClick={clear} disabled={applying || keep.size === 0}>Clear</Button>
         </div>
 
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-status-red-fg">{error}</p>}
 
         {loading ? (
           <div className="py-16 flex items-center justify-center text-fg-400">

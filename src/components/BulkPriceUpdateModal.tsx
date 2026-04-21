@@ -111,13 +111,13 @@ export function BulkPriceUpdateModal({
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <RefreshCw className="h-8 w-8 text-blue-600 animate-spin mx-auto mb-4" />
+            <RefreshCw className="h-8 w-8 text-accent-text animate-spin mx-auto mb-4" />
             <p className="text-fg-600">Analyzing price changes...</p>
           </div>
         </div>
       ) : !analysis || !analysis.hasStalePrices ? (
         <div className="py-12 text-center">
-          <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+          <CheckCircle className="h-12 w-12 text-status-emerald-fg mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-fg-900 mb-2">All Prices Up to Date</h3>
           <p className="text-fg-600">This project uses the latest prices from your price list.</p>
           <div className="mt-6">
@@ -132,7 +132,7 @@ export function BulkPriceUpdateModal({
                 onClick={() => setActiveTab('preview')}
                 className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'preview'
-                    ? 'border-blue-600 text-blue-600'
+                    ? 'border-blue-600 text-accent-text'
                     : 'border-transparent text-fg-600 hover:text-fg-900'
                 }`}
               >
@@ -142,7 +142,7 @@ export function BulkPriceUpdateModal({
                 onClick={() => setActiveTab('select')}
                 className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'select'
-                    ? 'border-blue-600 text-blue-600'
+                    ? 'border-blue-600 text-accent-text'
                     : 'border-transparent text-fg-600 hover:text-fg-900'
                 }`}
               >
@@ -153,7 +153,7 @@ export function BulkPriceUpdateModal({
                   onClick={() => setActiveTab('confirm')}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === 'confirm'
-                      ? 'border-blue-600 text-blue-600'
+                      ? 'border-blue-600 text-accent-text'
                       : 'border-transparent text-fg-600 hover:text-fg-900'
                   }`}
                 >
@@ -165,8 +165,8 @@ export function BulkPriceUpdateModal({
 
           {activeTab === 'preview' && (
             <div className="space-y-6">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start">
-                <AlertCircle className="h-5 w-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
+              <div className="bg-status-amber-bg border border-status-amber-brd rounded-lg p-4 flex items-start">
+                <AlertCircle className="h-5 w-5 text-status-amber-fg mr-3 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <h4 className="font-semibold text-yellow-900 mb-1">Price Changes Detected</h4>
                   <p className="text-sm text-yellow-800">
@@ -187,7 +187,7 @@ export function BulkPriceUpdateModal({
                 <div className="bg-surf-app rounded-lg p-4">
                   <div className="text-sm text-fg-600 mb-1">Total Difference</div>
                   <div className={`text-2xl font-bold flex items-center ${
-                    analysis.totalPotentialDifference >= 0 ? 'text-red-600' : 'text-green-600'
+                    analysis.totalPotentialDifference >= 0 ? 'text-status-red-fg' : 'text-status-emerald-fg'
                   }`}>
                     {analysis.totalPotentialDifference >= 0 ? (
                       <TrendingUp className="h-5 w-5 mr-1" />
@@ -241,13 +241,13 @@ export function BulkPriceUpdateModal({
                         type="checkbox"
                         checked={selectedAreaIds.includes(area.areaId)}
                         onChange={() => toggleAreaSelection(area.areaId)}
-                        className="h-4 w-4 text-blue-600 border-border-solid rounded focus-visible:ring-focus"
+                        className="h-4 w-4 text-accent-text border-border-solid rounded focus-visible:ring-focus"
                       />
                       <div className="ml-3 flex-1">
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-fg-900">{area.areaName}</span>
                           <span className={`text-sm font-semibold ${
-                            area.areaTotalDifference >= 0 ? 'text-red-600' : 'text-green-600'
+                            area.areaTotalDifference >= 0 ? 'text-status-red-fg' : 'text-status-emerald-fg'
                           }`}>
                             {area.areaTotalDifference >= 0 ? '+' : ''}{formatCurrency(area.areaTotalDifference)}
                           </span>
@@ -261,7 +261,7 @@ export function BulkPriceUpdateModal({
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-accent-tint-soft border border-accent-tint-border rounded-lg p-4">
                 <h4 className="font-semibold text-blue-900 mb-2">Selected Summary</h4>
                 <div className="text-sm text-blue-800 space-y-1">
                   <div>Areas: {selectedAreaIds.length} of {analysis.affectedAreas.length}</div>
@@ -269,7 +269,7 @@ export function BulkPriceUpdateModal({
                   <div className="flex items-center">
                     <span>Total Difference:</span>
                     <span className={`ml-2 font-semibold ${
-                      selectedTotalDifference >= 0 ? 'text-red-600' : 'text-green-600'
+                      selectedTotalDifference >= 0 ? 'text-status-red-fg' : 'text-status-emerald-fg'
                     }`}>
                       {selectedTotalDifference >= 0 ? '+' : ''}{formatCurrency(selectedTotalDifference)}
                     </span>
@@ -295,7 +295,7 @@ export function BulkPriceUpdateModal({
             <div className="space-y-6">
               {updating ? (
                 <div className="text-center py-12">
-                  <RefreshCw className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
+                  <RefreshCw className="h-12 w-12 text-accent-text animate-spin mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-fg-900 mb-2">Updating Prices...</h3>
                   <p className="text-fg-600">{updateProgress.message}</p>
                   {updateProgress.total > 0 && (
@@ -316,7 +316,7 @@ export function BulkPriceUpdateModal({
                 <div className="text-center py-12">
                   {updateResult.updated > 0 && updateResult.errors.length === 0 ? (
                     <>
-                      <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                      <CheckCircle className="h-12 w-12 text-status-emerald-fg mx-auto mb-4" />
                       <h3 className="text-lg font-semibold text-fg-900 mb-2">Prices Updated Successfully</h3>
                       <p className="text-fg-600">
                         Updated {updateResult.updated} cabinet{updateResult.updated !== 1 ? 's' : ''} with current prices.
@@ -324,13 +324,13 @@ export function BulkPriceUpdateModal({
                     </>
                   ) : (
                     <>
-                      <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+                      <AlertCircle className="h-12 w-12 text-status-red-fg mx-auto mb-4" />
                       <h3 className="text-lg font-semibold text-fg-900 mb-2">Update Completed with Errors</h3>
                       <p className="text-fg-600 mb-4">
                         Successfully updated: {updateResult.updated} cabinets
                       </p>
                       {updateResult.errors.length > 0 && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-left max-w-md mx-auto">
+                        <div className="bg-status-red-bg border border-status-red-brd rounded-lg p-4 text-left max-w-md mx-auto">
                           <h4 className="font-semibold text-red-900 mb-2">Errors:</h4>
                           <ul className="text-sm text-red-800 space-y-1">
                             {updateResult.errors.slice(0, 5).map((error, idx) => (
@@ -371,7 +371,7 @@ function AreaPricePreview({ area }: { area: AffectedArea }) {
         </div>
         <div className="flex items-center space-x-4">
           <span className={`text-sm font-semibold ${
-            area.areaTotalDifference >= 0 ? 'text-red-600' : 'text-green-600'
+            area.areaTotalDifference >= 0 ? 'text-status-red-fg' : 'text-status-emerald-fg'
           }`}>
             {area.areaTotalDifference >= 0 ? '+' : ''}{formatCurrency(area.areaTotalDifference)}
           </span>
@@ -390,7 +390,7 @@ function AreaPricePreview({ area }: { area: AffectedArea }) {
                   {cabinet.productSku} (Qty: {cabinet.quantity})
                 </span>
                 <span className={`text-sm font-semibold ${
-                  cabinet.totalDifference >= 0 ? 'text-red-600' : 'text-green-600'
+                  cabinet.totalDifference >= 0 ? 'text-status-red-fg' : 'text-status-emerald-fg'
                 }`}>
                   {cabinet.totalDifference >= 0 ? '+' : ''}{formatCurrency(cabinet.totalDifference)}
                 </span>
@@ -399,7 +399,7 @@ function AreaPricePreview({ area }: { area: AffectedArea }) {
                 {cabinet.materialChanges.map((change, idx) => (
                   <div key={idx} className="text-xs text-fg-600 flex items-center justify-between">
                     <span className="truncate mr-2">{change.materialName}</span>
-                    <span className={change.difference >= 0 ? 'text-red-600' : 'text-green-600'}>
+                    <span className={change.difference >= 0 ? 'text-status-red-fg' : 'text-status-emerald-fg'}>
                       {change.difference >= 0 ? '+' : ''}{formatCurrency(change.difference)} ({change.percentageChange.toFixed(1)}%)
                     </span>
                   </div>

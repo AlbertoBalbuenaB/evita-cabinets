@@ -313,25 +313,25 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-blue-50/60 to-slate-100 rounded-lg border border-blue-200 p-4">
+    <div className="bg-gradient-to-br from-blue-50/60 to-slate-100 rounded-lg border border-accent-tint-border p-4">
       <div className="flex items-center mb-3">
-        <Layers className="h-4 w-4 text-blue-700 mr-2" />
+        <Layers className="h-4 w-4 text-accent-text mr-2" />
         <h4 className="text-sm font-semibold text-fg-900">
           Material Breakdown
-          <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 border border-blue-200 text-[9px] font-bold tracking-wide uppercase">
+          <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded bg-accent-tint-soft text-accent-text border border-accent-tint-border text-[9px] font-bold tracking-wide uppercase">
             Optimizer
           </span>
         </h4>
-        <span className="ml-auto text-xs font-semibold text-green-600">
+        <span className="ml-auto text-xs font-semibold text-status-emerald-fg">
           Total: {formatCurrency(totalCost)}
         </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {boardRows.length > 0 && (
-          <div className="bg-amber-50 rounded-lg p-3 border border-amber-100 lg:col-span-2">
+          <div className="bg-status-amber-bg rounded-lg p-3 border border-amber-100 lg:col-span-2">
             <div className="flex items-center mb-2">
-              <Package className="h-3 w-3 text-amber-700 mr-1.5" />
+              <Package className="h-3 w-3 text-status-amber-fg mr-1.5" />
               <h5 className="text-xs font-semibold text-amber-900">Boards (from optimizer run)</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -347,21 +347,21 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
                       <Ruler className="h-3 w-3 inline mr-1" />
                       {row.totalSF.toFixed(1)} SF
                     </span>
-                    <span className="font-semibold text-amber-700">{formatCurrency(row.cost)}</span>
+                    <span className="font-semibold text-status-amber-fg">{formatCurrency(row.cost)}</span>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-2 text-[11px] text-amber-700 italic">
+            <div className="mt-2 text-[11px] text-status-amber-fg italic">
               Fractional counts reflect boards shared with other areas — allocation is by piece m² share.
             </div>
           </div>
         )}
 
         {edgebandRows.length > 0 && (
-          <div className="bg-amber-50 rounded-lg p-3 border border-amber-100 lg:col-span-2">
+          <div className="bg-status-amber-bg rounded-lg p-3 border border-amber-100 lg:col-span-2">
             <div className="flex items-center mb-2">
-              <Ruler className="h-3 w-3 text-amber-700 mr-1.5" />
+              <Ruler className="h-3 w-3 text-status-amber-fg mr-1.5" />
               <h5 className="text-xs font-semibold text-amber-900">Edgeband (Rolls 150m)</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -377,7 +377,7 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
                       <Ruler className="h-3 w-3 inline mr-1" />
                       {row.meters.toFixed(1)}m
                     </span>
-                    <span className="font-semibold text-amber-700">{formatCurrency(row.cost)}</span>
+                    <span className="font-semibold text-status-amber-fg">{formatCurrency(row.cost)}</span>
                   </div>
                 </div>
               ))}
@@ -409,9 +409,9 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
         )}
 
         {accessories.length > 0 && (
-          <div className="bg-purple-50 rounded-lg p-3 border border-purple-200 lg:col-span-2">
+          <div className="bg-accent-tint-soft rounded-lg p-3 border border-accent-tint-border lg:col-span-2">
             <div className="flex items-center mb-2">
-              <Package className="h-3 w-3 text-purple-700 mr-1.5" />
+              <Package className="h-3 w-3 text-accent-text mr-1.5" />
               <h5 className="text-xs font-semibold text-purple-900">Accessories</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
@@ -423,7 +423,7 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.quantity} pcs
                     </span>
-                    <span className="font-semibold text-purple-700">{formatCurrency(row.cost)}</span>
+                    <span className="font-semibold text-accent-text">{formatCurrency(row.cost)}</span>
                   </div>
                 </div>
               ))}
@@ -432,9 +432,9 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
         )}
 
         {countertops.length > 0 && (
-          <div className="bg-orange-50 rounded-lg p-3 border border-orange-200 lg:col-span-2">
+          <div className="bg-status-orange-bg rounded-lg p-3 border border-status-orange-brd lg:col-span-2">
             <div className="flex items-center mb-2">
-              <Hammer className="h-3 w-3 text-orange-700 mr-1.5" />
+              <Hammer className="h-3 w-3 text-status-orange-fg mr-1.5" />
               <h5 className="text-xs font-semibold text-orange-900">Countertops</h5>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
@@ -446,7 +446,7 @@ export function AreaMaterialBreakdownOptimizer({ areaId, run }: Props) {
                       <Hash className="h-3 w-3 inline mr-1" />
                       {row.quantity.toFixed(2)} units
                     </span>
-                    <span className="font-semibold text-orange-700">{formatCurrency(row.cost)}</span>
+                    <span className="font-semibold text-status-orange-fg">{formatCurrency(row.cost)}</span>
                   </div>
                 </div>
               ))}

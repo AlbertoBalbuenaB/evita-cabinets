@@ -28,10 +28,10 @@ const tools = [
 
 const colorMap: Record<string, { bg: string; iconBg: string; iconText: string; border: string }> = {
   blue: {
-    bg: 'hover:border-blue-300',
-    iconBg: 'bg-blue-100',
-    iconText: 'text-blue-600',
-    border: 'border-blue-200',
+    bg: 'hover:border-accent-tint-border',
+    iconBg: 'bg-accent-tint-soft',
+    iconText: 'text-accent-text',
+    border: 'border-accent-tint-border',
   },
   indigo: {
     bg: 'hover:border-indigo-300',
@@ -40,10 +40,10 @@ const colorMap: Record<string, { bg: string; iconBg: string; iconText: string; b
     border: 'border-accent-tint-border',
   },
   violet: {
-    bg: 'hover:border-violet-300',
-    iconBg: 'bg-violet-100',
-    iconText: 'text-violet-600',
-    border: 'border-violet-200',
+    bg: 'hover:border-accent-tint-border',
+    iconBg: 'bg-accent-tint-soft',
+    iconText: 'text-accent-text',
+    border: 'border-accent-tint-border',
   },
 };
 

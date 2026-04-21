@@ -9,10 +9,10 @@ import type { InventoryMovementWithDetails } from '../../types';
 const MOVEMENT_TYPES = ['All', 'IN', 'OUT', 'ADJUSTMENT', 'RETURN'] as const;
 
 const TYPE_STYLES: Record<string, string> = {
-  IN: 'bg-green-100 text-green-700',
-  OUT: 'bg-red-100 text-red-700',
-  ADJUSTMENT: 'bg-blue-100 text-blue-700',
-  RETURN: 'bg-orange-100 text-orange-700',
+  IN: 'bg-status-emerald-bg text-status-emerald-fg',
+  OUT: 'bg-status-red-bg text-status-red-fg',
+  ADJUSTMENT: 'bg-accent-tint-soft text-accent-text',
+  RETURN: 'bg-status-orange-bg text-status-orange-fg',
 };
 
 function qtyPrefix(type: string): string {
@@ -99,7 +99,7 @@ export function InventoryMovementsTable() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="px-3 py-2 text-sm rounded-xl border border-border-soft bg-surf-card focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
+              className="px-3 py-2 text-sm rounded-xl border border-border-soft bg-surf-card focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 outline-none transition"
               placeholder="From"
             />
             <span className="text-fg-400 text-sm">to</span>
@@ -107,7 +107,7 @@ export function InventoryMovementsTable() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="px-3 py-2 text-sm rounded-xl border border-border-soft bg-surf-card focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
+              className="px-3 py-2 text-sm rounded-xl border border-border-soft bg-surf-card focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 outline-none transition"
               placeholder="To"
             />
           </div>
@@ -120,7 +120,7 @@ export function InventoryMovementsTable() {
               placeholder="Search by item name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-border-soft bg-surf-card placeholder:text-fg-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
+              className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-border-soft bg-surf-card placeholder:text-fg-400 focus:border-accent-tint-border focus:ring-2 focus:ring-blue-100 outline-none transition"
             />
           </div>
         </div>
@@ -160,7 +160,7 @@ export function InventoryMovementsTable() {
                     <td className="px-5 py-3.5 max-w-[200px]">
                       <button
                         onClick={() => navigate(`/prices/${m.price_list_item_id}`)}
-                        className="text-blue-600 hover:text-blue-800 hover:underline truncate block text-left font-medium"
+                        className="text-accent-text hover:text-blue-800 hover:underline truncate block text-left font-medium"
                       >
                         {m.price_list_item?.concept_description ?? '—'}
                       </button>
@@ -192,7 +192,7 @@ export function InventoryMovementsTable() {
                           {m.reference_type === 'PROJECT' && m.reference_id && (
                             <button
                               onClick={() => navigate(`/projects/${m.reference_id}`)}
-                              className="text-blue-600 hover:underline text-xs"
+                              className="text-accent-text hover:underline text-xs"
                             >
                               View
                             </button>

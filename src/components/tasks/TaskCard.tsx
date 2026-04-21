@@ -14,11 +14,11 @@ interface Props {
 const STATUS_ORDER_CYCLE: TaskStatus[] = ['pending', 'in_progress', 'in_review', 'blocked', 'done', 'cancelled'];
 
 const AVATAR_COLORS = [
-  'bg-violet-100 text-violet-700',
-  'bg-blue-100 text-blue-700',
-  'bg-amber-100 text-amber-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-rose-100 text-rose-700',
+  'bg-accent-tint-soft text-accent-text',
+  'bg-accent-tint-soft text-accent-text',
+  'bg-status-amber-bg text-status-amber-fg',
+  'bg-status-emerald-bg text-status-emerald-fg',
+  'bg-status-red-bg text-status-red-fg',
 ];
 
 function getInitials(name: string) {
@@ -59,9 +59,9 @@ export function TaskCard({ task, selected, onSelect, onStatusChange, compact }: 
       onClick={() => onSelect(task.id)}
       className={`
         task-enter group relative cursor-pointer rounded-xl border-l-4 bg-surf-card backdrop-blur-sm p-3 shadow-sm
-        hover:shadow-md hover:border-blue-200/60 transition-all duration-200
+        hover:shadow-md hover:border-accent-tint-border transition-all duration-200
         ${priorityCfg.border}
-        ${selected ? 'ring-2 ring-blue-400/70 ring-offset-1 border-blue-200/60' : 'border border-white/80'}
+        ${selected ? 'ring-2 ring-blue-400/70 ring-offset-1 border-accent-tint-border' : 'border border-white/80'}
         ${isDone ? 'opacity-60' : ''}
       `}
     >

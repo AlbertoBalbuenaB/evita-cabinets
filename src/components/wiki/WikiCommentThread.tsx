@@ -98,7 +98,7 @@ export function WikiCommentThread({ proposalId, articleId, authorId, memberNames
           placeholder="Escribe un comentario…"
           className="w-full rounded-lg glass-white border border-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400/60"
         />
-        {error && <div className="text-xs text-red-700">{error}</div>}
+        {error && <div className="text-xs text-status-red-fg">{error}</div>}
         <div className="flex justify-end">
           <Button type="submit" variant="primary" size="sm" disabled={!text.trim() || submitting}>
             <Send className="w-3.5 h-3.5 mr-1.5" />

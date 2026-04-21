@@ -34,9 +34,9 @@ function computeHealth(supplier: Supplier): HealthScore {
 }
 
 const HEALTH_STYLES: Record<HealthScore, { label: string; className: string }> = {
-  green:  { label: 'Good',    className: 'bg-green-100 text-green-700 border border-green-200' },
-  yellow: { label: 'Average', className: 'bg-amber-100 text-amber-700 border border-amber-200' },
-  red:    { label: 'Poor',    className: 'bg-red-100 text-red-700 border border-red-200' },
+  green:  { label: 'Good',    className: 'bg-status-emerald-bg text-status-emerald-fg border border-status-emerald-brd' },
+  yellow: { label: 'Average', className: 'bg-status-amber-bg text-status-amber-fg border border-status-amber-brd' },
+  red:    { label: 'Poor',    className: 'bg-status-red-bg text-status-red-fg border border-status-red-brd' },
   none:   { label: '',        className: '' },
 };
 
@@ -112,7 +112,7 @@ function SupplierCard({
           )}
           <span
             className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-              supplier.is_active ? 'bg-green-100 text-green-700' : 'bg-surf-muted text-fg-500'
+              supplier.is_active ? 'bg-status-emerald-bg text-status-emerald-fg' : 'bg-surf-muted text-fg-500'
             }`}
           >
             {supplier.is_active ? 'Active' : 'Inactive'}
@@ -127,7 +127,7 @@ function SupplierCard({
       {categories.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {categories.slice(0, 3).map((cat) => (
-            <span key={cat} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-600">
+            <span key={cat} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-accent-tint-soft text-accent-text">
               <Tag className="h-2.5 w-2.5" />
               {cat}
             </span>
@@ -183,7 +183,7 @@ function SupplierCard({
         <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={onEdit}
-            className="p-1.5 rounded-lg bg-surf-card shadow-sm border border-border-soft text-fg-400 hover:text-blue-600 hover:border-blue-200 transition-colors"
+            className="p-1.5 rounded-lg bg-surf-card shadow-sm border border-border-soft text-fg-400 hover:text-accent-text hover:border-accent-tint-border transition-colors"
             title="Edit supplier"
           >
             <Edit2 className="h-3.5 w-3.5" />
@@ -192,8 +192,8 @@ function SupplierCard({
             onClick={onToggle}
             className={`p-1.5 rounded-lg bg-surf-card shadow-sm border border-border-soft transition-colors ${
               supplier.is_active
-                ? 'text-fg-400 hover:text-amber-600 hover:border-amber-200'
-                : 'text-fg-400 hover:text-green-600 hover:border-green-200'
+                ? 'text-fg-400 hover:text-status-amber-fg hover:border-status-amber-brd'
+                : 'text-fg-400 hover:text-status-emerald-fg hover:border-status-emerald-brd'
             }`}
             title={supplier.is_active ? 'Deactivate' : 'Activate'}
           >
@@ -400,7 +400,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                 type="checkbox"
                 checked={showInactive}
                 onChange={(e) => setShowInactive(e.target.checked)}
-                className="h-4 w-4 rounded border-border-solid text-blue-600 focus-visible:ring-focus"
+                className="h-4 w-4 rounded border-border-solid text-accent-text focus-visible:ring-focus"
               />
               Show inactive
             </label>
@@ -410,7 +410,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
               <button
                 onClick={() => setViewMode('card')}
                 className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === 'card' ? 'bg-surf-card text-blue-600 shadow-sm' : 'text-fg-400 hover:text-fg-600'
+                  viewMode === 'card' ? 'bg-surf-card text-accent-text shadow-sm' : 'text-fg-400 hover:text-fg-600'
                 }`}
                 title="Card view"
               >
@@ -419,7 +419,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
               <button
                 onClick={() => setViewMode('list')}
                 className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === 'list' ? 'bg-surf-card text-blue-600 shadow-sm' : 'text-fg-400 hover:text-fg-600'
+                  viewMode === 'list' ? 'bg-surf-card text-accent-text shadow-sm' : 'text-fg-400 hover:text-fg-600'
                 }`}
                 title="List view"
               >
@@ -448,7 +448,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                     onClick={() => toggleCategory(cat)}
                     className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                       active
-                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                        ? 'bg-accent-tint-soft text-accent-text border border-accent-tint-border'
                         : 'bg-surf-muted text-fg-500 border border-transparent hover:bg-surf-muted'
                     }`}
                   >
@@ -558,7 +558,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                               {categories.slice(0, 3).map((cat) => (
                                 <span
                                   key={cat}
-                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-600"
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-accent-tint-soft text-accent-text"
                                 >
                                   {cat}
                                 </span>
@@ -588,7 +588,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 supplier.is_active
-                                  ? 'bg-green-100 text-green-700'
+                                  ? 'bg-status-emerald-bg text-status-emerald-fg'
                                   : 'bg-surf-muted text-fg-500'
                               }`}
                             >
@@ -606,7 +606,7 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                             <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => handleEdit(supplier)}
-                                className="p-1.5 rounded-lg text-fg-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                className="p-1.5 rounded-lg text-fg-400 hover:text-accent-text hover:bg-accent-tint-soft transition-colors"
                                 title="Edit supplier"
                               >
                                 <Edit2 className="h-4 w-4" />
@@ -615,8 +615,8 @@ export function Suppliers({ embedded = false }: { embedded?: boolean }) {
                                 onClick={() => handleToggleActive(supplier)}
                                 className={`p-1.5 rounded-lg transition-colors ${
                                   supplier.is_active
-                                    ? 'text-fg-400 hover:text-amber-600 hover:bg-amber-50'
-                                    : 'text-fg-400 hover:text-green-600 hover:bg-green-50'
+                                    ? 'text-fg-400 hover:text-status-amber-fg hover:bg-status-amber-bg'
+                                    : 'text-fg-400 hover:text-status-emerald-fg hover:bg-status-emerald-bg'
                                 }`}
                                 title={supplier.is_active ? 'Deactivate supplier' : 'Activate supplier'}
                               >

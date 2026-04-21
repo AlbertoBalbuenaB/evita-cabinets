@@ -79,7 +79,7 @@ export function TaskCalendarView({ tasks, onSelect }: Props) {
               <div
                 key={key}
                 className={`min-h-[80px] p-1.5 border-b border-r border-white/50 transition-colors ${
-                  today ? 'bg-blue-50/70' : !inMonth ? 'bg-surf-card' : 'bg-surf-card'
+                  today ? 'bg-accent-tint-soft' : !inMonth ? 'bg-surf-card' : 'bg-surf-card'
                 } ${i % 7 === 6 ? 'border-r-0' : ''}`}
               >
                 {/* Date number */}

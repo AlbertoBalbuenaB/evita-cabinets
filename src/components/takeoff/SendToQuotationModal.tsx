@@ -138,10 +138,10 @@ export function SendToQuotationModal({ isOpen, onClose, projectId, displayUnit }
           </select>
         </div>
 
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-status-red-fg">{error}</p>}
 
         {result && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-xs text-emerald-800">
+          <div className="bg-status-emerald-bg border border-status-emerald-brd rounded-lg px-3 py-2 text-xs text-emerald-800">
             Inserted {result.inserted} item{result.inserted === 1 ? '' : 's'}
             {result.skipped > 0 && ` · skipped ${result.skipped}`}
             . Open the quotation to edit quantities.

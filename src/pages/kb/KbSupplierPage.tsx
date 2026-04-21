@@ -83,7 +83,7 @@ export function KbSupplierPage() {
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0 flex-1">
             <div className="inline-flex items-center gap-2 mb-2">
-              <Building2 className="w-5 h-5 text-emerald-600" />
+              <Building2 className="w-5 h-5 text-status-emerald-fg" />
               <span className="text-xs uppercase tracking-wide text-fg-600 font-semibold">Supplier</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-fg-900">{pickText(supplier, 'name', locale)}</h1>

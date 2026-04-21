@@ -17,12 +17,12 @@ type LogType = 'note' | 'change' | 'decision' | 'risk' | 'issue' | 'milestone' |
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const LOG_TYPES: Record<LogType, { label: string; Icon: any; color: string; bg: string; border: string; badgeBg: string }> = {
   note:      { label: 'Note',      Icon: FileText,       color: 'text-fg-600',  bg: 'bg-surf-app',    border: 'border-l-slate-300',   badgeBg: 'bg-surf-muted'  },
-  change:    { label: 'Change',    Icon: RefreshCw,      color: 'text-amber-600',  bg: 'bg-amber-50',    border: 'border-l-amber-400',   badgeBg: 'bg-amber-100'  },
-  decision:  { label: 'Decision',  Icon: CheckCircle,    color: 'text-blue-600',   bg: 'bg-blue-50',     border: 'border-l-blue-400',    badgeBg: 'bg-blue-100'   },
-  risk:      { label: 'Risk',      Icon: AlertTriangle,  color: 'text-orange-600', bg: 'bg-orange-50',   border: 'border-l-orange-400',  badgeBg: 'bg-orange-100' },
-  issue:     { label: 'Issue',     Icon: XCircle,        color: 'text-red-600',    bg: 'bg-red-50',      border: 'border-l-red-400',     badgeBg: 'bg-red-100'    },
-  milestone: { label: 'Milestone', Icon: Trophy,         color: 'text-green-600',  bg: 'bg-green-50',    border: 'border-l-green-400',   badgeBg: 'bg-green-100'  },
-  update:    { label: 'Update',    Icon: Radio,          color: 'text-purple-600', bg: 'bg-purple-50',   border: 'border-l-purple-400',  badgeBg: 'bg-purple-100' },
+  change:    { label: 'Change',    Icon: RefreshCw,      color: 'text-status-amber-fg',  bg: 'bg-status-amber-bg',    border: 'border-l-amber-400',   badgeBg: 'bg-status-amber-bg'  },
+  decision:  { label: 'Decision',  Icon: CheckCircle,    color: 'text-accent-text',   bg: 'bg-accent-tint-soft',     border: 'border-l-blue-400',    badgeBg: 'bg-accent-tint-soft'   },
+  risk:      { label: 'Risk',      Icon: AlertTriangle,  color: 'text-status-orange-fg', bg: 'bg-status-orange-bg',   border: 'border-l-orange-400',  badgeBg: 'bg-status-orange-bg' },
+  issue:     { label: 'Issue',     Icon: XCircle,        color: 'text-status-red-fg',    bg: 'bg-status-red-bg',      border: 'border-l-red-400',     badgeBg: 'bg-status-red-bg'    },
+  milestone: { label: 'Milestone', Icon: Trophy,         color: 'text-status-emerald-fg',  bg: 'bg-status-emerald-bg',    border: 'border-l-green-400',   badgeBg: 'bg-status-emerald-bg'  },
+  update:    { label: 'Update',    Icon: Radio,          color: 'text-accent-text', bg: 'bg-accent-tint-soft',   border: 'border-l-purple-400',  badgeBg: 'bg-accent-tint-soft' },
 };
 
 // ── TipTap JSON helpers ───────────────────────────────────────────────────────
@@ -89,9 +89,9 @@ function getInitials(name: string) {
 }
 
 const AVATAR_COLORS = [
-  'bg-violet-100 text-violet-700', 'bg-blue-100 text-blue-700',
-  'bg-amber-100 text-amber-700',   'bg-emerald-100 text-emerald-700',
-  'bg-rose-100 text-rose-700',     'bg-cyan-100 text-cyan-700',
+  'bg-accent-tint-soft text-accent-text', 'bg-accent-tint-soft text-accent-text',
+  'bg-status-amber-bg text-status-amber-fg',   'bg-status-emerald-bg text-status-emerald-fg',
+  'bg-status-red-bg text-status-red-fg',     'bg-cyan-100 text-cyan-700',
 ];
 
 function avatarColor(name: string) {
@@ -184,7 +184,7 @@ export function HomeLogDetailModal({ log, currentMemberId, currentMemberName, on
             <Link
               to={`/projects/${log.project_id}`}
               onClick={onClose}
-              className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-medium flex-shrink-0"
+              className="inline-flex items-center gap-1 text-[11px] text-accent-text hover:text-blue-800 font-medium flex-shrink-0"
             >
               {log.project_name} <ExternalLink className="h-3 w-3" />
             </Link>

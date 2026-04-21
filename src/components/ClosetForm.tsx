@@ -108,7 +108,7 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
     return (
       <>
         {text.slice(0, idx)}
-        <mark className="bg-yellow-100 text-yellow-900 rounded-sm px-0.5">{text.slice(idx, idx + query.length)}</mark>
+        <mark className="bg-status-amber-bg text-yellow-900 rounded-sm px-0.5">{text.slice(idx, idx + query.length)}</mark>
         {text.slice(idx + query.length)}
       </>
     );
@@ -283,7 +283,7 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
                   <div className="flex items-center gap-3 shrink-0 text-xs text-fg-400">
                     <span>{item.width_in}" W × {item.height_in}" H × {item.depth_in}" D</span>
                     <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                      item.evita_line === 'Evita Premium' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'
+                      item.evita_line === 'Evita Premium' ? 'bg-status-amber-bg text-status-amber-fg' : 'bg-accent-tint-soft text-accent-text'
                     }`}>
                       {item.evita_line === 'Evita Premium' ? 'Premium' : 'Plus'}
                     </span>
@@ -452,7 +452,7 @@ export function ClosetForm({ areaId, closetItem, onClose }: ClosetFormProps) {
               <button
                 type="button"
                 onClick={() => removeHardwareRow(index)}
-                className="px-3 py-2 text-red-500 hover:text-red-700"
+                className="px-3 py-2 text-red-500 hover:text-status-red-fg"
               >
                 ×
               </button>

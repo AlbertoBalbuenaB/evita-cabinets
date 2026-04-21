@@ -64,7 +64,7 @@ export function CommentInputModal() {
           className="w-full text-sm border border-border-soft rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus-visible:ring-focus resize-none"
         />
         <p className="text-[10px] text-fg-400">Tip: ⌘↵ / Ctrl+↵ to post.</p>
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-status-red-fg">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={close} disabled={submitting}>Cancel</Button>
           <Button variant="primary" size="sm" onClick={submit} disabled={submitting || !text.trim()}>
