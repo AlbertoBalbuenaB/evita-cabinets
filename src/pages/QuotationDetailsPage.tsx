@@ -63,14 +63,10 @@ export function QuotationDetailsPage() {
   usePageChrome(
     {
       title: titleProject ? `${titleProject} · ${variantName}` : variantName,
-      crumbs: [
-        { label: 'Projects', to: '/projects' },
-        {
-          label: parentProject?.name ?? '…',
-          to: parentProject ? `/projects/${parentProject.id}` : undefined,
-        },
-        { label: variantName },
-      ],
+      // ProjectHeader renders its own identity (back button + project /
+      // variant title). Suppress the Topbar's crumb strip so the two
+      // don't duplicate the same information.
+      hideCrumbs: true,
       tabs: chromeTabs,
       activeTabId: activeTab,
     },

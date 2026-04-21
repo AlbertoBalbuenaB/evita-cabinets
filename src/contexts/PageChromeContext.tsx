@@ -32,6 +32,13 @@ export type ChromeTab = {
 export type PageChrome = {
   title?: string;
   crumbs?: Crumb[];
+  /**
+   * When true, the Topbar suppresses breadcrumbs entirely for this page.
+   * Use on pages that render their own page-level identity (e.g. the
+   * Quotation Details page's ProjectHeader) where a Topbar crumb strip
+   * would just duplicate the title row below it.
+   */
+  hideCrumbs?: boolean;
   primaryAction?: ChromeAction;
   secondaryActions?: ChromeAction[];
   tabs?: ChromeTab[];

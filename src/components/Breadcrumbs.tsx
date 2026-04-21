@@ -5,9 +5,10 @@ import { deriveCrumbs } from '../lib/routeLabels';
 
 export function Breadcrumbs() {
   const { pathname } = useLocation();
-  const { crumbs: override } = useChromeReader();
+  const { crumbs: override, hideCrumbs } = useChromeReader();
   const crumbs = override && override.length > 0 ? override : deriveCrumbs(pathname);
 
+  if (hideCrumbs) return null;
   if (crumbs.length === 0) return null;
 
   return (

@@ -94,9 +94,12 @@ export function ProjectHeader({
     ? 'text-emerald-600'
     : 'text-rose-600';
 
+  // z-40 sits above the FloatingActionBar (z-[36]) so the StatusChip's
+  // dropdown can render over it when it extends below the header's bounds.
+  // Still under modal backdrops (z-50+).
   const outerClass =
     variant === 'fixed'
-      ? 'fixed top-14 right-0 left-0 lg:left-[var(--rail-w)] z-20 transition-[left] duration-[250ms] ease-[cubic-bezier(0.16,1,0.3,1)]'
+      ? 'fixed top-14 right-0 left-0 lg:left-[var(--rail-w)] z-40 transition-[left] duration-[250ms] ease-[cubic-bezier(0.16,1,0.3,1)]'
       : 'relative';
 
   return (
@@ -110,11 +113,11 @@ export function ProjectHeader({
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-4 lg:gap-6 py-[14px] lg:py-[18px] grid-cols-1 lg:[grid-template-columns:1fr_auto] items-start lg:items-center">
+        <div className="grid gap-3 lg:gap-6 py-[10px] lg:py-[12px] grid-cols-1 lg:[grid-template-columns:1fr_auto] items-start lg:items-center">
           {/* Left column — identity */}
           <div className="min-w-0">
             {/* Title row */}
-            <div className="flex items-center gap-[10px] mb-[10px] flex-wrap">
+            <div className="flex items-center gap-[10px] mb-[6px] flex-wrap">
               {onBack && (
                 <button
                   type="button"
@@ -137,7 +140,7 @@ export function ProjectHeader({
             </div>
 
             {/* Chips row */}
-            <div className="flex items-center gap-[6px] mb-[10px] flex-wrap">
+            <div className="flex items-center gap-[6px] mb-[6px] flex-wrap">
               <StatusChip status={status} onChange={onStatusChange} />
               {isStale && (
                 <span
@@ -189,41 +192,41 @@ export function ProjectHeader({
 
           {/* Right column — financial card */}
           <div
-            className="lg:min-w-[270px] rounded-[12px] px-[18px] py-[12px] border"
+            className="lg:min-w-[270px] rounded-[12px] px-[16px] py-[10px] border"
             style={{
               background:
                 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(59,130,246,0.06))',
               borderColor: 'rgba(165,180,252,0.55)',
             }}
           >
-            <div className="text-[10px] font-semibold tracking-[0.14em] uppercase text-indigo-700 mb-1 flex items-center gap-[6px]">
+            <div className="text-[10px] font-semibold tracking-[0.14em] uppercase text-indigo-700 mb-[2px] flex items-center gap-[6px]">
               <Zap className="h-[11px] w-[11px]" strokeWidth={1.5} />
               Project Total · {methodLabel}
             </div>
 
             {totalMode === 'Both' ? (
               <div className="leading-tight">
-                <div className="text-[22px] font-bold text-slate-900 tabular-nums tracking-[-0.02em]">
+                <div className="text-[20px] font-bold text-slate-900 tabular-nums tracking-[-0.02em]">
                   {formatMoney(total.usd, 'USD')}
                   <span className="text-[12px] text-slate-500 font-medium ml-[5px]">USD</span>
                 </div>
-                <div className="text-[14px] text-slate-500 font-medium tabular-nums mt-0.5">
+                <div className="text-[13px] text-slate-500 font-medium tabular-nums mt-0.5">
                   {formatMoney(total.mxn, 'MXN')}
                   <span className="ml-[4px]">MXN</span>
                 </div>
               </div>
             ) : (
               <div className="leading-none">
-                <span className="text-[24px] font-bold text-slate-900 tabular-nums tracking-[-0.02em]">
+                <span className="text-[22px] font-bold text-slate-900 tabular-nums tracking-[-0.02em]">
                   {formatMoney(totalMode === 'USD' ? total.usd : total.mxn, totalMode)}
                 </span>
-                <span className="text-[13px] text-slate-500 font-medium ml-[5px]">
+                <span className="text-[12px] text-slate-500 font-medium ml-[5px]">
                   {totalMode}
                 </span>
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-2 mt-[10px] flex-wrap">
+            <div className="flex items-center justify-between gap-2 mt-[8px] flex-wrap">
               <CurrencySegmented value={totalMode} onChange={onTotalModeChange} />
               {delta && (
                 <span
