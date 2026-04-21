@@ -27,45 +27,81 @@ This platform handles quotation, project management, inventory, and supplier wor
 
 ---
 
-## Design System — Glass Morphism Light
+## Design System — Glass Morphism (Light + Midnight)
 
-All UI must follow the established Glass Morphism Light design language. Never introduce opaque containers, dark backgrounds, or Material/Bootstrap patterns.
+Evita ships **two themes** driven by a CSS custom-property token system:
 
-### App Background
-```css
-.app-bg {
-  background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 30%, #faf5ff 60%, #f0f9ff 100%);
-  min-height: 100vh;
-}
-```
+- **Light** — glass on pastel indigo/violet gradient (legacy default).
+- **Midnight** — glass on deep navy gradient with radial indigo/violet orbs.
 
-### Glass Surface Classes (defined in index.css @layer utilities)
-| Class | Usage | Properties |
-|-------|-------|------------|
-| `glass-white` | Cards, panels, modals, forms | `bg: rgba(255,255,255,0.65)`, `backdrop-blur(20px)`, `border: 1px solid rgba(255,255,255,0.85)`, `border-radius: 14px`, `shadow: 0 2px 12px rgba(99,102,241,0.08)` |
-| `glass-blue` | Informational sections | `bg: rgba(219,234,254,0.6)`, `border: rgba(147,197,253,0.5)` |
-| `glass-indigo` | Hero sections, headers, highlights | `bg: rgba(224,231,255,0.6)`, `border: rgba(165,180,252,0.5)` |
-| `glass-green` | Success/positive feedback | `bg: rgba(209,250,229,0.55)`, `border: rgba(110,231,183,0.5)` |
-| `glass-nav` | Top navigation bar | `bg: rgba(255,255,255,0.75)`, `backdrop-blur(24px)`, no border-radius |
+The user picks Light / Midnight / System (follows OS `prefers-color-scheme`) via the 3-state toggle in the Topbar, mirrored in the user menu. The preference persists in `localStorage('evita:theme')`. A pre-paint inline script in `index.html` resolves the attribute before CSS loads — there is **no FOUC on reload**.
+
+### How the system works
+1. All colors live as CSS vars in `src/index.css` under `:root` / `[data-theme="light"]` / `[data-theme="midnight"]`.
+2. `tailwind.config.js` maps them to `theme.extend.colors` (+ `backgroundImage`, `boxShadow`, `ringColor`) so components use short aliases: `bg-surf-card`, `text-fg-900`, `shadow-card`, `bg-accent-primary`, etc.
+3. Swapping the palette (or adding a future theme) means editing `src/index.css` only — no component changes required.
+4. **Do NOT use Tailwind `dark:` variants.** Themes are driven by `[data-theme]`, not `.dark`. A `dark:` class won't fire.
+5. `@media print` forces Light tokens on every theme — quotations never print on dark paper.
+6. `prefers-reduced-motion` disables the blanket theme transition; component-level animations still run.
+
+**Full token reference: [`docs/design/midnight-glass-tokens.md`](docs/design/midnight-glass-tokens.md).** Read this before introducing new UI surfaces so you know which token to pick.
+
+### App background
+`bg-app-gradient` utility (reads `var(--gradient-app)`) — Light = pastel gradient, Midnight = navy + radial orbs. The `.app-bg` legacy class is preserved and reads the same token.
+
+### Glass surface classes (defined in `src/index.css`)
+All glass classes read tokens internally — their RGBA flips per theme. Class names stay stable.
+
+| Class | Token source | Use for |
+|-------|--------------|---------|
+| `glass-white` | `--surf-card` | Cards, panels, modals, forms |
+| `glass-blue` | `--surf-blue` | Informational sections |
+| `glass-indigo` | `--surf-indigo` | Hero sections, headers, highlights |
+| `glass-green` | `--surf-green` | Success/positive feedback |
+| `glass-nav` | `--surf-chrome` | Top navigation bar |
+
+### Semantic token aliases (preferred for new code)
+| Alias | Purpose |
+|-------|---------|
+| `bg-surf-{app,card,chrome,rail,projhdr,input,btn,btn-hover,muted,hover}` | Contextual surfaces |
+| `text-fg-{300..900}` / `text-fg-inverse` | Foreground ramp (highest contrast = fg-900) |
+| `border-border-{hair,soft,solid,input,rail}` | Borders per context |
+| `bg-accent-primary` (gradient) / `bg-accent-secondary` (hover) | Brand gradient buttons, active pills |
+| `bg-accent-tint-{soft,strong,card}` / `text-accent-text` | Indigo-tinted surfaces + accent text |
+| `bg-accent-badge-bg` / `text-accent-badge-fg` | Sidebar count pills |
+| `bg-status-{orange,amber,emerald,red,indigo}-{bg,fg,brd}` | Status chips (Estimating/Stale/Sent/Approved/...) |
+| `text-red-dot` / `bg-red-dot` | Danger/destructive — adapts per theme |
+| `shadow-{card,card-blue,card-green,rail,btn,btn-hover,seg-active,login-card}` | Pre-themed elevations |
+| `ring-focus` / `outline-focus` | Keyboard focus indicator (theme-aware) |
+
+**New status type not in the set** (Won/Lost/Archived/Sent/...)? Add `--status-{name}-{bg,fg,brd}` to **both** `[data-theme="light"]` and `[data-theme="midnight"]` in `src/index.css` **before** using it in JSX, and register Tailwind aliases under `theme.extend.colors.status` in `tailwind.config.js`.
 
 ### Buttons
-| Class | Usage |
+| Class / primitive | Variant |
 |-------|-------|
-| `btn-primary-glass` | Primary actions — gradient `#6366f1 → #3b82f6`, white text, indigo shadow |
-| `Button` component | Variants: `primary` (blue-600), `secondary` (slate-200), `danger` (red-600), `ghost`, `outline` — all `rounded-lg` |
+| `<Button variant="primary">` | `bg-accent-primary text-accent-on shadow-btn` — gradient adapts per theme |
+| `<Button variant="secondary">` | `bg-surf-btn text-fg-800 border border-border-soft` |
+| `<Button variant="danger">` | `bg-red-dot text-white` |
+| `<Button variant="ghost">` | `text-fg-700 hover:bg-surf-hover` |
+| `<Button variant="outline">` | `border border-border-solid text-fg-700` |
+| `btn-primary-glass` class | Legacy — gradient + shadow, tokenized |
 
-### Modal Pattern
+### Modal pattern
 - Portal-rendered (`createPortal`)
-- Backdrop: `bg-black bg-opacity-30 backdrop-blur-[2px]`
-- Content: `glass-white` with `border-radius: 16px`
+- Backdrop: `bg-modal-backdrop backdrop-blur-[2px]` (themed overlay — `rgba(0,0,0,0.3)` light, `rgba(0,0,0,0.55)` midnight)
+- Content: `glass-white` (token-backed) with `border-radius: 16px`
 - Sizes: sm (md), md (2xl), lg (4xl), xl (6xl)
-- Header with border-bottom `border-slate-200/60`
+- Header: `border-b border-border-soft`
 
-### Color Palette (Tailwind defaults, no custom theme)
-- **Primary:** indigo-600 / blue-600 spectrum
-- **Text:** slate-900 (headings), slate-700 (body), slate-500 (secondary), slate-400 (muted)
-- **Accents:** emerald (success), amber (warning), red (danger), purple (special)
-- **Backgrounds:** slate-50, white/65 (glass), blue-50/70, indigo-50/60
+### Data colors (stay theme-agnostic — do NOT tokenize)
+Some colors are **data identity** and should stay hardcoded across both themes:
+
+- **Chart material fills** — `COLOR_PALETTE` in `src/components/ProjectCharts.tsx` uses Tailwind class strings → hex; material colors for cabinets (blue = Box Material, green = Pallets, etc.) stay identical in both themes. Only axis/grid/tooltip use tokens (`--chart-axis`, `--chart-grid`, `--chart-tooltip-*`).
+- **Avatar gradients** — `lib/avatarColors.ts` seed colors per team member.
+- **Save-success emerald button** (`FloatingActionBar.tsx`) — intentional success indicator, readable on both themes.
+- **Category-coded icons** in toolbars (Materials = `#0891b2` cyan, Prices = `#7c3aed` violet) — same reasoning.
+
+Everything else must use tokens.
 
 ### Animation System (CSS @layer utilities)
 | Class | Effect | Use for |
@@ -88,15 +124,19 @@ All UI must follow the established Glass Morphism Light design language. Never i
 - Glow ring: gradient `from-indigo-300/30 to-violet-300/30` with shimmer
 
 ### Design Rules for Claude Code
-1. **Always use glass classes** — never `bg-white` for containers, use `glass-white` instead
-2. **Border radius:** 14px (glass classes) or `rounded-lg`/`rounded-xl` for smaller elements
-3. **Shadows:** subtle indigo-tinted, never heavy `shadow-lg`
-4. **New sections:** wrap in `glass-white` or `glass-indigo` with appropriate animation class
-5. **Tables:** no full borders — use `border-b border-slate-200/60` for row separation
-6. **Loading states:** use `skeleton-shimmer` class, not spinners (except for action buttons)
-7. **Consistent spacing:** `px-4 sm:px-6 lg:px-8` for page-level, `p-4 sm:p-6` for cards
-8. **Responsive:** always mobile-first, glass panels stack on mobile
-9. **Scrollbar:** use `scrollbar-none` for hidden scrollbars where appropriate
+1. **Use tokens, never hardcode colors.** Forbidden in new code: `bg-white`, `bg-slate-*`, `text-slate-*`, `text-black`, `border-slate-*`, `from-indigo-500`, `to-blue-500`, `bg-indigo-50`, `text-blue-900`, raw hex (`#fff`, `#0f172a`), raw rgba (`rgba(255,255,255,0.7)`), and any `text-{color}-{800,900}`. Use the semantic aliases above (`bg-surf-card`, `text-fg-900`, `bg-accent-primary`, `bg-status-amber-bg`, etc.).
+2. **Never use Tailwind `dark:` variants.** Themes run off `[data-theme]` + CSS vars.
+3. **Never inline** `style={{ background: 'rgba(...)' }}` or `{ color: '#...' }` for theming. If dynamic, use `style={{ background: 'var(--surf-card)' }}`.
+4. **Glass containers** — use `glass-white` / `glass-blue` / `glass-indigo` / `glass-green` for panels, cards, modals. Never `bg-surf-card` + manual border + blur + shadow — the utility class does it with one name.
+5. **Border radius:** 14px (glass classes) or `rounded-lg` / `rounded-xl` for smaller elements.
+6. **Shadows:** `shadow-card` / `shadow-btn` / `shadow-rail` — never `shadow-lg`/`shadow-xl`, which skip the token.
+7. **New sections:** wrap in a glass class + appropriate animation class (`section-enter`, `card-enter`).
+8. **Tables:** no full borders — use `border-b border-border-soft` for row separation.
+9. **Loading states:** use `skeleton-shimmer` class, not spinners (except for action buttons).
+10. **Focus indicators:** `focus-visible:ring-2 focus-visible:ring-focus` — the `focus` ring color adapts per theme.
+11. **Consistent spacing:** `px-4 sm:px-6 lg:px-8` for page-level, `p-4 sm:p-6` for cards.
+12. **Responsive:** always mobile-first, glass panels stack on mobile.
+13. **Scrollbar:** use `scrollbar-none` for hidden scrollbars where appropriate.
 
 ### Reusable Components
 | Component | Location | Notes |
@@ -432,14 +472,43 @@ Wait for explicit approval before committing or opening a PR when one of these c
 3. **Schema refactors must leave a migration artifact for every DROP/CREATE.**
    The `group_id` column was added in migration `20260118022123_add_group_id_to_projects.sql` and silently disappeared during the projects-table recreate that introduced the projects/quotations split. No migration file documents the loss, leaving the registered migration permanently out of sync with the actual schema. Future schema refactors must commit a migration with the explicit DDL (DROP/RECREATE/ALTER) so `supabase_migrations.schema_migrations` stays consistent with reality.
 
-### Future-proofing for dark mode (deferred to a dedicated session)
-A full dark mode audit was run in April 2026 and found ~1,236 hardcoded colors across 110 files. Implementation was deferred until the platform is more stable, but new code should follow these rules so the eventual refactor stays small:
+### Theming system — live (Midnight Glass, shipped Apr 2026 via PR #43)
 
-1. **New components/pages MUST use glass classes** (`glass-white`, `glass-blue`, `glass-indigo`, `glass-green`) for containers instead of raw `bg-white border border-slate-200`. Every new file that respects this is one less file to refactor when dark mode lands.
-2. **Avoid new direct uses of** `bg-white`, `text-black`, `text-slate-900`. Prefer `text-slate-700` for body text — it maps cleanly to dark mode tokens later.
-3. **Tables, modals, panels** — wrap in `glass-white` + use `border-b border-slate-200/60` for row separators, never full borders or solid `bg-white` cards.
-4. **Charts** — when adding new chart components, follow the lookup-palette pattern in `src/components/ProjectCharts.tsx` (`COLOR_PALETTE` object) so a future dark palette is a one-object swap.
-5. **The full dark mode plan is at** `.claude/plans/spicy-yawning-goblet.md` and includes the prioritized refactor order, file inventory, and verification checklist for when it's time to execute.
+The platform runs on a two-theme token system:
+
+- **Tokens** live on `:root` / `[data-theme="light"]` / `[data-theme="midnight"]` in `src/index.css`.
+- **Tailwind aliases** (`bg-surf-card`, `text-fg-900`, `bg-accent-primary`, `bg-status-amber-bg`, etc.) are registered in `tailwind.config.js` under `theme.extend.colors` / `backgroundImage` / `boxShadow` / `ringColor`.
+- **Runtime** is orchestrated by `src/hooks/useTheme.ts` (3-state `light|midnight|system` preference stored in `localStorage('evita:theme')`, subscribed to `matchMedia('(prefers-color-scheme: dark)')` when in `system`). The inline `<head>` script in `index.html` applies `data-theme` pre-paint to avoid FOUC. `<ThemeToggle />` lives in the Topbar and mirrors in the user menu.
+- **Raw `<input>` / `<textarea>` / `<select>`** without a bg class fall back to `var(--surf-input)` via an `@layer base` rule in `src/index.css`. No manual guard needed.
+- **Print** — an `@media print { [data-theme] { --*: light values } }` block forces Light on paper.
+
+**When building anything new, always:**
+
+1. **Start with glass classes** (`glass-white` / `glass-blue` / `glass-indigo` / `glass-green`) for containers, or the short token aliases (`bg-surf-card`, `text-fg-900`, `border-border-soft`, etc.). Never `bg-white`, `bg-slate-*`, `text-slate-*`, `text-blue-900`, raw hex, or `rgba(255,...)`.
+2. **Primary action button gradient** → `bg-accent-primary text-accent-on shadow-btn`. Never `bg-gradient-to-r from-indigo-500 to-blue-500`.
+3. **Status chips** → use `bg-status-{kind}-bg text-status-{kind}-fg border-status-{kind}-brd`. If the status is new, add the token triple to `src/index.css` for both themes first, then register under `theme.extend.colors.status` in `tailwind.config.js`.
+4. **Charts** — material fills + avatars + category icons stay theme-agnostic (data identity). Axis/grid/tooltip use `--chart-*` tokens. Follow the `COLOR_PALETTE` pattern in `ProjectCharts.tsx` if you add a new chart.
+5. **Focus rings** → `focus-visible:ring-2 focus-visible:ring-focus`.
+6. **Logo** → `filter: var(--logo-filter)` (tints indigo on Light, inverts to white on Midnight — works on both).
+7. **NEVER** introduce inline `style={{ background: 'rgba(255,255,255,0.X)' }}` or hex colors. If you need a dynamic value, reference a var: `style={{ background: 'var(--surf-card)' }}`.
+8. **NEVER** use `dark:` Tailwind variants. They won't fire because themes run off `[data-theme]`.
+
+### Adding a new theme token (playbook)
+
+1. Name it semantically (`--status-won-bg`, not `--emerald-600`).
+2. Define the value in **both** `:root/[data-theme="light"]` and `[data-theme="midnight"]` blocks in `src/index.css`. Also add the Light value under the `@media print` override block if the surface can appear in printed output.
+3. Register a Tailwind alias under `theme.extend.colors` (or `backgroundImage` / `boxShadow`) in `tailwind.config.js`.
+4. Document it under the appropriate group in `docs/design/midnight-glass-tokens.md`.
+5. Use the alias in JSX — never reach past it to the raw var unless you need a CSS-only context (e.g., inside `style={{}}` for dynamic values).
+
+### QA checklist for new UI work
+
+Before considering a feature "done":
+- [ ] Toggle the theme (Topbar) and confirm every new surface reads correctly in both Light and Midnight.
+- [ ] Hard-reload in Midnight — no white flash.
+- [ ] `Cmd+P` / Print — forces Light, no dark backgrounds in the PDF preview.
+- [ ] Focus rings visible in both themes.
+- [ ] `grep` the changed files for `bg-white`, `text-slate-`, `from-indigo-`, `rgba(255,` — should be zero matches on new code.
 
 ---
 
@@ -451,11 +520,14 @@ A full dark mode audit was run in April 2026 and found ~1,236 hardcoded colors a
 3. **DO NOT** refactor large components (>500 lines) unless explicitly asked
 4. **DO NOT** introduce new CSS frameworks, component libraries, or design patterns
 5. **DO NOT** change the edge function without providing the complete `index.ts`
-6. **ALWAYS** use glass morphism classes for any new UI container
-7. **ALWAYS** maintain lazy-loading for new pages
-8. **ALWAYS** use Tailwind CSS — no CSS modules, styled-components, or inline styles for layout
-9. **ALWAYS** run `npm run typecheck` before confirming type changes
-10. **ALWAYS** write English labels for any new UI text
+6. **DO NOT** hardcode colors — no `bg-white`, `bg-slate-*`, `text-slate-*`, `text-blue-900`, `from-indigo-500`, `#hex`, or `rgba(255,...)` in new code. Use semantic tokens (`bg-surf-card`, `text-fg-900`, `bg-accent-primary`, `bg-status-*`). See the Design System section above.
+7. **DO NOT** use Tailwind `dark:` variants — themes run off `[data-theme]`, `dark:` won't fire.
+8. **ALWAYS** use glass morphism classes for any new UI container (`glass-white` / `glass-blue` / `glass-indigo` / `glass-green`)
+9. **ALWAYS** maintain lazy-loading for new pages
+10. **ALWAYS** use Tailwind CSS — no CSS modules, styled-components, or inline styles for layout; inline `style={{}}` only for dynamic values, and those must reference `var(--token)` (not raw colors)
+11. **ALWAYS** run `npm run typecheck` before confirming type changes
+12. **ALWAYS** write English labels for any new UI text
+13. **ALWAYS** verify both themes (Light + Midnight) before declaring a UI change done — toggle via the Topbar switch
 
 ### Conventions
 - New migrations: `supabase/migrations/YYYYMMDDHHMMSS_description.sql`
