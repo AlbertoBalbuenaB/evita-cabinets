@@ -92,8 +92,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
           background: 'rgba(255,255,255,0.55)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          borderRight: '1px solid rgba(255,255,255,0.7)',
-          boxShadow: '1px 0 12px rgba(99,102,241,0.06)',
+          borderRight: '1px solid rgba(148,163,184,0.2)',
         }}
       >
         <SidebarHeader expanded={expanded} onToggle={toggleExpanded} />
