@@ -93,6 +93,8 @@ export type Database = {
           shelf_material_id: string | null
           source_drawing_element_id: string | null
           subtotal: number | null
+          updated_at: string
+          updated_by_member_id: string | null
           use_back_panel_material: boolean | null
           use_drawer_box_material: boolean | null
           use_shelf_material: boolean | null
@@ -148,6 +150,8 @@ export type Database = {
           shelf_material_id?: string | null
           source_drawing_element_id?: string | null
           subtotal?: number | null
+          updated_at?: string
+          updated_by_member_id?: string | null
           use_back_panel_material?: boolean | null
           use_drawer_box_material?: boolean | null
           use_shelf_material?: boolean | null
@@ -203,6 +207,8 @@ export type Database = {
           shelf_material_id?: string | null
           source_drawing_element_id?: string | null
           subtotal?: number | null
+          updated_at?: string
+          updated_by_member_id?: string | null
           use_back_panel_material?: boolean | null
           use_drawer_box_material?: boolean | null
           use_shelf_material?: boolean | null
@@ -299,6 +305,13 @@ export type Database = {
             referencedRelation: "price_list"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "area_cabinets_updated_by_member_id_fkey"
+            columns: ["updated_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
         ]
       }
       area_closet_items: {
@@ -316,6 +329,7 @@ export type Database = {
           unit_price_mxn: number
           unit_price_usd: number
           updated_at: string | null
+          updated_by_member_id: string | null
           with_backs: boolean
         }
         Insert: {
@@ -332,6 +346,7 @@ export type Database = {
           unit_price_mxn?: number
           unit_price_usd?: number
           updated_at?: string | null
+          updated_by_member_id?: string | null
           with_backs?: boolean
         }
         Update: {
@@ -348,6 +363,7 @@ export type Database = {
           unit_price_mxn?: number
           unit_price_usd?: number
           updated_at?: string | null
+          updated_by_member_id?: string | null
           with_backs?: boolean
         }
         Relationships: [
@@ -365,6 +381,13 @@ export type Database = {
             referencedRelation: "closet_catalog"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "area_closet_items_updated_by_member_id_fkey"
+            columns: ["updated_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
         ]
       }
       area_countertops: {
@@ -380,6 +403,7 @@ export type Database = {
           subtotal: number
           unit_price: number
           updated_at: string | null
+          updated_by_member_id: string | null
         }
         Insert: {
           area_id: string
@@ -393,6 +417,7 @@ export type Database = {
           subtotal?: number
           unit_price?: number
           updated_at?: string | null
+          updated_by_member_id?: string | null
         }
         Update: {
           area_id?: string
@@ -406,6 +431,7 @@ export type Database = {
           subtotal?: number
           unit_price?: number
           updated_at?: string | null
+          updated_by_member_id?: string | null
         }
         Relationships: [
           {
@@ -420,6 +446,13 @@ export type Database = {
             columns: ["price_list_item_id"]
             isOneToOne: false
             referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_countertops_updated_by_member_id_fkey"
+            columns: ["updated_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
         ]
@@ -437,6 +470,7 @@ export type Database = {
           subtotal: number
           unit_price: number
           updated_at: string | null
+          updated_by_member_id: string | null
         }
         Insert: {
           area_id: string
@@ -450,6 +484,7 @@ export type Database = {
           subtotal?: number
           unit_price?: number
           updated_at?: string | null
+          updated_by_member_id?: string | null
         }
         Update: {
           area_id?: string
@@ -463,6 +498,7 @@ export type Database = {
           subtotal?: number
           unit_price?: number
           updated_at?: string | null
+          updated_by_member_id?: string | null
         }
         Relationships: [
           {
@@ -477,6 +513,13 @@ export type Database = {
             columns: ["price_list_item_id"]
             isOneToOne: false
             referencedRelation: "price_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_items_updated_by_member_id_fkey"
+            columns: ["updated_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
         ]
@@ -494,6 +537,7 @@ export type Database = {
           prefab_catalog_id: string
           quantity: number
           updated_at: string | null
+          updated_by_member_id: string | null
         }
         Insert: {
           area_id: string
@@ -507,6 +551,7 @@ export type Database = {
           prefab_catalog_id: string
           quantity?: number
           updated_at?: string | null
+          updated_by_member_id?: string | null
         }
         Update: {
           area_id?: string
@@ -520,6 +565,7 @@ export type Database = {
           prefab_catalog_id?: string
           quantity?: number
           updated_at?: string | null
+          updated_by_member_id?: string | null
         }
         Relationships: [
           {
@@ -543,6 +589,13 @@ export type Database = {
             referencedRelation: "prefab_catalog_with_prices"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "area_prefab_items_updated_by_member_id_fkey"
+            columns: ["updated_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
         ]
       }
       area_sections: {
@@ -553,6 +606,7 @@ export type Database = {
           id: string
           name: string
           updated_at: string | null
+          updated_by_member_id: string | null
         }
         Insert: {
           area_id: string
@@ -561,6 +615,7 @@ export type Database = {
           id?: string
           name: string
           updated_at?: string | null
+          updated_by_member_id?: string | null
         }
         Update: {
           area_id?: string
@@ -569,6 +624,7 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string | null
+          updated_by_member_id?: string | null
         }
         Relationships: [
           {
@@ -576,6 +632,13 @@ export type Database = {
             columns: ["area_id"]
             isOneToOne: false
             referencedRelation: "project_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_sections_updated_by_member_id_fkey"
+            columns: ["updated_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
         ]
@@ -2219,6 +2282,7 @@ export type Database = {
           quantity: number
           subtotal: number | null
           updated_at: string | null
+          updated_by_member_id: string | null
         }
         Insert: {
           applies_tariff?: boolean
@@ -2230,6 +2294,7 @@ export type Database = {
           quantity?: number
           subtotal?: number | null
           updated_at?: string | null
+          updated_by_member_id?: string | null
         }
         Update: {
           applies_tariff?: boolean
@@ -2241,6 +2306,7 @@ export type Database = {
           quantity?: number
           subtotal?: number | null
           updated_at?: string | null
+          updated_by_member_id?: string | null
         }
         Relationships: [
           {
@@ -2248,6 +2314,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_areas_updated_by_member_id_fkey"
+            columns: ["updated_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
             referencedColumns: ["id"]
           },
         ]
@@ -2655,45 +2728,86 @@ export type Database = {
       }
       project_versions: {
         Row: {
+          action_code: string | null
+          actor_member_id: string | null
+          actor_user_id: string | null
           affected_areas: string[] | null
           change_summary: Json | null
           created_at: string | null
           id: string
+          is_auto: boolean
+          is_named: boolean
+          is_rollup: boolean
           notes: string | null
+          parent_version_id: string | null
           project_id: string
           snapshot_data: Json
+          source: string
+          summary: string | null
           total_amount: number
           version_name: string
           version_number: number
           version_type: string
         }
         Insert: {
+          action_code?: string | null
+          actor_member_id?: string | null
+          actor_user_id?: string | null
           affected_areas?: string[] | null
           change_summary?: Json | null
           created_at?: string | null
           id?: string
+          is_auto?: boolean
+          is_named?: boolean
+          is_rollup?: boolean
           notes?: string | null
+          parent_version_id?: string | null
           project_id: string
           snapshot_data?: Json
+          source?: string
+          summary?: string | null
           total_amount?: number
           version_name: string
           version_number: number
           version_type: string
         }
         Update: {
+          action_code?: string | null
+          actor_member_id?: string | null
+          actor_user_id?: string | null
           affected_areas?: string[] | null
           change_summary?: Json | null
           created_at?: string | null
           id?: string
+          is_auto?: boolean
+          is_named?: boolean
+          is_rollup?: boolean
           notes?: string | null
+          parent_version_id?: string | null
           project_id?: string
           snapshot_data?: Json
+          source?: string
+          summary?: string | null
           total_amount?: number
           version_name?: string
           version_number?: number
           version_type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "project_versions_actor_member_id_fkey"
+            columns: ["actor_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_versions_parent_version_id_fkey"
+            columns: ["parent_version_id"]
+            isOneToOne: false
+            referencedRelation: "project_versions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_versions_project_id_fkey"
             columns: ["project_id"]
@@ -4117,6 +4231,21 @@ export type Database = {
         Args: { p_cabinet_quantity: number; p_hardware_array: Json }
         Returns: number
       }
+      capture_project_version_v2: {
+        Args: {
+          p_action_code: string
+          p_actor_member_id?: string
+          p_actor_user_id?: string
+          p_is_named?: boolean
+          p_notes?: string
+          p_project_id: string
+          p_source?: string
+          p_summary: string
+          p_version_name?: string
+          p_version_type?: string
+        }
+        Returns: string
+      }
       check_product_usage: {
         Args: { product_sku_param: string }
         Returns: {
@@ -4205,12 +4334,21 @@ export type Database = {
         Args: { p_note?: string; p_proposal_id: string }
         Returns: string
       }
+      prune_auto_versions: { Args: { p_retain_days?: number }; Returns: Json }
       refresh_project_price_staleness: {
         Args: { p_project_id: string }
         Returns: undefined
       }
       remove_hardware_from_cabinet: {
         Args: { p_hardware_array: Json; p_hardware_id: string }
+        Returns: Json
+      }
+      restore_project_version: {
+        Args: {
+          p_actor_member_id?: string
+          p_actor_user_id?: string
+          p_version_id: string
+        }
         Returns: Json
       }
       show_limit: { Args: never; Returns: number }
