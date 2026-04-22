@@ -137,51 +137,49 @@ export async function runOptimizationParallel(
     objective: params.objective,
   });
 
-  // Track everything that needs cleanup on cancel / timeout.
-  const activeWorkers = new Set<Worker>();
+  // One internal AbortController rules both caller-cancel and timeout. Every
+  // per-group task listens to `internal.signal` so an abort actually reaches
+  // the worker (terminate + reject), instead of just killing workers and
+  // leaving the task promises pending forever.
+  const internal = new AbortController();
+  const timeoutMs = params.timeoutMs ?? 120_000;
   let completed = 0;
-  let aborted = false;
+  let timedOut = false;
 
-  const abortAll = (): void => {
-    aborted = true;
-    for (const w of activeWorkers) {
-      try { w.terminate(); } catch { /* already gone */ }
-    }
-    activeWorkers.clear();
-  };
-
-  let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutHandle = setTimeout(() => {
-      abortAll();
-      reject(new Error(
-        `Optimizer took too long (>${Math.round((params.timeoutMs ?? 120_000) / 1000)}s) and was cancelled. Consider reducing stocks or splitting the quotation.`,
-      ));
-    }, params.timeoutMs ?? 120_000);
-  });
-
-  const onAbort = (): void => {
-    abortAll();
+  const onCallerAbort = (): void => {
+    internal.abort(new DOMException('Optimizer run cancelled.', 'AbortError'));
   };
   if (params.signal) {
     if (params.signal.aborted) {
       throw new DOMException('Optimizer run was aborted before it started.', 'AbortError');
     }
-    params.signal.addEventListener('abort', onAbort, { once: true });
+    params.signal.addEventListener('abort', onCallerAbort, { once: true });
   }
+
+  const timeoutHandle = setTimeout(() => {
+    timedOut = true;
+    internal.abort(new Error(
+      `Optimizer took too long (>${Math.round(timeoutMs / 1000)}s) and was cancelled. Consider reducing stocks or splitting the quotation.`,
+    ));
+  }, timeoutMs);
 
   const runOneGroup = (groupKey: string, groupPieces: Pieza[]): Promise<GroupResultPart> => {
     return new Promise<GroupResultPart>((resolve, reject) => {
-      if (aborted) {
-        reject(new DOMException('Run aborted.', 'AbortError'));
+      if (internal.signal.aborted) {
+        reject(internal.signal.reason ?? new DOMException('Run aborted.', 'AbortError'));
         return;
       }
       const worker = new GroupWorker();
-      activeWorkers.add(worker);
+
+      const onInternalAbort = (): void => {
+        try { worker.terminate(); } catch { /* noop */ }
+        reject(internal.signal.reason ?? new DOMException('Run aborted.', 'AbortError'));
+      };
+      internal.signal.addEventListener('abort', onInternalAbort, { once: true });
 
       const cleanup = (): void => {
-        activeWorkers.delete(worker);
         try { worker.terminate(); } catch { /* noop */ }
+        internal.signal.removeEventListener('abort', onInternalAbort);
       };
 
       worker.onmessage = (ev: MessageEvent<OptimizerGroupWorkerResponse>) => {
@@ -189,8 +187,6 @@ export async function runOptimizationParallel(
         cleanup();
         if (msg.type === 'result') {
           completed += 1;
-          // `current` is the label of the next group the user will see in
-          // the progress bar — or null when we're done.
           const next = groupKeys[completed] ?? null;
           const nextLabel = next ? (groups.get(next)?.[0]?.material ?? next) : null;
           params.onProgress?.({ completed, total: totalGroups, current: nextLabel });
@@ -229,6 +225,8 @@ export async function runOptimizationParallel(
         objective: params.objective,
         rngSeed: seedForGroup(groupKey),
       };
+      const expanded = groupPieces.reduce((s, p) => s + p.cantidad, 0);
+      console.log(`[runOptimizationParallel] ${groupKey} starting: ${groupPieces.length} piece-types, ${expanded} expanded`);
       worker.postMessage(req);
     });
   };
@@ -242,18 +240,18 @@ export async function runOptimizationParallel(
     params.onProgress?.({ completed: 0, total: totalGroups, current: firstLabel });
 
     const tasks = groupKeys.map((k) => () => runOneGroup(k, groups.get(k) as Pieza[]));
-    const parts = await Promise.race([
-      runWithLimit(tasks, concurrency),
-      timeoutPromise,
-    ]);
-
+    const parts = await runWithLimit(tasks, concurrency);
     return mergeOptimizationResults(parts, cleanPieces, groups);
   } catch (err) {
-    abortAll();
+    // Timeout / cancel surface here. Workers have already been terminated
+    // by the per-task abort listeners; nothing else to clean up.
+    if (timedOut && err instanceof DOMException && err.name === 'AbortError') {
+      // Prefer the timeout message over the generic AbortError when both apply.
+      throw internal.signal.reason ?? err;
+    }
     throw err;
   } finally {
-    if (timeoutHandle != null) clearTimeout(timeoutHandle);
-    if (params.signal) params.signal.removeEventListener('abort', onAbort);
-    activeWorkers.clear();
+    clearTimeout(timeoutHandle);
+    if (params.signal) params.signal.removeEventListener('abort', onCallerAbort);
   }
 }
