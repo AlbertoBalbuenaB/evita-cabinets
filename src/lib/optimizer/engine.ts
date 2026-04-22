@@ -57,6 +57,24 @@ type TypedEntry = {
  *  so `revertChangedLog` can restore the state before the losing branch. */
 type ChangedLog = Array<[TypedEntry, number]>;
 
+/** Recursion-call budget for `guillotinePack`. The packer explores both H-cut
+ *  and V-cut branches at every frame; with 4 recursive sub-calls per internal
+ *  node, specific dimensional combinations can blow up exponentially
+ *  (observed on 1030 W 8th Street's 189-type × 637-expanded group — timeout
+ *  >60s even in the post-refactor engine). The budget is a soft cap: when
+ *  `count > limit`, the recursion returns empty and the caller keeps whatever
+ *  partial placements it already found. The top-level caller (packShelf)
+ *  creates a fresh budget per sub-guillotinePack invocation, so the cap is
+ *  per-invocation, not global. */
+type GuillotineBudget = { count: number; limit: number };
+
+/** Default cap per top-level guillotinePack call from packShelf. Sized to be
+ *  far above what real projects hit in healthy cases (Mountain View real
+ *  dims complete in ~15s ≈ millions of calls across ALL sub-guillotines,
+ *  each sub-invocation well under 1M), while bounding pathological
+ *  dimensional combinations that would otherwise explode the recursion tree. */
+const GUILLOTINE_CALL_LIMIT = 1_000_000;
+
 function revertChangedLog(log: ChangedLog): void {
   for (let i = 0; i < log.length; i++) {
     const [entry, amount] = log[i];
@@ -280,7 +298,16 @@ function guillotinePack(
   entries: TypedEntry[],
   kerf: number,
   depth = 0,
+  budget?: GuillotineBudget,
 ): { placed: PlacedPiece[]; tree: CutTreeNode | null; log: ChangedLog } {
+  // Budget check: fire early if the caller-provided call-count cap was hit.
+  // Healthy dimensional combinations (observed on Mountain View) never reach
+  // this. Pathological ones (observed on 1030 W 8th Street's Roble Merida
+  // group) would otherwise run indefinitely — the partial placements gathered
+  // so far are kept by the caller.
+  if (budget && ++budget.count > budget.limit) {
+    return { placed: [], tree: null, log: [] };
+  }
   if (rw < 10 || rh < 10 || depth > 40 || !hasAnyRemaining(entries)) {
     return { placed: [], tree: null, log: [] };
   }
@@ -325,10 +352,10 @@ function guillotinePack(
   const hBotY   = ry + bestIh + kerf, hBotH   = rh - bestIh - kerf;
 
   const hRight = hRightW >= 10 && bestIh >= 10
-    ? guillotinePack(hRightX, ry, hRightW, bestIh, entries, kerf, depth + 1)
+    ? guillotinePack(hRightX, ry, hRightW, bestIh, entries, kerf, depth + 1, budget)
     : { placed: [] as PlacedPiece[], tree: null as CutTreeNode | null, log: [] as ChangedLog };
   const hBot = hBotH >= 10
-    ? guillotinePack(rx, hBotY, rw, hBotH, entries, kerf, depth + 1)
+    ? guillotinePack(rx, hBotY, rw, hBotH, entries, kerf, depth + 1, budget)
     : { placed: [] as PlacedPiece[], tree: null as CutTreeNode | null, log: [] as ChangedLog };
   const hTotal = hRight.placed.length + hBot.placed.length;
 
@@ -342,10 +369,10 @@ function guillotinePack(
   const vRightX = rx + bestIw + kerf, vRightW = rw - bestIw - kerf;
 
   const vTop = vTopH >= 10 && bestIw >= 10
-    ? guillotinePack(rx, ry + bestIh + kerf, bestIw, vTopH, entries, kerf, depth + 1)
+    ? guillotinePack(rx, ry + bestIh + kerf, bestIw, vTopH, entries, kerf, depth + 1, budget)
     : { placed: [] as PlacedPiece[], tree: null as CutTreeNode | null, log: [] as ChangedLog };
   const vRight = vRightW >= 10
-    ? guillotinePack(vRightX, ry, vRightW, rh, entries, kerf, depth + 1)
+    ? guillotinePack(vRightX, ry, vRightW, rh, entries, kerf, depth + 1, budget)
     : { placed: [] as PlacedPiece[], tree: null as CutTreeNode | null, log: [] as ChangedLog };
   const vTotal = vTop.placed.length + vRight.placed.length;
 
@@ -497,7 +524,11 @@ function packShelf(
       const belowH = shelfH - bestH - kerf;
 
       if (belowH >= 10) {
-        const subResult = guillotinePack(xCursor, belowY, bestW, belowH, entries, kerf);
+        // Fresh call-count budget for this sub-guillotine invocation.
+        // Each sub-column gets its own cap — prevents a single pathological
+        // column from starving the rest of the shelf's packing budget.
+        const subBudget: GuillotineBudget = { count: 0, limit: GUILLOTINE_CALL_LIMIT };
+        const subResult = guillotinePack(xCursor, belowY, bestW, belowH, entries, kerf, 0, subBudget);
         const subTree = subResult.tree ?? {
           x: xCursor, y: belowY, w: bestW, h: belowH,
           piece: null, cut: null, left: null, right: null, // waste
