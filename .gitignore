@@ -42,3 +42,8 @@ supabase/.temp/
 
 # Vercel
 .vercel/
+
+# MCP server local artifacts
+mcp-server/node_modules/
+mcp-server/dist/
+mcp-server/.env
