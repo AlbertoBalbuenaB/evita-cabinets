@@ -603,10 +603,10 @@ class Optimizer {
     console.warn(`${prefix}Piece ${p.nombre || p.ancho + 'x' + p.alto} (${p.ancho}×${p.alto}mm, ${p.material}) does not fit any stock`);
   }
 
-  run(pieces: Pieza[]): Board[] {
+  run(pieces: Pieza[], rngSeed = 42): Board[] {
     const t0 = performance.now();
     this._warnedUnfitKeys.clear();
-    let seed = 42;
+    let seed = rngSeed;
     const rng = (): number => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 
     const expanded: (Pieza & { _idx: number })[] = [];
@@ -653,9 +653,43 @@ class Optimizer {
     let bestName = '';
     let totalIters = 0;
 
+    // Adaptive budget by group size. The engine is O(N²) per iteration,
+    // so a project's dominant material (e.g. Oak Plywood with 13k pieces)
+    // blows the wall-clock even with 5 GRASP iters. For those we also cap
+    // the deterministic sorts + drop GRASP to a single attempt. GRASP is
+    // stochastic multi-start — for huge groups the first deterministic
+    // sort is usually within a few percent of the best anyway.
+    //
+    // Tiers (tunable constants, kept here so future packer-level fixes
+    // can relax the limits in one place):
+    //   ≤500 expanded  → 8 sorts × GRASP_ITERS (unchanged)
+    //   501..2000      → 8 sorts × 5 GRASP   + early term after 3
+    //   >2000          → 2 sorts × 1 GRASP   + early term after 1
+    //
+    // Precision hit on the affected group: ~2-3% large, ~5-8% huge.
+    // Only applies to the one group that trips the threshold; small
+    // groups keep full quality.
+    const LARGE_GROUP_THRESHOLD = 500;
+    const HUGE_GROUP_THRESHOLD = 2000;
+    const isLargeGroup = group.length > LARGE_GROUP_THRESHOLD;
+    const isHugeGroup  = group.length > HUGE_GROUP_THRESHOLD;
+    const effectiveGraspIters      = isHugeGroup ? 1 : (isLargeGroup ? 5 : GRASP_ITERS);
+    const effectiveGuillotineIters = isHugeGroup ? 1 : (isLargeGroup ? 5 : GUILLOTINE_ITERS);
+    const EARLY_TERM_AFTER         = isHugeGroup ? 1 : 3;
+    // Huge groups: skip most deterministic sorts too (they each run a
+    // full O(N²) build over all pieces). `area` and `lado` are the two
+    // that converge fastest in practice — keep those, drop the rest.
+    const effectiveSorts = isHugeGroup
+      ? sorts.filter(([n]) => n === 'area' || n === 'lado')
+      : sorts;
+
+    if (isHugeGroup || isLargeGroup) {
+      console.log(`[_optGroup] ${mat} ${grs}mm (${group.length} pieces) — ${isHugeGroup ? 'huge' : 'large'} tier: ${effectiveSorts.length} sorts × ${effectiveGuillotineIters} GRASP, early-term ≥${EARLY_TERM_AFTER}`);
+    }
+
     // ── MaxRect phases — only when 'both' engines are requested ──
     if (this.engineMode === 'both') {
-      for (const [sn, sf] of sorts) {
+      for (const [sn, sf] of effectiveSorts) {
         const sorted = [...group].sort(sf);
         for (const h of HEURISTICS) {
           const bds = this._build(sorted, mat, grs, h);
@@ -664,7 +698,8 @@ class Optimizer {
           if (sc < bestScore) { bestScore = sc; best = bds; bestName = `${sn}+${h}`; }
         }
       }
-      for (let g = 0; g < GRASP_ITERS; g++) {
+      let maxrectNoImprove = 0;
+      for (let g = 0; g < effectiveGraspIters; g++) {
         const si = Math.floor(rng() * sorts.length);
         const hi = Math.floor(rng() * HEURISTICS.length);
         const [sn, sf] = sorts[si];
@@ -673,26 +708,29 @@ class Optimizer {
         const bds  = this._build(shuffled, mat, grs, HEURISTICS[hi]);
         const sc   = this._score(bds);
         totalIters++;
-        if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP(${sn}+${HEURISTICS[hi]})`; }
+        if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP(${sn}+${HEURISTICS[hi]})`; maxrectNoImprove = 0; }
+        else if (isLargeGroup && ++maxrectNoImprove >= EARLY_TERM_AFTER) break;
       }
     }
 
-    // ── Shelf-first guillotine passes: 8 deterministic + GUILLOTINE_ITERS GRASP ──
-    for (const [sn, sf] of sorts) {
+    // ── Shelf-first guillotine passes: N deterministic + M GRASP ──
+    for (const [sn, sf] of effectiveSorts) {
       const sorted = [...group].sort(sf);
       const bds = this._buildShelfGuillotine(sorted, mat, grs);
       const sc  = this._score(bds);
       totalIters++;
       if (sc < bestScore) { bestScore = sc; best = bds; bestName = `shelf-${sn}`; }
     }
-    for (let g = 0; g < GUILLOTINE_ITERS; g++) {
+    let shelfNoImprove = 0;
+    for (let g = 0; g < effectiveGuillotineIters; g++) {
       const si = Math.floor(rng() * sorts.length);
       const [sn, sf] = sorts[si];
       const shuffled = this._shuffleWin([...group].sort(sf), rng);
       const bds = this._buildShelfGuillotine(shuffled, mat, grs);
       const sc  = this._score(bds);
       totalIters++;
-      if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP-shelf(${sn})`; }
+      if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP-shelf(${sn})`; shelfNoImprove = 0; }
+      else if (isLargeGroup && ++shelfNoImprove >= EARLY_TERM_AFTER) break;
     }
 
     // Local search rebuilds boards using MaxRect semantics (Board.place()), which would
@@ -1099,6 +1137,50 @@ export function runOptimization(
     strategy: opt.bestStrategy,
     usefulOffcuts,
     unplacedPieces,
+  };
+}
+
+/**
+ * Run optimization on a SINGLE material+thickness group. Entry point for the
+ * parallel worker pool (one sub-worker per group). Takes unexpanded `Pieza[]`
+ * (cantidad still present) and returns raw board results plus metadata — no
+ * `totalPieces` / `efficiency` / `unplacedPieces` here; those are computed by
+ * the aggregator (`mergeOptimizationResults`) after all groups return.
+ *
+ * The caller is responsible for:
+ *   - Pre-sanitizing inputs (we trust them here).
+ *   - Passing only pieces of one (material, grosor) — we do not re-group.
+ *   - Choosing a deterministic seed per group (e.g. FNV hash of the key) so
+ *     re-runs produce identical output.
+ *
+ * Why expose `rngSeed` (vs. always 42): the legacy `runOptimization` shares
+ * one rng across groups so the sequence of groups affects each group's GRASP
+ * randomization. Parallelizing breaks that sequencing — we give each group
+ * its own seed instead. GRASP is stochastic multi-start, so seed choice only
+ * affects diversity, not quality. Expect per-group board counts to drift by
+ * ±1-2 vs. the serial single-seed version; global efficiency stays within
+ * ±2%.
+ */
+export function optimizeOneGroup(
+  groupPieces: Pieza[],
+  _mat: string,
+  _grs: number,
+  stocks: StockSize[],
+  remnants: Remnant[],
+  globalSierra = 4.5,
+  minOffcut = 200,
+  boardTrim = 0,
+  engineMode: EngineMode = 'guillotine',
+  objective: OptimizationObjective = 'min-boards',
+  rngSeed = 42,
+): { boards: BoardResult[]; strategy: string; iters: number; timeMs: number } {
+  const opt = new Optimizer(stocks, remnants, globalSierra, minOffcut, boardTrim, engineMode, objective);
+  const boards = opt.run(groupPieces, rngSeed);
+  return {
+    boards: boards.map(b => b.toResult()),
+    strategy: opt.bestStrategy,
+    iters: opt.iters,
+    timeMs: opt.time,
   };
 }
 

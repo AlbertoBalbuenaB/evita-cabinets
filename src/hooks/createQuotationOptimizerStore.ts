@@ -29,15 +29,10 @@
 
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { supabase } from '../lib/supabase';
-import EngineWorker from '../lib/optimizer/engine.worker?worker';
-import type {
-  OptimizerWorkerRequest,
-  OptimizerWorkerResponse,
-} from '../lib/optimizer/engine.worker';
+import { runOptimizationParallel } from '../lib/optimizer/parallelOptimization';
 import type {
   Pieza,
   StockSize,
-  Remnant,
   EbConfig,
   EbCabinetMap,
   EbTypeSummary,
@@ -61,74 +56,6 @@ import {
   renameRun as repoRenameRun,
   deleteRun as repoDeleteRun,
 } from '../lib/optimizer/quotation/quotationOptimizerRepo';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Web Worker runner
-//
-// The optimizer engine is CPU-bound — for large projects (e.g. 2,306
-// pieces × 10 material groups × 28 iterations each) it can run for
-// tens of seconds. Running it on the main thread froze the browser,
-// since synchronous JS cannot yield. We delegate to a dedicated
-// worker so the UI stays responsive, and so a budget overrun can be
-// killed with worker.terminate() (unlike sync JS, this is a real
-// cancellation).
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface RunOptimizationInWorkerParams {
-  pieces: Pieza[];
-  stocks: StockSize[];
-  remnants: Remnant[];
-  globalSierra: number;
-  minOffcut: number;
-  boardTrim: number;
-  engineMode: EngineMode;
-  objective: OptimizationObjective;
-  timeoutMs: number;
-}
-
-function runOptimizationInWorker(params: RunOptimizationInWorkerParams): Promise<OptimizationResult> {
-  return new Promise<OptimizationResult>((resolve, reject) => {
-    const worker = new EngineWorker();
-    const timer = setTimeout(() => {
-      worker.terminate();
-      reject(new Error(
-        `Optimizer took too long (>${Math.round(params.timeoutMs / 1000)}s) and was cancelled. The project may be too large for the current iteration budget — consider reducing the number of stocks or splitting the quotation.`,
-      ));
-    }, params.timeoutMs);
-
-    worker.onmessage = (ev: MessageEvent<OptimizerWorkerResponse>) => {
-      clearTimeout(timer);
-      worker.terminate();
-      const msg = ev.data;
-      if (msg.type === 'result') {
-        resolve(msg.result);
-      } else if (msg.type === 'error') {
-        reject(new Error(msg.error));
-      } else {
-        reject(new Error('Optimizer worker returned an unexpected response.'));
-      }
-    };
-
-    worker.onerror = (err) => {
-      clearTimeout(timer);
-      worker.terminate();
-      reject(new Error(`Optimizer worker crashed: ${err.message || 'unknown error'}`));
-    };
-
-    const req: OptimizerWorkerRequest = {
-      type: 'run',
-      pieces: params.pieces,
-      stocks: params.stocks,
-      remnants: params.remnants,
-      globalSierra: params.globalSierra,
-      minOffcut: params.minOffcut,
-      boardTrim: params.boardTrim,
-      engineMode: params.engineMode,
-      objective: params.objective,
-    };
-    worker.postMessage(req);
-  });
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Store shape
@@ -197,6 +124,13 @@ export interface QuotationOptimizerState {
   isSaving: boolean;
   lastError: string | null;
 
+  /**
+   * Per-group progress snapshot while the parallel pool is running. Null
+   * when no run is active. The UI's `OptimizerProgressBand` reads this
+   * slice to render the bar + "material X of N" label.
+   */
+  optimizerProgress: { completed: number; total: number; current: string | null } | null;
+
   // Settings actions
   setGlobalSierra: (v: number) => void;
   setMinOffcut: (v: number) => void;
@@ -211,6 +145,9 @@ export interface QuotationOptimizerState {
   refreshRunsList: () => Promise<void>;
   build: () => Promise<void>;
   runOptimize: () => Promise<void>;
+  /** Abort the in-flight parallel run. Terminates all active sub-workers
+   *  and clears `optimizerProgress`. No-op if no run is active. */
+  cancelOptimize: () => void;
   saveAsRun: (name: string, opts?: { setActive?: boolean }) => Promise<string>;
   loadRun: (runId: string) => Promise<void>;
   setActive: (runId: string) => Promise<void>;
@@ -252,6 +189,11 @@ export function getQuotationOptimizerStore(
   const cached = storeCache.get(quotationId);
   if (cached) return cached;
 
+  // Per-store AbortController for the in-flight parallel run. Lives in the
+  // factory closure (not Zustand state) because AbortController is not
+  // serializable and each quotation has its own store instance.
+  let activeAbortController: AbortController | null = null;
+
   const hook = create<QuotationOptimizerState>((set, get) => ({
     quotationId,
 
@@ -292,6 +234,7 @@ export function getQuotationOptimizerStore(
     isOptimizing: false,
     isSaving: false,
     lastError: null,
+    optimizerProgress: null,
 
     setGlobalSierra:     (v) => set({ globalSierra: v }),
     setMinOffcut:        (v) => set({ minOffcut: v }),
@@ -369,26 +312,30 @@ export function getQuotationOptimizerStore(
         set({ lastError: 'Nothing to optimize — build from quotation first.' });
         return;
       }
-      set({ isOptimizing: true, lastError: null });
-      // Yield a tick so the UI can show a spinner before the synchronous engine runs.
+      // Replace any stale controller (shouldn't happen in normal flow, but
+      // guards against a second Run click before the prior promise settles).
+      if (activeAbortController) {
+        try { activeAbortController.abort(); } catch { /* noop */ }
+      }
+      activeAbortController = new AbortController();
+      const signal = activeAbortController.signal;
+
+      set({ isOptimizing: true, lastError: null, optimizerProgress: null });
+      // Yield a tick so the UI can show the initial spinner frame.
       await new Promise((r) => setTimeout(r, 50));
       try {
         const effectiveTrim = state.trimIncludesKerf
           ? state.boardTrim
           : state.boardTrim + state.globalSierra;
-        // Only include stocks the user has selected (checkbox in sidebar).
         const activeStocks = state.pendingStocks.filter((s) =>
           state.selectedStockIds.has(s.id),
         );
-        // Also filter pieces: exclude any piece whose material has no active stock.
-        // This ensures unchecking a stock fully removes that material's pieces from
-        // the run, giving clean results without unplaced-piece warnings.
         const activeStockNames = new Set(activeStocks.map((s) => s.nombre));
         const activePieces = state.pendingPieces.filter((p) =>
           activeStockNames.has(p.material),
         );
 
-        console.log('[runOptimize] invoking engine (in Web Worker)', {
+        console.log('[runOptimize] invoking parallel pool', {
           activePieces: activePieces.length,
           activeStocks: activeStocks.length,
           totalExpanded: activePieces.reduce((s, p) => s + p.cantidad, 0),
@@ -396,10 +343,7 @@ export function getQuotationOptimizerStore(
           objective: state.objective,
         });
 
-        // Off-main-thread execution via Web Worker. worker.terminate()
-        // is a real cancellation (unlike sync JS), so if we pass the
-        // budget we kill the run instead of waiting for it to finish.
-        const result = await runOptimizationInWorker({
+        const result = await runOptimizationParallel({
           pieces: activePieces,
           stocks: activeStocks,
           remnants: [], // no remnants in quotation mode for now
@@ -408,16 +352,31 @@ export function getQuotationOptimizerStore(
           boardTrim: effectiveTrim,
           engineMode: state.engineMode,
           objective: state.objective,
-          timeoutMs: 120_000, // 2 minutes — generous for big projects; worker can be cancelled for real.
+          signal,
+          onProgress: (p) => set({ optimizerProgress: p }),
+          timeoutMs: 120_000,
         });
-        set({ pendingResult: result, isOptimizing: false });
+        set({ pendingResult: result, isOptimizing: false, optimizerProgress: null });
       } catch (err) {
         console.error('[runOptimize] failed', err);
+        const isAbort = err instanceof DOMException && err.name === 'AbortError';
         set({
           isOptimizing: false,
-          lastError: err instanceof Error ? err.message : String(err),
+          optimizerProgress: null,
+          lastError: isAbort
+            ? 'Optimizer run cancelled.'
+            : (err instanceof Error ? err.message : String(err)),
         });
-        throw err;
+        if (!isAbort) throw err;
+      } finally {
+        activeAbortController = null;
+      }
+    },
+
+    // ── Cancel the in-flight parallel run ─────────────────────────────────
+    cancelOptimize: () => {
+      if (activeAbortController) {
+        activeAbortController.abort();
       }
     },
 

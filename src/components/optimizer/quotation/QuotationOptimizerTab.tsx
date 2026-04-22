@@ -48,6 +48,7 @@ import { PerAreaBoardsBreakdown } from './PerAreaBoardsBreakdown';
 import { CutListDetailPanel, type CabinetDisplayInfo } from './CutListDetailPanel';
 import { StaleBadge } from './StaleBadge';
 import { BreakdownBOM } from './BreakdownBOM';
+import { OptimizerProgressBand } from './OptimizerProgressBand';
 import type { OptimizationResult } from '../../../lib/optimizer/types';
 import { allocateBoardCostsByArea } from '../../../lib/optimizer/quotation/computeOptimizerAreaSubtotals';
 import type {
@@ -168,6 +169,7 @@ export function QuotationOptimizerTab({
   const isOptimizing      = useStore((s) => s.isOptimizing);
   const isSaving          = useStore((s) => s.isSaving);
   const lastError          = useStore((s) => s.lastError);
+  const optimizerProgress  = useStore((s) => s.optimizerProgress);
   const pendingResult      = useStore((s) => s.pendingResult);
   const pendingPieces      = useStore((s) => s.pendingPieces);
   const pendingWarnings    = useStore((s) => s.pendingWarnings);
@@ -182,6 +184,7 @@ export function QuotationOptimizerTab({
   const refreshRunsList = useStore((s) => s.refreshRunsList);
   const build           = useStore((s) => s.build);
   const runOptimize     = useStore((s) => s.runOptimize);
+  const cancelOptimize  = useStore((s) => s.cancelOptimize);
   const saveAsRun       = useStore((s) => s.saveAsRun);
   const loadRun         = useStore((s) => s.loadRun);
   const setActive       = useStore((s) => s.setActive);
@@ -623,6 +626,9 @@ export function QuotationOptimizerTab({
           <RefreshCw className="h-3.5 w-3.5" />
         </Button>
       </div>
+
+      {/* ── Progress band (parallel pool, one group per sub-worker) ── */}
+      <OptimizerProgressBand progress={optimizerProgress} onCancel={cancelOptimize} />
 
       {lastError && (
         <div className="bg-status-red-bg border-b border-status-red-brd px-4 py-2 text-xs text-status-red-fg">
