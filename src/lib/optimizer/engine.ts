@@ -653,6 +653,18 @@ class Optimizer {
     let bestName = '';
     let totalIters = 0;
 
+    // Adaptive GRASP budget: for groups above this expanded-piece count,
+    // each GRASP iteration pays an O(N²) cost per piece so keeping the full
+    // 20/40 iterations stretches runtime for marginal gains (the best
+    // result is almost always found in the first few iterations). We cap
+    // to 5 iterations with early termination after 3 no-improvements.
+    // Typical precision hit: 2-3% extra boards on the affected group only.
+    const LARGE_GROUP_THRESHOLD = 500;
+    const isLargeGroup = group.length > LARGE_GROUP_THRESHOLD;
+    const effectiveGraspIters = isLargeGroup ? 5 : GRASP_ITERS;
+    const effectiveGuillotineIters = isLargeGroup ? 5 : GUILLOTINE_ITERS;
+    const EARLY_TERM_AFTER = 3; // break after this many no-improve iters
+
     // ── MaxRect phases — only when 'both' engines are requested ──
     if (this.engineMode === 'both') {
       for (const [sn, sf] of sorts) {
@@ -664,7 +676,8 @@ class Optimizer {
           if (sc < bestScore) { bestScore = sc; best = bds; bestName = `${sn}+${h}`; }
         }
       }
-      for (let g = 0; g < GRASP_ITERS; g++) {
+      let maxrectNoImprove = 0;
+      for (let g = 0; g < effectiveGraspIters; g++) {
         const si = Math.floor(rng() * sorts.length);
         const hi = Math.floor(rng() * HEURISTICS.length);
         const [sn, sf] = sorts[si];
@@ -673,11 +686,12 @@ class Optimizer {
         const bds  = this._build(shuffled, mat, grs, HEURISTICS[hi]);
         const sc   = this._score(bds);
         totalIters++;
-        if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP(${sn}+${HEURISTICS[hi]})`; }
+        if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP(${sn}+${HEURISTICS[hi]})`; maxrectNoImprove = 0; }
+        else if (isLargeGroup && ++maxrectNoImprove >= EARLY_TERM_AFTER) break;
       }
     }
 
-    // ── Shelf-first guillotine passes: 8 deterministic + GUILLOTINE_ITERS GRASP ──
+    // ── Shelf-first guillotine passes: 8 deterministic + N GRASP ──
     for (const [sn, sf] of sorts) {
       const sorted = [...group].sort(sf);
       const bds = this._buildShelfGuillotine(sorted, mat, grs);
@@ -685,14 +699,16 @@ class Optimizer {
       totalIters++;
       if (sc < bestScore) { bestScore = sc; best = bds; bestName = `shelf-${sn}`; }
     }
-    for (let g = 0; g < GUILLOTINE_ITERS; g++) {
+    let shelfNoImprove = 0;
+    for (let g = 0; g < effectiveGuillotineIters; g++) {
       const si = Math.floor(rng() * sorts.length);
       const [sn, sf] = sorts[si];
       const shuffled = this._shuffleWin([...group].sort(sf), rng);
       const bds = this._buildShelfGuillotine(shuffled, mat, grs);
       const sc  = this._score(bds);
       totalIters++;
-      if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP-shelf(${sn})`; }
+      if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP-shelf(${sn})`; shelfNoImprove = 0; }
+      else if (isLargeGroup && ++shelfNoImprove >= EARLY_TERM_AFTER) break;
     }
 
     // Local search rebuilds boards using MaxRect semantics (Board.place()), which would

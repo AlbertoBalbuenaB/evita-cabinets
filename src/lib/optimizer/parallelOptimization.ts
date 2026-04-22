@@ -47,6 +47,11 @@ export interface ParallelOptimizationParams {
   /** Upper bound on wall-clock time (ms). On timeout, all active workers
    *  are terminated and the promise rejects. Default: 120_000 ms. */
   timeoutMs?: number;
+  /** Per-group wall-clock cap (ms). If a single group doesn't complete in
+   *  this time, its worker is terminated and the whole run rejects with a
+   *  message naming the stuck group. Default: 60_000 ms. Catches
+   *  pathological groups that drag down the global 120s budget. */
+  perGroupTimeoutMs?: number;
 }
 
 /** FNV-1a 32-bit hash, mapped into the Lehmer RNG's valid range [1, 2^31-2]. */
@@ -163,6 +168,8 @@ export async function runOptimizationParallel(
     ));
   }, timeoutMs);
 
+  const perGroupTimeoutMs = params.perGroupTimeoutMs ?? 60_000;
+
   const runOneGroup = (groupKey: string, groupPieces: Pieza[]): Promise<GroupResultPart> => {
     return new Promise<GroupResultPart>((resolve, reject) => {
       if (internal.signal.aborted) {
@@ -170,14 +177,31 @@ export async function runOptimizationParallel(
         return;
       }
       const worker = new GroupWorker();
+      const matLabel = groupPieces[0]?.material ?? groupKey;
+
+      // Per-group watchdog: if this specific worker exceeds its budget,
+      // terminate it and reject with a message naming the group. Fires
+      // the internal abort so the other workers also stop (one bad group
+      // shouldn't keep the rest running only to produce an invalid total).
+      const perGroupTimeout = setTimeout(() => {
+        console.warn(`[runOptimizationParallel] ${groupKey} exceeded ${perGroupTimeoutMs}ms budget — terminating worker.`);
+        try { worker.terminate(); } catch { /* noop */ }
+        const err = new Error(
+          `Material "${matLabel}" (${groupPieces.length} piece-types, ${groupPieces.reduce((s, p) => s + p.cantidad, 0)} expanded) took over ${Math.round(perGroupTimeoutMs / 1000)}s and was skipped. Check cut-piece dimensions or veta settings for this material.`,
+        );
+        reject(err);
+        internal.abort(err);
+      }, perGroupTimeoutMs);
 
       const onInternalAbort = (): void => {
+        clearTimeout(perGroupTimeout);
         try { worker.terminate(); } catch { /* noop */ }
         reject(internal.signal.reason ?? new DOMException('Run aborted.', 'AbortError'));
       };
       internal.signal.addEventListener('abort', onInternalAbort, { once: true });
 
       const cleanup = (): void => {
+        clearTimeout(perGroupTimeout);
         try { worker.terminate(); } catch { /* noop */ }
         internal.signal.removeEventListener('abort', onInternalAbort);
       };
