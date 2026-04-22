@@ -653,21 +653,43 @@ class Optimizer {
     let bestName = '';
     let totalIters = 0;
 
-    // Adaptive GRASP budget: for groups above this expanded-piece count,
-    // each GRASP iteration pays an O(N²) cost per piece so keeping the full
-    // 20/40 iterations stretches runtime for marginal gains (the best
-    // result is almost always found in the first few iterations). We cap
-    // to 5 iterations with early termination after 3 no-improvements.
-    // Typical precision hit: 2-3% extra boards on the affected group only.
+    // Adaptive budget by group size. The engine is O(N²) per iteration,
+    // so a project's dominant material (e.g. Oak Plywood with 13k pieces)
+    // blows the wall-clock even with 5 GRASP iters. For those we also cap
+    // the deterministic sorts + drop GRASP to a single attempt. GRASP is
+    // stochastic multi-start — for huge groups the first deterministic
+    // sort is usually within a few percent of the best anyway.
+    //
+    // Tiers (tunable constants, kept here so future packer-level fixes
+    // can relax the limits in one place):
+    //   ≤500 expanded  → 8 sorts × GRASP_ITERS (unchanged)
+    //   501..2000      → 8 sorts × 5 GRASP   + early term after 3
+    //   >2000          → 2 sorts × 1 GRASP   + early term after 1
+    //
+    // Precision hit on the affected group: ~2-3% large, ~5-8% huge.
+    // Only applies to the one group that trips the threshold; small
+    // groups keep full quality.
     const LARGE_GROUP_THRESHOLD = 500;
+    const HUGE_GROUP_THRESHOLD = 2000;
     const isLargeGroup = group.length > LARGE_GROUP_THRESHOLD;
-    const effectiveGraspIters = isLargeGroup ? 5 : GRASP_ITERS;
-    const effectiveGuillotineIters = isLargeGroup ? 5 : GUILLOTINE_ITERS;
-    const EARLY_TERM_AFTER = 3; // break after this many no-improve iters
+    const isHugeGroup  = group.length > HUGE_GROUP_THRESHOLD;
+    const effectiveGraspIters      = isHugeGroup ? 1 : (isLargeGroup ? 5 : GRASP_ITERS);
+    const effectiveGuillotineIters = isHugeGroup ? 1 : (isLargeGroup ? 5 : GUILLOTINE_ITERS);
+    const EARLY_TERM_AFTER         = isHugeGroup ? 1 : 3;
+    // Huge groups: skip most deterministic sorts too (they each run a
+    // full O(N²) build over all pieces). `area` and `lado` are the two
+    // that converge fastest in practice — keep those, drop the rest.
+    const effectiveSorts = isHugeGroup
+      ? sorts.filter(([n]) => n === 'area' || n === 'lado')
+      : sorts;
+
+    if (isHugeGroup || isLargeGroup) {
+      console.log(`[_optGroup] ${mat} ${grs}mm (${group.length} pieces) — ${isHugeGroup ? 'huge' : 'large'} tier: ${effectiveSorts.length} sorts × ${effectiveGuillotineIters} GRASP, early-term ≥${EARLY_TERM_AFTER}`);
+    }
 
     // ── MaxRect phases — only when 'both' engines are requested ──
     if (this.engineMode === 'both') {
-      for (const [sn, sf] of sorts) {
+      for (const [sn, sf] of effectiveSorts) {
         const sorted = [...group].sort(sf);
         for (const h of HEURISTICS) {
           const bds = this._build(sorted, mat, grs, h);
@@ -691,8 +713,8 @@ class Optimizer {
       }
     }
 
-    // ── Shelf-first guillotine passes: 8 deterministic + N GRASP ──
-    for (const [sn, sf] of sorts) {
+    // ── Shelf-first guillotine passes: N deterministic + M GRASP ──
+    for (const [sn, sf] of effectiveSorts) {
       const sorted = [...group].sort(sf);
       const bds = this._buildShelfGuillotine(sorted, mat, grs);
       const sc  = this._score(bds);
