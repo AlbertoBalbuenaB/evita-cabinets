@@ -238,13 +238,17 @@ export async function runOptimizationParallel(
         if (msg.type === 'result') {
           completed += 1;
           emitProgress();
-          console.log(`[runOptimizationParallel] ${groupKey} done in ${msg.timeMs.toFixed(0)}ms (strategy: ${msg.strategy})`);
+          console.log(
+            `[runOptimizationParallel] ${groupKey} done in ${msg.timeMs.toFixed(0)}ms ` +
+            `(strategy: ${msg.strategy}${msg.capFires > 0 ? `, capFires: ${msg.capFires}` : ''})`
+          );
           resolve({
             groupKey,
             boards: msg.boards,
             strategy: msg.strategy,
             iters: msg.iters,
             timeMs: msg.timeMs,
+            capFires: msg.capFires,
           });
         } else if (msg.type === 'error') {
           reject(new Error(`Group ${groupKey}: ${msg.error}`));

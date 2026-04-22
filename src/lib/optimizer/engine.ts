@@ -75,6 +75,13 @@ type GuillotineBudget = { count: number; limit: number };
  *  dimensional combinations that would otherwise explode the recursion tree. */
 const GUILLOTINE_CALL_LIMIT = 1_000_000;
 
+/** Module-level counter — how many times the guillotinePack budget cap fired
+ *  during the current top-level `run()` / `runOptimization()` / `optimizeOneGroup()`
+ *  call. Reset by each public entry point; surfaced on the result as `capFires`
+ *  so the UI can warn the user that packing may be sub-optimal for affected
+ *  groups. Safe as module state because workers are isolated (single-threaded JS). */
+let _capFireCount = 0;
+
 function revertChangedLog(log: ChangedLog): void {
   for (let i = 0; i < log.length; i++) {
     const [entry, amount] = log[i];
@@ -304,9 +311,16 @@ function guillotinePack(
   // Healthy dimensional combinations (observed on Mountain View) never reach
   // this. Pathological ones (observed on 1030 W 8th Street's Roble Merida
   // group) would otherwise run indefinitely — the partial placements gathered
-  // so far are kept by the caller.
-  if (budget && ++budget.count > budget.limit) {
-    return { placed: [], tree: null, log: [] };
+  // so far are kept by the caller. Increments the module-level cap-fire
+  // counter the FIRST time this budget exceeds its limit (subsequent fires
+  // for the same budget don't re-increment, so the counter reflects distinct
+  // pathological sub-column trees).
+  if (budget) {
+    budget.count += 1;
+    if (budget.count > budget.limit) {
+      if (budget.count === budget.limit + 1) _capFireCount += 1;
+      return { placed: [], tree: null, log: [] };
+    }
   }
   if (rw < 10 || rh < 10 || depth > 40 || !hasAnyRemaining(entries)) {
     return { placed: [], tree: null, log: [] };
@@ -1286,6 +1300,10 @@ export function runOptimization(
     console.warn('[runOptimization] dropped invalid inputs:', dropped);
   }
 
+  // Reset the module-level cap-fire counter so this run's value reflects
+  // only decrements that happened during this invocation.
+  _capFireCount = 0;
+
   const totalExpanded = cleanPieces.reduce((s, p) => s + p.cantidad, 0);
   console.log('[runOptimization] starting', {
     piecesIn: pieces.length,
@@ -1339,6 +1357,25 @@ export function runOptimization(
     }
   });
 
+  const totalPlaced = boardResults.reduce((s, b) => s + b.placed.length, 0);
+  const totalUnplaced = unplacedPieces.reduce((s, u) => s + u.count, 0);
+  const capFires = _capFireCount;
+  console.log(
+    `[runOptimization] done: ${boardResults.length} boards, ${totalPlaced} placed, ` +
+    `${totalUnplaced} unplaced, efficiency ${(totalArea > 0 ? (usedArea / totalArea) * 100 : 0).toFixed(1)}%, ` +
+    `strategy=${opt.bestStrategy}, capFires=${capFires}`
+  );
+  if (totalUnplaced > 0) {
+    console.warn('[runOptimization] unplaced pieces:', unplacedPieces);
+  }
+  if (capFires > 0) {
+    console.warn(
+      `[runOptimization] guillotinePack call-count cap fired ${capFires} time(s) — ` +
+      `some groups may be sub-optimally packed. Consider adding +5-10% safety margin ` +
+      `to material estimates for this quotation.`
+    );
+  }
+
   return {
     boards: boardResults,
     totalPieces,
@@ -1348,6 +1385,7 @@ export function runOptimization(
     strategy: opt.bestStrategy,
     usefulOffcuts,
     unplacedPieces,
+    capFires,
   };
 }
 
@@ -1384,7 +1422,11 @@ export function optimizeOneGroup(
   engineMode: EngineMode = 'guillotine',
   objective: OptimizationObjective = 'min-boards',
   rngSeed = 42,
-): { boards: BoardResult[]; strategy: string; iters: number; timeMs: number } {
+): { boards: BoardResult[]; strategy: string; iters: number; timeMs: number; capFires: number } {
+  // Reset the module-level cap-fire counter so the returned capFires reflects
+  // only decrements from this group's pack. Workers are isolated (one group
+  // per worker) so this is safe module state.
+  _capFireCount = 0;
   const opt = new Optimizer(stocks, remnants, globalSierra, minOffcut, boardTrim, engineMode, objective);
   const boards = opt.run(groupPieces, rngSeed);
   return {
@@ -1392,6 +1434,7 @@ export function optimizeOneGroup(
     strategy: opt.bestStrategy,
     iters: opt.iters,
     timeMs: opt.time,
+    capFires: _capFireCount,
   };
 }
 

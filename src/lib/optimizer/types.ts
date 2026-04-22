@@ -129,6 +129,14 @@ export interface OptimizationResult {
   /** Pieces that could not be placed on any board (name × dims × count).
    *  Absent on results saved before this field was added. */
   unplacedPieces?: { nombre: string; ancho: number; alto: number; count: number }[];
+  /** How many times the `guillotinePack` recursion budget cap fired during
+   *  this run. A non-zero value means dimensional patterns in the input
+   *  triggered the pathological-recursion safeguard (see GUILLOTINE_CALL_LIMIT
+   *  in engine.ts). Placements are still valid but the group may be packed
+   *  sub-optimally — consider adding a safety margin (+5-10%) to material
+   *  estimates for affected groups. Absent on results saved before this
+   *  field was added. */
+  capFires?: number;
 }
 
 export interface CutStep {

@@ -19,6 +19,8 @@
 //   - unplacedPieces  → computed from scratch by comparing each input
 //                       piece's expected cantidad to actual placed count
 //                       across all boards
+//   - capFires        → sum across groups (non-zero signals some groups
+//                       hit the guillotine recursion safeguard)
 // ─────────────────────────────────────────────────────────────
 
 import type { BoardResult, OptimizationResult, Pieza } from './types';
@@ -29,6 +31,13 @@ export interface GroupResultPart {
   strategy: string;
   iters: number;
   timeMs: number;
+  /** Number of times the guillotinePack call-count cap fired while packing
+   *  this group. Non-zero means the group had dimensional patterns that
+   *  triggered the pathological-recursion safeguard — the caller may want to
+   *  surface a warning about sub-optimal packing. Optional because older
+   *  pool callsites (or tests that predate the safeguard) may omit it; the
+   *  aggregator treats absence as 0. */
+  capFires?: number;
 }
 
 /**
@@ -55,6 +64,7 @@ export function mergeOptimizationResults(
   const totalCost = allBoards.reduce((s, b) => s + b.stockInfo.costo, 0);
   const usefulOffcuts = allBoards.reduce((s, b) => s + b.offcuts.length, 0);
   const timeMs = parts.length === 0 ? 0 : Math.max(...parts.map((p) => p.timeMs));
+  const capFires = parts.reduce((s, p) => s + (p.capFires ?? 0), 0);
 
   const strategy = parts
     .filter((p) => p.strategy)
@@ -98,5 +108,6 @@ export function mergeOptimizationResults(
     strategy,
     usefulOffcuts,
     unplacedPieces: unplaced,
+    capFires,
   };
 }
