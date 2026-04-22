@@ -646,13 +646,19 @@ export function QuotationOptimizerTab({
       </div>
 
       {/* ── Warnings strip ────────────────────────────────── */}
-      {(pendingWarnings.length > 0 || pendingCabSkipped.length > 0 || pendingPieces.length > 0) && (
+      {(pendingWarnings.length > 0 ||
+        pendingCabSkipped.length > 0 ||
+        pendingPieces.length > 0 ||
+        (pendingResult?.unplacedPieces?.length ?? 0) > 0 ||
+        (pendingResult?.capFires ?? 0) > 0) && (
         <div className="px-4 py-2 border-b border-border-soft bg-surf-app">
           <OptimizerWarningsPanel
             warnings={pendingWarnings}
             cabinetsSkipped={pendingCabSkipped}
             cabinetsCoveredCount={pendingCabCovered.size}
             totalCabinetsCount={totalCabinetsCount}
+            unplacedPieces={pendingResult?.unplacedPieces}
+            capFires={pendingResult?.capFires}
           />
         </div>
       )}

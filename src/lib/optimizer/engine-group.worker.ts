@@ -47,6 +47,7 @@ export type OptimizerGroupWorkerResponse =
       strategy: string;
       iters: number;
       timeMs: number;
+      capFires: number;
     }
   | { type: 'error'; groupKey: string; error: string };
 
@@ -54,7 +55,7 @@ self.onmessage = (ev: MessageEvent<OptimizerGroupWorkerRequest>) => {
   const req = ev.data;
   if (!req || req.type !== 'run-group') return;
   try {
-    const { boards, strategy, iters, timeMs } = optimizeOneGroup(
+    const { boards, strategy, iters, timeMs, capFires } = optimizeOneGroup(
       req.pieces,
       req.mat,
       req.grs,
@@ -74,6 +75,7 @@ self.onmessage = (ev: MessageEvent<OptimizerGroupWorkerRequest>) => {
       strategy,
       iters,
       timeMs,
+      capFires,
     };
     self.postMessage(msg);
   } catch (err) {

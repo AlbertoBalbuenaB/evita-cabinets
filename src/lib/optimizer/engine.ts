@@ -23,6 +23,126 @@ const MIN_OFFCUT_DEFAULT = 200;
 const MIN_USEFUL_STRIP = 80; // mm — thin-strip penalty threshold for guillotine scoring
 
 // ─────────────────────────────────────────────────────────────
+// TYPED ENTRY — internal packing representation
+// ─────────────────────────────────────────────────────────────
+/**
+ * One entry per unique piece type (cleanPieces[_idx]) with a `remaining`
+ * counter instead of a per-instance expanded array. The hot packing loops
+ * iterate T entries (e.g. 892 for Oak Plywood 15mm in Mountain View) instead
+ * of N expanded instances (13,614) — the primary source of the refactor
+ * speedup. Fields `ancho`, `alto`, `veta` are cached to avoid `.piece.*`
+ * dereferencing per hot-loop iteration. In the landscape-transpose path
+ * (_buildShelfGuillotine with packW > packH), the per-call entry array is
+ * a shallow copy with `veta` swapped; `piece` still refs the original
+ * Pieza, so PlacedPiece.piece downstream always points to the unswapped
+ * original.
+ */
+type TypedEntry = {
+  piece: Pieza & { _idx?: number };
+  _idx: number;
+  remaining: number;
+  ancho: number;
+  alto: number;
+  /** Math.max(ancho, alto). Cached so hot scans can early-skip entries that
+   *  cannot fit in either orientation of the available rect (maxDim > max(rw,rh))
+   *  without reading ancho/alto and running per-orientation checks. Byte-identity
+   *  preserved: an entry skipped by this bound would have failed both orientation
+   *  checks anyway, so bestEntry selection is unchanged. */
+  maxDim: number;
+  veta: 'none' | 'horizontal' | 'vertical';
+};
+
+/** Change log for in-place rollback during `guillotinePack` branch exploration.
+ *  Each tuple `[entry, amount]` records how much `entry.remaining` was decremented
+ *  so `revertChangedLog` can restore the state before the losing branch. */
+type ChangedLog = Array<[TypedEntry, number]>;
+
+/** Recursion-call budget for `guillotinePack`. The packer explores both H-cut
+ *  and V-cut branches at every frame; with 4 recursive sub-calls per internal
+ *  node, specific dimensional combinations can blow up exponentially
+ *  (observed on 1030 W 8th Street's 189-type × 637-expanded group — timeout
+ *  >60s even in the post-refactor engine). The budget is a soft cap: when
+ *  `count > limit`, the recursion returns empty and the caller keeps whatever
+ *  partial placements it already found. The top-level caller (packShelf)
+ *  creates a fresh budget per sub-guillotinePack invocation, so the cap is
+ *  per-invocation, not global. */
+type GuillotineBudget = { count: number; limit: number };
+
+/** Default cap per top-level guillotinePack call from packShelf. Sized far
+ *  above what real projects hit in healthy cases (Mountain View real dims
+ *  complete in ~15s ≈ millions of calls across ALL sub-guillotines, each
+ *  sub-invocation well under 1M), while bounding pathological dimensional
+ *  combinations that would otherwise explode the recursion tree.
+ *
+ *  Bumped from 1M → 5M (Apr 2026) after 1030 W 8th Street showed 11 pieces
+ *  stranded by the old 1M cap. 5M gives the packer enough room to complete
+ *  moderately-pathological groups without letting a truly explosive tree
+ *  run away. */
+const GUILLOTINE_CALL_LIMIT = 5_000_000;
+
+/** Inflated budget used by the `_buildShelfGuillotine` fallback pass when
+ *  the main loop leaves pieces stranded. 10× the default, so a group that
+ *  couldn't complete inside the regular budget gets a real second chance
+ *  before we drop it into the one-piece-per-board last resort. */
+const GUILLOTINE_CALL_LIMIT_FALLBACK = 50_000_000;
+
+/** Module-level counter — how many times the guillotinePack budget cap fired
+ *  during the current top-level `run()` / `runOptimization()` / `optimizeOneGroup()`
+ *  call. Reset by each public entry point; surfaced on the result as `capFires`
+ *  so the UI can warn the user that packing may be sub-optimal for affected
+ *  groups. Safe as module state because workers are isolated (single-threaded JS). */
+let _capFireCount = 0;
+
+function revertChangedLog(log: ChangedLog): void {
+  for (let i = 0; i < log.length; i++) {
+    const [entry, amount] = log[i];
+    entry.remaining += amount;
+  }
+}
+
+/** Materialize an expanded (one-per-physical-instance) array into `TypedEntry[]`
+ *  form where each entry has `remaining = 1`. Used for GRASP paths so the
+ *  `_shuffleWin` pass continues to consume the RNG length × times (byte-identity
+ *  with the pre-refactor output). The input expanded array is assumed to already
+ *  be one Pieza-spread per physical copy. */
+function wrapExpandedAsEntries(expanded: (Pieza & { _idx: number })[]): TypedEntry[] {
+  const out: TypedEntry[] = new Array(expanded.length);
+  for (let i = 0; i < expanded.length; i++) {
+    const p = expanded[i];
+    out[i] = {
+      piece: p,
+      _idx: p._idx,
+      remaining: 1,
+      ancho: p.ancho,
+      alto: p.alto,
+      maxDim: p.ancho > p.alto ? p.ancho : p.alto,
+      veta: p.veta,
+    };
+  }
+  return out;
+}
+
+/** Expand TypedEntry[] back into a one-per-physical-instance array. Used by GRASP
+ *  paths so `_shuffleWin` sees the same length as before the refactor. */
+function materializeExpanded(entries: TypedEntry[]): (Pieza & { _idx: number })[] {
+  const out: (Pieza & { _idx: number })[] = [];
+  for (const e of entries) {
+    for (let c = 0; c < e.remaining; c++) {
+      out.push({ ...e.piece, _idx: e._idx });
+    }
+  }
+  return out;
+}
+
+/** True when any entry in the array still has `remaining > 0`. */
+function hasAnyRemaining(entries: TypedEntry[]): boolean {
+  for (let i = 0; i < entries.length; i++) {
+    if (entries[i].remaining > 0) return true;
+  }
+  return false;
+}
+
+// ─────────────────────────────────────────────────────────────
 // FREE RECT
 // ─────────────────────────────────────────────────────────────
 class FreeRect {
@@ -183,72 +303,102 @@ function scoreFit(rw: number, rh: number, iw: number, ih: number): number {
   return areaRatio + exactBonus + thinPenalty;
 }
 
-/** Recursively pack items into rectangle (rx, ry, rw, rh) using guillotine cuts.
- *  Returns placed pieces and a CutTreeNode for exact panel-saw sequencing.
- *  Items must already be expanded by quantity (one entry per physical piece). */
+/** Recursively pack entries into rectangle (rx, ry, rw, rh) using guillotine cuts.
+ *  Returns placed pieces, a CutTreeNode for exact panel-saw sequencing, and a
+ *  `log` of the decrements applied to `entries.remaining` during this subtree
+ *  (so the caller can revert if this branch is discarded).
+ *
+ *  Both H-cut and V-cut options are explored by mutating `entries` in place;
+ *  the losing branch's log is reverted before the winning branch is re-applied
+ *  (when H wins) or kept in place (when V wins). */
 function guillotinePack(
   rx: number, ry: number, rw: number, rh: number,
-  items: (Pieza & { _idx: number })[],
+  entries: TypedEntry[],
   kerf: number,
   depth = 0,
-): { placed: PlacedPiece[]; tree: CutTreeNode | null } {
-  if (!items.length || rw < 10 || rh < 10 || depth > 40) {
-    return { placed: [], tree: null };
+  budget?: GuillotineBudget,
+): { placed: PlacedPiece[]; tree: CutTreeNode | null; log: ChangedLog } {
+  // Budget check: fire early if the caller-provided call-count cap was hit.
+  // Healthy dimensional combinations (observed on Mountain View) never reach
+  // this. Pathological ones (observed on 1030 W 8th Street's Roble Merida
+  // group) would otherwise run indefinitely — the partial placements gathered
+  // so far are kept by the caller. Increments the module-level cap-fire
+  // counter the FIRST time this budget exceeds its limit (subsequent fires
+  // for the same budget don't re-increment, so the counter reflects distinct
+  // pathological sub-column trees).
+  if (budget) {
+    budget.count += 1;
+    if (budget.count > budget.limit) {
+      if (budget.count === budget.limit + 1) _capFireCount += 1;
+      return { placed: [], tree: null, log: [] };
+    }
+  }
+  if (rw < 10 || rh < 10 || depth > 40 || !hasAnyRemaining(entries)) {
+    return { placed: [], tree: null, log: [] };
   }
 
-  // ── Find best-fitting item (all orientations, all items) ──
-  let bestItem: (Pieza & { _idx: number }) | null = null;
+  const log: ChangedLog = [];
+
+  // ── Find best-fitting entry (all orientations, all remaining entries) ──
+  // Pruning pasivo: any entry with `maxDim > max(rw, rh)` cannot fit in either
+  // orientation. Skip before the per-orientation checks — byte-identity preserved
+  // because such entries would have failed both inner ifs anyway.
+  const rMax = rw > rh ? rw : rh;
+  let bestEntry: TypedEntry | null = null;
   let bestIw = 0, bestIh = 0, bestScore = -Infinity;
 
-  for (const item of items) {
-    if (item.veta !== 'vertical' && item.ancho <= rw && item.alto <= rh) {
-      const s = scoreFit(rw, rh, item.ancho, item.alto);
-      if (s > bestScore) { bestScore = s; bestItem = item; bestIw = item.ancho; bestIh = item.alto; }
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i];
+    if (e.remaining === 0 || e.maxDim > rMax) continue;
+    if (e.veta !== 'vertical' && e.ancho <= rw && e.alto <= rh) {
+      const s = scoreFit(rw, rh, e.ancho, e.alto);
+      if (s > bestScore) { bestScore = s; bestEntry = e; bestIw = e.ancho; bestIh = e.alto; }
     }
-    if (item.veta !== 'horizontal' && item.alto <= rw && item.ancho <= rh) {
-      const s = scoreFit(rw, rh, item.alto, item.ancho);
-      if (s > bestScore) { bestScore = s; bestItem = item; bestIw = item.alto; bestIh = item.ancho; }
+    if (e.veta !== 'horizontal' && e.alto <= rw && e.ancho <= rh) {
+      const s = scoreFit(rw, rh, e.alto, e.ancho);
+      if (s > bestScore) { bestScore = s; bestEntry = e; bestIw = e.alto; bestIh = e.ancho; }
     }
   }
 
-  if (!bestItem) return { placed: [], tree: null };
+  if (!bestEntry) return { placed: [], tree: null, log: [] };
 
   const pp: PlacedPiece = {
-    piece: bestItem,
+    piece: bestEntry.piece,
     x: rx, y: ry,
     w: bestIw, h: bestIh,
-    rotated: bestIw !== bestItem.ancho,
-    idx: bestItem._idx,
+    rotated: bestIw !== bestEntry.piece.ancho,
+    idx: bestEntry._idx,
   };
-  const remaining = items.filter(it => it !== bestItem);
+  bestEntry.remaining -= 1;
+  log.push([bestEntry, 1]);
 
   // ── H-cut option: right remainder (beside piece) + bottom remainder ──
   const hRightX = rx + bestIw + kerf, hRightW = rw - bestIw - kerf;
   const hBotY   = ry + bestIh + kerf, hBotH   = rh - bestIh - kerf;
 
   const hRight = hRightW >= 10 && bestIh >= 10
-    ? guillotinePack(hRightX, ry, hRightW, bestIh, remaining, kerf, depth + 1)
-    : { placed: [] as PlacedPiece[], tree: null };
-  // Object-reference equality is correct here: each expanded piece instance is a distinct
-  // object (created via spread in run()), so === correctly identifies which instances
-  // were placed even when multiple items share the same _idx (cantidad > 1).
-  const hRemainingAfterRight = remaining.filter(it => !hRight.placed.some(pp => pp.piece === it));
+    ? guillotinePack(hRightX, ry, hRightW, bestIh, entries, kerf, depth + 1, budget)
+    : { placed: [] as PlacedPiece[], tree: null as CutTreeNode | null, log: [] as ChangedLog };
   const hBot = hBotH >= 10
-    ? guillotinePack(rx, hBotY, rw, hBotH, hRemainingAfterRight, kerf, depth + 1)
-    : { placed: [] as PlacedPiece[], tree: null };
+    ? guillotinePack(rx, hBotY, rw, hBotH, entries, kerf, depth + 1, budget)
+    : { placed: [] as PlacedPiece[], tree: null as CutTreeNode | null, log: [] as ChangedLog };
   const hTotal = hRight.placed.length + hBot.placed.length;
 
-  // ── V-cut option: top remainder (above remainder) + right remainder ──
+  // Revert the H subtree's decrements so V starts from the same post-bestEntry state.
+  // bestEntry's own decrement stays — V also places bestEntry at the same position.
+  revertChangedLog(hBot.log);
+  revertChangedLog(hRight.log);
+
+  // ── V-cut option: top remainder (above piece) + right remainder (full height) ──
   const vTopH   = rh - bestIh - kerf;
   const vRightX = rx + bestIw + kerf, vRightW = rw - bestIw - kerf;
 
   const vTop = vTopH >= 10 && bestIw >= 10
-    ? guillotinePack(rx, ry + bestIh + kerf, bestIw, vTopH, remaining, kerf, depth + 1)
-    : { placed: [] as PlacedPiece[], tree: null };
-  const vRemainingAfterTop = remaining.filter(it => !vTop.placed.some(pp => pp.piece === it));
+    ? guillotinePack(rx, ry + bestIh + kerf, bestIw, vTopH, entries, kerf, depth + 1, budget)
+    : { placed: [] as PlacedPiece[], tree: null as CutTreeNode | null, log: [] as ChangedLog };
   const vRight = vRightW >= 10
-    ? guillotinePack(vRightX, ry, vRightW, rh, vRemainingAfterTop, kerf, depth + 1)
-    : { placed: [] as PlacedPiece[], tree: null };
+    ? guillotinePack(vRightX, ry, vRightW, rh, entries, kerf, depth + 1, budget)
+    : { placed: [] as PlacedPiece[], tree: null as CutTreeNode | null, log: [] as ChangedLog };
   const vTotal = vTop.placed.length + vRight.placed.length;
 
   // ── Choose winner; tie-break by actual combined waste (unoccupied) area ──
@@ -261,6 +411,23 @@ function guillotinePack(
     - vTop.placed.reduce((s, p) => s + p.w * p.h, 0)
     - vRight.placed.reduce((s, p) => s + p.w * p.h, 0);
   const useH = hTotal > vTotal || (hTotal === vTotal && hWasteArea <= vWasteArea);
+
+  // Reconcile `entries` state to reflect the winning branch.
+  if (useH) {
+    // V is currently applied — revert it, then replay H's decrements.
+    revertChangedLog(vRight.log);
+    revertChangedLog(vTop.log);
+    for (let i = 0; i < hRight.log.length; i++) {
+      const tup = hRight.log[i]; tup[0].remaining -= tup[1]; log.push(tup);
+    }
+    for (let i = 0; i < hBot.log.length; i++) {
+      const tup = hBot.log[i]; tup[0].remaining -= tup[1]; log.push(tup);
+    }
+  } else {
+    // V is already applied — accumulate its decrements into this frame's log.
+    for (let i = 0; i < vTop.log.length; i++) log.push(vTop.log[i]);
+    for (let i = 0; i < vRight.log.length; i++) log.push(vRight.log[i]);
+  }
 
   // ── Build CutTreeNode ──
   const pieceLeaf: CutTreeNode = { x: rx, y: ry, w: bestIw, h: bestIh, piece: pp, cut: null, left: null, right: null };
@@ -289,7 +456,7 @@ function guillotinePack(
       ? { x: rx, y: ry, w: rw, h: rh, piece: null, cut: hCut, left: innerNode, right: botNode }
       : { x: rx, y: ry, w: rw, h: rh, piece: null, cut: null, left: innerNode, right: null };
 
-    return { placed: [pp, ...hRight.placed, ...hBot.placed], tree: rootTree };
+    return { placed: [pp, ...hRight.placed, ...hBot.placed], tree: rootTree, log };
   } else {
     // Structure: V-cut at rx+bestIw+kerf/2 (full height)
     //   left child:  H-cut at ry+bestIh+kerf/2 (width=bestIw)
@@ -314,7 +481,7 @@ function guillotinePack(
       ? { x: rx, y: ry, w: rw, h: rh, piece: null, cut: vCut, left: innerNode, right: rightNode }
       : { x: rx, y: ry, w: rw, h: rh, piece: null, cut: null, left: innerNode, right: null };
 
-    return { placed: [pp, ...vTop.placed, ...vRight.placed], tree: rootTree };
+    return { placed: [pp, ...vTop.placed, ...vRight.placed], tree: rootTree, log };
   }
 }
 
@@ -324,44 +491,52 @@ function guillotinePack(
 
 /** Pack a single shelf (full-width horizontal strip) left-to-right with vertical cuts.
  *  Pieces that are shorter than the shelf height create sub-columns where the remaining
- *  vertical space below is filled via guillotinePack(). */
+ *  vertical space below is filled via guillotinePack(). Decrements `entries.remaining`
+ *  in place and returns a `log` the caller can revert to undo this trial.
+ *  `budgetLimit` controls the recursion cap for sub-guillotine calls; defaults to
+ *  GUILLOTINE_CALL_LIMIT but can be inflated by the fallback path. */
 function packShelf(
   shelfX: number, shelfY: number, shelfW: number, shelfH: number,
-  items: (Pieza & { _idx: number })[], kerf: number,
-): { placed: PlacedPiece[]; tree: CutTreeNode; remaining: (Pieza & { _idx: number })[] } {
+  entries: TypedEntry[], kerf: number,
+  budgetLimit: number = GUILLOTINE_CALL_LIMIT,
+): { placed: PlacedPiece[]; tree: CutTreeNode; log: ChangedLog } {
   const placed: PlacedPiece[] = [];
   const columns: CutTreeNode[] = [];
   let xCursor = shelfX;
-  let remaining = [...items];
+  const log: ChangedLog = [];
 
-  while (remaining.length > 0 && xCursor + 10 < shelfX + shelfW) {
+  while (xCursor + 10 < shelfX + shelfW) {
     const availW = shelfX + shelfW - xCursor;
+    const boundMax = availW > shelfH ? availW : shelfH;
 
-    // Find best piece that fits in remaining width × shelf height
-    let bestIdx = -1, bestW = 0, bestH = 0, bestScore = -Infinity;
-    for (let i = 0; i < remaining.length; i++) {
-      const p = remaining[i];
+    // Find best entry that fits in remaining width × shelf height.
+    // Pruning pasivo: skip entries whose maxDim exceeds max(availW, shelfH).
+    let bestEntry: TypedEntry | null = null;
+    let bestW = 0, bestH = 0, bestScore = -Infinity;
+    for (let i = 0; i < entries.length; i++) {
+      const e = entries[i];
+      if (e.remaining === 0 || e.maxDim > boundMax) continue;
       // Normal orientation
-      if (p.veta !== 'vertical' && p.ancho <= availW && p.alto <= shelfH) {
-        const s = scoreFit(availW, shelfH, p.ancho, p.alto);
-        if (s > bestScore) { bestScore = s; bestIdx = i; bestW = p.ancho; bestH = p.alto; }
+      if (e.veta !== 'vertical' && e.ancho <= availW && e.alto <= shelfH) {
+        const s = scoreFit(availW, shelfH, e.ancho, e.alto);
+        if (s > bestScore) { bestScore = s; bestEntry = e; bestW = e.ancho; bestH = e.alto; }
       }
       // Rotated orientation
-      if (p.veta !== 'horizontal' && p.alto <= availW && p.ancho <= shelfH) {
-        const s = scoreFit(availW, shelfH, p.alto, p.ancho);
-        if (s > bestScore) { bestScore = s; bestIdx = i; bestW = p.alto; bestH = p.ancho; }
+      if (e.veta !== 'horizontal' && e.alto <= availW && e.ancho <= shelfH) {
+        const s = scoreFit(availW, shelfH, e.alto, e.ancho);
+        if (s > bestScore) { bestScore = s; bestEntry = e; bestW = e.alto; bestH = e.ancho; }
       }
     }
-    if (bestIdx === -1) break;
+    if (!bestEntry) break;
 
-    const piece = remaining[bestIdx];
-    remaining = remaining.filter((_, i) => i !== bestIdx);
+    bestEntry.remaining -= 1;
+    log.push([bestEntry, 1]);
 
     const pp: PlacedPiece = {
-      piece, x: xCursor, y: shelfY,
+      piece: bestEntry.piece, x: xCursor, y: shelfY,
       w: bestW, h: bestH,
-      rotated: bestW !== piece.ancho,
-      idx: piece._idx,
+      rotated: bestW !== bestEntry.piece.ancho,
+      idx: bestEntry._idx,
     };
     placed.push(pp);
 
@@ -377,14 +552,18 @@ function packShelf(
       const belowH = shelfH - bestH - kerf;
 
       if (belowH >= 10) {
-        const subResult = guillotinePack(xCursor, belowY, bestW, belowH, remaining, kerf);
+        // Fresh call-count budget for this sub-guillotine invocation.
+        // Each sub-column gets its own cap — prevents a single pathological
+        // column from starving the rest of the shelf's packing budget.
+        const subBudget: GuillotineBudget = { count: 0, limit: budgetLimit };
+        const subResult = guillotinePack(xCursor, belowY, bestW, belowH, entries, kerf, 0, subBudget);
         const subTree = subResult.tree ?? {
           x: xCursor, y: belowY, w: bestW, h: belowH,
           piece: null, cut: null, left: null, right: null, // waste
         };
         placed.push(...subResult.placed);
-        const subPlacedSet = new Set(subResult.placed.map(p => p.piece));
-        remaining = remaining.filter(p => !subPlacedSet.has(p));
+        // Sub-guillotine already mutated entries in place — accumulate its decrements.
+        for (let i = 0; i < subResult.log.length; i++) log.push(subResult.log[i]);
 
         // Column node: H-cut separating piece from below
         const colNode: CutTreeNode = {
@@ -422,7 +601,7 @@ function packShelf(
       x: shelfX, y: shelfY, w: shelfW, h: shelfH,
       piece: null, cut: null, left: null, right: null,
     };
-    return { placed: [], tree: wasteNode, remaining };
+    return { placed: [], tree: wasteNode, log };
   }
 
   // Chain columns via V-cuts (right-to-left chaining)
@@ -439,38 +618,42 @@ function packShelf(
     };
   }
 
-  return { placed, tree, remaining };
+  return { placed, tree, log };
 }
 
 /** Shelf-first guillotine packer: creates full-width horizontal shelves (H-cuts at top level),
  *  then packs pieces left-to-right within each shelf using vertical cuts.
- *  Guarantees all first-level cuts are H-type — compatible with HongYe panel saws. */
+ *  Guarantees all first-level cuts are H-type — compatible with HongYe panel saws.
+ *  Each candidate shelf-height is trialed in place and reverted; the winner's log
+ *  is re-applied at the end. `budgetLimit` is threaded to packShelf so callers can
+ *  inflate the recursion cap for fallback passes. */
 function shelfGuillotinePack(
   rx: number, ry: number, rw: number, rh: number,
-  items: (Pieza & { _idx: number })[],
+  entries: TypedEntry[],
   kerf: number,
-): { placed: PlacedPiece[]; tree: CutTreeNode | null } {
-  if (!items.length || rw < 10 || rh < 10) {
-    return { placed: [], tree: null };
+  budgetLimit: number = GUILLOTINE_CALL_LIMIT,
+): { placed: PlacedPiece[]; tree: CutTreeNode | null; log: ChangedLog } {
+  if (rw < 10 || rh < 10 || !hasAnyRemaining(entries)) {
+    return { placed: [], tree: null, log: [] };
   }
 
   const allPlaced: PlacedPiece[] = [];
   const shelves: CutTreeNode[] = [];
   let yCursor = ry;
-  let remaining = [...items];
+  const log: ChangedLog = [];
 
-  while (remaining.length > 0 && yCursor + 10 <= ry + rh) {
+  while (yCursor + 10 <= ry + rh && hasAnyRemaining(entries)) {
     const availH = ry + rh - yCursor;
+    const boundMax = availH > rw ? availH : rw;
 
-    // Collect all distinct candidate shelf heights from remaining pieces.
+    // Collect distinct candidate shelf heights from entries with remaining > 0.
+    // Pruning pasivo: skip entries whose maxDim exceeds max(availH, rw).
     const heightSet = new Set<number>();
-    for (const p of remaining) {
-      if (p.veta !== 'vertical' && p.alto <= availH && p.ancho <= rw) {
-        heightSet.add(p.alto);
-      }
-      if (p.veta !== 'horizontal' && p.ancho <= availH && p.alto <= rw) {
-        heightSet.add(p.ancho);
-      }
+    for (let i = 0; i < entries.length; i++) {
+      const e = entries[i];
+      if (e.remaining === 0 || e.maxDim > boundMax) continue;
+      if (e.veta !== 'vertical'   && e.alto  <= availH && e.ancho <= rw) heightSet.add(e.alto);
+      if (e.veta !== 'horizontal' && e.ancho <= availH && e.alto  <= rw) heightSet.add(e.ancho);
     }
     if (heightSet.size === 0) break;
 
@@ -482,39 +665,63 @@ function shelfGuillotinePack(
     // would leave enough remaining height for other pieces below.
     let bestShelfH = candidates[0];
     let bestPlacedCount = 0;
-    let bestResult: ReturnType<typeof packShelf> | null = null;
+    let bestTrialPlaced: PlacedPiece[] | null = null;
+    let bestTrialTree: CutTreeNode | null = null;
+    let bestTrialLog: ChangedLog | null = null;
 
     for (const candidateH of candidates) {
       if (candidateH < 10) continue;
-      const trial = packShelf(rx, yCursor, rw, candidateH, remaining, kerf);
-      if (trial.placed.length === 0) continue;
+      const trial = packShelf(rx, yCursor, rw, candidateH, entries, kerf, budgetLimit);
+      if (trial.placed.length === 0) {
+        revertChangedLog(trial.log);
+        continue;
+      }
 
       // Score: prefer shelves that place more pieces. Among ties, prefer
       // a height that leaves room for the remaining unplaced pieces below.
+      // `entries` is currently in post-trial state — check fits below before reverting.
       const afterH = availH - candidateH - kerf;
-      const unplacedFitBelow = afterH >= 10 && trial.remaining.some(p =>
-        (p.veta !== 'vertical' && p.alto <= afterH && p.ancho <= rw) ||
-        (p.veta !== 'horizontal' && p.ancho <= afterH && p.alto <= rw)
-      );
+      let unplacedFitBelow = false;
+      if (afterH >= 10) {
+        const belowBoundMax = afterH > rw ? afterH : rw;
+        for (let i = 0; i < entries.length; i++) {
+          const e = entries[i];
+          if (e.remaining === 0 || e.maxDim > belowBoundMax) continue;
+          if ((e.veta !== 'vertical'   && e.alto  <= afterH && e.ancho <= rw) ||
+              (e.veta !== 'horizontal' && e.ancho <= afterH && e.alto  <= rw)) {
+            unplacedFitBelow = true;
+            break;
+          }
+        }
+      }
       // Bonus for leaving viable space below for remaining pieces
       const score = trial.placed.length + (unplacedFitBelow ? 0.5 : 0);
 
-      if (score > bestPlacedCount || bestResult === null) {
+      // Revert this trial so next candidate starts from the same state.
+      revertChangedLog(trial.log);
+
+      if (score > bestPlacedCount || bestTrialLog === null) {
         bestPlacedCount = score;
         bestShelfH = candidateH;
-        bestResult = trial;
+        bestTrialPlaced = trial.placed;
+        bestTrialTree = trial.tree;
+        bestTrialLog = trial.log;
       }
     }
 
-    if (!bestResult || bestResult.placed.length === 0) break;
+    if (!bestTrialPlaced || bestTrialPlaced.length === 0 || !bestTrialLog) break;
 
-    allPlaced.push(...bestResult.placed);
-    remaining = bestResult.remaining;
-    shelves.push(bestResult.tree);
+    // Replay the winning trial's decrements against `entries`.
+    for (let i = 0; i < bestTrialLog.length; i++) {
+      const tup = bestTrialLog[i]; tup[0].remaining -= tup[1]; log.push(tup);
+    }
+
+    allPlaced.push(...bestTrialPlaced);
+    if (bestTrialTree) shelves.push(bestTrialTree);
     yCursor += bestShelfH + kerf;
   }
 
-  if (shelves.length === 0) return { placed: [], tree: null };
+  if (shelves.length === 0) return { placed: [], tree: null, log };
 
   // Bottom waste below all shelves
   const wasteH = ry + rh - yCursor;
@@ -540,7 +747,7 @@ function shelfGuillotinePack(
     };
   }
 
-  return { placed: allPlaced, tree };
+  return { placed: allPlaced, tree, log };
 }
 
 /** Transpose a CutTreeNode hierarchy: swap x↔y, w↔h, H↔V.
@@ -609,21 +816,32 @@ class Optimizer {
     let seed = rngSeed;
     const rng = (): number => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 
-    const expanded: (Pieza & { _idx: number })[] = [];
-    pieces.forEach((p, i) => {
-      for (let c = 0; c < p.cantidad; c++) expanded.push({ ...p, _idx: i });
-    });
+    // Build TypedEntry[] — one entry per cleanPieces[i], carrying cantidad as
+    // `remaining`. This is the core representation shift: post-refactor scans
+    // iterate T types (not N expanded instances). Identity is tracked via
+    // `remaining` counters; PlacedPiece.piece downstream always points to the
+    // original Pieza object (not a per-instance spread).
+    const entries: TypedEntry[] = pieces.map((p, i) => ({
+      piece: p,
+      _idx: i,
+      remaining: p.cantidad,
+      ancho: p.ancho,
+      alto: p.alto,
+      maxDim: p.ancho > p.alto ? p.ancho : p.alto,
+      veta: p.veta,
+    }));
 
-    const groups: Record<string, typeof expanded> = {};
-    expanded.forEach(p => {
-      const k = `${p.material}_${p.grosor}`;
-      (groups[k] = groups[k] || []).push(p);
-    });
+    const groups: Record<string, TypedEntry[]> = {};
+    for (const e of entries) {
+      const k = `${e.piece.material}_${e.piece.grosor}`;
+      (groups[k] = groups[k] || []).push(e);
+    }
 
     const allBoards: Board[] = [];
     for (const k in groups) {
       const g = groups[k];
-      const best = this._optGroup(g, g[0].material, g[0].grosor, rng);
+      const first = g[0].piece;
+      const best = this._optGroup(g, first.material, first.grosor, rng);
       allBoards.push(...best);
     }
     allBoards.forEach(b => b.calcOffcuts(this.minOff));
@@ -632,11 +850,12 @@ class Optimizer {
   }
 
   private _optGroup(
-    group: (Pieza & { _idx: number })[],
+    group: TypedEntry[],
     mat: string, grs: number,
     rng: () => number
   ): Board[] {
-    type SortFn = (a: Pieza, b: Pieza) => number;
+    // Accepts both Pieza and TypedEntry (structural subtype — both expose .ancho/.alto).
+    type SortFn = (a: { ancho: number; alto: number }, b: { ancho: number; alto: number }) => number;
     const sorts: [string, SortFn][] = [
       ['area',  (a, b) => (b.ancho * b.alto - a.ancho * a.alto) || (Math.max(b.ancho, b.alto) - Math.max(a.ancho, a.alto))],
       ['lado',  (a, b) => (Math.max(b.ancho, b.alto) - Math.max(a.ancho, a.alto)) || (b.ancho * b.alto - a.ancho * a.alto)],
@@ -653,46 +872,38 @@ class Optimizer {
     let bestName = '';
     let totalIters = 0;
 
-    // Adaptive budget by group size. The engine is O(N²) per iteration,
-    // so a project's dominant material (e.g. Oak Plywood with 13k pieces)
-    // blows the wall-clock even with 5 GRASP iters. For those we also cap
-    // the deterministic sorts + drop GRASP to a single attempt. GRASP is
-    // stochastic multi-start — for huge groups the first deterministic
-    // sort is usually within a few percent of the best anyway.
+    // Adaptive budget by expanded piece count (= Σ remaining across entries),
+    // matching pre-refactor semantics where `group.length` was the total
+    // number of physical instances.
     //
-    // Tiers (tunable constants, kept here so future packer-level fixes
-    // can relax the limits in one place):
+    // Tiers (tunable — future packer-level wins can relax these in one place):
     //   ≤500 expanded  → 8 sorts × GRASP_ITERS (unchanged)
     //   501..2000      → 8 sorts × 5 GRASP   + early term after 3
     //   >2000          → 2 sorts × 1 GRASP   + early term after 1
-    //
-    // Precision hit on the affected group: ~2-3% large, ~5-8% huge.
-    // Only applies to the one group that trips the threshold; small
-    // groups keep full quality.
+    let totalExpanded = 0;
+    for (let i = 0; i < group.length; i++) totalExpanded += group[i].remaining;
+
     const LARGE_GROUP_THRESHOLD = 500;
     const HUGE_GROUP_THRESHOLD = 2000;
-    const isLargeGroup = group.length > LARGE_GROUP_THRESHOLD;
-    const isHugeGroup  = group.length > HUGE_GROUP_THRESHOLD;
+    const isLargeGroup = totalExpanded > LARGE_GROUP_THRESHOLD;
+    const isHugeGroup  = totalExpanded > HUGE_GROUP_THRESHOLD;
     const effectiveGraspIters      = isHugeGroup ? 1 : (isLargeGroup ? 5 : GRASP_ITERS);
     const effectiveGuillotineIters = isHugeGroup ? 1 : (isLargeGroup ? 5 : GUILLOTINE_ITERS);
     const EARLY_TERM_AFTER         = isHugeGroup ? 1 : 3;
-    // Huge groups: skip most deterministic sorts too (they each run a
-    // full O(N²) build over all pieces). `area` and `lado` are the two
-    // that converge fastest in practice — keep those, drop the rest.
     const effectiveSorts = isHugeGroup
       ? sorts.filter(([n]) => n === 'area' || n === 'lado')
       : sorts;
 
     if (isHugeGroup || isLargeGroup) {
-      console.log(`[_optGroup] ${mat} ${grs}mm (${group.length} pieces) — ${isHugeGroup ? 'huge' : 'large'} tier: ${effectiveSorts.length} sorts × ${effectiveGuillotineIters} GRASP, early-term ≥${EARLY_TERM_AFTER}`);
+      console.log(`[_optGroup] ${mat} ${grs}mm (${totalExpanded} pieces) — ${isHugeGroup ? 'huge' : 'large'} tier: ${effectiveSorts.length} sorts × ${effectiveGuillotineIters} GRASP, early-term ≥${EARLY_TERM_AFTER}`);
     }
 
     // ── MaxRect phases — only when 'both' engines are requested ──
     if (this.engineMode === 'both') {
       for (const [sn, sf] of effectiveSorts) {
-        const sorted = [...group].sort(sf);
+        const sortedEntries = [...group].sort(sf);
         for (const h of HEURISTICS) {
-          const bds = this._build(sorted, mat, grs, h);
+          const bds = this._build(sortedEntries, mat, grs, h);
           const sc  = this._score(bds);
           totalIters++;
           if (sc < bestScore) { bestScore = sc; best = bds; bestName = `${sn}+${h}`; }
@@ -703,9 +914,14 @@ class Optimizer {
         const si = Math.floor(rng() * sorts.length);
         const hi = Math.floor(rng() * HEURISTICS.length);
         const [sn, sf] = sorts[si];
-        const sorted  = [...group].sort(sf);
-        const shuffled = this._shuffleWin(sorted, rng);
-        const bds  = this._build(shuffled, mat, grs, HEURISTICS[hi]);
+        // GRASP path: shuffle over the expanded sequence (one item per physical
+        // instance) so _shuffleWin consumes the RNG length × times — matches the
+        // pre-refactor RNG consumption and preserves byte-identity. Wrap the
+        // shuffled expanded back into TypedEntry[] (remaining=1 each) so
+        // downstream packing functions see the unified type.
+        const shuffledExpanded = this._shuffleWin(materializeExpanded(group).sort(sf), rng);
+        const shuffledEntries = wrapExpandedAsEntries(shuffledExpanded);
+        const bds  = this._build(shuffledEntries, mat, grs, HEURISTICS[hi]);
         const sc   = this._score(bds);
         totalIters++;
         if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP(${sn}+${HEURISTICS[hi]})`; maxrectNoImprove = 0; }
@@ -715,8 +931,8 @@ class Optimizer {
 
     // ── Shelf-first guillotine passes: N deterministic + M GRASP ──
     for (const [sn, sf] of effectiveSorts) {
-      const sorted = [...group].sort(sf);
-      const bds = this._buildShelfGuillotine(sorted, mat, grs);
+      const sortedEntries = [...group].sort(sf);
+      const bds = this._buildShelfGuillotine(sortedEntries, mat, grs);
       const sc  = this._score(bds);
       totalIters++;
       if (sc < bestScore) { bestScore = sc; best = bds; bestName = `shelf-${sn}`; }
@@ -725,8 +941,10 @@ class Optimizer {
     for (let g = 0; g < effectiveGuillotineIters; g++) {
       const si = Math.floor(rng() * sorts.length);
       const [sn, sf] = sorts[si];
-      const shuffled = this._shuffleWin([...group].sort(sf), rng);
-      const bds = this._buildShelfGuillotine(shuffled, mat, grs);
+      // GRASP path: shuffle over expanded to preserve RNG consumption (byte-identity).
+      const shuffledExpanded = this._shuffleWin(materializeExpanded(group).sort(sf), rng);
+      const shuffledEntries = wrapExpandedAsEntries(shuffledExpanded);
+      const bds = this._buildShelfGuillotine(shuffledEntries, mat, grs);
       const sc  = this._score(bds);
       totalIters++;
       if (sc < bestScore) { bestScore = sc; best = bds; bestName = `GRASP-shelf(${sn})`; shelfNoImprove = 0; }
@@ -768,7 +986,7 @@ class Optimizer {
     return [...rems, ...stk.sort((a, b) => a.costo - b.costo)];
   }
 
-  private _build(pcs: (Pieza & { _idx: number })[], mat: string, grs: number, heuristic: Heuristic): Board[] {
+  private _build(entries: TypedEntry[], mat: string, grs: number, heuristic: Heuristic): Board[] {
     const boards: Board[] = [];
     const availStocks = this._getStocksFor(mat, grs);
     if (!availStocks.length) return [];
@@ -776,62 +994,69 @@ class Optimizer {
     // Track usage count per stockId for qty limits
     const usageCount: Record<string, number> = {};
 
-    for (const p of pcs) {
-      const fitsN = (s: { ancho: number; alto: number }) => p.veta !== 'vertical' && p.ancho <= s.ancho && p.alto <= s.alto;
-      const fitsR = (s: { ancho: number; alto: number }) => p.veta !== 'horizontal' && p.alto <= s.ancho && p.ancho <= s.alto;
+    // Iterate entries and place each physical instance (count = snapshot of
+    // remaining at entry time; we don't mutate entry.remaining — _build is
+    // re-entrant across sort/heuristic passes within _optGroup).
+    for (const e of entries) {
+      const count = e.remaining;
+      if (count <= 0) continue;
+      const p = e.piece;
+      const pAncho = e.ancho, pAlto = e.alto, pVeta = e.veta, pIdx = e._idx;
 
-      let bestBoard: Board | null = null;
-      let bestS = Infinity, bestS2 = Infinity, bestRot = false;
+      for (let c = 0; c < count; c++) {
+        let bestBoard: Board | null = null;
+        let bestS = Infinity, bestS2 = Infinity, bestRot = false;
 
-      for (const b of boards) {
-        if (fitsN(b)) {
-          const r = b.findBest(p.ancho, p.alto, heuristic);
-          if (r) {
-            const [s1, s2] = this._espScore(r, p.ancho, p.alto, heuristic);
-            if (s1 < bestS || (s1 === bestS && s2 < bestS2)) { bestS = s1; bestS2 = s2; bestBoard = b; bestRot = false; }
+        for (const b of boards) {
+          if (pVeta !== 'vertical' && pAncho <= b.ancho && pAlto <= b.alto) {
+            const r = b.findBest(pAncho, pAlto, heuristic);
+            if (r) {
+              const [s1, s2] = this._espScore(r, pAncho, pAlto, heuristic);
+              if (s1 < bestS || (s1 === bestS && s2 < bestS2)) { bestS = s1; bestS2 = s2; bestBoard = b; bestRot = false; }
+            }
+          }
+          if (pVeta !== 'horizontal' && pAlto <= b.ancho && pAncho <= b.alto) {
+            const r = b.findBest(pAlto, pAncho, heuristic);
+            if (r) {
+              const [s1, s2] = this._espScore(r, pAlto, pAncho, heuristic);
+              if (s1 < bestS || (s1 === bestS && s2 < bestS2)) { bestS = s1; bestS2 = s2; bestBoard = b; bestRot = true; }
+            }
           }
         }
-        if (fitsR(b)) {
-          const r = b.findBest(p.alto, p.ancho, heuristic);
-          if (r) {
-            const [s1, s2] = this._espScore(r, p.alto, p.ancho, heuristic);
-            if (s1 < bestS || (s1 === bestS && s2 < bestS2)) { bestS = s1; bestS2 = s2; bestBoard = b; bestRot = true; }
+
+        if (bestBoard) {
+          if (bestRot) bestBoard.place(p, pAlto, pAncho, true,  pIdx, heuristic);
+          else         bestBoard.place(p, pAncho, pAlto, false, pIdx, heuristic);
+          continue;
+        }
+
+        let placed = false;
+        for (const st of availStocks) {
+          if (st.isRemnant && st._used) continue;
+          // Check qty limit (0 = unlimited)
+          if (st.stockId && st.qty && st.qty > 0) {
+            if ((usageCount[st.stockId] || 0) >= st.qty) continue;
+          }
+          const sierra = st.sierra || this.sierra;
+          const nb = new Board(st.ancho, st.alto, sierra, mat, grs, {
+            nombre: st.nombre, costo: st.costo, isRemnant: !!st.isRemnant,
+          }, this.trim);
+          const fn = pVeta !== 'vertical' && pAncho <= st.ancho && pAlto <= st.alto;
+          const fr = pVeta !== 'horizontal' && pAlto <= st.ancho && pAncho <= st.alto;
+          if (fn && nb.place(p, pAncho, pAlto, false, pIdx, heuristic)) {
+            boards.push(nb); if (st.isRemnant) st._used = true;
+            if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
+            placed = true; break;
+          }
+          if (fr && nb.place(p, pAlto, pAncho, true,  pIdx, heuristic)) {
+            boards.push(nb); if (st.isRemnant) st._used = true;
+            if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
+            placed = true; break;
           }
         }
-      }
-
-      if (bestBoard) {
-        if (bestRot) bestBoard.place(p, p.alto, p.ancho, true,  p._idx, heuristic);
-        else         bestBoard.place(p, p.ancho, p.alto, false, p._idx, heuristic);
-        continue;
-      }
-
-      let placed = false;
-      for (const st of availStocks) {
-        if (st.isRemnant && st._used) continue;
-        // Check qty limit (0 = unlimited)
-        if (st.stockId && st.qty && st.qty > 0) {
-          if ((usageCount[st.stockId] || 0) >= st.qty) continue;
+        if (!placed) {
+          this._warnUnfit(p, '');
         }
-        const sierra = st.sierra || this.sierra;
-        const nb = new Board(st.ancho, st.alto, sierra, mat, grs, {
-          nombre: st.nombre, costo: st.costo, isRemnant: !!st.isRemnant,
-        }, this.trim);
-        const fn = p.veta !== 'vertical' && p.ancho <= st.ancho && p.alto <= st.alto;
-        const fr = p.veta !== 'horizontal' && p.alto <= st.ancho && p.ancho <= st.alto;
-        if (fn && nb.place(p, p.ancho, p.alto, false, p._idx, heuristic)) {
-          boards.push(nb); if (st.isRemnant) st._used = true;
-          if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
-          placed = true; break;
-        }
-        if (fr && nb.place(p, p.alto, p.ancho, true,  p._idx, heuristic)) {
-          boards.push(nb); if (st.isRemnant) st._used = true;
-          if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
-          placed = true; break;
-        }
-      }
-      if (!placed) {
-        this._warnUnfit(p, '');
       }
     }
     return boards;
@@ -843,104 +1068,257 @@ class Optimizer {
    *  transposed so shelves span the SHORT dimension and stack along the LONG
    *  dimension — matching the HongYe convention where shelves span the full
    *  board width (1220mm) and stack along the board length (2440mm). */
-  private _buildShelfGuillotine(pcs: (Pieza & { _idx: number })[], mat: string, grs: number): Board[] {
+  private _buildShelfGuillotine(entries: TypedEntry[], mat: string, grs: number): Board[] {
     const boards: Board[] = [];
     const availStocks = this._getStocksFor(mat, grs);
     if (!availStocks.length) return [];
 
     const usageCount: Record<string, number> = {};
-    let remaining = [...pcs];
 
-    while (remaining.length > 0) {
-      let placed = false;
+    // Clone entries so per-board decrements don't pollute the caller's array
+    // (each sort/iter pass in _optGroup must see the same initial remaining).
+    const localEntries: TypedEntry[] = new Array(entries.length);
+    for (let i = 0; i < entries.length; i++) localEntries[i] = { ...entries[i] };
 
-      for (const st of availStocks) {
-        if (st.isRemnant && st._used) continue;
-        if (st.stockId && st.qty && st.qty > 0) {
-          if ((usageCount[st.stockId] || 0) >= st.qty) continue;
-        }
+    // Main packing pass — parameterised by the guillotinePack recursion
+    // budget so the fallback can re-run with a larger cap if the first pass
+    // leaves pieces stranded.
+    const runMainLoop = (budgetLimit: number) => {
+      while (hasAnyRemaining(localEntries)) {
+        let placed = false;
 
-        const sierra = st.sierra || this.sierra;
-        const t = this.trim;
-        const packW = st.ancho - 2 * t;
-        const packH = st.alto  - 2 * t;
-
-        if (packW < 10 || packH < 10) continue;
-
-        // HongYe shelf convention: shelves span the SHORT side, stack along the LONG side.
-        // If the board is landscape (packW > packH), transpose so the algorithm's
-        // internal Y becomes the long dimension.
-        const needTranspose = packW > packH;
-        const sW = needTranspose ? packH : packW;
-        const sH = needTranspose ? packW : packH;
-
-        // When transposing, "normal" in transposed space maps to "rotated" on the
-        // actual board and vice versa. Swap veta so grain constraints stay correct:
-        //   veta='vertical' (blocks normal on board) → blocks rotated in transposed = 'horizontal'
-        //   veta='horizontal' (blocks rotated on board) → blocks normal in transposed = 'vertical'
-        const swapVeta = (v: 'none' | 'horizontal' | 'vertical') =>
-          !needTranspose ? v : v === 'vertical' ? 'horizontal' : v === 'horizontal' ? 'vertical' : v;
-
-        const anyFits = remaining.some(p => {
-          const v = swapVeta(p.veta);
-          return (v !== 'vertical'   && p.ancho <= sW && p.alto  <= sH) ||
-                 (v !== 'horizontal' && p.alto  <= sW && p.ancho <= sH);
-        });
-        if (!anyFits) continue;
-
-        // Create piece copies with transposed veta for the packing algorithm.
-        // Keep a map from copy → original for restoring references after packing.
-        let packItems: (Pieza & { _idx: number })[];
-        let copyToOrig: Map<object, (Pieza & { _idx: number })> | null = null;
-        if (needTranspose) {
-          copyToOrig = new Map();
-          packItems = remaining.map(p => {
-            const copy = { ...p, veta: swapVeta(p.veta) };
-            copyToOrig!.set(copy, p);
-            return copy;
-          });
-        } else {
-          packItems = remaining;
-        }
-
-        const result = shelfGuillotinePack(t, t, sW, sH, packItems, sierra);
-        if (!result.placed.length) continue;
-
-        // Transpose coordinates back to the board's actual orientation
-        if (needTranspose && copyToOrig) {
-          for (const pp of result.placed) {
-            // Restore original piece reference (packing used veta-swapped copies)
-            pp.piece = copyToOrig.get(pp.piece) ?? pp.piece;
-            [pp.x, pp.y] = [pp.y, pp.x];
-            [pp.w, pp.h] = [pp.h, pp.w];
-            pp.rotated = pp.w !== pp.piece.ancho;
+        for (const st of availStocks) {
+          if (st.isRemnant && st._used) continue;
+          if (st.stockId && st.qty && st.qty > 0) {
+            if ((usageCount[st.stockId] || 0) >= st.qty) continue;
           }
-          if (result.tree) transposeCutTree(result.tree);
+
+          const sierra = st.sierra || this.sierra;
+          const t = this.trim;
+          const packW = st.ancho - 2 * t;
+          const packH = st.alto  - 2 * t;
+
+          if (packW < 10 || packH < 10) continue;
+
+          // HongYe shelf convention: shelves span the SHORT side, stack along the LONG side.
+          // If the board is landscape (packW > packH), transpose so the algorithm's
+          // internal Y becomes the long dimension.
+          const needTranspose = packW > packH;
+          const sW = needTranspose ? packH : packW;
+          const sH = needTranspose ? packW : packH;
+
+          // When transposing, "normal" in transposed space maps to "rotated" on the
+          // actual board and vice versa. Swap veta so grain constraints stay correct.
+          const swapVeta = (v: 'none' | 'horizontal' | 'vertical') =>
+            !needTranspose ? v : v === 'vertical' ? 'horizontal' : v === 'horizontal' ? 'vertical' : v;
+
+          const stockBoundMax = sW > sH ? sW : sH;
+          let anyFits = false;
+          for (let i = 0; i < localEntries.length; i++) {
+            const e = localEntries[i];
+            if (e.remaining === 0 || e.maxDim > stockBoundMax) continue;
+            const v = swapVeta(e.veta);
+            if ((v !== 'vertical'   && e.ancho <= sW && e.alto  <= sH) ||
+                (v !== 'horizontal' && e.alto  <= sW && e.ancho <= sH)) {
+              anyFits = true;
+              break;
+            }
+          }
+          if (!anyFits) continue;
+
+          // For the transpose path, create T veta-swapped TypedEntry copies
+          // (was N spread copies pre-refactor — e.g. 892 vs 24,585 for Oak
+          // Plywood). `piece` still refs the original Pieza so PlacedPiece.piece
+          // downstream always points to the unswapped original.
+          let packEntries: TypedEntry[];
+          if (needTranspose) {
+            packEntries = new Array(localEntries.length);
+            for (let i = 0; i < localEntries.length; i++) {
+              const e = localEntries[i];
+              packEntries[i] = { ...e, veta: swapVeta(e.veta) };
+            }
+          } else {
+            packEntries = localEntries;
+          }
+
+          const result = shelfGuillotinePack(t, t, sW, sH, packEntries, sierra, budgetLimit);
+          if (!result.placed.length) continue;
+
+          // Transpose coordinates back to the board's actual orientation.
+          // `pp.piece` already refs the original Pieza — no Map lookup needed.
+          if (needTranspose) {
+            for (const pp of result.placed) {
+              [pp.x, pp.y] = [pp.y, pp.x];
+              [pp.w, pp.h] = [pp.h, pp.w];
+              pp.rotated = pp.w !== pp.piece.ancho;
+            }
+            if (result.tree) transposeCutTree(result.tree);
+          }
+
+          const nb = new Board(st.ancho, st.alto, sierra, mat, grs, {
+            nombre: st.nombre, costo: st.costo, isRemnant: !!st.isRemnant,
+          }, t);
+          nb.placed   = result.placed;
+          nb.cutTree  = result.tree ?? undefined;
+          boards.push(nb);
+
+          if (st.isRemnant) st._used = true;
+          if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
+
+          // Propagate decrements from packEntries back to localEntries.
+          // Same-array case (no transpose): decrements already applied in place.
+          if (needTranspose) {
+            for (let i = 0; i < localEntries.length; i++) {
+              localEntries[i].remaining = packEntries[i].remaining;
+            }
+          }
+          placed = true;
+          break;
         }
 
-        const nb = new Board(st.ancho, st.alto, sierra, mat, grs, {
-          nombre: st.nombre, costo: st.costo, isRemnant: !!st.isRemnant,
-        }, t);
-        nb.placed   = result.placed;
-        nb.cutTree  = result.tree ?? undefined;
-        boards.push(nb);
-
-        if (st.isRemnant) st._used = true;
-        if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
-
-        const placedSet = new Set(result.placed.map(pp => pp.piece));
-        remaining = remaining.filter(p => !placedSet.has(p));
-        placed = true;
-        break;
+        if (!placed) break;
       }
+    };
 
-      if (!placed) {
-        remaining.forEach(p => this._warnUnfit(p, '[shelf-guillotine] '));
-        break;
+    // Pass 1: main packer at default recursion budget.
+    runMainLoop(GUILLOTINE_CALL_LIMIT);
+
+    // Pass 2: if pieces remain, retry the whole main loop with a 10× inflated
+    // budget. Often enough to pack pieces that were stranded because a sub-
+    // guillotine call hit the default cap and left part of a shelf empty.
+    if (hasAnyRemaining(localEntries)) {
+      const stranded = localEntries.reduce((s, e) => s + e.remaining, 0);
+      console.warn(
+        `[_buildShelfGuillotine] ${mat} ${grs}mm: ${stranded} piece(s) stranded after ` +
+        `main pass (GUILLOTINE_CALL_LIMIT=${GUILLOTINE_CALL_LIMIT}); retrying with inflated ` +
+        `budget (${GUILLOTINE_CALL_LIMIT_FALLBACK}).`
+      );
+      runMainLoop(GUILLOTINE_CALL_LIMIT_FALLBACK);
+    }
+
+    // Pass 3 (last resort): force-place any remaining pieces one per board.
+    // Guarantees the quote covers every piece that physically fits on any
+    // available stock. Inefficient — creates extra boards — but avoids the
+    // catastrophic case where pieces silently drop out of the material cost.
+    if (hasAnyRemaining(localEntries)) {
+      const stillStranded = localEntries.reduce((s, e) => s + e.remaining, 0);
+      console.warn(
+        `[_buildShelfGuillotine] ${mat} ${grs}mm: ${stillStranded} piece(s) still stranded ` +
+        `after fallback pass; force-placing one-per-board to guarantee material coverage.`
+      );
+      this._forcePlaceOnePerBoard(localEntries, availStocks, mat, grs, boards, usageCount);
+    }
+
+    // Final warn for pieces that don't geometrically fit any stock at all.
+    if (hasAnyRemaining(localEntries)) {
+      for (let i = 0; i < localEntries.length; i++) {
+        const e = localEntries[i];
+        if (e.remaining > 0) this._warnUnfit(e.piece, '[shelf-guillotine] ');
       }
     }
 
     return boards;
+  }
+
+  /** Last-resort fallback: create one dedicated board per remaining piece
+   *  instance. Called only when both the main packer pass and the inflated-
+   *  budget pass leave pieces stranded. Uses a simple first-fit-stock +
+   *  corner-placement layout to guarantee every piece that geometrically fits
+   *  in any available stock gets a board (and thus shows up in the quote's
+   *  material cost). Pieces that don't fit any stock are left in `localEntries`
+   *  for the caller to warn about. */
+  private _forcePlaceOnePerBoard(
+    localEntries: TypedEntry[],
+    availStocks: ReturnType<Optimizer['_getStocksFor']>,
+    mat: string,
+    grs: number,
+    boards: Board[],
+    usageCount: Record<string, number>,
+  ): void {
+    for (const e of localEntries) {
+      while (e.remaining > 0) {
+        // Find first stock that can host this piece in either orientation,
+        // respecting veta and remnant/qty limits.
+        let chosenStock: typeof availStocks[number] | null = null;
+        let chosenRotated = false;
+
+        for (const st of availStocks) {
+          if (st.isRemnant && st._used) continue;
+          if (st.stockId && st.qty && st.qty > 0) {
+            if ((usageCount[st.stockId] || 0) >= st.qty) continue;
+          }
+          const packW = st.ancho - 2 * this.trim;
+          const packH = st.alto  - 2 * this.trim;
+          if (packW < 10 || packH < 10) continue;
+          if (e.veta !== 'vertical'   && e.ancho <= packW && e.alto  <= packH) {
+            chosenStock = st; chosenRotated = false; break;
+          }
+          if (e.veta !== 'horizontal' && e.alto  <= packW && e.ancho <= packH) {
+            chosenStock = st; chosenRotated = true; break;
+          }
+        }
+
+        if (!chosenStock) break; // truly unfit — handled by caller's warn pass
+
+        const t = this.trim;
+        const brdSierra = chosenStock.sierra || this.sierra;
+        const kerf = brdSierra;
+        const pw = chosenRotated ? e.alto : e.ancho;
+        const ph = chosenRotated ? e.ancho : e.alto;
+        const boardW = chosenStock.ancho - 2 * t;
+        const boardH = chosenStock.alto  - 2 * t;
+
+        const pp: PlacedPiece = {
+          piece: e.piece, x: t, y: t, w: pw, h: ph,
+          rotated: chosenRotated, idx: e._idx,
+        };
+        const pieceLeaf: CutTreeNode = {
+          x: t, y: t, w: pw, h: ph,
+          piece: pp, cut: null, left: null, right: null,
+        };
+
+        // Minimal cutTree: optionally V-cut right of piece, then H-cut below.
+        let topPart: CutTreeNode = pieceLeaf;
+        if (pw < boardW - kerf) {
+          const rightWaste: CutTreeNode = {
+            x: t + pw + kerf, y: t, w: boardW - pw - kerf, h: ph,
+            piece: null, cut: null, left: null, right: null,
+          };
+          topPart = {
+            x: t, y: t, w: boardW, h: ph,
+            piece: null, cut: { type: 'V', pos: t + pw + kerf / 2, isPieceCut: true },
+            left: pieceLeaf, right: rightWaste,
+          };
+        }
+
+        let rootTree: CutTreeNode;
+        if (ph < boardH - kerf) {
+          const belowWaste: CutTreeNode = {
+            x: t, y: t + ph + kerf, w: boardW, h: boardH - ph - kerf,
+            piece: null, cut: null, left: null, right: null,
+          };
+          rootTree = {
+            x: t, y: t, w: boardW, h: boardH,
+            piece: null, cut: { type: 'H', pos: t + ph + kerf / 2, isPieceCut: true },
+            left: topPart, right: belowWaste,
+          };
+        } else {
+          rootTree = topPart;
+        }
+
+        const nb = new Board(chosenStock.ancho, chosenStock.alto, brdSierra, mat, grs, {
+          nombre: chosenStock.nombre, costo: chosenStock.costo, isRemnant: !!chosenStock.isRemnant,
+        }, t);
+        nb.placed = [pp];
+        nb.cutTree = rootTree;
+        boards.push(nb);
+
+        if (chosenStock.isRemnant) chosenStock._used = true;
+        if (chosenStock.stockId) usageCount[chosenStock.stockId] = (usageCount[chosenStock.stockId] || 0) + 1;
+
+        e.remaining -= 1;
+      }
+    }
   }
 
   private _espScore(r: { x: number; y: number; w: number; h: number }, w: number, h: number, heuristic: Heuristic): [number, number] {
@@ -1075,6 +1453,10 @@ export function runOptimization(
     console.warn('[runOptimization] dropped invalid inputs:', dropped);
   }
 
+  // Reset the module-level cap-fire counter so this run's value reflects
+  // only decrements that happened during this invocation.
+  _capFireCount = 0;
+
   const totalExpanded = cleanPieces.reduce((s, p) => s + p.cantidad, 0);
   console.log('[runOptimization] starting', {
     piecesIn: pieces.length,
@@ -1128,6 +1510,25 @@ export function runOptimization(
     }
   });
 
+  const totalPlaced = boardResults.reduce((s, b) => s + b.placed.length, 0);
+  const totalUnplaced = unplacedPieces.reduce((s, u) => s + u.count, 0);
+  const capFires = _capFireCount;
+  console.log(
+    `[runOptimization] done: ${boardResults.length} boards, ${totalPlaced} placed, ` +
+    `${totalUnplaced} unplaced, efficiency ${(totalArea > 0 ? (usedArea / totalArea) * 100 : 0).toFixed(1)}%, ` +
+    `strategy=${opt.bestStrategy}, capFires=${capFires}`
+  );
+  if (totalUnplaced > 0) {
+    console.warn('[runOptimization] unplaced pieces:', unplacedPieces);
+  }
+  if (capFires > 0) {
+    console.warn(
+      `[runOptimization] guillotinePack call-count cap fired ${capFires} time(s) — ` +
+      `some groups may be sub-optimally packed. Consider adding +5-10% safety margin ` +
+      `to material estimates for this quotation.`
+    );
+  }
+
   return {
     boards: boardResults,
     totalPieces,
@@ -1137,6 +1538,7 @@ export function runOptimization(
     strategy: opt.bestStrategy,
     usefulOffcuts,
     unplacedPieces,
+    capFires,
   };
 }
 
@@ -1173,7 +1575,11 @@ export function optimizeOneGroup(
   engineMode: EngineMode = 'guillotine',
   objective: OptimizationObjective = 'min-boards',
   rngSeed = 42,
-): { boards: BoardResult[]; strategy: string; iters: number; timeMs: number } {
+): { boards: BoardResult[]; strategy: string; iters: number; timeMs: number; capFires: number } {
+  // Reset the module-level cap-fire counter so the returned capFires reflects
+  // only decrements from this group's pack. Workers are isolated (one group
+  // per worker) so this is safe module state.
+  _capFireCount = 0;
   const opt = new Optimizer(stocks, remnants, globalSierra, minOffcut, boardTrim, engineMode, objective);
   const boards = opt.run(groupPieces, rngSeed);
   return {
@@ -1181,6 +1587,7 @@ export function optimizeOneGroup(
     strategy: opt.bestStrategy,
     iters: opt.iters,
     timeMs: opt.time,
+    capFires: _capFireCount,
   };
 }
 
