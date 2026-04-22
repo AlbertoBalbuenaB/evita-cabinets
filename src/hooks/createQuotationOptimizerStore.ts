@@ -314,18 +314,49 @@ export function getQuotationOptimizerStore(
         const activePieces = state.pendingPieces.filter((p) =>
           activeStockNames.has(p.material),
         );
-        const result = runOptimization(
-          activePieces,
-          activeStocks,
-          [], // no remnants in quotation mode for now
-          state.globalSierra,
-          state.minOffcut,
-          effectiveTrim,
-          state.engineMode,
-          state.objective,
-        );
+
+        console.log('[runOptimize] invoking engine', {
+          activePieces: activePieces.length,
+          activeStocks: activeStocks.length,
+          totalExpanded: activePieces.reduce((s, p) => s + p.cantidad, 0),
+          engineMode: state.engineMode,
+          objective: state.objective,
+        });
+
+        // Hard timeout: runOptimization is synchronous, so if it enters a
+        // pathological branch the main thread locks until it returns. The
+        // race below doesn't interrupt the engine (you can't cancel a
+        // synchronous function in JS), but it guarantees the user sees a
+        // legible error instead of Chrome's "Page Unresponsive" dialog
+        // when the run finally completes past the budget. The cure for
+        // the freeze itself is moving the engine to a Web Worker — tracked
+        // as a follow-up PR.
+        const TIMEOUT_MS = 60_000;
+        const result = await Promise.race([
+          Promise.resolve().then(() =>
+            runOptimization(
+              activePieces,
+              activeStocks,
+              [], // no remnants in quotation mode for now
+              state.globalSierra,
+              state.minOffcut,
+              effectiveTrim,
+              state.engineMode,
+              state.objective,
+            ),
+          ),
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new Error(
+                'Optimizer took too long (>60s). The project may have too many pieces or invalid dimensions. Check the console for details.',
+              )),
+              TIMEOUT_MS,
+            ),
+          ),
+        ]);
         set({ pendingResult: result, isOptimizing: false });
       } catch (err) {
+        console.error('[runOptimize] failed', err);
         set({
           isOptimizing: false,
           lastError: err instanceof Error ? err.message : String(err),
