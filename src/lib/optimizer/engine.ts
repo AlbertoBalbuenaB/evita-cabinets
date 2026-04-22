@@ -603,10 +603,10 @@ class Optimizer {
     console.warn(`${prefix}Piece ${p.nombre || p.ancho + 'x' + p.alto} (${p.ancho}×${p.alto}mm, ${p.material}) does not fit any stock`);
   }
 
-  run(pieces: Pieza[]): Board[] {
+  run(pieces: Pieza[], rngSeed = 42): Board[] {
     const t0 = performance.now();
     this._warnedUnfitKeys.clear();
-    let seed = 42;
+    let seed = rngSeed;
     const rng = (): number => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 
     const expanded: (Pieza & { _idx: number })[] = [];
@@ -1099,6 +1099,50 @@ export function runOptimization(
     strategy: opt.bestStrategy,
     usefulOffcuts,
     unplacedPieces,
+  };
+}
+
+/**
+ * Run optimization on a SINGLE material+thickness group. Entry point for the
+ * parallel worker pool (one sub-worker per group). Takes unexpanded `Pieza[]`
+ * (cantidad still present) and returns raw board results plus metadata — no
+ * `totalPieces` / `efficiency` / `unplacedPieces` here; those are computed by
+ * the aggregator (`mergeOptimizationResults`) after all groups return.
+ *
+ * The caller is responsible for:
+ *   - Pre-sanitizing inputs (we trust them here).
+ *   - Passing only pieces of one (material, grosor) — we do not re-group.
+ *   - Choosing a deterministic seed per group (e.g. FNV hash of the key) so
+ *     re-runs produce identical output.
+ *
+ * Why expose `rngSeed` (vs. always 42): the legacy `runOptimization` shares
+ * one rng across groups so the sequence of groups affects each group's GRASP
+ * randomization. Parallelizing breaks that sequencing — we give each group
+ * its own seed instead. GRASP is stochastic multi-start, so seed choice only
+ * affects diversity, not quality. Expect per-group board counts to drift by
+ * ±1-2 vs. the serial single-seed version; global efficiency stays within
+ * ±2%.
+ */
+export function optimizeOneGroup(
+  groupPieces: Pieza[],
+  _mat: string,
+  _grs: number,
+  stocks: StockSize[],
+  remnants: Remnant[],
+  globalSierra = 4.5,
+  minOffcut = 200,
+  boardTrim = 0,
+  engineMode: EngineMode = 'guillotine',
+  objective: OptimizationObjective = 'min-boards',
+  rngSeed = 42,
+): { boards: BoardResult[]; strategy: string; iters: number; timeMs: number } {
+  const opt = new Optimizer(stocks, remnants, globalSierra, minOffcut, boardTrim, engineMode, objective);
+  const boards = opt.run(groupPieces, rngSeed);
+  return {
+    boards: boards.map(b => b.toResult()),
+    strategy: opt.bestStrategy,
+    iters: opt.iters,
+    timeMs: opt.time,
   };
 }
 
