@@ -519,6 +519,10 @@ export function AiChat() {
           detail = parsed.error || parsed.message || raw;
         } catch {}
         console.error('[Evita AI] edge function error', res.status, detail);
+        const isRateLimit = res.status === 429 || /rate[_ ]?limit|429/i.test(detail);
+        if (isRateLimit) {
+          throw new Error('RATE_LIMIT');
+        }
         throw new Error(`HTTP ${res.status}: ${detail.slice(0, 200)}`);
       }
       const data = await res.json();
@@ -531,9 +535,12 @@ export function AiChat() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error('[Evita AI] sendMessage failed:', err);
+      const content = msg === 'RATE_LIMIT'
+        ? '⏳ Evita AI is busy right now (rate limit reached). Please wait ~60 seconds and try again.'
+        : `⚠️ Connection error. Please try again.\n\n_Details: ${msg}_`;
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', content: `⚠️ Connection error. Please try again.\n\n_Details: ${msg}_` },
+        { role: 'assistant', content },
       ]);
     } finally {
       setLoading(false);
@@ -976,7 +983,7 @@ export function AiChat() {
                           : {
                               background: 'var(--surf-btn-hover)',
                               border: '1px solid var(--border-soft)',
-                              color: '#374151',
+                              color: 'var(--fg-800)',
                               borderBottomLeftRadius: '6px',
                             }
                       }

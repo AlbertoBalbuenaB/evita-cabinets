@@ -1953,11 +1953,19 @@ Style: Auto-detect EN/ES. Always show the full breakdown table. Say explicitly i
       ...OPTIMIZER_TOOLS,
       ...BOM_TOOLS,
     ];
-    const tools = modMode
+    const toolsRaw = modMode
       ? [...alwaysTools, ...CATALOG_SEARCH_TOOL, ...MODIFICATION_TOOLS]
       : hasMissingSkus
         ? [...alwaysTools, ...CATALOG_SEARCH_TOOL]
         : alwaysTools;
+    // Prompt caching: mark the last tool so the whole tools block + system
+    // prompt above it are cached for ~5 min. First request pays full input
+    // cost; subsequent requests in the window count cached portions at ~10%
+    // the rate, which keeps us under the 30k input-tokens/min org limit.
+    const tools = toolsRaw.length > 0
+      ? [...toolsRaw.slice(0, -1), { ...toolsRaw[toolsRaw.length - 1], cache_control: { type: 'ephemeral' } }]
+      : toolsRaw;
+    const systemBlocks = [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }];
 
     let currentMessages = [...messages];
     let finalContent = '';
@@ -1967,7 +1975,7 @@ Style: Auto-detect EN/ES. Always show the full breakdown table. Say explicitly i
       const reqBody: any = {
         model: 'claude-sonnet-4-5',
         max_tokens: 4096,
-        system,
+        system: systemBlocks,
         messages: currentMessages,
         tools,
       };
@@ -1976,7 +1984,12 @@ Style: Auto-detect EN/ES. Always show the full breakdown table. Say explicitly i
         headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify(reqBody),
       });
-      if (!aiRes.ok) throw new Error(`Claude ${aiRes.status}: ${await aiRes.text()}`);
+      if (!aiRes.ok) {
+        const errText = await aiRes.text();
+        const err: any = new Error(`Claude ${aiRes.status}: ${errText}`);
+        err.upstreamStatus = aiRes.status;
+        throw err;
+      }
       const d = await aiRes.json();
 
       if (d.stop_reason !== 'tool_use') {
@@ -2001,6 +2014,7 @@ Style: Auto-detect EN/ES. Always show the full breakdown table. Say explicitly i
     );
   } catch (err: any) {
     console.error('evita-ia:', err);
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: CORS });
+    const status = err?.upstreamStatus === 429 ? 429 : 500;
+    return new Response(JSON.stringify({ error: err.message }), { status, headers: CORS });
   }
 });
