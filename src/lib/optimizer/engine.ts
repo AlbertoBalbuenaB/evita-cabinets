@@ -43,6 +43,12 @@ type TypedEntry = {
   remaining: number;
   ancho: number;
   alto: number;
+  /** Math.max(ancho, alto). Cached so hot scans can early-skip entries that
+   *  cannot fit in either orientation of the available rect (maxDim > max(rw,rh))
+   *  without reading ancho/alto and running per-orientation checks. Byte-identity
+   *  preserved: an entry skipped by this bound would have failed both orientation
+   *  checks anyway, so bestEntry selection is unchanged. */
+  maxDim: number;
   veta: 'none' | 'horizontal' | 'vertical';
 };
 
@@ -73,6 +79,7 @@ function wrapExpandedAsEntries(expanded: (Pieza & { _idx: number })[]): TypedEnt
       remaining: 1,
       ancho: p.ancho,
       alto: p.alto,
+      maxDim: p.ancho > p.alto ? p.ancho : p.alto,
       veta: p.veta,
     };
   }
@@ -281,12 +288,16 @@ function guillotinePack(
   const log: ChangedLog = [];
 
   // ── Find best-fitting entry (all orientations, all remaining entries) ──
+  // Pruning pasivo: any entry with `maxDim > max(rw, rh)` cannot fit in either
+  // orientation. Skip before the per-orientation checks — byte-identity preserved
+  // because such entries would have failed both inner ifs anyway.
+  const rMax = rw > rh ? rw : rh;
   let bestEntry: TypedEntry | null = null;
   let bestIw = 0, bestIh = 0, bestScore = -Infinity;
 
   for (let i = 0; i < entries.length; i++) {
     const e = entries[i];
-    if (e.remaining === 0) continue;
+    if (e.remaining === 0 || e.maxDim > rMax) continue;
     if (e.veta !== 'vertical' && e.ancho <= rw && e.alto <= rh) {
       const s = scoreFit(rw, rh, e.ancho, e.alto);
       if (s > bestScore) { bestScore = s; bestEntry = e; bestIw = e.ancho; bestIh = e.alto; }
@@ -441,13 +452,15 @@ function packShelf(
 
   while (xCursor + 10 < shelfX + shelfW) {
     const availW = shelfX + shelfW - xCursor;
+    const boundMax = availW > shelfH ? availW : shelfH;
 
-    // Find best entry that fits in remaining width × shelf height
+    // Find best entry that fits in remaining width × shelf height.
+    // Pruning pasivo: skip entries whose maxDim exceeds max(availW, shelfH).
     let bestEntry: TypedEntry | null = null;
     let bestW = 0, bestH = 0, bestScore = -Infinity;
     for (let i = 0; i < entries.length; i++) {
       const e = entries[i];
-      if (e.remaining === 0) continue;
+      if (e.remaining === 0 || e.maxDim > boundMax) continue;
       // Normal orientation
       if (e.veta !== 'vertical' && e.ancho <= availW && e.alto <= shelfH) {
         const s = scoreFit(availW, shelfH, e.ancho, e.alto);
@@ -570,12 +583,14 @@ function shelfGuillotinePack(
 
   while (yCursor + 10 <= ry + rh && hasAnyRemaining(entries)) {
     const availH = ry + rh - yCursor;
+    const boundMax = availH > rw ? availH : rw;
 
     // Collect distinct candidate shelf heights from entries with remaining > 0.
+    // Pruning pasivo: skip entries whose maxDim exceeds max(availH, rw).
     const heightSet = new Set<number>();
     for (let i = 0; i < entries.length; i++) {
       const e = entries[i];
-      if (e.remaining === 0) continue;
+      if (e.remaining === 0 || e.maxDim > boundMax) continue;
       if (e.veta !== 'vertical'   && e.alto  <= availH && e.ancho <= rw) heightSet.add(e.alto);
       if (e.veta !== 'horizontal' && e.ancho <= availH && e.alto  <= rw) heightSet.add(e.ancho);
     }
@@ -607,9 +622,10 @@ function shelfGuillotinePack(
       const afterH = availH - candidateH - kerf;
       let unplacedFitBelow = false;
       if (afterH >= 10) {
+        const belowBoundMax = afterH > rw ? afterH : rw;
         for (let i = 0; i < entries.length; i++) {
           const e = entries[i];
-          if (e.remaining === 0) continue;
+          if (e.remaining === 0 || e.maxDim > belowBoundMax) continue;
           if ((e.veta !== 'vertical'   && e.alto  <= afterH && e.ancho <= rw) ||
               (e.veta !== 'horizontal' && e.ancho <= afterH && e.alto  <= rw)) {
             unplacedFitBelow = true;
@@ -750,6 +766,7 @@ class Optimizer {
       remaining: p.cantidad,
       ancho: p.ancho,
       alto: p.alto,
+      maxDim: p.ancho > p.alto ? p.ancho : p.alto,
       veta: p.veta,
     }));
 
@@ -1030,10 +1047,11 @@ class Optimizer {
         const swapVeta = (v: 'none' | 'horizontal' | 'vertical') =>
           !needTranspose ? v : v === 'vertical' ? 'horizontal' : v === 'horizontal' ? 'vertical' : v;
 
+        const stockBoundMax = sW > sH ? sW : sH;
         let anyFits = false;
         for (let i = 0; i < localEntries.length; i++) {
           const e = localEntries[i];
-          if (e.remaining === 0) continue;
+          if (e.remaining === 0 || e.maxDim > stockBoundMax) continue;
           const v = swapVeta(e.veta);
           if ((v !== 'vertical'   && e.ancho <= sW && e.alto  <= sH) ||
               (v !== 'horizontal' && e.alto  <= sW && e.ancho <= sH)) {
