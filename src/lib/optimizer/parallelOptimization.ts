@@ -170,6 +170,30 @@ export async function runOptimizationParallel(
 
   const perGroupTimeoutMs = params.perGroupTimeoutMs ?? 60_000;
 
+  // Set of group keys whose worker is currently running. Used to give the
+  // progress UI the *actual* material that's in progress instead of just
+  // the `completed`-th key by insertion order (which is misleading under
+  // parallel scheduling — tasks complete out of order).
+  const runningKeys = new Set<string>();
+
+  const emitProgress = (): void => {
+    let current: string | null;
+    if (runningKeys.size === 0) {
+      current = null;
+    } else if (runningKeys.size === 1) {
+      const onlyKey = runningKeys.values().next().value as string;
+      current = groups.get(onlyKey)?.[0]?.material ?? onlyKey;
+    } else {
+      current = `${runningKeys.size} materials in parallel`;
+    }
+    try {
+      params.onProgress?.({ completed, total: totalGroups, current });
+    } catch (err) {
+      // Never let a caller's onProgress handler deadlock the pool.
+      console.warn('[runOptimizationParallel] onProgress callback threw:', err);
+    }
+  };
+
   const runOneGroup = (groupKey: string, groupPieces: Pieza[]): Promise<GroupResultPart> => {
     return new Promise<GroupResultPart>((resolve, reject) => {
       if (internal.signal.aborted) {
@@ -195,6 +219,7 @@ export async function runOptimizationParallel(
 
       const onInternalAbort = (): void => {
         clearTimeout(perGroupTimeout);
+        runningKeys.delete(groupKey);
         try { worker.terminate(); } catch { /* noop */ }
         reject(internal.signal.reason ?? new DOMException('Run aborted.', 'AbortError'));
       };
@@ -202,6 +227,7 @@ export async function runOptimizationParallel(
 
       const cleanup = (): void => {
         clearTimeout(perGroupTimeout);
+        runningKeys.delete(groupKey);
         try { worker.terminate(); } catch { /* noop */ }
         internal.signal.removeEventListener('abort', onInternalAbort);
       };
@@ -211,9 +237,7 @@ export async function runOptimizationParallel(
         cleanup();
         if (msg.type === 'result') {
           completed += 1;
-          const next = groupKeys[completed] ?? null;
-          const nextLabel = next ? (groups.get(next)?.[0]?.material ?? next) : null;
-          params.onProgress?.({ completed, total: totalGroups, current: nextLabel });
+          emitProgress();
           console.log(`[runOptimizationParallel] ${groupKey} done in ${msg.timeMs.toFixed(0)}ms (strategy: ${msg.strategy})`);
           resolve({
             groupKey,
@@ -251,17 +275,17 @@ export async function runOptimizationParallel(
       };
       const expanded = groupPieces.reduce((s, p) => s + p.cantidad, 0);
       console.log(`[runOptimizationParallel] ${groupKey} starting: ${groupPieces.length} piece-types, ${expanded} expanded`);
+      runningKeys.add(groupKey);
+      emitProgress();
       worker.postMessage(req);
     });
   };
 
   try {
-    // Emit an initial progress event so the UI can render the bar
-    // immediately with "0 of N" + the first material label.
-    const firstLabel = groupKeys.length > 0
-      ? (groups.get(groupKeys[0])?.[0]?.material ?? groupKeys[0])
-      : null;
-    params.onProgress?.({ completed: 0, total: totalGroups, current: firstLabel });
+    // Initial progress frame so the UI renders the bar before any worker
+    // has spawned. `runningKeys` is empty here — emitProgress() will emit
+    // current=null and the band's fallback text takes over.
+    emitProgress();
 
     const tasks = groupKeys.map((k) => () => runOneGroup(k, groups.get(k) as Pieza[]));
     const parts = await runWithLimit(tasks, concurrency);

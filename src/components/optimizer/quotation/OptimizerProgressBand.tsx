@@ -21,6 +21,21 @@ export function OptimizerProgressBand({ progress, onCancel }: OptimizerProgressB
   const { completed, total, current } = progress;
   const percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
 
+  // Label semantics:
+  //  - current === null & completed === total → "Finalizing..."
+  //  - current === null & completed < total   → "Starting..."
+  //  - current is set (either a material name or "N materials in parallel")
+  //    → render it alongside the completion count. Avoids the misleading
+  //    "material N+1 of total" wording that doesn't match parallel scheduling.
+  let label: string;
+  if (current) {
+    label = `${completed} of ${total} complete · ${current}`;
+  } else if (completed >= total) {
+    label = 'Finalizing...';
+  } else {
+    label = 'Starting...';
+  }
+
   return (
     <div
       role="status"
@@ -31,11 +46,7 @@ export function OptimizerProgressBand({ progress, onCancel }: OptimizerProgressB
         <Loader2 className="h-4 w-4 animate-spin text-accent-text shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
-            <span className="text-xs font-medium text-fg-800 truncate">
-              {completed < total
-                ? `Optimizing material ${completed + 1} of ${total}${current ? `: ${current}` : '...'}`
-                : 'Finalizing...'}
-            </span>
+            <span className="text-xs font-medium text-fg-800 truncate">{label}</span>
             <span className="text-xs text-fg-600 shrink-0 tabular-nums">{percent}%</span>
           </div>
           <div
