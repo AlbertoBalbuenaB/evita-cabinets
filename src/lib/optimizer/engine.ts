@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { Pieza, StockSize, Remnant, BoardResult, PlacedPiece, FreeRectData, OptimizationResult, CutStep, UnitSystem, GuillotineCut, CutTreeNode, EngineMode, OptimizationObjective } from './types';
+import { sanitizeOptimizerInputs, MAX_ENGINE_MS } from './sanitizeOptimizerInputs';
 
 // Local unit formatter — avoids importing units.ts into the engine bundle
 const _fmtU = (v: number, unit: UnitSystem) =>
@@ -569,6 +570,13 @@ class Optimizer {
   private trim: number;
   private engineMode: EngineMode;
   private objective: OptimizationObjective;
+  /** Dedupe set for "piece does not fit" warnings. Without this, each of
+   *  the 8 deterministic sorts and ~20 GRASP iterations per material group
+   *  re-emits the same warning for every unfit piece → thousands of logs
+   *  that stall the main thread when DevTools is open. One warning per
+   *  (nombre × WxH × material) is plenty; the full unfit list is returned
+   *  via `unplacedPieces` on the result and surfaced by the Warnings Panel. */
+  private _warnedUnfitKeys: Set<string> = new Set();
   bestStrategy = '';
   iters = 0;
   time = 0;
@@ -588,8 +596,16 @@ class Optimizer {
     this.objective  = objective;
   }
 
+  private _warnUnfit(p: Pieza, prefix: string): void {
+    const key = `${p.material}|${p.grosor}|${p.nombre || ''}|${p.ancho}x${p.alto}`;
+    if (this._warnedUnfitKeys.has(key)) return;
+    this._warnedUnfitKeys.add(key);
+    console.warn(`${prefix}Piece ${p.nombre || p.ancho + 'x' + p.alto} (${p.ancho}×${p.alto}mm, ${p.material}) does not fit any stock`);
+  }
+
   run(pieces: Pieza[]): Board[] {
     const t0 = performance.now();
+    this._warnedUnfitKeys.clear();
     let seed = 42;
     const rng = (): number => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 
@@ -777,7 +793,7 @@ class Optimizer {
         }
       }
       if (!placed) {
-        console.warn(`Piece ${p.nombre || p.ancho + 'x' + p.alto} does not fit any stock size`);
+        this._warnUnfit(p, '');
       }
     }
     return boards;
@@ -881,7 +897,7 @@ class Optimizer {
       }
 
       if (!placed) {
-        remaining.forEach(p => console.warn(`[shelf-guillotine] Piece ${p.nombre || p.ancho + 'x' + p.alto} does not fit any stock`));
+        remaining.forEach(p => this._warnUnfit(p, '[shelf-guillotine] '));
         break;
       }
     }
@@ -1013,13 +1029,48 @@ export function runOptimization(
   engineMode: EngineMode = 'guillotine',
   objective: OptimizationObjective = 'min-boards',
 ): OptimizationResult {
-  const opt = new Optimizer(stocks, remnants, globalSierra, minOffcut, boardTrim, engineMode, objective);
-  const boards = opt.run(pieces);
+  const t0 = performance.now();
+
+  const { cleanPieces, cleanStocks, dropped } = sanitizeOptimizerInputs(pieces, stocks);
+
+  if (dropped.length > 0) {
+    console.warn('[runOptimization] dropped invalid inputs:', dropped);
+  }
+
+  const totalExpanded = cleanPieces.reduce((s, p) => s + p.cantidad, 0);
+  console.log('[runOptimization] starting', {
+    piecesIn: pieces.length,
+    piecesClean: cleanPieces.length,
+    totalExpanded,
+    stocksIn: stocks.length,
+    stocksClean: cleanStocks.length,
+    engineMode,
+    objective,
+  });
+
+  if (cleanPieces.length === 0) {
+    throw new Error(
+      'No valid pieces to optimize. Check cabinet cut-pieces for missing dimensions or quantities.',
+    );
+  }
+  if (cleanStocks.length === 0) {
+    throw new Error(
+      'No valid stocks selected. Make sure at least one board material is checked in the sidebar.',
+    );
+  }
+
+  const opt = new Optimizer(cleanStocks, remnants, globalSierra, minOffcut, boardTrim, engineMode, objective);
+  const boards = opt.run(cleanPieces);
   const boardResults = boards.map(b => b.toResult());
+
+  const elapsed = performance.now() - t0;
+  if (elapsed > MAX_ENGINE_MS) {
+    console.warn(`[runOptimization] took ${elapsed.toFixed(0)}ms (soft budget ${MAX_ENGINE_MS}ms)`);
+  }
 
   const totalArea   = boardResults.reduce((s, b) => s + b.areaTotal, 0);
   const usedArea    = boardResults.reduce((s, b) => s + b.areaUsed, 0);
-  const totalPieces = pieces.reduce((s, p) => s + p.cantidad, 0);
+  const totalPieces = cleanPieces.reduce((s, p) => s + p.cantidad, 0);
   const totalCost   = boardResults.reduce((s, b) => s + b.stockInfo.costo, 0);
   const usefulOffcuts = boardResults.reduce((s, b) => s + b.offcuts.length, 0);
 
@@ -1031,7 +1082,7 @@ export function runOptimization(
     }
   }
   const unplacedPieces: { nombre: string; ancho: number; alto: number; count: number }[] = [];
-  pieces.forEach((p, idx) => {
+  cleanPieces.forEach((p, idx) => {
     const placed = placedCounts.get(idx) || 0;
     const missing = p.cantidad - placed;
     if (missing > 0) {

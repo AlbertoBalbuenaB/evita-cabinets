@@ -32,6 +32,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Hammer, Play, Save, Loader2, RefreshCw, Layers, FileDown } from 'lucide-react';
 import { Button } from '../../Button';
+import { ErrorBoundary } from '../../ErrorBoundary';
 import { CADViewer } from '../CADViewer';
 import { RightStatsPanel } from '../RightStatsPanel';
 import { getQuotationOptimizerStore } from '../../../hooks/createQuotationOptimizerStore';
@@ -488,15 +489,38 @@ export function QuotationOptimizerTab({
   const canSelectOptimizer = activeRunId != null;
 
   return (
-    // Full-bleed wrapper: escape the Layout's max-w-7xl container so the
-    // Breakdown tab uses the full width of the main column. Only affects
-    // this tab — the other tabs (Info, Pricing, Analytics, History) still
-    // respect the centered container.
-    //
-    // --content-offset is the sidebar rail width on desktop and 0 on
-    // mobile (see index.css). It keeps the full-bleed box aligned with
-    // the main column instead of the raw viewport, so the left edge
-    // doesn't slide behind the sidebar on lg+ screens.
+    // Local ErrorBoundary isolates a tab crash (e.g. sync throw from the
+    // optimizer engine) from the rest of the page — the sidebar, other
+    // tabs, and the AI chat stay usable while the Breakdown is broken.
+    // This supplements but does not replace the hard timeout in the
+    // store: the timeout catches main-thread freezes, this catches
+    // thrown errors during render.
+    <ErrorBoundary
+      fallback={
+        <div className="glass-white p-6 rounded-[14px] shadow-card border border-status-red-brd m-4">
+          <h3 className="text-fg-900 font-semibold mb-2">Breakdown tab crashed</h3>
+          <p className="text-fg-700 text-sm mb-3">
+            Something went wrong rendering the optimizer. Open DevTools → Console for the error,
+            then reload the page.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-accent-primary text-accent-on shadow-btn rounded-lg px-4 py-2 text-sm"
+          >
+            Reload
+          </button>
+        </div>
+      }
+    >
+    {/* Full-bleed wrapper: escape the Layout's max-w-7xl container so the
+        Breakdown tab uses the full width of the main column. Only affects
+        this tab — the other tabs (Info, Pricing, Analytics, History) still
+        respect the centered container.
+
+        --content-offset is the sidebar rail width on desktop and 0 on
+        mobile (see index.css). It keeps the full-bleed box aligned with
+        the main column instead of the raw viewport, so the left edge
+        doesn't slide behind the sidebar on lg+ screens. */}
     <div
       className="relative"
       style={{
@@ -691,5 +715,6 @@ export function QuotationOptimizerTab({
       />
     </div>
     </div>
+    </ErrorBoundary>
   );
 }
