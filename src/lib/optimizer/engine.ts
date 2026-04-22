@@ -68,12 +68,23 @@ type ChangedLog = Array<[TypedEntry, number]>;
  *  per-invocation, not global. */
 type GuillotineBudget = { count: number; limit: number };
 
-/** Default cap per top-level guillotinePack call from packShelf. Sized to be
- *  far above what real projects hit in healthy cases (Mountain View real
- *  dims complete in ~15s ≈ millions of calls across ALL sub-guillotines,
- *  each sub-invocation well under 1M), while bounding pathological
- *  dimensional combinations that would otherwise explode the recursion tree. */
-const GUILLOTINE_CALL_LIMIT = 1_000_000;
+/** Default cap per top-level guillotinePack call from packShelf. Sized far
+ *  above what real projects hit in healthy cases (Mountain View real dims
+ *  complete in ~15s ≈ millions of calls across ALL sub-guillotines, each
+ *  sub-invocation well under 1M), while bounding pathological dimensional
+ *  combinations that would otherwise explode the recursion tree.
+ *
+ *  Bumped from 1M → 5M (Apr 2026) after 1030 W 8th Street showed 11 pieces
+ *  stranded by the old 1M cap. 5M gives the packer enough room to complete
+ *  moderately-pathological groups without letting a truly explosive tree
+ *  run away. */
+const GUILLOTINE_CALL_LIMIT = 5_000_000;
+
+/** Inflated budget used by the `_buildShelfGuillotine` fallback pass when
+ *  the main loop leaves pieces stranded. 10× the default, so a group that
+ *  couldn't complete inside the regular budget gets a real second chance
+ *  before we drop it into the one-piece-per-board last resort. */
+const GUILLOTINE_CALL_LIMIT_FALLBACK = 50_000_000;
 
 /** Module-level counter — how many times the guillotinePack budget cap fired
  *  during the current top-level `run()` / `runOptimization()` / `optimizeOneGroup()`
@@ -481,10 +492,13 @@ function guillotinePack(
 /** Pack a single shelf (full-width horizontal strip) left-to-right with vertical cuts.
  *  Pieces that are shorter than the shelf height create sub-columns where the remaining
  *  vertical space below is filled via guillotinePack(). Decrements `entries.remaining`
- *  in place and returns a `log` the caller can revert to undo this trial. */
+ *  in place and returns a `log` the caller can revert to undo this trial.
+ *  `budgetLimit` controls the recursion cap for sub-guillotine calls; defaults to
+ *  GUILLOTINE_CALL_LIMIT but can be inflated by the fallback path. */
 function packShelf(
   shelfX: number, shelfY: number, shelfW: number, shelfH: number,
   entries: TypedEntry[], kerf: number,
+  budgetLimit: number = GUILLOTINE_CALL_LIMIT,
 ): { placed: PlacedPiece[]; tree: CutTreeNode; log: ChangedLog } {
   const placed: PlacedPiece[] = [];
   const columns: CutTreeNode[] = [];
@@ -541,7 +555,7 @@ function packShelf(
         // Fresh call-count budget for this sub-guillotine invocation.
         // Each sub-column gets its own cap — prevents a single pathological
         // column from starving the rest of the shelf's packing budget.
-        const subBudget: GuillotineBudget = { count: 0, limit: GUILLOTINE_CALL_LIMIT };
+        const subBudget: GuillotineBudget = { count: 0, limit: budgetLimit };
         const subResult = guillotinePack(xCursor, belowY, bestW, belowH, entries, kerf, 0, subBudget);
         const subTree = subResult.tree ?? {
           x: xCursor, y: belowY, w: bestW, h: belowH,
@@ -611,11 +625,13 @@ function packShelf(
  *  then packs pieces left-to-right within each shelf using vertical cuts.
  *  Guarantees all first-level cuts are H-type — compatible with HongYe panel saws.
  *  Each candidate shelf-height is trialed in place and reverted; the winner's log
- *  is re-applied at the end. */
+ *  is re-applied at the end. `budgetLimit` is threaded to packShelf so callers can
+ *  inflate the recursion cap for fallback passes. */
 function shelfGuillotinePack(
   rx: number, ry: number, rw: number, rh: number,
   entries: TypedEntry[],
   kerf: number,
+  budgetLimit: number = GUILLOTINE_CALL_LIMIT,
 ): { placed: PlacedPiece[]; tree: CutTreeNode | null; log: ChangedLog } {
   if (rw < 10 || rh < 10 || !hasAnyRemaining(entries)) {
     return { placed: [], tree: null, log: [] };
@@ -655,7 +671,7 @@ function shelfGuillotinePack(
 
     for (const candidateH of candidates) {
       if (candidateH < 10) continue;
-      const trial = packShelf(rx, yCursor, rw, candidateH, entries, kerf);
+      const trial = packShelf(rx, yCursor, rw, candidateH, entries, kerf, budgetLimit);
       if (trial.placed.length === 0) {
         revertChangedLog(trial.log);
         continue;
@@ -1064,108 +1080,245 @@ class Optimizer {
     const localEntries: TypedEntry[] = new Array(entries.length);
     for (let i = 0; i < entries.length; i++) localEntries[i] = { ...entries[i] };
 
-    while (hasAnyRemaining(localEntries)) {
-      let placed = false;
+    // Main packing pass — parameterised by the guillotinePack recursion
+    // budget so the fallback can re-run with a larger cap if the first pass
+    // leaves pieces stranded.
+    const runMainLoop = (budgetLimit: number) => {
+      while (hasAnyRemaining(localEntries)) {
+        let placed = false;
 
-      for (const st of availStocks) {
-        if (st.isRemnant && st._used) continue;
-        if (st.stockId && st.qty && st.qty > 0) {
-          if ((usageCount[st.stockId] || 0) >= st.qty) continue;
-        }
-
-        const sierra = st.sierra || this.sierra;
-        const t = this.trim;
-        const packW = st.ancho - 2 * t;
-        const packH = st.alto  - 2 * t;
-
-        if (packW < 10 || packH < 10) continue;
-
-        // HongYe shelf convention: shelves span the SHORT side, stack along the LONG side.
-        // If the board is landscape (packW > packH), transpose so the algorithm's
-        // internal Y becomes the long dimension.
-        const needTranspose = packW > packH;
-        const sW = needTranspose ? packH : packW;
-        const sH = needTranspose ? packW : packH;
-
-        // When transposing, "normal" in transposed space maps to "rotated" on the
-        // actual board and vice versa. Swap veta so grain constraints stay correct.
-        const swapVeta = (v: 'none' | 'horizontal' | 'vertical') =>
-          !needTranspose ? v : v === 'vertical' ? 'horizontal' : v === 'horizontal' ? 'vertical' : v;
-
-        const stockBoundMax = sW > sH ? sW : sH;
-        let anyFits = false;
-        for (let i = 0; i < localEntries.length; i++) {
-          const e = localEntries[i];
-          if (e.remaining === 0 || e.maxDim > stockBoundMax) continue;
-          const v = swapVeta(e.veta);
-          if ((v !== 'vertical'   && e.ancho <= sW && e.alto  <= sH) ||
-              (v !== 'horizontal' && e.alto  <= sW && e.ancho <= sH)) {
-            anyFits = true;
-            break;
+        for (const st of availStocks) {
+          if (st.isRemnant && st._used) continue;
+          if (st.stockId && st.qty && st.qty > 0) {
+            if ((usageCount[st.stockId] || 0) >= st.qty) continue;
           }
-        }
-        if (!anyFits) continue;
 
-        // For the transpose path, create T veta-swapped TypedEntry copies
-        // (was N spread copies pre-refactor — e.g. 892 vs 24,585 for Oak
-        // Plywood). `piece` still refs the original Pieza so PlacedPiece.piece
-        // downstream always points to the unswapped original.
-        let packEntries: TypedEntry[];
-        if (needTranspose) {
-          packEntries = new Array(localEntries.length);
+          const sierra = st.sierra || this.sierra;
+          const t = this.trim;
+          const packW = st.ancho - 2 * t;
+          const packH = st.alto  - 2 * t;
+
+          if (packW < 10 || packH < 10) continue;
+
+          // HongYe shelf convention: shelves span the SHORT side, stack along the LONG side.
+          // If the board is landscape (packW > packH), transpose so the algorithm's
+          // internal Y becomes the long dimension.
+          const needTranspose = packW > packH;
+          const sW = needTranspose ? packH : packW;
+          const sH = needTranspose ? packW : packH;
+
+          // When transposing, "normal" in transposed space maps to "rotated" on the
+          // actual board and vice versa. Swap veta so grain constraints stay correct.
+          const swapVeta = (v: 'none' | 'horizontal' | 'vertical') =>
+            !needTranspose ? v : v === 'vertical' ? 'horizontal' : v === 'horizontal' ? 'vertical' : v;
+
+          const stockBoundMax = sW > sH ? sW : sH;
+          let anyFits = false;
           for (let i = 0; i < localEntries.length; i++) {
             const e = localEntries[i];
-            packEntries[i] = { ...e, veta: swapVeta(e.veta) };
+            if (e.remaining === 0 || e.maxDim > stockBoundMax) continue;
+            const v = swapVeta(e.veta);
+            if ((v !== 'vertical'   && e.ancho <= sW && e.alto  <= sH) ||
+                (v !== 'horizontal' && e.alto  <= sW && e.ancho <= sH)) {
+              anyFits = true;
+              break;
+            }
           }
-        } else {
-          packEntries = localEntries;
+          if (!anyFits) continue;
+
+          // For the transpose path, create T veta-swapped TypedEntry copies
+          // (was N spread copies pre-refactor — e.g. 892 vs 24,585 for Oak
+          // Plywood). `piece` still refs the original Pieza so PlacedPiece.piece
+          // downstream always points to the unswapped original.
+          let packEntries: TypedEntry[];
+          if (needTranspose) {
+            packEntries = new Array(localEntries.length);
+            for (let i = 0; i < localEntries.length; i++) {
+              const e = localEntries[i];
+              packEntries[i] = { ...e, veta: swapVeta(e.veta) };
+            }
+          } else {
+            packEntries = localEntries;
+          }
+
+          const result = shelfGuillotinePack(t, t, sW, sH, packEntries, sierra, budgetLimit);
+          if (!result.placed.length) continue;
+
+          // Transpose coordinates back to the board's actual orientation.
+          // `pp.piece` already refs the original Pieza — no Map lookup needed.
+          if (needTranspose) {
+            for (const pp of result.placed) {
+              [pp.x, pp.y] = [pp.y, pp.x];
+              [pp.w, pp.h] = [pp.h, pp.w];
+              pp.rotated = pp.w !== pp.piece.ancho;
+            }
+            if (result.tree) transposeCutTree(result.tree);
+          }
+
+          const nb = new Board(st.ancho, st.alto, sierra, mat, grs, {
+            nombre: st.nombre, costo: st.costo, isRemnant: !!st.isRemnant,
+          }, t);
+          nb.placed   = result.placed;
+          nb.cutTree  = result.tree ?? undefined;
+          boards.push(nb);
+
+          if (st.isRemnant) st._used = true;
+          if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
+
+          // Propagate decrements from packEntries back to localEntries.
+          // Same-array case (no transpose): decrements already applied in place.
+          if (needTranspose) {
+            for (let i = 0; i < localEntries.length; i++) {
+              localEntries[i].remaining = packEntries[i].remaining;
+            }
+          }
+          placed = true;
+          break;
         }
 
-        const result = shelfGuillotinePack(t, t, sW, sH, packEntries, sierra);
-        if (!result.placed.length) continue;
-
-        // Transpose coordinates back to the board's actual orientation.
-        // `pp.piece` already refs the original Pieza — no Map lookup needed.
-        if (needTranspose) {
-          for (const pp of result.placed) {
-            [pp.x, pp.y] = [pp.y, pp.x];
-            [pp.w, pp.h] = [pp.h, pp.w];
-            pp.rotated = pp.w !== pp.piece.ancho;
-          }
-          if (result.tree) transposeCutTree(result.tree);
-        }
-
-        const nb = new Board(st.ancho, st.alto, sierra, mat, grs, {
-          nombre: st.nombre, costo: st.costo, isRemnant: !!st.isRemnant,
-        }, t);
-        nb.placed   = result.placed;
-        nb.cutTree  = result.tree ?? undefined;
-        boards.push(nb);
-
-        if (st.isRemnant) st._used = true;
-        if (st.stockId) usageCount[st.stockId] = (usageCount[st.stockId] || 0) + 1;
-
-        // Propagate decrements from packEntries back to localEntries.
-        // Same-array case (no transpose): decrements already applied in place.
-        if (needTranspose) {
-          for (let i = 0; i < localEntries.length; i++) {
-            localEntries[i].remaining = packEntries[i].remaining;
-          }
-        }
-        placed = true;
-        break;
+        if (!placed) break;
       }
+    };
 
-      if (!placed) {
-        for (let i = 0; i < localEntries.length; i++) {
-          const e = localEntries[i];
-          if (e.remaining > 0) this._warnUnfit(e.piece, '[shelf-guillotine] ');
-        }
-        break;
+    // Pass 1: main packer at default recursion budget.
+    runMainLoop(GUILLOTINE_CALL_LIMIT);
+
+    // Pass 2: if pieces remain, retry the whole main loop with a 10× inflated
+    // budget. Often enough to pack pieces that were stranded because a sub-
+    // guillotine call hit the default cap and left part of a shelf empty.
+    if (hasAnyRemaining(localEntries)) {
+      const stranded = localEntries.reduce((s, e) => s + e.remaining, 0);
+      console.warn(
+        `[_buildShelfGuillotine] ${mat} ${grs}mm: ${stranded} piece(s) stranded after ` +
+        `main pass (GUILLOTINE_CALL_LIMIT=${GUILLOTINE_CALL_LIMIT}); retrying with inflated ` +
+        `budget (${GUILLOTINE_CALL_LIMIT_FALLBACK}).`
+      );
+      runMainLoop(GUILLOTINE_CALL_LIMIT_FALLBACK);
+    }
+
+    // Pass 3 (last resort): force-place any remaining pieces one per board.
+    // Guarantees the quote covers every piece that physically fits on any
+    // available stock. Inefficient — creates extra boards — but avoids the
+    // catastrophic case where pieces silently drop out of the material cost.
+    if (hasAnyRemaining(localEntries)) {
+      const stillStranded = localEntries.reduce((s, e) => s + e.remaining, 0);
+      console.warn(
+        `[_buildShelfGuillotine] ${mat} ${grs}mm: ${stillStranded} piece(s) still stranded ` +
+        `after fallback pass; force-placing one-per-board to guarantee material coverage.`
+      );
+      this._forcePlaceOnePerBoard(localEntries, availStocks, mat, grs, boards, usageCount);
+    }
+
+    // Final warn for pieces that don't geometrically fit any stock at all.
+    if (hasAnyRemaining(localEntries)) {
+      for (let i = 0; i < localEntries.length; i++) {
+        const e = localEntries[i];
+        if (e.remaining > 0) this._warnUnfit(e.piece, '[shelf-guillotine] ');
       }
     }
 
     return boards;
+  }
+
+  /** Last-resort fallback: create one dedicated board per remaining piece
+   *  instance. Called only when both the main packer pass and the inflated-
+   *  budget pass leave pieces stranded. Uses a simple first-fit-stock +
+   *  corner-placement layout to guarantee every piece that geometrically fits
+   *  in any available stock gets a board (and thus shows up in the quote's
+   *  material cost). Pieces that don't fit any stock are left in `localEntries`
+   *  for the caller to warn about. */
+  private _forcePlaceOnePerBoard(
+    localEntries: TypedEntry[],
+    availStocks: ReturnType<Optimizer['_getStocksFor']>,
+    mat: string,
+    grs: number,
+    boards: Board[],
+    usageCount: Record<string, number>,
+  ): void {
+    for (const e of localEntries) {
+      while (e.remaining > 0) {
+        // Find first stock that can host this piece in either orientation,
+        // respecting veta and remnant/qty limits.
+        let chosenStock: typeof availStocks[number] | null = null;
+        let chosenRotated = false;
+
+        for (const st of availStocks) {
+          if (st.isRemnant && st._used) continue;
+          if (st.stockId && st.qty && st.qty > 0) {
+            if ((usageCount[st.stockId] || 0) >= st.qty) continue;
+          }
+          const packW = st.ancho - 2 * this.trim;
+          const packH = st.alto  - 2 * this.trim;
+          if (packW < 10 || packH < 10) continue;
+          if (e.veta !== 'vertical'   && e.ancho <= packW && e.alto  <= packH) {
+            chosenStock = st; chosenRotated = false; break;
+          }
+          if (e.veta !== 'horizontal' && e.alto  <= packW && e.ancho <= packH) {
+            chosenStock = st; chosenRotated = true; break;
+          }
+        }
+
+        if (!chosenStock) break; // truly unfit — handled by caller's warn pass
+
+        const t = this.trim;
+        const brdSierra = chosenStock.sierra || this.sierra;
+        const kerf = brdSierra;
+        const pw = chosenRotated ? e.alto : e.ancho;
+        const ph = chosenRotated ? e.ancho : e.alto;
+        const boardW = chosenStock.ancho - 2 * t;
+        const boardH = chosenStock.alto  - 2 * t;
+
+        const pp: PlacedPiece = {
+          piece: e.piece, x: t, y: t, w: pw, h: ph,
+          rotated: chosenRotated, idx: e._idx,
+        };
+        const pieceLeaf: CutTreeNode = {
+          x: t, y: t, w: pw, h: ph,
+          piece: pp, cut: null, left: null, right: null,
+        };
+
+        // Minimal cutTree: optionally V-cut right of piece, then H-cut below.
+        let topPart: CutTreeNode = pieceLeaf;
+        if (pw < boardW - kerf) {
+          const rightWaste: CutTreeNode = {
+            x: t + pw + kerf, y: t, w: boardW - pw - kerf, h: ph,
+            piece: null, cut: null, left: null, right: null,
+          };
+          topPart = {
+            x: t, y: t, w: boardW, h: ph,
+            piece: null, cut: { type: 'V', pos: t + pw + kerf / 2, isPieceCut: true },
+            left: pieceLeaf, right: rightWaste,
+          };
+        }
+
+        let rootTree: CutTreeNode;
+        if (ph < boardH - kerf) {
+          const belowWaste: CutTreeNode = {
+            x: t, y: t + ph + kerf, w: boardW, h: boardH - ph - kerf,
+            piece: null, cut: null, left: null, right: null,
+          };
+          rootTree = {
+            x: t, y: t, w: boardW, h: boardH,
+            piece: null, cut: { type: 'H', pos: t + ph + kerf / 2, isPieceCut: true },
+            left: topPart, right: belowWaste,
+          };
+        } else {
+          rootTree = topPart;
+        }
+
+        const nb = new Board(chosenStock.ancho, chosenStock.alto, brdSierra, mat, grs, {
+          nombre: chosenStock.nombre, costo: chosenStock.costo, isRemnant: !!chosenStock.isRemnant,
+        }, t);
+        nb.placed = [pp];
+        nb.cutTree = rootTree;
+        boards.push(nb);
+
+        if (chosenStock.isRemnant) chosenStock._used = true;
+        if (chosenStock.stockId) usageCount[chosenStock.stockId] = (usageCount[chosenStock.stockId] || 0) + 1;
+
+        e.remaining -= 1;
+      }
+    }
   }
 
   private _espScore(r: { x: number; y: number; w: number; h: number }, w: number, h: number, heuristic: Heuristic): [number, number] {
