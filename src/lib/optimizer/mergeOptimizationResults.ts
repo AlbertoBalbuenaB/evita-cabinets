@@ -18,9 +18,13 @@
 //   - usefulOffcuts   → sum
 //   - unplacedPieces  → computed from scratch by comparing each input
 //                       piece's expected cantidad to actual placed count
-//                       across all boards
+//                       across all boards (groups marked `skipped` have no
+//                       placements, so their pieces fall in here naturally)
 //   - capFires        → sum across groups (non-zero signals some groups
 //                       hit the guillotine recursion safeguard)
+//   - skippedGroups   → pass-through: every part with `skipped: true` is
+//                       promoted to a skippedGroups entry so the UI can
+//                       name the material
 // ─────────────────────────────────────────────────────────────
 
 import type { BoardResult, OptimizationResult, Pieza } from './types';
@@ -38,6 +42,11 @@ export interface GroupResultPart {
    *  pool callsites (or tests that predate the safeguard) may omit it; the
    *  aggregator treats absence as 0. */
   capFires?: number;
+  /** Present when the coordinator gave up on this group (per-group timeout).
+   *  The part carries `boards: []` so merged totals skip it, and the merge
+   *  promotes the entry into `OptimizationResult.skippedGroups` so the UI
+   *  can name the material. Pieces land in `unplacedPieces` automatically. */
+  skipped?: { materialLabel: string; reason: string };
 }
 
 /**
@@ -99,6 +108,14 @@ export function mergeOptimizationResults(
     });
   }
 
+  const skippedGroups = parts
+    .filter((p) => p.skipped)
+    .map((p) => ({
+      groupKey: p.groupKey,
+      materialLabel: p.skipped!.materialLabel,
+      reason: p.skipped!.reason,
+    }));
+
   return {
     boards: allBoards,
     totalPieces,
@@ -109,5 +126,6 @@ export function mergeOptimizationResults(
     usefulOffcuts,
     unplacedPieces: unplaced,
     capFires,
+    skippedGroups,
   };
 }

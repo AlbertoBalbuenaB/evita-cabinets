@@ -350,8 +350,10 @@ export function QuotationOptimizerTab({
       await build();
       await runOptimize();
       // Auto-save as a new run (stale → fresh). User can rename later.
+      // Skip the auto-save when any material was skipped by the pool: the
+      // totalCost is partial and must not become the new active reference.
       const state = useStore.getState();
-      if (state.pendingResult) {
+      if (state.pendingResult && (state.pendingResult.skippedGroups?.length ?? 0) === 0) {
         const runNum = state.runs.length + 1;
         await saveAsRun(`Re-run #${runNum}`);
         if (onRecomputeRollup) await onRecomputeRollup();
@@ -596,8 +598,13 @@ export function QuotationOptimizerTab({
               variant="secondary"
               size="sm"
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || (pendingResult.skippedGroups?.length ?? 0) > 0}
               className="flex items-center gap-1"
+              title={
+                (pendingResult.skippedGroups?.length ?? 0) > 0
+                  ? 'Cannot save a run with skipped materials — its totalCost is partial. Fix cut-piece dimensions / veta / stock size for the skipped materials and re-run before saving.'
+                  : undefined
+              }
             >
               {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               Save
@@ -650,7 +657,8 @@ export function QuotationOptimizerTab({
         pendingCabSkipped.length > 0 ||
         pendingPieces.length > 0 ||
         (pendingResult?.unplacedPieces?.length ?? 0) > 0 ||
-        (pendingResult?.capFires ?? 0) > 0) && (
+        (pendingResult?.capFires ?? 0) > 0 ||
+        (pendingResult?.skippedGroups?.length ?? 0) > 0) && (
         <div className="px-4 py-2 border-b border-border-soft bg-surf-app">
           <OptimizerWarningsPanel
             warnings={pendingWarnings}
@@ -659,6 +667,7 @@ export function QuotationOptimizerTab({
             totalCabinetsCount={totalCabinetsCount}
             unplacedPieces={pendingResult?.unplacedPieces}
             capFires={pendingResult?.capFires}
+            skippedGroups={pendingResult?.skippedGroups}
           />
         </div>
       )}
