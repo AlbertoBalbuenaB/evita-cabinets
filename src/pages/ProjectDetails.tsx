@@ -1532,7 +1532,6 @@ const [isEditingDate, setIsEditingDate] = useState(false);
       // Info tab's Materials Subtotal.
       byCategory:           totals.byCategory,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     areas,
     pricingMethod,
@@ -1545,6 +1544,15 @@ const [isEditingDate, setIsEditingDate] = useState(false);
     installDelivery,
     exchangeRate,
     otherExpenses,
+    // Risk factor inputs — lines 1414/1430/1437 thread `riskFactorPct` into
+    // `computeQuotationTotals()` via the `riskFactorAppliesOptimizer|Sqft`
+    // toggle. Omitting these left the memo stale: when the user changed the
+    // risk %, the Info tab kept displaying old totals until an unrelated
+    // dep (e.g. areas) triggered a refresh. Now the memo recomputes on any
+    // risk-factor change.
+    riskFactorPct,
+    riskFactorAppliesOptimizer,
+    riskFactorAppliesSqft,
   ]);
 
   const cabinetsSubtotal = quotationView.cabinetsSubtotal;
