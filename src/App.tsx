@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -7,40 +7,45 @@ import { Login } from './pages/Login';
 import { useAuth } from './lib/auth';
 import { useCurrentMember } from './lib/useCurrentMember';
 import { PageChromeProvider } from './contexts/PageChromeContext';
+import { lazyWithRetry } from './lib/lazyWithRetry';
 
 // ── Lazy-loaded pages (code-split per route) ────────────────────────────────
-const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
-const ProjectsHub = lazy(() => import('./pages/ProjectsHub').then(m => ({ default: m.ProjectsHub })));
-const ProjectPage = lazy(() => import('./pages/ProjectPage').then(m => ({ default: m.ProjectPage })));
-const QuotationDetailsPage = lazy(() => import('./pages/QuotationDetailsPage').then(m => ({ default: m.QuotationDetailsPage })));
-const ProductsCatalog = lazy(() => import('./pages/ProductsCatalog').then(m => ({ default: m.ProductsCatalog })));
-const ProductItem = lazy(() => import('./pages/ProductItem').then(m => ({ default: m.ProductItem })));
-const PriceList = lazy(() => import('./pages/PriceList').then(m => ({ default: m.PriceList })));
-const PriceListItem = lazy(() => import('./pages/PriceListItem').then(m => ({ default: m.PriceListItem })));
-const Templates = lazy(() => import('./pages/Templates').then(m => ({ default: m.Templates })));
-const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
-const OptimizerPage = lazy(() => import('./pages/OptimizerPage').then(m => ({ default: m.OptimizerPage })));
-const AiChat = lazy(() => import('./components/AiChat').then(m => ({ default: m.AiChat })));
-const Suppliers = lazy(() => import('./pages/Suppliers').then(m => ({ default: m.Suppliers })));
-const SupplierPage = lazy(() => import('./pages/SupplierPage').then(m => ({ default: m.SupplierPage })));
-const ToolsHub = lazy(() => import('./pages/ToolsHub').then(m => ({ default: m.ToolsHub })));
-const TakeoffPage = lazy(() => import('./pages/TakeoffPage').then(m => ({ default: m.TakeoffPage })));
-const DraftToolPage = lazy(() => import('./tools/draft/DraftToolPage').then(m => ({ default: m.DraftToolPage })));
-const KbHub = lazy(() => import('./pages/kb/KbHub').then(m => ({ default: m.KbHub })));
-const KbEntryPage = lazy(() => import('./pages/kb/KbEntryPage').then(m => ({ default: m.KbEntryPage })));
-const KbNew = lazy(() => import('./pages/kb/KbNew').then(m => ({ default: m.KbNew })));
-const KbProposals = lazy(() => import('./pages/kb/KbProposals').then(m => ({ default: m.KbProposals })));
-const KbProposalPage = lazy(() => import('./pages/kb/KbProposalPage').then(m => ({ default: m.KbProposalPage })));
-const KbSupplierPage = lazy(() => import('./pages/kb/KbSupplierPage').then(m => ({ default: m.KbSupplierPage })));
-const KbAudit = lazy(() => import('./pages/kb/KbAudit').then(m => ({ default: m.KbAudit })));
-const WikiHub = lazy(() => import('./pages/wiki/WikiHub').then(m => ({ default: m.WikiHub })));
-const WikiArticlePage = lazy(() => import('./pages/wiki/WikiArticlePage').then(m => ({ default: m.WikiArticlePage })));
-const WikiNew = lazy(() => import('./pages/wiki/WikiNew').then(m => ({ default: m.WikiNew })));
-const WikiProposals = lazy(() => import('./pages/wiki/WikiProposals').then(m => ({ default: m.WikiProposals })));
-const WikiProposalPage = lazy(() => import('./pages/wiki/WikiProposalPage').then(m => ({ default: m.WikiProposalPage })));
-const WikiAudit = lazy(() => import('./pages/wiki/WikiAudit').then(m => ({ default: m.WikiAudit })));
-const CrmPlaceholder = lazy(() => import('./pages/CrmPlaceholder').then(m => ({ default: m.CrmPlaceholder })));
-const ProjectHeaderDemo = lazy(() => import('./pages/_dev/ProjectHeaderDemo').then(m => ({ default: m.ProjectHeaderDemo })));
+// `lazyWithRetry` wraps `React.lazy` with a retry + hard-reload fallback so
+// a stale chunk URL (common after a fresh deploy when the user had the tab
+// open against the previous build) turns into a silent page refresh instead
+// of a "Failed to fetch dynamically imported module" error card.
+const Dashboard = lazyWithRetry(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const ProjectsHub = lazyWithRetry(() => import('./pages/ProjectsHub').then(m => ({ default: m.ProjectsHub })));
+const ProjectPage = lazyWithRetry(() => import('./pages/ProjectPage').then(m => ({ default: m.ProjectPage })));
+const QuotationDetailsPage = lazyWithRetry(() => import('./pages/QuotationDetailsPage').then(m => ({ default: m.QuotationDetailsPage })));
+const ProductsCatalog = lazyWithRetry(() => import('./pages/ProductsCatalog').then(m => ({ default: m.ProductsCatalog })));
+const ProductItem = lazyWithRetry(() => import('./pages/ProductItem').then(m => ({ default: m.ProductItem })));
+const PriceList = lazyWithRetry(() => import('./pages/PriceList').then(m => ({ default: m.PriceList })));
+const PriceListItem = lazyWithRetry(() => import('./pages/PriceListItem').then(m => ({ default: m.PriceListItem })));
+const Templates = lazyWithRetry(() => import('./pages/Templates').then(m => ({ default: m.Templates })));
+const Settings = lazyWithRetry(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const OptimizerPage = lazyWithRetry(() => import('./pages/OptimizerPage').then(m => ({ default: m.OptimizerPage })));
+const AiChat = lazyWithRetry(() => import('./components/AiChat').then(m => ({ default: m.AiChat })));
+const Suppliers = lazyWithRetry(() => import('./pages/Suppliers').then(m => ({ default: m.Suppliers })));
+const SupplierPage = lazyWithRetry(() => import('./pages/SupplierPage').then(m => ({ default: m.SupplierPage })));
+const ToolsHub = lazyWithRetry(() => import('./pages/ToolsHub').then(m => ({ default: m.ToolsHub })));
+const TakeoffPage = lazyWithRetry(() => import('./pages/TakeoffPage').then(m => ({ default: m.TakeoffPage })));
+const DraftToolPage = lazyWithRetry(() => import('./tools/draft/DraftToolPage').then(m => ({ default: m.DraftToolPage })));
+const KbHub = lazyWithRetry(() => import('./pages/kb/KbHub').then(m => ({ default: m.KbHub })));
+const KbEntryPage = lazyWithRetry(() => import('./pages/kb/KbEntryPage').then(m => ({ default: m.KbEntryPage })));
+const KbNew = lazyWithRetry(() => import('./pages/kb/KbNew').then(m => ({ default: m.KbNew })));
+const KbProposals = lazyWithRetry(() => import('./pages/kb/KbProposals').then(m => ({ default: m.KbProposals })));
+const KbProposalPage = lazyWithRetry(() => import('./pages/kb/KbProposalPage').then(m => ({ default: m.KbProposalPage })));
+const KbSupplierPage = lazyWithRetry(() => import('./pages/kb/KbSupplierPage').then(m => ({ default: m.KbSupplierPage })));
+const KbAudit = lazyWithRetry(() => import('./pages/kb/KbAudit').then(m => ({ default: m.KbAudit })));
+const WikiHub = lazyWithRetry(() => import('./pages/wiki/WikiHub').then(m => ({ default: m.WikiHub })));
+const WikiArticlePage = lazyWithRetry(() => import('./pages/wiki/WikiArticlePage').then(m => ({ default: m.WikiArticlePage })));
+const WikiNew = lazyWithRetry(() => import('./pages/wiki/WikiNew').then(m => ({ default: m.WikiNew })));
+const WikiProposals = lazyWithRetry(() => import('./pages/wiki/WikiProposals').then(m => ({ default: m.WikiProposals })));
+const WikiProposalPage = lazyWithRetry(() => import('./pages/wiki/WikiProposalPage').then(m => ({ default: m.WikiProposalPage })));
+const WikiAudit = lazyWithRetry(() => import('./pages/wiki/WikiAudit').then(m => ({ default: m.WikiAudit })));
+const CrmPlaceholder = lazyWithRetry(() => import('./pages/CrmPlaceholder').then(m => ({ default: m.CrmPlaceholder })));
+const ProjectHeaderDemo = lazyWithRetry(() => import('./pages/_dev/ProjectHeaderDemo').then(m => ({ default: m.ProjectHeaderDemo })));
 
 function AdminRoute({ children }: { children: ReactNode }) {
   const { member, loading } = useCurrentMember();
