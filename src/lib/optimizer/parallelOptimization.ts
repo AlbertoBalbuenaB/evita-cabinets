@@ -98,25 +98,30 @@ export const perAreaGroupKey = (p: Pieza): string =>
  * Tuning history:
  *   - v1 (15): too aggressive; flagged common materials with 15-24
  *     piece-types → cost drifted toward full Split mode.
- *   - v2 (25): still flagged common materials at 25-39 types on large
- *     real projects (e.g. `1030 W 8th Street / Custom` observed 7
- *     flagged materials with counts 32, 34, 40, 43, 43, 43, 72). Cost
+ *   - v2 (25): still flagged common materials at 25-39 types → cost
  *     stayed noticeably above Pool baseline.
- *   - v3 (40, current): only clearly-pathological materials (40+
- *     distinct dimensions) get split. Still catches the production
- *     Wilsonart case (28 types) only if it ever grows, and the
- *     Merida 43 / TBD 72 cases seen at W 8th — the proven timeout
- *     offenders. Medium-large projects with ~30-type common materials
- *     stay pooled, closing the gap with Pool baseline.
+ *   - v3 (40): achieved cost parity with Pool on W 8th, but Wilsonart
+ *     28-type material — the ORIGINAL pathology that motivated this
+ *     feature — fell BELOW the threshold and was no longer auto-split.
+ *     It hit the 90s per-group timeout and got skipped, blocking Save.
+ *   - v4 (28, current): recalibrated to the exact Wilsonart case (28
+ *     piece-types, 124 expanded, timed out at 90s pooled). Catches
+ *     that + all larger materials. The project has a count gap: 28,
+ *     32, 34, 40, 43, 43, 43, 72 — no threshold between 28 and 32
+ *     exists that catches Wilsonart without also catching Absolut
+ *     White (32/34). Accepting that tradeoff because:
+ *       (a) Save must work — skipped groups block the workflow; and
+ *       (b) 1-2 extra last-partial-board penalties are small relative
+ *           to the cost of a Save-blocked run.
  *
  * Tuning guide:
- *   - Lower = more aggressive splitting → more cost delta vs Pool.
+ *   - Lower = more aggressive splitting → cost drifts toward Split mode.
  *   - Higher = more conservative → cost closer to Pool, but borderline
- *     materials (30-39 types) may timeout. PR #50's skip mechanism
- *     still covers that case; the user sees a skippedGroup warning
- *     and can re-run with a lower threshold if needed.
+ *     materials (~30 types) may hit the per-group timeout and get
+ *     skipped (Save blocked). 28 is the floor for the W 8th project;
+ *     raising above 28 re-introduces the Wilsonart skip.
  */
-export const PATHOLOGICAL_PIECE_TYPE_THRESHOLD = 40;
+export const PATHOLOGICAL_PIECE_TYPE_THRESHOLD = 28;
 
 /**
  * Build the grouping + label functions for `'auto'` mode.
