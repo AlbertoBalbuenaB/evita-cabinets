@@ -92,13 +92,22 @@ export const perAreaGroupKey = (p: Pieza): string =>
 /**
  * Piece-type count at which a pooled group is considered "pathological"
  * and worth splitting per-area. Calibrated against the Wilsonart 18mm
- * production incident (28 piece-types, timed out at 90s). Materials at
- * or above this count get per-area splitting in `'auto'` mode; smaller
- * materials stay pooled for best utilization. Tune if production reveals
- * timeouts below this count (lower = more aggressive splitting = more
- * material waste but fewer timeouts).
+ * production incident (28 piece-types, timed out at 90s) with ~3 types
+ * of headroom so we catch that case but don't over-flag medium
+ * materials. Materials at or above this count get per-area splitting
+ * in `'auto'` mode; smaller materials stay pooled for best utilization.
+ *
+ * Tuning guide:
+ *   - Lower (e.g. 15): more aggressive splitting → more materials split
+ *     per-area → cost moves toward full Split mode.
+ *   - Higher (e.g. 30): more conservative → cost closer to Pool, but a
+ *     Wilsonart-sized material (28 types) would NOT be flagged and may
+ *     timeout (then PR #50's skip mechanism kicks in).
+ * Current value (25) favours cost-parity with Pool while still catching
+ * the documented pathology. Raised from 15 in Apr 2026 after the
+ * original threshold proved too aggressive on real projects.
  */
-export const PATHOLOGICAL_PIECE_TYPE_THRESHOLD = 15;
+export const PATHOLOGICAL_PIECE_TYPE_THRESHOLD = 25;
 
 /**
  * Build the grouping + label functions for `'auto'` mode.
@@ -119,6 +128,10 @@ export function buildAutoGroupFns(pieces: Pieza[]): {
   groupKeyFn: (p: Pieza) => string;
   groupLabelFn: (p: Pieza) => string;
   pathological: Set<string>;
+  /** Piece-type count per `material_grosor` key, exposed so the caller
+   *  can emit diagnostic logs ("Wilsonart_18 (28 types)") and spot
+   *  near-threshold materials for tuning without re-walking pieces. */
+  pieceCounts: Map<string, number>;
 } {
   const typeCounts = new Map<string, number>();
   for (const p of pieces) {
@@ -141,6 +154,7 @@ export function buildAutoGroupFns(pieces: Pieza[]): {
         : p.material;
     },
     pathological,
+    pieceCounts: typeCounts,
   };
 }
 

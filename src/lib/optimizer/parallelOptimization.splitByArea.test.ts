@@ -132,11 +132,14 @@ describe('parallelOptimization — buildAutoGroupFns (hybrid mode)', () => {
   });
 
   it('splits only pathological materials (>= threshold), pools the rest', () => {
-    // Wilsonart: 20 distinct types across 4 areas → pathological (>= 15).
-    // White Laminate: 8 distinct types across 4 areas → safe (< 15).
+    // Wilsonart: threshold + 5 distinct types across 4 areas → pathological.
+    // White Laminate: threshold - 7 distinct types across 4 areas → safe.
+    // Using the constant keeps this test robust across threshold tuning.
     const pieces: Pieza[] = [];
     const areas = ['kitchen', 'closet', 'laundry', 'bath'];
-    for (let i = 0; i < 20; i++) {
+    const wilsonartTypes = PATHOLOGICAL_PIECE_TYPE_THRESHOLD + 5;
+    const whiteLaminateTypes = Math.max(4, PATHOLOGICAL_PIECE_TYPE_THRESHOLD - 7);
+    for (let i = 0; i < wilsonartTypes; i++) {
       pieces.push(makePiece({
         id: `w${i}`,
         nombre: `WilsonartPart-${i}`,
@@ -145,7 +148,7 @@ describe('parallelOptimization — buildAutoGroupFns (hybrid mode)', () => {
         area: areas[i % areas.length]!,
       }));
     }
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < whiteLaminateTypes; i++) {
       pieces.push(makePiece({
         id: `l${i}`,
         nombre: `WhitePart-${i}`,
@@ -216,10 +219,36 @@ describe('parallelOptimization — buildAutoGroupFns (hybrid mode)', () => {
   });
 
   it('handles empty input without crashing', () => {
-    const { groupKeyFn, groupLabelFn, pathological } = buildAutoGroupFns([]);
+    const { groupKeyFn, groupLabelFn, pathological, pieceCounts } = buildAutoGroupFns([]);
     expect(pathological.size).toBe(0);
+    expect(pieceCounts.size).toBe(0);
     expect(typeof groupKeyFn).toBe('function');
     expect(typeof groupLabelFn).toBe('function');
+  });
+
+  it('returns accurate pieceCounts so callers can log threshold proximity', () => {
+    // Mix of sizes to verify the count map is populated correctly even for
+    // materials that stay pooled. This backs the diagnostic log in the
+    // store ("Wilsonart_18 (28 types)" + near-threshold list).
+    const pieces: Pieza[] = [];
+    for (let i = 0; i < 10; i++) {
+      pieces.push(makePiece({ id: `s${i}`, material: 'Small', areaId: 'kitchen', area: 'Kitchen' }));
+    }
+    for (let i = 0; i < PATHOLOGICAL_PIECE_TYPE_THRESHOLD - 2; i++) {
+      pieces.push(makePiece({ id: `n${i}`, material: 'Near', areaId: 'closet', area: 'Closet' }));
+    }
+    for (let i = 0; i < PATHOLOGICAL_PIECE_TYPE_THRESHOLD + 3; i++) {
+      pieces.push(makePiece({ id: `p${i}`, material: 'Pathological', areaId: 'bath', area: 'Bath' }));
+    }
+    const { pieceCounts, pathological } = buildAutoGroupFns(pieces);
+
+    expect(pieceCounts.get('Small_18')).toBe(10);
+    expect(pieceCounts.get('Near_18')).toBe(PATHOLOGICAL_PIECE_TYPE_THRESHOLD - 2);
+    expect(pieceCounts.get('Pathological_18')).toBe(PATHOLOGICAL_PIECE_TYPE_THRESHOLD + 3);
+    // Only the above-threshold material gets flagged.
+    expect(pathological.has('Pathological_18')).toBe(true);
+    expect(pathological.has('Near_18')).toBe(false);
+    expect(pathological.has('Small_18')).toBe(false);
   });
 });
 

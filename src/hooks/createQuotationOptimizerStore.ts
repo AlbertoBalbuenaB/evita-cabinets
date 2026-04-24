@@ -32,6 +32,7 @@ import { supabase } from '../lib/supabase';
 import {
   runOptimizationParallel,
   buildAutoGroupFns,
+  PATHOLOGICAL_PIECE_TYPE_THRESHOLD,
 } from '../lib/optimizer/parallelOptimization';
 import type {
   Pieza,
@@ -373,9 +374,9 @@ export function getQuotationOptimizerStore(
         //   - 'pooled'   → undefined (engine uses default material_grosor)
         //   - 'per-area' → always split by material_grosor_areaId, labels
         //     carry the area name so warnings + progress show "Mat / Area"
-        //   - 'auto'     → scan pieces once, split only materials with >=
-        //     15 piece-types (pathological), pool the rest. Identical to
-        //     'pooled' when nothing is pathological.
+        //   - 'auto'     → scan pieces once, split only materials at or
+        //     above PATHOLOGICAL_PIECE_TYPE_THRESHOLD piece-types. Identical
+        //     to 'pooled' when nothing is pathological.
         let groupKeyFn: ((p: Pieza) => string) | undefined;
         let groupLabelFn: ((p: Pieza) => string) | undefined;
         if (state.groupingMode === 'per-area') {
@@ -385,10 +386,29 @@ export function getQuotationOptimizerStore(
           const auto = buildAutoGroupFns(activePieces);
           groupKeyFn = auto.groupKeyFn;
           groupLabelFn = auto.groupLabelFn;
+          // Diagnostic logs: show exactly what got split AND what was close
+          // to the threshold so tuning the constant is data-driven rather
+          // than guesswork. Threshold-agnostic — reads the constant.
           if (auto.pathological.size > 0) {
+            const flagged = Array.from(auto.pathological).map((key) => ({
+              key,
+              types: auto.pieceCounts.get(key) ?? 0,
+            }));
             console.log(
-              `[runOptimize] auto mode: splitting ${auto.pathological.size} pathological material(s) per-area:`,
-              Array.from(auto.pathological),
+              `[runOptimize] auto mode: split ${flagged.length} pathological material(s) (threshold ${PATHOLOGICAL_PIECE_TYPE_THRESHOLD}):`,
+              flagged,
+            );
+          }
+          const nearThreshold = Array.from(auto.pieceCounts.entries())
+            .filter(([, n]) =>
+              n >= PATHOLOGICAL_PIECE_TYPE_THRESHOLD - 5 &&
+              n < PATHOLOGICAL_PIECE_TYPE_THRESHOLD,
+            )
+            .map(([key, types]) => ({ key, types }));
+          if (nearThreshold.length > 0) {
+            console.log(
+              `[runOptimize] auto mode: near-threshold materials (not split; bump threshold if any of these timeout):`,
+              nearThreshold,
             );
           }
         }
