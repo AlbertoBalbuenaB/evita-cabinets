@@ -137,13 +137,22 @@ export interface OptimizationResult {
    *  estimates for affected groups. Absent on results saved before this
    *  field was added. */
   capFires?: number;
-  /** Groups (material_grosor) whose worker exceeded the per-group budget and
-   *  were skipped so the pool could complete the rest. Their pieces are
-   *  reported in `unplacedPieces` and contribute 0 boards / 0 cost. A
-   *  non-empty array means the `totalCost` here is PARTIAL — callers must
-   *  block save / warn the user instead of treating it as final. Absent on
-   *  results saved before this field was added. */
-  skippedGroups?: { groupKey: string; materialLabel: string; reason: string }[];
+  /** Groups (material_grosor, optionally split by area) whose worker exceeded
+   *  the per-group budget and were skipped so the pool could complete the
+   *  rest. Their pieces are reported in `unplacedPieces` and contribute 0
+   *  boards / 0 cost. A non-empty array means the `totalCost` here is
+   *  PARTIAL — callers must block save / warn the user instead of treating
+   *  it as final. `areaId`/`areaName` are present when the run used
+   *  per-area grouping, so UI warnings can say "Wilsonart 18mm / Kitchen"
+   *  instead of just "Wilsonart 18mm". Absent on results saved before this
+   *  field was added. */
+  skippedGroups?: {
+    groupKey: string;
+    materialLabel: string;
+    reason: string;
+    areaId?: string;
+    areaName?: string;
+  }[];
 }
 
 export interface CutStep {

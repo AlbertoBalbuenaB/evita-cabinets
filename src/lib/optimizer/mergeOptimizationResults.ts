@@ -45,8 +45,10 @@ export interface GroupResultPart {
   /** Present when the coordinator gave up on this group (per-group timeout).
    *  The part carries `boards: []` so merged totals skip it, and the merge
    *  promotes the entry into `OptimizationResult.skippedGroups` so the UI
-   *  can name the material. Pieces land in `unplacedPieces` automatically. */
-  skipped?: { materialLabel: string; reason: string };
+   *  can name the material. Pieces land in `unplacedPieces` automatically.
+   *  `areaId`/`areaName` are forwarded from the group's pieces when the
+   *  run used per-area grouping, so the UI can say "X / Kitchen". */
+  skipped?: { materialLabel: string; reason: string; areaId?: string; areaName?: string };
 }
 
 /**
@@ -114,6 +116,8 @@ export function mergeOptimizationResults(
       groupKey: p.groupKey,
       materialLabel: p.skipped!.materialLabel,
       reason: p.skipped!.reason,
+      ...(p.skipped!.areaId !== undefined && { areaId: p.skipped!.areaId }),
+      ...(p.skipped!.areaName !== undefined && { areaName: p.skipped!.areaName }),
     }));
 
   return {

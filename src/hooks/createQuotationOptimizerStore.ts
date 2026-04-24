@@ -117,6 +117,13 @@ export interface QuotationOptimizerState {
   trimIncludesKerf: boolean;
   engineMode: EngineMode;
   objective: OptimizationObjective;
+  /** Grouping mode for the parallel pool. `'pooled'` (default) = one worker
+   *  per `material_grosor`, pieces pooled across all areas. `'per-area'` =
+   *  one worker per `material_grosor_areaId`, so each area packs its own
+   *  boards independently. Useful for very large quotations where a single
+   *  material spans many areas and the pooled run triggers the per-group
+   *  timeout watchdog. */
+  groupingMode: 'pooled' | 'per-area';
 
   // Flags
   isBuilding: boolean;
@@ -138,6 +145,7 @@ export interface QuotationOptimizerState {
   setTrimIncludesKerf: (v: boolean) => void;
   setEngineMode: (v: EngineMode) => void;
   setObjective: (v: OptimizationObjective) => void;
+  setGroupingMode: (v: 'pooled' | 'per-area') => void;
   toggleStockSelected: (id: string) => void;
   toggleEbSlot: (slot: 'a' | 'b' | 'c') => void;
 
@@ -229,6 +237,7 @@ export function getQuotationOptimizerStore(
     trimIncludesKerf: true,
     engineMode: 'guillotine' as EngineMode,
     objective: 'min-boards' as OptimizationObjective,
+    groupingMode: 'pooled' as 'pooled' | 'per-area',
 
     isBuilding: false,
     isOptimizing: false,
@@ -242,6 +251,12 @@ export function getQuotationOptimizerStore(
     setTrimIncludesKerf: (v) => set({ trimIncludesKerf: v }),
     setEngineMode:       (v) => set({ engineMode: v }),
     setObjective:        (v) => set({ objective: v }),
+    setGroupingMode: (v) => set((state) => {
+      // Changing grouping mode invalidates any pending result — the new mode
+      // will produce a different (and possibly incompatible) board layout.
+      if (state.groupingMode === v) return {};
+      return { groupingMode: v, pendingResult: null };
+    }),
 
     toggleStockSelected: (id) => set((state) => {
       const next = new Set(state.selectedStockIds);
@@ -341,7 +356,19 @@ export function getQuotationOptimizerStore(
           totalExpanded: activePieces.reduce((s, p) => s + p.cantidad, 0),
           engineMode: state.engineMode,
           objective: state.objective,
+          groupingMode: state.groupingMode,
         });
+
+        // Per-area mode: split each material into independent per-area groups
+        // so a single material spanning many areas no longer triggers the
+        // per-group timeout. Label pieces as "Material / Area" so warnings
+        // and progress identify exactly which area is running.
+        const groupKeyFn = state.groupingMode === 'per-area'
+          ? (p: Pieza) => `${p.material}_${p.grosor}_${p.areaId ?? '__no_area__'}`
+          : undefined; // default: `${material}_${grosor}` (pooled)
+        const groupLabelFn = state.groupingMode === 'per-area'
+          ? (p: Pieza) => `${p.material} / ${p.area ?? 'Sin área'}`
+          : undefined;
 
         const result = await runOptimizationParallel({
           pieces: activePieces,
@@ -355,6 +382,8 @@ export function getQuotationOptimizerStore(
           signal,
           onProgress: (p) => set({ optimizerProgress: p }),
           timeoutMs: 120_000,
+          groupKeyFn,
+          groupLabelFn,
         });
         set({ pendingResult: result, isOptimizing: false, optimizerProgress: null });
       } catch (err) {
@@ -441,6 +470,7 @@ export function getQuotationOptimizerStore(
             minOffcut:        state.minOffcut,
             boardTrim:        state.boardTrim,
             trimIncludesKerf: state.trimIncludesKerf,
+            groupingMode:     state.groupingMode,
           },
           areaAttribution,
           cabinetAttribution,
@@ -529,6 +559,8 @@ export function getQuotationOptimizerStore(
           minOffcut:        snapshot.settings.minOffcut,
           boardTrim:        snapshot.settings.boardTrim,
           trimIncludesKerf: snapshot.settings.trimIncludesKerf,
+          // Older snapshots predate groupingMode — default to 'pooled' (legacy).
+          groupingMode:     snapshot.settings.groupingMode ?? 'pooled',
         });
       } catch (err) {
         set({ lastError: err instanceof Error ? err.message : String(err) });

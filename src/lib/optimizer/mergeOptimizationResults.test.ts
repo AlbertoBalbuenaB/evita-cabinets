@@ -252,4 +252,54 @@ describe('mergeOptimizationResults — skipped groups', () => {
     // Skipped group's pieces land in unplacedPieces.
     expect(r.unplacedPieces).toContainEqual({ nombre: 'BadDoors', ancho: 1000, alto: 500, count: 2 });
   });
+
+  it('forwards areaId/areaName from a skipped part into the skippedGroups entry (per-area mode)', () => {
+    const piece = makePiece({ id: 'k0', nombre: 'KitchenDoor', cantidad: 3, areaId: 'area-kitchen', area: 'Kitchen' });
+    const grouped = new Map<string, Pieza[]>();
+    grouped.set('wilsonart_18_area-kitchen', [piece]);
+    const parts: GroupResultPart[] = [
+      {
+        groupKey: 'wilsonart_18_area-kitchen',
+        boards: [],
+        strategy: '(skipped: timeout)',
+        iters: 0,
+        timeMs: 90_000,
+        skipped: {
+          materialLabel: 'Wilsonart 18mm / Kitchen',
+          reason: 'Took over 90s — 28 piece-types, 124 expanded.',
+          areaId: 'area-kitchen',
+          areaName: 'Kitchen',
+        },
+      },
+    ];
+    const r = mergeOptimizationResults(parts, [piece], grouped);
+    expect(r.skippedGroups).toHaveLength(1);
+    expect(r.skippedGroups?.[0]).toEqual({
+      groupKey: 'wilsonart_18_area-kitchen',
+      materialLabel: 'Wilsonart 18mm / Kitchen',
+      reason: 'Took over 90s — 28 piece-types, 124 expanded.',
+      areaId: 'area-kitchen',
+      areaName: 'Kitchen',
+    });
+  });
+
+  it('omits areaId/areaName on skippedGroups entries when the skipped part did not carry them (pooled mode)', () => {
+    const piece = makePiece({ id: 'x0', nombre: 'NoAreaPiece', cantidad: 1 });
+    const grouped = new Map<string, Pieza[]>();
+    grouped.set('pooled_18', [piece]);
+    const parts: GroupResultPart[] = [
+      {
+        groupKey: 'pooled_18',
+        boards: [],
+        strategy: '(skipped: timeout)',
+        iters: 0,
+        timeMs: 90_000,
+        skipped: { materialLabel: 'Pooled material', reason: 'Took over 90s.' },
+      },
+    ];
+    const r = mergeOptimizationResults(parts, [piece], grouped);
+    expect(r.skippedGroups).toHaveLength(1);
+    expect(r.skippedGroups?.[0]).not.toHaveProperty('areaId');
+    expect(r.skippedGroups?.[0]).not.toHaveProperty('areaName');
+  });
 });

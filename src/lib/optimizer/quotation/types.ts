@@ -32,6 +32,15 @@ export interface OptimizerRunSnapshot {
     minOffcut: number;
     boardTrim: number;
     trimIncludesKerf: boolean;
+    /** How pieces were grouped into worker batches. `'pooled'` (default, legacy)
+     *  = one group per `material_grosor`, pieces pooled across all areas.
+     *  `'per-area'` = one group per `material_grosor_areaId`, so each area packs
+     *  its own boards independently. Split-by-area avoids combinatorial
+     *  explosion when a single material spans many areas, at the cost of
+     *  slightly worse material utilization (each area's last board may be
+     *  partial). Optional for back-compat with snapshots saved before this
+     *  field existed — readers default to `'pooled'`. */
+    groupingMode?: 'pooled' | 'per-area';
   };
 
   /** Per-area attribution: area_id → { m², cost, fractional board count }. */
