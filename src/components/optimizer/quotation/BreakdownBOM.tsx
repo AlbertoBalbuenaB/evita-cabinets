@@ -393,31 +393,13 @@ export function BreakdownBOM({ loadedRun, areas, quotation, priceList: priceList
     });
     countertopsMap.forEach(row => { if (row.qty > 0) rows.push(row); });
 
-    // ── 7. Interior Finish ────────────────────────────────────────────────
-    // Aggregated cost of interior finish (applied to box + doors) across
-    // every cabinet × area quantity. Surfaced as a single BOM row so that
-    // the BOM total matches the "Materials Cost" line in the Cost Summary
-    // (which derives from totals.byCategory.interiorFinish).
-    let interiorFinishTotal = 0;
-    areas.forEach(area => {
-      const areaQty = area.quantity ?? 1;
-      area.cabinets.forEach(cabinet => {
-        interiorFinishTotal +=
-          ((cabinet.box_interior_finish_cost ?? 0) +
-            (cabinet.doors_interior_finish_cost ?? 0)) * areaQty;
-      });
-    });
-    if (interiorFinishTotal > 0) {
-      rows.push({
-        category: 'Interior Finish',
-        concept: 'Box + Doors Interior Finish',
-        unit: 'project',
-        qty: 1,
-        price: interiorFinishTotal,
-        subtotal: interiorFinishTotal,
-        priceListItemId: null,
-      });
-    }
+    // ── 7. Interior Finish (folded into Boards row) ──────────────────────
+    // Previously surfaced as a standalone BOM row. Removed because the
+    // optimizer now cuts interior-finish pieces on their own laminate
+    // stocks inside `run.material_cost`, so showing an additional ft²
+    // interior-finish row double-bills the laminate. The laminate cost
+    // still appears in the Boards row (it contributes to the optimizer's
+    // total board cost). See computeOptimizerQuotationTotal.MATERIAL_FIELDS.
 
     // ── 8. Door Profile ───────────────────────────────────────────────────
     let doorProfileTotal = 0;

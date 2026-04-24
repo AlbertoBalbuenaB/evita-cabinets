@@ -179,13 +179,21 @@ function buildByCategory(
 
   const boards   = optimizer ? optimizer.materialCost : (boxMat + doorsMat + backMat + drawerMat + shelfMat);
   const edgeband = optimizer ? optimizer.edgebandCost : (boxEb + doorsEb + drawerEb + shelfEb);
+  // In optimizer mode the interior-finish pieces are cut on their own
+  // laminate stocks (see buildOptimizerSetupFromQuotation "interior finish
+  // pass") and land inside `optimizer.materialCost`. Showing the ft²
+  // interiorFinish on top of `boards` would double-bill the laminate —
+  // already seen on the Hospitality Health of Lake Jackson quotation
+  // (Apr 2026) where $852K of ft² interior finish stacked on top of
+  // ~$1.2M of laminate boards the optimizer had already paid for.
+  const interiorFinish = optimizer ? 0 : (boxIf + doorsIf);
 
   return {
     boards,
     edgeband,
     hardware,
     accessories,
-    interiorFinish: boxIf + doorsIf,
+    interiorFinish,
     doorProfile,
     labor,
     items: itemsTotal,
