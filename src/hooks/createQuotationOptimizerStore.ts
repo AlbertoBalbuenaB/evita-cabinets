@@ -29,7 +29,11 @@
 
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { supabase } from '../lib/supabase';
-import { runOptimizationParallel } from '../lib/optimizer/parallelOptimization';
+import {
+  runOptimizationParallel,
+  buildAutoGroupFns,
+  PATHOLOGICAL_PIECE_TYPE_THRESHOLD,
+} from '../lib/optimizer/parallelOptimization';
 import type {
   Pieza,
   StockSize,
@@ -117,6 +121,16 @@ export interface QuotationOptimizerState {
   trimIncludesKerf: boolean;
   engineMode: EngineMode;
   objective: OptimizationObjective;
+  /** Grouping mode for the parallel pool.
+   *   - `'pooled'`: one worker per `material_grosor`, pieces pooled across
+   *     all areas. Best material utilization, legacy behaviour.
+   *   - `'auto'` (default): pooled for normal materials, but any material
+   *     with >= `PATHOLOGICAL_PIECE_TYPE_THRESHOLD` piece-types is split
+   *     per-area to avoid the per-group timeout. Strictly safe — when no
+   *     material crosses the threshold, output is identical to `'pooled'`.
+   *   - `'per-area'`: every material split per-area regardless of size.
+   *     Most resilient, worst utilization. */
+  groupingMode: 'pooled' | 'auto' | 'per-area';
 
   // Flags
   isBuilding: boolean;
@@ -138,6 +152,7 @@ export interface QuotationOptimizerState {
   setTrimIncludesKerf: (v: boolean) => void;
   setEngineMode: (v: EngineMode) => void;
   setObjective: (v: OptimizationObjective) => void;
+  setGroupingMode: (v: 'pooled' | 'auto' | 'per-area') => void;
   toggleStockSelected: (id: string) => void;
   toggleEbSlot: (slot: 'a' | 'b' | 'c') => void;
 
@@ -229,6 +244,11 @@ export function getQuotationOptimizerStore(
     trimIncludesKerf: true,
     engineMode: 'guillotine' as EngineMode,
     objective: 'min-boards' as OptimizationObjective,
+    // Default 'auto' — strictly safe (identical to 'pooled' when no
+    // material has >= 15 piece-types), with graceful fallback for
+    // pathological materials. Users can still pick 'pooled' or 'per-area'
+    // explicitly in the toolbar toggle.
+    groupingMode: 'auto' as 'pooled' | 'auto' | 'per-area',
 
     isBuilding: false,
     isOptimizing: false,
@@ -242,6 +262,12 @@ export function getQuotationOptimizerStore(
     setTrimIncludesKerf: (v) => set({ trimIncludesKerf: v }),
     setEngineMode:       (v) => set({ engineMode: v }),
     setObjective:        (v) => set({ objective: v }),
+    setGroupingMode: (v) => set((state) => {
+      // Changing grouping mode invalidates any pending result — the new mode
+      // will produce a different (and possibly incompatible) board layout.
+      if (state.groupingMode === v) return {};
+      return { groupingMode: v, pendingResult: null };
+    }),
 
     toggleStockSelected: (id) => set((state) => {
       const next = new Set(state.selectedStockIds);
@@ -341,7 +367,52 @@ export function getQuotationOptimizerStore(
           totalExpanded: activePieces.reduce((s, p) => s + p.cantidad, 0),
           engineMode: state.engineMode,
           objective: state.objective,
+          groupingMode: state.groupingMode,
         });
+
+        // Pick groupKeyFn/groupLabelFn based on the selected grouping mode:
+        //   - 'pooled'   → undefined (engine uses default material_grosor)
+        //   - 'per-area' → always split by material_grosor_areaId, labels
+        //     carry the area name so warnings + progress show "Mat / Area"
+        //   - 'auto'     → scan pieces once, split only materials at or
+        //     above PATHOLOGICAL_PIECE_TYPE_THRESHOLD piece-types. Identical
+        //     to 'pooled' when nothing is pathological.
+        let groupKeyFn: ((p: Pieza) => string) | undefined;
+        let groupLabelFn: ((p: Pieza) => string) | undefined;
+        if (state.groupingMode === 'per-area') {
+          groupKeyFn = (p) => `${p.material}_${p.grosor}_${p.areaId ?? '__no_area__'}`;
+          groupLabelFn = (p) => `${p.material} / ${p.area ?? 'Sin área'}`;
+        } else if (state.groupingMode === 'auto') {
+          const auto = buildAutoGroupFns(activePieces);
+          groupKeyFn = auto.groupKeyFn;
+          groupLabelFn = auto.groupLabelFn;
+          // Diagnostic logs: show exactly what got split AND what was close
+          // to the threshold so tuning the constant is data-driven rather
+          // than guesswork. Threshold-agnostic — reads the constant.
+          if (auto.pathological.size > 0) {
+            const flagged = Array.from(auto.pathological).map((key) => ({
+              key,
+              types: auto.pieceCounts.get(key) ?? 0,
+            }));
+            console.log(
+              `[runOptimize] auto mode: split ${flagged.length} pathological material(s) (threshold ${PATHOLOGICAL_PIECE_TYPE_THRESHOLD}):`,
+              flagged,
+            );
+          }
+          const nearThreshold = Array.from(auto.pieceCounts.entries())
+            .filter(([, n]) =>
+              n >= PATHOLOGICAL_PIECE_TYPE_THRESHOLD - 5 &&
+              n < PATHOLOGICAL_PIECE_TYPE_THRESHOLD,
+            )
+            .map(([key, types]) => ({ key, types }));
+          if (nearThreshold.length > 0) {
+            console.log(
+              `[runOptimize] auto mode: near-threshold materials (not split; bump threshold if any of these timeout):`,
+              nearThreshold,
+            );
+          }
+        }
+        // else 'pooled' → both undefined, engine uses defaults
 
         const result = await runOptimizationParallel({
           pieces: activePieces,
@@ -355,6 +426,8 @@ export function getQuotationOptimizerStore(
           signal,
           onProgress: (p) => set({ optimizerProgress: p }),
           timeoutMs: 120_000,
+          groupKeyFn,
+          groupLabelFn,
         });
         set({ pendingResult: result, isOptimizing: false, optimizerProgress: null });
       } catch (err) {
@@ -441,6 +514,7 @@ export function getQuotationOptimizerStore(
             minOffcut:        state.minOffcut,
             boardTrim:        state.boardTrim,
             trimIncludesKerf: state.trimIncludesKerf,
+            groupingMode:     state.groupingMode,
           },
           areaAttribution,
           cabinetAttribution,
@@ -529,6 +603,8 @@ export function getQuotationOptimizerStore(
           minOffcut:        snapshot.settings.minOffcut,
           boardTrim:        snapshot.settings.boardTrim,
           trimIncludesKerf: snapshot.settings.trimIncludesKerf,
+          // Older snapshots predate groupingMode — default to 'pooled' (legacy).
+          groupingMode:     snapshot.settings.groupingMode ?? 'pooled',
         });
       } catch (err) {
         set({ lastError: err instanceof Error ? err.message : String(err) });

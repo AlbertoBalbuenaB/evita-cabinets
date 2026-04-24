@@ -43,6 +43,7 @@ import { OptimizerWarningsPanel } from './OptimizerWarningsPanel';
 import { OptimizerVersionsList } from './OptimizerVersionsList';
 import { OptimizerComparisonPanel } from './OptimizerComparisonPanel';
 import { PricingMethodToggle } from './PricingMethodToggle';
+import { GroupingModeToggle } from './GroupingModeToggle';
 import { FtVsOptimizerComparisonCard } from './FtVsOptimizerComparisonCard';
 import { PerAreaBoardsBreakdown } from './PerAreaBoardsBreakdown';
 import { CutListDetailPanel, type CabinetDisplayInfo } from './CutListDetailPanel';
@@ -176,12 +177,15 @@ export function QuotationOptimizerTab({
   const pendingCabCovered  = useStore((s) => s.pendingCabinetsCovered);
   const pendingCabSkipped  = useStore((s) => s.pendingCabinetsSkipped);
   const pendingCabinetDetails = useStore((s) => s.pendingCabinetDetails);
+  const pendingStocks      = useStore((s) => s.pendingStocks);
   const loadedRun          = useStore((s) => s.loadedRun);
   const runs               = useStore((s) => s.runs);
   const activeRunId        = useStore((s) => s.activeRunId);
+  const groupingMode       = useStore((s) => s.groupingMode);
 
   // Actions
   const refreshRunsList = useStore((s) => s.refreshRunsList);
+  const setGroupingMode = useStore((s) => s.setGroupingMode);
   const build           = useStore((s) => s.build);
   const runOptimize     = useStore((s) => s.runOptimize);
   const cancelOptimize  = useStore((s) => s.cancelOptimize);
@@ -373,9 +377,21 @@ export function QuotationOptimizerTab({
   // share a single source of truth for how a board's cost is split across
   // areas when its pieces span multiple areas.
   const perAreaRows = useMemo(() => {
-    if (!loadedRun) return [];
-    const { result, snapshot } = loadedRun;
-    const attr = allocateBoardCostsByArea(result, snapshot.stocks);
+    // Prefer the saved run when available (same as before). When only a
+    // pending unsaved result exists, derive per-area rows from it using the
+    // current pendingStocks — this lets the split-by-area mode show the
+    // breakdown immediately after Run, before the user saves.
+    let result: OptimizationResult | null = null;
+    let stocks: typeof pendingStocks = [];
+    if (loadedRun) {
+      result = loadedRun.result;
+      stocks = loadedRun.snapshot.stocks;
+    } else if (pendingResult && pendingStocks.length > 0) {
+      result = pendingResult;
+      stocks = pendingStocks;
+    }
+    if (!result) return [];
+    const attr = allocateBoardCostsByArea(result, stocks);
 
     return Object.entries(attr)
       .map(([areaId, v]) => ({
@@ -386,7 +402,7 @@ export function QuotationOptimizerTab({
         boards: v.boards,
       }))
       .sort((a, b) => b.cost - a.cost);
-  }, [loadedRun, areasById]);
+  }, [loadedRun, pendingResult, pendingStocks, areasById]);
 
   // Retro-compat fallback: for snapshots saved before `cabinetDetails` was
   // persisted, re-query area_cabinets + products_catalog so the Cut-list
@@ -551,6 +567,12 @@ export function QuotationOptimizerTab({
           <StaleBadge onRerun={handleStaleRerun} />
         )}
 
+        <GroupingModeToggle
+          value={groupingMode}
+          onChange={setGroupingMode}
+          disabled={isOptimizing}
+        />
+
         <div className="flex-1" />
 
         <OptimizerVersionsList
@@ -693,6 +715,17 @@ export function QuotationOptimizerTab({
         </div>
       </div>
 
+      {/* ── Per-Area Breakdown — promoted above the CAD row for any    */}
+      {/*    non-pooled mode (Auto + Split). In these modes the per-area */}
+      {/*    view is the primary lens on the result, so it sits right    */}
+      {/*    above the CAD viewer. In Pool mode we keep the legacy       */}
+      {/*    below-CAD position (and only render for saved runs).        */}
+      {groupingMode !== 'pooled' && perAreaRows.length > 0 && (
+        <div className="px-4 py-4 border-b border-border-soft bg-surf-app">
+          <PerAreaBoardsBreakdown rows={perAreaRows} />
+        </div>
+      )}
+
       {/* ── Row 2 — Post-Run: CAD Viewer + Global Statistics ── */}
       {displayResult && (
         <div className="flex min-h-[600px] border-b border-border-soft">
@@ -709,7 +742,7 @@ export function QuotationOptimizerTab({
         </div>
       )}
 
-      {loadedRun && perAreaRows.length > 0 && (
+      {groupingMode === 'pooled' && loadedRun && perAreaRows.length > 0 && (
         <div className="px-4 py-4 border-t border-border-soft bg-surf-app">
           <PerAreaBoardsBreakdown rows={perAreaRows} />
         </div>

@@ -54,6 +54,17 @@ export interface ParallelOptimizationParams {
    *  their pieces land in `unplacedPieces`. Default: 90_000 ms. One
    *  pathological material no longer kills the whole run. */
   perGroupTimeoutMs?: number;
+  /** Custom grouping key function. Pieces sharing the same key go to the
+   *  same worker. Default: `${material}_${grosor}` (pool all areas).
+   *  Pass a key that includes `areaId` to optimize per-area — each area's
+   *  subset of a material packs independently, which dramatically reduces
+   *  combinatorial pressure when a single material spans many areas. */
+  groupKeyFn?: (p: Pieza) => string;
+  /** Human-readable label function for progress UI and skipped-group
+   *  warnings. Default: `p => p.material`. Pass e.g.
+   *  `p => \`${p.material} / ${p.area}\`` when per-area so the UI can say
+   *  "Wilsonart 18mm / Kitchen" instead of just "Wilsonart 18mm". */
+  groupLabelFn?: (p: Pieza) => string;
 }
 
 /** FNV-1a 32-bit hash, mapped into the Lehmer RNG's valid range [1, 2^31-2]. */
@@ -66,15 +77,115 @@ function seedForGroup(groupKey: string): number {
   return (h % 2147483646) + 1;
 }
 
+/** Default grouping key: material + thickness, pooling pieces across all
+ *  areas. Matches the key used inside `Optimizer.run()`. */
+export const poolGroupKey = (p: Pieza): string => `${p.material}_${p.grosor}`;
+
+/** Per-area grouping key: material + thickness + areaId. Pieces from
+ *  different areas of the same material pack independently, which
+ *  avoids combinatorial explosion when one material spans many areas.
+ *  Pieces without an areaId (e.g. legacy standalone-page inputs) fall
+ *  into a shared `__no_area__` bucket so they still get optimized. */
+export const perAreaGroupKey = (p: Pieza): string =>
+  `${p.material}_${p.grosor}_${p.areaId ?? '__no_area__'}`;
+
 /**
- * Partition cleaned pieces by `${material}_${grosor}`, matching the same
- * grouping key used inside `Optimizer.run()`. Order is insertion order, so
- * reruns over the same data produce the same group sequence.
+ * Piece-type count at which a pooled group is considered "pathological"
+ * and worth splitting per-area. Materials at or above this count get
+ * per-area splitting in `'auto'` mode; smaller materials stay pooled
+ * for best utilization.
+ *
+ * Tuning history:
+ *   - v1 (15): too aggressive; flagged common materials with 15-24
+ *     piece-types → cost drifted toward full Split mode.
+ *   - v2 (25): still flagged common materials at 25-39 types → cost
+ *     stayed noticeably above Pool baseline.
+ *   - v3 (40): achieved cost parity with Pool on W 8th, but Wilsonart
+ *     28-type material — the ORIGINAL pathology that motivated this
+ *     feature — fell BELOW the threshold and was no longer auto-split.
+ *     It hit the 90s per-group timeout and got skipped, blocking Save.
+ *   - v4 (28, current): recalibrated to the exact Wilsonart case (28
+ *     piece-types, 124 expanded, timed out at 90s pooled). Catches
+ *     that + all larger materials. The project has a count gap: 28,
+ *     32, 34, 40, 43, 43, 43, 72 — no threshold between 28 and 32
+ *     exists that catches Wilsonart without also catching Absolut
+ *     White (32/34). Accepting that tradeoff because:
+ *       (a) Save must work — skipped groups block the workflow; and
+ *       (b) 1-2 extra last-partial-board penalties are small relative
+ *           to the cost of a Save-blocked run.
+ *
+ * Tuning guide:
+ *   - Lower = more aggressive splitting → cost drifts toward Split mode.
+ *   - Higher = more conservative → cost closer to Pool, but borderline
+ *     materials (~30 types) may hit the per-group timeout and get
+ *     skipped (Save blocked). 28 is the floor for the W 8th project;
+ *     raising above 28 re-introduces the Wilsonart skip.
  */
-function groupPiecesByMaterial(pieces: Pieza[]): Map<string, Pieza[]> {
+export const PATHOLOGICAL_PIECE_TYPE_THRESHOLD = 28;
+
+/**
+ * Build the grouping + label functions for `'auto'` mode.
+ *
+ * Scans the incoming pieces once, counts piece-types per `material_grosor`,
+ * and flags any material at or above {@link PATHOLOGICAL_PIECE_TYPE_THRESHOLD}
+ * as `pathological`. The returned `groupKeyFn`:
+ *   - uses `perAreaGroupKey` for pathological materials (one worker per area)
+ *   - uses `poolGroupKey` for everything else (shared boards, best util)
+ *
+ * When no material is pathological, the returned fns are behaviourally
+ * identical to the pooled defaults, so `'auto'` mode is a strict superset
+ * of `'pooled'` — it only diverges when there is an actual problem to
+ * solve. The `pathological` set is returned alongside for logging and UI
+ * introspection.
+ */
+export function buildAutoGroupFns(pieces: Pieza[]): {
+  groupKeyFn: (p: Pieza) => string;
+  groupLabelFn: (p: Pieza) => string;
+  pathological: Set<string>;
+  /** Piece-type count per `material_grosor` key, exposed so the caller
+   *  can emit diagnostic logs ("Wilsonart_18 (28 types)") and spot
+   *  near-threshold materials for tuning without re-walking pieces. */
+  pieceCounts: Map<string, number>;
+} {
+  const typeCounts = new Map<string, number>();
+  for (const p of pieces) {
+    const k = poolGroupKey(p);
+    typeCounts.set(k, (typeCounts.get(k) ?? 0) + 1);
+  }
+  const pathological = new Set<string>();
+  for (const [k, n] of typeCounts) {
+    if (n >= PATHOLOGICAL_PIECE_TYPE_THRESHOLD) pathological.add(k);
+  }
+  return {
+    groupKeyFn: (p) => {
+      const k = poolGroupKey(p);
+      return pathological.has(k) ? perAreaGroupKey(p) : k;
+    },
+    groupLabelFn: (p) => {
+      const k = poolGroupKey(p);
+      return pathological.has(k)
+        ? `${p.material} / ${p.area ?? 'Sin área'}`
+        : p.material;
+    },
+    pathological,
+    pieceCounts: typeCounts,
+  };
+}
+
+/**
+ * Partition cleaned pieces into groups keyed by `keyFn(piece)`. Order is
+ * insertion order, so reruns over the same data produce the same group
+ * sequence (seeding stays deterministic). Exported for unit testing —
+ * production callers use `runOptimizationParallel` which invokes this
+ * internally.
+ */
+export function groupPiecesBy(
+  pieces: Pieza[],
+  keyFn: (p: Pieza) => string,
+): Map<string, Pieza[]> {
   const groups = new Map<string, Pieza[]>();
   for (const p of pieces) {
-    const key = `${p.material}_${p.grosor}`;
+    const key = keyFn(p);
     const arr = groups.get(key);
     if (arr) arr.push(p);
     else groups.set(key, [p]);
@@ -132,7 +243,9 @@ export async function runOptimizationParallel(
     );
   }
 
-  const groups = groupPiecesByMaterial(cleanPieces);
+  const groupKeyFn = params.groupKeyFn ?? poolGroupKey;
+  const groupLabelFn = params.groupLabelFn ?? ((p: Pieza) => p.material);
+  const groups = groupPiecesBy(cleanPieces, groupKeyFn);
   const groupKeys = Array.from(groups.keys());
   const totalGroups = groupKeys.length;
   const hwConcurrency = typeof navigator !== 'undefined' && navigator.hardwareConcurrency
@@ -190,7 +303,8 @@ export async function runOptimizationParallel(
       current = null;
     } else if (runningKeys.size === 1) {
       const onlyKey = runningKeys.values().next().value as string;
-      current = groups.get(onlyKey)?.[0]?.material ?? onlyKey;
+      const firstPiece = groups.get(onlyKey)?.[0];
+      current = firstPiece ? groupLabelFn(firstPiece) : onlyKey;
     } else {
       current = `${runningKeys.size} materials in parallel`;
     }
@@ -209,7 +323,10 @@ export async function runOptimizationParallel(
         return;
       }
       const worker = new GroupWorker();
-      const matLabel = groupPieces[0]?.material ?? groupKey;
+      const firstPiece = groupPieces[0];
+      const matLabel = firstPiece ? groupLabelFn(firstPiece) : groupKey;
+      const areaId = firstPiece?.areaId;
+      const areaName = firstPiece?.area;
 
       // Per-group watchdog: if this specific worker exceeds its budget,
       // terminate it and mark the group as skipped. The pool keeps running
@@ -235,7 +352,12 @@ export async function runOptimizationParallel(
           iters: 0,
           timeMs: perGroupTimeoutMs,
           capFires: 0,
-          skipped: { materialLabel: matLabel, reason },
+          skipped: {
+            materialLabel: matLabel,
+            reason,
+            ...(areaId !== undefined && { areaId }),
+            ...(areaName !== undefined && { areaName }),
+          },
         });
       }, perGroupTimeoutMs);
 
