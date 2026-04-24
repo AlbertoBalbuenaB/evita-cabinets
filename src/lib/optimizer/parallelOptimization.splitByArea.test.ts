@@ -194,23 +194,29 @@ describe('parallelOptimization — buildAutoGroupFns (hybrid mode)', () => {
     expect(buildAutoGroupFns(belowThreshold).pathological.has('BelowThreshold_18')).toBe(false);
   });
 
-  it('handles the Wilsonart production pathology — 28 types across 6 areas becomes 6 small groups', () => {
-    // Mirrors the 1030 W 8th Street / Custom incident that motivated PR #50.
+  it('splits a material with `threshold + 6` types across 6 areas into 6 smaller groups', () => {
+    // Structural invariant test: when a material has >= threshold piece-types
+    // and spans multiple areas, auto mode produces one group per area and
+    // each group is smaller than the threshold (== packing pressure drops
+    // below the pathological level). Threshold-agnostic — uses the constant
+    // so this stays valid as we tune the threshold up or down.
     const areas = ['Kitchen', 'Closet', 'Laundry', 'Bath', 'Pantry', 'Entry'];
+    const totalTypes = PATHOLOGICAL_PIECE_TYPE_THRESHOLD + 6;
     const pieces: Pieza[] = [];
-    for (let i = 0; i < 28; i++) {
+    for (let i = 0; i < totalTypes; i++) {
       pieces.push(makePiece({
         id: `w${i}`,
         nombre: `Part-${i}`,
-        material: 'Wilsonart 18mm',
+        material: 'PathologicalMaterial 18mm',
         areaId: areas[i % areas.length]!.toLowerCase(),
         area: areas[i % areas.length],
       }));
     }
     const { groupKeyFn, pathological } = buildAutoGroupFns(pieces);
-    expect(pathological.has('Wilsonart 18mm_18')).toBe(true);
+    expect(pathological.has('PathologicalMaterial 18mm_18')).toBe(true);
 
-    // Auto-mode groups: each area's subset is independent; 6 groups, each < 15 types.
+    // Auto-mode groups: each area's subset is independent; 6 groups, each
+    // smaller than the threshold (packing pressure below pathological level).
     const autoGroups = groupPiecesBy(pieces, groupKeyFn);
     expect(autoGroups.size).toBe(6);
     for (const group of autoGroups.values()) {

@@ -91,23 +91,32 @@ export const perAreaGroupKey = (p: Pieza): string =>
 
 /**
  * Piece-type count at which a pooled group is considered "pathological"
- * and worth splitting per-area. Calibrated against the Wilsonart 18mm
- * production incident (28 piece-types, timed out at 90s) with ~3 types
- * of headroom so we catch that case but don't over-flag medium
- * materials. Materials at or above this count get per-area splitting
- * in `'auto'` mode; smaller materials stay pooled for best utilization.
+ * and worth splitting per-area. Materials at or above this count get
+ * per-area splitting in `'auto'` mode; smaller materials stay pooled
+ * for best utilization.
+ *
+ * Tuning history:
+ *   - v1 (15): too aggressive; flagged common materials with 15-24
+ *     piece-types → cost drifted toward full Split mode.
+ *   - v2 (25): still flagged common materials at 25-39 types on large
+ *     real projects (e.g. `1030 W 8th Street / Custom` observed 7
+ *     flagged materials with counts 32, 34, 40, 43, 43, 43, 72). Cost
+ *     stayed noticeably above Pool baseline.
+ *   - v3 (40, current): only clearly-pathological materials (40+
+ *     distinct dimensions) get split. Still catches the production
+ *     Wilsonart case (28 types) only if it ever grows, and the
+ *     Merida 43 / TBD 72 cases seen at W 8th — the proven timeout
+ *     offenders. Medium-large projects with ~30-type common materials
+ *     stay pooled, closing the gap with Pool baseline.
  *
  * Tuning guide:
- *   - Lower (e.g. 15): more aggressive splitting → more materials split
- *     per-area → cost moves toward full Split mode.
- *   - Higher (e.g. 30): more conservative → cost closer to Pool, but a
- *     Wilsonart-sized material (28 types) would NOT be flagged and may
- *     timeout (then PR #50's skip mechanism kicks in).
- * Current value (25) favours cost-parity with Pool while still catching
- * the documented pathology. Raised from 15 in Apr 2026 after the
- * original threshold proved too aggressive on real projects.
+ *   - Lower = more aggressive splitting → more cost delta vs Pool.
+ *   - Higher = more conservative → cost closer to Pool, but borderline
+ *     materials (30-39 types) may timeout. PR #50's skip mechanism
+ *     still covers that case; the user sees a skippedGroup warning
+ *     and can re-run with a lower threshold if needed.
  */
-export const PATHOLOGICAL_PIECE_TYPE_THRESHOLD = 25;
+export const PATHOLOGICAL_PIECE_TYPE_THRESHOLD = 40;
 
 /**
  * Build the grouping + label functions for `'auto'` mode.
