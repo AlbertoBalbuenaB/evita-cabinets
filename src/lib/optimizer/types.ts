@@ -137,6 +137,13 @@ export interface OptimizationResult {
    *  estimates for affected groups. Absent on results saved before this
    *  field was added. */
   capFires?: number;
+  /** Groups (material_grosor) whose worker exceeded the per-group budget and
+   *  were skipped so the pool could complete the rest. Their pieces are
+   *  reported in `unplacedPieces` and contribute 0 boards / 0 cost. A
+   *  non-empty array means the `totalCost` here is PARTIAL — callers must
+   *  block save / warn the user instead of treating it as final. Absent on
+   *  results saved before this field was added. */
+  skippedGroups?: { groupKey: string; materialLabel: string; reason: string }[];
 }
 
 export interface CutStep {

@@ -22,6 +22,10 @@ interface Props {
    *  Non-zero means some groups were sub-optimally packed; a +5-10% safety
    *  margin on material estimates is advised for those groups. */
   capFires?: number;
+  /** Groups whose worker busted the per-group budget and were skipped by the
+   *  coordinator. When present, the run's totalCost is PARTIAL — the parent
+   *  also blocks Save. */
+  skippedGroups?: { groupKey: string; materialLabel: string; reason: string }[];
 }
 
 /**
@@ -40,6 +44,7 @@ export function OptimizerWarningsPanel({
   totalCabinetsCount,
   unplacedPieces = [],
   capFires = 0,
+  skippedGroups = [],
 }: Props) {
   const [open, setOpen] = useState(false);
 
@@ -48,15 +53,18 @@ export function OptimizerWarningsPanel({
     warnings.length > 0 ||
     cabinetsSkipped.length > 0 ||
     unplacedPieces.length > 0 ||
-    capFires > 0;
+    capFires > 0 ||
+    skippedGroups.length > 0;
 
   const coverage = totalCabinetsCount > 0
     ? Math.round((cabinetsCoveredCount / totalCabinetsCount) * 100)
     : 0;
 
-  // Compute tone: red if nothing is covered or pieces unplaced, amber if
-  // partial / capFires fired, green if fully covered and no warnings.
-  const tone = cabinetsCoveredCount === 0 || unplacedTotal > 0
+  // Compute tone: red if nothing is covered, pieces unplaced, or any
+  // material was skipped (partial totalCost is a hard problem); amber if
+  // partial coverage / capFires fired; green if fully covered and no
+  // warnings.
+  const tone = cabinetsCoveredCount === 0 || unplacedTotal > 0 || skippedGroups.length > 0
     ? 'red'
     : cabinetsCoveredCount < totalCabinetsCount || capFires > 0
       ? 'amber'
@@ -72,6 +80,7 @@ export function OptimizerWarningsPanel({
 
   // Summary suffix: compact list of the extra signals.
   const summarySuffix: string[] = [];
+  if (skippedGroups.length > 0) summarySuffix.push(`${skippedGroups.length} material${skippedGroups.length > 1 ? 's' : ''} skipped`);
   if (warnings.length > 0) summarySuffix.push(`${warnings.length} warning${warnings.length > 1 ? 's' : ''}`);
   if (unplacedTotal > 0) summarySuffix.push(`${unplacedTotal} piece${unplacedTotal > 1 ? 's' : ''} unplaced`);
   if (capFires > 0) summarySuffix.push(`${capFires} sub-optimal pack${capFires > 1 ? 's' : ''}`);
@@ -98,6 +107,31 @@ export function OptimizerWarningsPanel({
 
       {open && hasAnything && (
         <div className={`px-3 pb-3 border-t ${toneClasses.border}`}>
+          {skippedGroups.length > 0 && (
+            <div className="mt-2">
+              <div className={`text-xs font-semibold uppercase tracking-wide mb-1 ${toneClasses.text}`}>
+                Materials skipped by optimizer ({skippedGroups.length})
+              </div>
+              <ul className="text-xs space-y-1 text-fg-700">
+                {skippedGroups.map((g) => (
+                  <li key={g.groupKey} className="flex items-start gap-1.5">
+                    <AlertCircle className="h-3 w-3 text-status-red-fg shrink-0 mt-0.5" />
+                    <span>
+                      <span className="font-medium">{g.materialLabel}</span> — {g.reason}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="text-xs text-fg-600 mt-1">
+                The optimizer could not pack these materials within the time
+                budget, so their cost is <strong>not</strong> included in the
+                run total. Save is blocked until the skipped materials are
+                fixed (or removed from the selection) and the run is
+                re-executed.
+              </div>
+            </div>
+          )}
+
           {cabinetsSkipped.length > 0 && (
             <div className="mt-2">
               <div className={`text-xs font-semibold uppercase tracking-wide mb-1 ${toneClasses.text}`}>

@@ -201,3 +201,55 @@ describe('mergeOptimizationResults — totalPieces + unplacedPieces', () => {
     expect(r.unplacedPieces).toContainEqual({ nombre: 'B0', ancho: 1000, alto: 500, count: 1 });
   });
 });
+
+describe('mergeOptimizationResults — skipped groups', () => {
+  it('returns an empty skippedGroups array when no part is marked skipped', () => {
+    const parts: GroupResultPart[] = [
+      { groupKey: 'a', boards: [], strategy: 's', iters: 0, timeMs: 0 },
+    ];
+    const r = mergeOptimizationResults(parts, [], new Map());
+    expect(r.skippedGroups).toEqual([]);
+  });
+
+  it('promotes skipped parts into skippedGroups and leaves their pieces in unplacedPieces', () => {
+    // Group "good_15" completes normally with one piece placed.
+    const good = makePiece({ id: 'g0', nombre: 'GoodSides', cantidad: 1 });
+    const goodBoard = makeBoard({
+      material: 'good',
+      stockInfo: { nombre: 'good-stock', costo: 80, isRemnant: false },
+      placed: [makePlaced(0, good)],
+    });
+    // Group "bad_18" is skipped by the watchdog — 0 boards, 2 pieces unplaced.
+    const bad = makePiece({ id: 'b0', nombre: 'BadDoors', cantidad: 2 });
+    const grouped = new Map<string, Pieza[]>();
+    grouped.set('good_15', [good]);
+    grouped.set('bad_18', [bad]);
+    const parts: GroupResultPart[] = [
+      { groupKey: 'good_15', boards: [goodBoard], strategy: 'shelf-area', iters: 10, timeMs: 500 },
+      {
+        groupKey: 'bad_18',
+        boards: [],
+        strategy: '(skipped: timeout)',
+        iters: 0,
+        timeMs: 90_000,
+        skipped: { materialLabel: 'bad', reason: 'Took over 90s — 2 piece-types, 2 expanded.' },
+      },
+    ];
+    const r = mergeOptimizationResults(parts, [good, bad], grouped);
+
+    // Skipped entry surfaces on the result.
+    expect(r.skippedGroups).toHaveLength(1);
+    expect(r.skippedGroups?.[0]).toEqual({
+      groupKey: 'bad_18',
+      materialLabel: 'bad',
+      reason: 'Took over 90s — 2 piece-types, 2 expanded.',
+    });
+
+    // Good group's cost is included; skipped group contributes nothing.
+    expect(r.boards).toHaveLength(1);
+    expect(r.totalCost).toBe(80);
+
+    // Skipped group's pieces land in unplacedPieces.
+    expect(r.unplacedPieces).toContainEqual({ nombre: 'BadDoors', ancho: 1000, alto: 500, count: 2 });
+  });
+});

@@ -363,6 +363,10 @@ export function getQuotationOptimizerStore(
         set({
           isOptimizing: false,
           optimizerProgress: null,
+          // Wipe any half-built result from a prior successful attempt so the
+          // CADViewer / BreakdownBOM don't render stale data alongside the
+          // error. The DB-backed `loadedRun` is untouched.
+          pendingResult: null,
           lastError: isAbort
             ? 'Optimizer run cancelled.'
             : (err instanceof Error ? err.message : String(err)),

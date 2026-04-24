@@ -48,9 +48,11 @@ export interface ParallelOptimizationParams {
    *  are terminated and the promise rejects. Default: 120_000 ms. */
   timeoutMs?: number;
   /** Per-group wall-clock cap (ms). If a single group doesn't complete in
-   *  this time, its worker is terminated and the whole run rejects with a
-   *  message naming the stuck group. Default: 60_000 ms. Catches
-   *  pathological groups that drag down the global 120s budget. */
+   *  this time, its worker is terminated and the group is marked `skipped`
+   *  in the final result — the pool continues with the remaining groups.
+   *  Skipped materials surface in `OptimizationResult.skippedGroups` and
+   *  their pieces land in `unplacedPieces`. Default: 90_000 ms. One
+   *  pathological material no longer kills the whole run. */
   perGroupTimeoutMs?: number;
 }
 
@@ -103,6 +105,12 @@ async function runWithLimit<T>(tasks: (() => Promise<T>)[], limit: number): Prom
  *     drift by ±1-2 boards per group vs. the serial single-seed engine.
  *   - Strategy string is joined across groups (`"<key>:<strategy> | ..."`).
  *   - Supports AbortSignal-based cancellation and onProgress callback.
+ *   - A group that busts its per-group budget is SKIPPED (not fatal): its
+ *     worker is terminated and the pool keeps running with the remaining
+ *     groups. Skipped materials surface in `result.skippedGroups` and their
+ *     pieces in `result.unplacedPieces`. The caller MUST treat `totalCost`
+ *     as partial when `skippedGroups.length > 0` — block Save, show a
+ *     warning, or re-run once the material's data is fixed.
  */
 export async function runOptimizationParallel(
   params: ParallelOptimizationParams,
@@ -168,7 +176,7 @@ export async function runOptimizationParallel(
     ));
   }, timeoutMs);
 
-  const perGroupTimeoutMs = params.perGroupTimeoutMs ?? 60_000;
+  const perGroupTimeoutMs = params.perGroupTimeoutMs ?? 90_000;
 
   // Set of group keys whose worker is currently running. Used to give the
   // progress UI the *actual* material that's in progress instead of just
@@ -204,17 +212,31 @@ export async function runOptimizationParallel(
       const matLabel = groupPieces[0]?.material ?? groupKey;
 
       // Per-group watchdog: if this specific worker exceeds its budget,
-      // terminate it and reject with a message naming the group. Fires
-      // the internal abort so the other workers also stop (one bad group
-      // shouldn't keep the rest running only to produce an invalid total).
+      // terminate it and mark the group as skipped. The pool keeps running
+      // on the remaining groups — a single pathological material no longer
+      // invalidates everything. The UI must show a warning and block Save
+      // when `result.skippedGroups.length > 0` (its totalCost is partial).
       const perGroupTimeout = setTimeout(() => {
-        console.warn(`[runOptimizationParallel] ${groupKey} exceeded ${perGroupTimeoutMs}ms budget — terminating worker.`);
+        console.warn(`[runOptimizationParallel] ${groupKey} exceeded ${perGroupTimeoutMs}ms budget — terminating worker and marking group as skipped.`);
+        // Detach handlers BEFORE terminate to avoid a late message from the
+        // worker racing with the resolve below and double-counting progress.
+        worker.onmessage = null;
+        worker.onerror = null;
         try { worker.terminate(); } catch { /* noop */ }
-        const err = new Error(
-          `Material "${matLabel}" (${groupPieces.length} piece-types, ${groupPieces.reduce((s, p) => s + p.cantidad, 0)} expanded) took over ${Math.round(perGroupTimeoutMs / 1000)}s and was skipped. Check cut-piece dimensions or veta settings for this material.`,
-        );
-        reject(err);
-        internal.abort(err);
+        runningKeys.delete(groupKey);
+        internal.signal.removeEventListener('abort', onInternalAbort);
+        completed += 1;
+        emitProgress();
+        const reason = `Took over ${Math.round(perGroupTimeoutMs / 1000)}s — ${groupPieces.length} piece-types, ${groupPieces.reduce((s, p) => s + p.cantidad, 0)} expanded. Check cut-piece dimensions, veta settings, or stock size for this material.`;
+        resolve({
+          groupKey,
+          boards: [],
+          strategy: '(skipped: timeout)',
+          iters: 0,
+          timeMs: perGroupTimeoutMs,
+          capFires: 0,
+          skipped: { materialLabel: matLabel, reason },
+        });
       }, perGroupTimeoutMs);
 
       const onInternalAbort = (): void => {
