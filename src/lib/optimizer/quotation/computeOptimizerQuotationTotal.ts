@@ -93,17 +93,34 @@ export interface OptimizerQuotationTotal {
  * those boards. Subtracting the ft²-estimated cost fields here keeps
  * the Info-tab Materials Subtotal from double-counting them.
  *
- * Fields intentionally NOT listed (the optimizer does NOT replace them
- * — they remain in `extras` on top of optimizer boards):
- *   - box_interior_finish_cost, doors_interior_finish_cost
- *   - door_profile_cost
+ * 2026-04-24 addition: `box_interior_finish_cost` and
+ * `doors_interior_finish_cost`. The "interior finish pass" in
+ * `buildOptimizerSetupFromQuotation` duplicates cuerpo/frente pieces
+ * onto the surface-layer (laminate) material when a cabinet has
+ * `box_interior_finish_id` / `doors_interior_finish_id` configured, and
+ * the resulting 'interior-finish' pieces are cut on real laminate stocks
+ * (e.g. Wilsonart PB Ember at ~$12,927/sheet). That cost lands inside
+ * the optimizer's `materialCost`, so the ft²-estimated interior-finish
+ * costs must be subtracted here to avoid double-billing the laminate.
+ * Originally excluded on the assumption the optimizer did NOT cut these
+ * pieces; that assumption became stale once the interior-finish pass
+ * was added. Confirmed against Hospitality Health of Lake Jackson
+ * (Apr 2026): $852K of ft² interior-finish was being stacked on top of
+ * the ~$1.2M of laminate boards the optimizer had already paid for,
+ * inflating the quotation total by ~$2.1M after multipliers/tax.
+ *
+ * Fields intentionally NOT listed (the optimizer does NOT cut them —
+ * they remain in `extras` on top of optimizer boards):
+ *   - door_profile_cost (extruded / bought pre-finished, not cut)
  *   - hardware / accessories / labor (handled separately)
  */
 export const MATERIAL_FIELDS = [
   'box_material_cost',
   'box_edgeband_cost',
+  'box_interior_finish_cost',
   'doors_material_cost',
   'doors_edgeband_cost',
+  'doors_interior_finish_cost',
   'back_panel_material_cost',
   'drawer_box_material_cost',
   'drawer_box_edgeband_cost',

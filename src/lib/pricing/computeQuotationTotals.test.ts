@@ -150,6 +150,48 @@ describe('computeQuotationTotals — optimizer mode', () => {
     expect(out.byCategory.labor).toBe(300);     // from cabinet
   });
 
+  it('subtracts interior finish cost in optimizer mode (no double-count of laminate)', () => {
+    // Regression for Hospitality Health of Lake Jackson (Apr 2026):
+    // buildOptimizerSetupFromQuotation's interior-finish pass emits
+    // 'interior-finish' pieces on real laminate stocks, so the laminate
+    // cost lands inside `optimizer.materialCost`. The ft²-estimated
+    // interior-finish cost fields MUST be subtracted from cabinet.subtotal
+    // or they double-bill the laminate as extras on top of boards.
+    const cabinetWithInteriorFinish = cab('c1', {
+      box_material_cost: 300,           // ft² core (subtracted)
+      box_interior_finish_cost: 200,    // ft² laminate (MUST be subtracted)
+      doors_material_cost: 200,         // ft² core (subtracted)
+      doors_interior_finish_cost: 300,  // ft² laminate (MUST be subtracted)
+      hardware_cost: 150,
+      labor_cost: 100,
+    });
+    // subtotal = 300 + 200 + 200 + 300 + 150 + 100 = 1250
+    const out = computeQuotationTotals({
+      pricingMethod: 'optimizer',
+      multipliers: BASE_MULTIPLIERS,
+      areasData: [area('a1', { cabinets: [cabinetWithInteriorFinish] })],
+      optimizerRun: {
+        // Optimizer cut BOTH cores AND laminate on real boards, so
+        // materialCost is the total spend on boards including laminate.
+        materialCost: 1100,
+        edgebandCost: 0,
+        cabinetsCovered: new Set(['c1']),
+        tariffableMaterialsCost: 1100,
+      },
+    });
+    // MATERIAL_FIELDS now subtracts $300+$200+$200+$300 = $1000.
+    // extras = 1250 - 1000 = 250 (hardware 150 + labor 100)
+    // materialsSubtotal = 1100 (optimizer) + 250 (extras) = 1350
+    expect(out.materialsSubtotal).toBe(1350);
+    expect(out.optimizerMaterialsCost).toBe(1100);
+    // Interior finish should report 0 in optimizer mode (folded into boards)
+    // to avoid the BOM / Analytics showing it twice.
+    expect(out.byCategory.interiorFinish).toBe(0);
+    expect(out.byCategory.boards).toBe(1100);
+    expect(out.byCategory.hardware).toBe(150);
+    expect(out.byCategory.labor).toBe(100);
+  });
+
   it('throws when optimizer mode is selected without optimizerRun input', () => {
     expect(() =>
       computeQuotationTotals({
