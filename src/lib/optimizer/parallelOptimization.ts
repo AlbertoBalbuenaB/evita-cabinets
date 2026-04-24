@@ -90,6 +90,61 @@ export const perAreaGroupKey = (p: Pieza): string =>
   `${p.material}_${p.grosor}_${p.areaId ?? '__no_area__'}`;
 
 /**
+ * Piece-type count at which a pooled group is considered "pathological"
+ * and worth splitting per-area. Calibrated against the Wilsonart 18mm
+ * production incident (28 piece-types, timed out at 90s). Materials at
+ * or above this count get per-area splitting in `'auto'` mode; smaller
+ * materials stay pooled for best utilization. Tune if production reveals
+ * timeouts below this count (lower = more aggressive splitting = more
+ * material waste but fewer timeouts).
+ */
+export const PATHOLOGICAL_PIECE_TYPE_THRESHOLD = 15;
+
+/**
+ * Build the grouping + label functions for `'auto'` mode.
+ *
+ * Scans the incoming pieces once, counts piece-types per `material_grosor`,
+ * and flags any material at or above {@link PATHOLOGICAL_PIECE_TYPE_THRESHOLD}
+ * as `pathological`. The returned `groupKeyFn`:
+ *   - uses `perAreaGroupKey` for pathological materials (one worker per area)
+ *   - uses `poolGroupKey` for everything else (shared boards, best util)
+ *
+ * When no material is pathological, the returned fns are behaviourally
+ * identical to the pooled defaults, so `'auto'` mode is a strict superset
+ * of `'pooled'` — it only diverges when there is an actual problem to
+ * solve. The `pathological` set is returned alongside for logging and UI
+ * introspection.
+ */
+export function buildAutoGroupFns(pieces: Pieza[]): {
+  groupKeyFn: (p: Pieza) => string;
+  groupLabelFn: (p: Pieza) => string;
+  pathological: Set<string>;
+} {
+  const typeCounts = new Map<string, number>();
+  for (const p of pieces) {
+    const k = poolGroupKey(p);
+    typeCounts.set(k, (typeCounts.get(k) ?? 0) + 1);
+  }
+  const pathological = new Set<string>();
+  for (const [k, n] of typeCounts) {
+    if (n >= PATHOLOGICAL_PIECE_TYPE_THRESHOLD) pathological.add(k);
+  }
+  return {
+    groupKeyFn: (p) => {
+      const k = poolGroupKey(p);
+      return pathological.has(k) ? perAreaGroupKey(p) : k;
+    },
+    groupLabelFn: (p) => {
+      const k = poolGroupKey(p);
+      return pathological.has(k)
+        ? `${p.material} / ${p.area ?? 'Sin área'}`
+        : p.material;
+    },
+    pathological,
+  };
+}
+
+/**
  * Partition cleaned pieces into groups keyed by `keyFn(piece)`. Order is
  * insertion order, so reruns over the same data produce the same group
  * sequence (seeding stays deterministic). Exported for unit testing —

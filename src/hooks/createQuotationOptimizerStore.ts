@@ -29,7 +29,10 @@
 
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { supabase } from '../lib/supabase';
-import { runOptimizationParallel } from '../lib/optimizer/parallelOptimization';
+import {
+  runOptimizationParallel,
+  buildAutoGroupFns,
+} from '../lib/optimizer/parallelOptimization';
 import type {
   Pieza,
   StockSize,
@@ -117,13 +120,16 @@ export interface QuotationOptimizerState {
   trimIncludesKerf: boolean;
   engineMode: EngineMode;
   objective: OptimizationObjective;
-  /** Grouping mode for the parallel pool. `'pooled'` (default) = one worker
-   *  per `material_grosor`, pieces pooled across all areas. `'per-area'` =
-   *  one worker per `material_grosor_areaId`, so each area packs its own
-   *  boards independently. Useful for very large quotations where a single
-   *  material spans many areas and the pooled run triggers the per-group
-   *  timeout watchdog. */
-  groupingMode: 'pooled' | 'per-area';
+  /** Grouping mode for the parallel pool.
+   *   - `'pooled'`: one worker per `material_grosor`, pieces pooled across
+   *     all areas. Best material utilization, legacy behaviour.
+   *   - `'auto'` (default): pooled for normal materials, but any material
+   *     with >= `PATHOLOGICAL_PIECE_TYPE_THRESHOLD` piece-types is split
+   *     per-area to avoid the per-group timeout. Strictly safe — when no
+   *     material crosses the threshold, output is identical to `'pooled'`.
+   *   - `'per-area'`: every material split per-area regardless of size.
+   *     Most resilient, worst utilization. */
+  groupingMode: 'pooled' | 'auto' | 'per-area';
 
   // Flags
   isBuilding: boolean;
@@ -145,7 +151,7 @@ export interface QuotationOptimizerState {
   setTrimIncludesKerf: (v: boolean) => void;
   setEngineMode: (v: EngineMode) => void;
   setObjective: (v: OptimizationObjective) => void;
-  setGroupingMode: (v: 'pooled' | 'per-area') => void;
+  setGroupingMode: (v: 'pooled' | 'auto' | 'per-area') => void;
   toggleStockSelected: (id: string) => void;
   toggleEbSlot: (slot: 'a' | 'b' | 'c') => void;
 
@@ -237,7 +243,11 @@ export function getQuotationOptimizerStore(
     trimIncludesKerf: true,
     engineMode: 'guillotine' as EngineMode,
     objective: 'min-boards' as OptimizationObjective,
-    groupingMode: 'pooled' as 'pooled' | 'per-area',
+    // Default 'auto' — strictly safe (identical to 'pooled' when no
+    // material has >= 15 piece-types), with graceful fallback for
+    // pathological materials. Users can still pick 'pooled' or 'per-area'
+    // explicitly in the toolbar toggle.
+    groupingMode: 'auto' as 'pooled' | 'auto' | 'per-area',
 
     isBuilding: false,
     isOptimizing: false,
@@ -359,16 +369,30 @@ export function getQuotationOptimizerStore(
           groupingMode: state.groupingMode,
         });
 
-        // Per-area mode: split each material into independent per-area groups
-        // so a single material spanning many areas no longer triggers the
-        // per-group timeout. Label pieces as "Material / Area" so warnings
-        // and progress identify exactly which area is running.
-        const groupKeyFn = state.groupingMode === 'per-area'
-          ? (p: Pieza) => `${p.material}_${p.grosor}_${p.areaId ?? '__no_area__'}`
-          : undefined; // default: `${material}_${grosor}` (pooled)
-        const groupLabelFn = state.groupingMode === 'per-area'
-          ? (p: Pieza) => `${p.material} / ${p.area ?? 'Sin área'}`
-          : undefined;
+        // Pick groupKeyFn/groupLabelFn based on the selected grouping mode:
+        //   - 'pooled'   → undefined (engine uses default material_grosor)
+        //   - 'per-area' → always split by material_grosor_areaId, labels
+        //     carry the area name so warnings + progress show "Mat / Area"
+        //   - 'auto'     → scan pieces once, split only materials with >=
+        //     15 piece-types (pathological), pool the rest. Identical to
+        //     'pooled' when nothing is pathological.
+        let groupKeyFn: ((p: Pieza) => string) | undefined;
+        let groupLabelFn: ((p: Pieza) => string) | undefined;
+        if (state.groupingMode === 'per-area') {
+          groupKeyFn = (p) => `${p.material}_${p.grosor}_${p.areaId ?? '__no_area__'}`;
+          groupLabelFn = (p) => `${p.material} / ${p.area ?? 'Sin área'}`;
+        } else if (state.groupingMode === 'auto') {
+          const auto = buildAutoGroupFns(activePieces);
+          groupKeyFn = auto.groupKeyFn;
+          groupLabelFn = auto.groupLabelFn;
+          if (auto.pathological.size > 0) {
+            console.log(
+              `[runOptimize] auto mode: splitting ${auto.pathological.size} pathological material(s) per-area:`,
+              Array.from(auto.pathological),
+            );
+          }
+        }
+        // else 'pooled' → both undefined, engine uses defaults
 
         const result = await runOptimizationParallel({
           pieces: activePieces,

@@ -715,11 +715,12 @@ export function QuotationOptimizerTab({
         </div>
       </div>
 
-      {/* ── Per-Area Breakdown — promoted above the CAD row in split mode ── */}
-      {/*    In split-by-area mode this is the primary lens on the result, so */}
-      {/*    it sits right above the CAD viewer. In pooled mode we keep the   */}
-      {/*    legacy below-CAD position (and only render for saved runs).      */}
-      {groupingMode === 'per-area' && perAreaRows.length > 0 && (
+      {/* ── Per-Area Breakdown — promoted above the CAD row for any    */}
+      {/*    non-pooled mode (Auto + Split). In these modes the per-area */}
+      {/*    view is the primary lens on the result, so it sits right    */}
+      {/*    above the CAD viewer. In Pool mode we keep the legacy       */}
+      {/*    below-CAD position (and only render for saved runs).        */}
+      {groupingMode !== 'pooled' && perAreaRows.length > 0 && (
         <div className="px-4 py-4 border-b border-border-soft bg-surf-app">
           <PerAreaBoardsBreakdown rows={perAreaRows} />
         </div>

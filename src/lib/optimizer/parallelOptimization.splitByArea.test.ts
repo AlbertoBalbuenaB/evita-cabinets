@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { groupPiecesBy, poolGroupKey, perAreaGroupKey } from './parallelOptimization';
+import {
+  groupPiecesBy,
+  poolGroupKey,
+  perAreaGroupKey,
+  buildAutoGroupFns,
+  PATHOLOGICAL_PIECE_TYPE_THRESHOLD,
+} from './parallelOptimization';
 import type { Pieza } from './types';
 
 function makePiece(overrides: Partial<Pieza> = {}): Pieza {
@@ -94,6 +100,126 @@ describe('parallelOptimization — groupPiecesBy partitioning', () => {
   it('returns an empty Map when given no pieces', () => {
     expect(groupPiecesBy([], poolGroupKey).size).toBe(0);
     expect(groupPiecesBy([], perAreaGroupKey).size).toBe(0);
+  });
+});
+
+describe('parallelOptimization — buildAutoGroupFns (hybrid mode)', () => {
+  it('pools every material when nothing crosses the threshold — equivalent to pooled', () => {
+    const pieces: Pieza[] = [];
+    // Small materials: 3 types each across 3 areas (9 total each < 15 threshold)
+    for (const mat of ['White Laminate', 'Oak Ply']) {
+      for (const area of ['kitchen', 'closet', 'laundry']) {
+        for (let i = 0; i < 3; i++) {
+          pieces.push(makePiece({
+            id: `${mat}-${area}-${i}`,
+            material: mat,
+            areaId: area,
+            area: area[0]!.toUpperCase() + area.slice(1),
+          }));
+        }
+      }
+    }
+    const { groupKeyFn, groupLabelFn, pathological } = buildAutoGroupFns(pieces);
+    expect(pathological.size).toBe(0);
+    // Every piece gets the plain pool key — no split.
+    const whiteKitchen = pieces.find((p) => p.material === 'White Laminate' && p.areaId === 'kitchen')!;
+    const whiteCloset = pieces.find((p) => p.material === 'White Laminate' && p.areaId === 'closet')!;
+    expect(groupKeyFn(whiteKitchen)).toBe('White Laminate_18');
+    expect(groupKeyFn(whiteCloset)).toBe('White Laminate_18');
+    expect(groupKeyFn(whiteKitchen)).toBe(groupKeyFn(whiteCloset));
+    // Labels stay plain (no area suffix) for non-pathological materials.
+    expect(groupLabelFn(whiteKitchen)).toBe('White Laminate');
+  });
+
+  it('splits only pathological materials (>= threshold), pools the rest', () => {
+    // Wilsonart: 20 distinct types across 4 areas → pathological (>= 15).
+    // White Laminate: 8 distinct types across 4 areas → safe (< 15).
+    const pieces: Pieza[] = [];
+    const areas = ['kitchen', 'closet', 'laundry', 'bath'];
+    for (let i = 0; i < 20; i++) {
+      pieces.push(makePiece({
+        id: `w${i}`,
+        nombre: `WilsonartPart-${i}`,
+        material: 'Wilsonart',
+        areaId: areas[i % areas.length],
+        area: areas[i % areas.length]!,
+      }));
+    }
+    for (let i = 0; i < 8; i++) {
+      pieces.push(makePiece({
+        id: `l${i}`,
+        nombre: `WhitePart-${i}`,
+        material: 'White Laminate',
+        areaId: areas[i % areas.length],
+        area: areas[i % areas.length]!,
+      }));
+    }
+    const { groupKeyFn, groupLabelFn, pathological } = buildAutoGroupFns(pieces);
+
+    expect(pathological.size).toBe(1);
+    expect(pathological.has('Wilsonart_18')).toBe(true);
+    expect(pathological.has('White Laminate_18')).toBe(false);
+
+    // Wilsonart pieces from different areas now have different keys.
+    const wKitchen = pieces.find((p) => p.material === 'Wilsonart' && p.areaId === 'kitchen')!;
+    const wCloset = pieces.find((p) => p.material === 'Wilsonart' && p.areaId === 'closet')!;
+    expect(groupKeyFn(wKitchen)).toBe('Wilsonart_18_kitchen');
+    expect(groupKeyFn(wCloset)).toBe('Wilsonart_18_closet');
+    expect(groupKeyFn(wKitchen)).not.toBe(groupKeyFn(wCloset));
+    // Split materials carry area in label for UI warnings.
+    expect(groupLabelFn(wKitchen)).toBe('Wilsonart / kitchen');
+
+    // White Laminate pieces from different areas still share a key (pooled).
+    const laKitchen = pieces.find((p) => p.material === 'White Laminate' && p.areaId === 'kitchen')!;
+    const laCloset = pieces.find((p) => p.material === 'White Laminate' && p.areaId === 'closet')!;
+    expect(groupKeyFn(laKitchen)).toBe('White Laminate_18');
+    expect(groupKeyFn(laKitchen)).toBe(groupKeyFn(laCloset));
+    expect(groupLabelFn(laKitchen)).toBe('White Laminate');
+  });
+
+  it('respects the documented threshold value — at exactly the threshold, split; below it, pool', () => {
+    const atThreshold: Pieza[] = [];
+    for (let i = 0; i < PATHOLOGICAL_PIECE_TYPE_THRESHOLD; i++) {
+      atThreshold.push(makePiece({ id: `at${i}`, material: 'AtThreshold', areaId: 'kitchen', area: 'Kitchen' }));
+    }
+    expect(buildAutoGroupFns(atThreshold).pathological.has('AtThreshold_18')).toBe(true);
+
+    const belowThreshold: Pieza[] = [];
+    for (let i = 0; i < PATHOLOGICAL_PIECE_TYPE_THRESHOLD - 1; i++) {
+      belowThreshold.push(makePiece({ id: `bt${i}`, material: 'BelowThreshold', areaId: 'kitchen', area: 'Kitchen' }));
+    }
+    expect(buildAutoGroupFns(belowThreshold).pathological.has('BelowThreshold_18')).toBe(false);
+  });
+
+  it('handles the Wilsonart production pathology — 28 types across 6 areas becomes 6 small groups', () => {
+    // Mirrors the 1030 W 8th Street / Custom incident that motivated PR #50.
+    const areas = ['Kitchen', 'Closet', 'Laundry', 'Bath', 'Pantry', 'Entry'];
+    const pieces: Pieza[] = [];
+    for (let i = 0; i < 28; i++) {
+      pieces.push(makePiece({
+        id: `w${i}`,
+        nombre: `Part-${i}`,
+        material: 'Wilsonart 18mm',
+        areaId: areas[i % areas.length]!.toLowerCase(),
+        area: areas[i % areas.length],
+      }));
+    }
+    const { groupKeyFn, pathological } = buildAutoGroupFns(pieces);
+    expect(pathological.has('Wilsonart 18mm_18')).toBe(true);
+
+    // Auto-mode groups: each area's subset is independent; 6 groups, each < 15 types.
+    const autoGroups = groupPiecesBy(pieces, groupKeyFn);
+    expect(autoGroups.size).toBe(6);
+    for (const group of autoGroups.values()) {
+      expect(group.length).toBeLessThan(PATHOLOGICAL_PIECE_TYPE_THRESHOLD);
+    }
+  });
+
+  it('handles empty input without crashing', () => {
+    const { groupKeyFn, groupLabelFn, pathological } = buildAutoGroupFns([]);
+    expect(pathological.size).toBe(0);
+    expect(typeof groupKeyFn).toBe('function');
+    expect(typeof groupLabelFn).toBe('function');
   });
 });
 
